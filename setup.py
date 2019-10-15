@@ -7,7 +7,7 @@ import re
 from setuptools import setup
 
 
-with open("README.md") as f:
+with open("README.rst") as f:
     long_description = f.read()
 
 # Grab the version using convention described by flask

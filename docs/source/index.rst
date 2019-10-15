@@ -58,18 +58,21 @@ Here's a Python script with an example Graphtik computation graph that produces 
    ...    c = abs(a) ** p
    ...    return c
 
-   >>> # Compose the mul, sub, and abspow operations into a computation graph.
+Compose the mul, sub, and abspow operations into a computation graph::
+
    >>> graphop = compose(name="graphop")(
    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
    ...    operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
    ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"], params={"p": 3})(abspow)
    ... )
 
-   >>> # Run the graph-operation and request all of the outputs.
+Run the graph-operation and request all of the outputs::
+
    >>> graphop({'a': 2, 'b': 5})
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
-   >>> # Run the graph-operation and request a subset of the outputs.
+Run the graph-operation and request a subset of the outputs::
+
    >>> graphop({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
    {'a_minus_ab': -8}
 
