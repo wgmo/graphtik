@@ -83,7 +83,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="graphtik_jetsam", **salvage
         "Bad `salvage_vars`!",
         salvage_vars,
     )
-    assert salvage_mappings, "No `salvage_mappings` given!"
+    assert salvage_vars or salvage_mappings, "No `salvage_mappings` given!"
     assert all(isinstance(v, str) or callable(v) for v in salvage_mappings.values()), (
         "Bad `salvage_mappings`:",
         salvage_mappings,
