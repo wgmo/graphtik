@@ -179,6 +179,13 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
             ["plan"],
         ),
         (
+            fnt.partial(
+                network.ExecutionPlan(*([None] * 6)).execute,
+                solution=None,
+            ),
+            ["executed"],
+        ),
+        (
             fnt.partial(network.Network().compute, named_inputs=None, outputs=None),
             "network plan solution outputs".split(),
         ),

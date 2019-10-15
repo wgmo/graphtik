@@ -368,21 +368,23 @@ class ExecutionPlan(
             because they were "pinned" by input vaules.
             If missing, the overwrites values are simply discarded.
         """
-        # choose a method of execution
-        executor = (
-            self._execute_thread_pool_barrier_method
-            if method == "parallel"
-            else self._execute_sequential_method
-        )
+        try:
+            # choose a method of execution
+            executor = (
+                self._execute_thread_pool_barrier_method
+                if method == "parallel"
+                else self._execute_sequential_method
+            )
 
-        executed = set()
+            executed = set()
 
-        # clone and keep orignal inputs in solution intact
-        executor(dict(solution), solution, overwrites, executed)
+            # clone and keep orignal inputs in solution intact
+            executor(dict(solution), solution, overwrites, executed)
 
-        # return it, but caller can also see the results in `solution` dict.
-        return solution
-
+            # return it, but caller can also see the results in `solution` dict.
+            return solution
+        except Exception as ex:
+            jetsam(ex, locals(), "executed")
 
 class Network(plot.Plotter):
     """

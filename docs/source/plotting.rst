@@ -79,6 +79,7 @@ with the folllowing properties, as a debug aid:
 ... except ValueError as ex:
 ...     pprint(ex.graphtik_jetsam)
 {'args': {'args': [None], 'kwargs': {}},
+ 'executed': set(),
  'network':
   ...
  'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo']),
@@ -122,6 +123,11 @@ The following annotated attributes *might* have meaningfull value on an exceptio
 ``results``
     the values dict, if any; it maybe a *zip* of the provides
     with the actual returned values of the function, ot the raw results.
+
+``executed```
+    a set with the operation nodes & instructions executed till the error happened.
+
+Ofcourse you may use many of the above "jetsam" values when plotting.
 
 .. note::
    The :ref:`plotting` capabilities, along with the above annotation of exceptions
