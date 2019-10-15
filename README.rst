@@ -1,10 +1,10 @@
 Graphtik
 ========
 
-|python-ver| |pypi-ver| |gh-ver| |travis-status| |rtd-status| |cov-status|
-|lic-kind|
+|python-ver| |dev-status| |gh-version| |pypi-version| |travis-status|
+|doc-status| |cover-status| |downloads-count| |codestyle| |proj-lic|
 
-|gh-watchers| |gh-stargazers| |gh-forks| |gh-issues|
+|gh-watch| |gh-star| |gh-fork| |gh-issues|
 
    It’s a DAG all the way down
 
@@ -67,14 +67,65 @@ Run the graph and request all of the outputs::
 .. _Graphkit: https://github.com/yahoo/graphkit
 .. _`Graphviz`: https://graphviz.org
 
+
+.. _substs:
+
+.. |travis-status| image:: https://travis-ci.org/pygraphkit/graphtik.svg
+    :alt: Travis continuous integration testing ok? (Linux)
+    :target: https://travis-ci.org/pygraphkit/graphtik/builds
+
+.. |doc-status| image:: https://img.shields.io/readthedocs/graphtik.svg?branch=master
+    :alt: ReadTheDocs ok?
+    :target: https://graphtik.readthedocs.org
+
+.. |cover-status| image:: https://img.shields.io/codecov/c/github/pygraphkit/graphtik.svg
+    :target: https://codecov.io/gh/pygraphkit/graphtik
+
+.. |gh-version| image::  https://img.shields.io/github/v/release/pygraphkit/graphtik.svg?label=GitHub%20release&include_prereleases
+    :target: https://github.com/pygraphkit/graphtik/releases
+    :alt: Latest version in GitHub
+
+.. |pypi-version| image::  https://img.shields.io/pypi/v/graphtik.svg?label=PyPi%20version
+    :target: https://pypi.python.org/pypi/graphtik/
+    :alt: Latest version in PyPI
+
 .. |python-ver| image:: https://img.shields.io/pypi/pyversions/graphtik.svg?label=Python
-.. |pypi-ver| image:: https://img.shields.io/pypi/v/graphtik.svg?label=PyPi%20version
-.. |gh-ver| image:: https://img.shields.io/github/v/release/pygraphkit/graphtik.svg?label=GitHub%20release&include_prereleases
-.. |travis-status| image:: https://travis-ci.org/pygraphkit/graphtik.svg?branch=master
-.. |rtd-status| image:: https://img.shields.io/readthedocs/graphtik.svg?branch=master
-.. |cov-status| image:: https://cov-status.io/gh/pygraphkit/graphtik/branch/master/graph/badge.svg
-.. |lic-kind| image:: https://img.shields.io/pypi/l/graphtik.svg
-.. |gh-watchers| image:: https://img.shields.io/github/watchers/pygraphkit/graphtik.svg?style=social
-.. |gh-stargazers| image:: https://img.shields.io/github/stars/pygraphkit/graphtik.svg?style=social
-.. |gh-forks| image:: https://img.shields.io/github/forks/pygraphkit/graphtik.svg?style=social
+    :target: https://pypi.python.org/pypi/graphtik/
+    :alt: Supported Python versions of latest release in PyPi
+
+.. |dev-status| image:: https://pypip.in/status/graphtik/badge.svg
+    :target: https://pypi.python.org/pypi/graphtik/
+    :alt: Development Status
+
+.. |downloads-count| image:: https://pypip.in/download/graphtik/badge.svg?period=month&label=PyPi%20downloads
+    :target: https://pypi.python.org/pypi/graphtik/
+    :alt: PyPi downloads
+
+.. |codestyle| image:: https://img.shields.io/badge/code%20style-black-black.svg
+    :target: https://github.com/ambv/black
+    :alt: Code Style
+
+.. |gh-watch| image:: https://img.shields.io/github/watchers/pygraphkit/graphtik.svg?style=social
+    :target: https://github.com/pygraphkit/graphtik
+    :alt: Github watchers
+
+.. |gh-star| image:: https://img.shields.io/github/stars/pygraphkit/graphtik.svg?style=social
+    :target: https://github.com/pygraphkit/graphtik
+    :alt: Github stargazers
+
+.. |gh-fork| image:: https://img.shields.io/github/forks/pygraphkit/graphtik.svg?style=social
+    :target: https://github.com/pygraphkit/graphtik
+    :alt: Github forks
+
 .. |gh-issues| image:: http://img.shields.io/github/issues/pygraphkit/graphtik.svg?style=social
+    :target: https://github.com/pygraphkit/graphtik/issues
+    :alt: Issues count
+
+.. |proj-lic| image:: https://img.shields.io/pypi/l/graphtik.svg
+    :target:  https://www.apache.org/licenses/LICENSE-2.0
+    :alt: Apache License, version 2.0
+
+.. |sample-plot| image:: images/barebone_2ops.svg
+    :alt: sample graphtik plot
+    :width: 120px
+    :align: middle
