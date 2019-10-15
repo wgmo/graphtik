@@ -156,6 +156,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         acallable()
 
     ex = excinfo.value
+    assert hasattr(ex, 'graphtik_jetsam'), acallable
     assert set(ex.graphtik_jetsam.keys()) == set(expected_jetsam)
 
 
@@ -197,4 +198,5 @@ def test_jetsam_sites_scream(acallable, expected_jetsam):
         acallable()
 
     ex = excinfo.value
+    assert hasattr(ex, 'graphtik_jetsam'), acallable
     assert set(ex.graphtik_jetsam.keys()) == set(expected_jetsam)
