@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 def jetsam(ex, locs, *salvage_vars: str, annotation="graphtik_jetsam", **salvage_mappings):
     """
-    Annotate exception with salvaged values from locals().
+    Annotate exception with salvaged values from locals() and raise!
 
     :param ex:
         the exception to annotate

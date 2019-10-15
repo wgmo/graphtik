@@ -263,14 +263,20 @@ class ExecutionPlan(
             jetsam(ex, locals(), plan="self")
 
     def _execute_thread_pool_barrier_method(
-        self, inputs, solution, overwrites, executed, thread_pool_size=10
+        self, solution, overwrites, executed, thread_pool_size=10
     ):
         """
         This method runs the graph using a parallel pool of thread executors.
         You may achieve lower total latency if your graph is sufficiently
         sub divided into operations using this method.
+
+        :param solution:
+            must contain the input values only, gets modified
         """
         from multiprocessing.dummy import Pool
+
+        # Keep original inputs for pinning
+        inputs = solution.copy()
 
         # if we have not already created a thread_pool, create one
         if not hasattr(self.net, "_thread_pool"):
@@ -304,7 +310,9 @@ class ExecutionPlan(
                     # providers of the data have executed.
                     # An optional need may not have a value in the solution.
                     if node in solution:
-                        self._pin_data_in_solution(node, solution, inputs, overwrites)
+                        self._pin_data_in_solution(
+                            node, solution, inputs, overwrites
+                        )
 
             # stop if no nodes left to schedule, exit out of the loop
             if len(upnext) == 0:
@@ -319,10 +327,16 @@ class ExecutionPlan(
                 solution.update(result)
                 executed.add(op)
 
-    def _execute_sequential_method(self, inputs, solution, overwrites, executed):
+    def _execute_sequential_method(self, solution, overwrites, executed):
         """
         This method runs the graph one operation at a time in a single thread
+
+        :param solution:
+            must contain the input values only, gets modified
         """
+        # Keep original inputs for pinning
+        inputs = solution.copy()
+
         self.times = {}
         for step in self.steps:
 
@@ -356,12 +370,13 @@ class ExecutionPlan(
             else:
                 raise AssertionError("Unrecognized instruction.%r" % step)
 
-    def execute(self, solution, overwrites=None, method=None):
+    def execute(self, named_inputs, overwrites=None, method=None):
         """
-        :param solution:
-            a mutable maping to collect the results and that must contain also
-            the given input values for at least the compulsory inputs that
-            were specified when the plan was built (but cannot enforce that!).
+        :param named_inputs:
+            A maping of names --> values that must contain at least
+            the compulsory inputs that were specified when the plan was built
+            (but cannot enforce that!).
+            Cloned, not modified.
 
         :param overwrites:
             (optional) a mutable dict to collect calculated-but-discarded values
@@ -376,15 +391,17 @@ class ExecutionPlan(
                 else self._execute_sequential_method
             )
 
+            # Put only relevant inputs in solution.
+            solution = {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
             executed = set()
 
             # clone and keep orignal inputs in solution intact
-            executor(dict(solution), solution, overwrites, executed)
+            executor(solution, overwrites, executed)
 
-            # return it, but caller can also see the results in `solution` dict.
             return solution
         except Exception as ex:
-            jetsam(ex, locals(), "executed")
+            jetsam(ex, locals(), "solution", "executed")
+
 
 class Network(plot.Plotter):
     """
@@ -694,9 +711,10 @@ class Network(plot.Plotter):
         Solve & execute the graph, sequentially or parallel.
 
         :param dict named_inputs:
-            A dict of key/value pairs where the keys represent the data nodes
-            you want to populate, and the values are the concrete values you
-            want to set for the data node.
+            A maping of names --> values that must contain at least
+            the compulsory inputs that were specified when the plan was built
+            (but cannot enforce that!).
+            Cloned, not modified.
 
         :param outputs:
             a string or a list of strings with all data asked to compute.
@@ -725,17 +743,14 @@ class Network(plot.Plotter):
             # Build the execution plan.
             self.last_plan = plan = self.compile(named_inputs.keys(), outputs)
 
-            # start with fresh data solution.
-            solution = dict(named_inputs)
-
-            plan.execute(solution, overwrites_collector, method)
+            solution = plan.execute(named_inputs, overwrites_collector, method)
 
             if outputs:
                 # Filter outputs to just return what's requested.
                 # Otherwise, return the whole solution as output,
                 # including input and intermediate data nodes.
-                # Still needed with eviction to clean isolated given inputs.
-                solution = dict(i for i in solution.items() if i[0] in outputs)
+                # Filtering needed, despite eviction, to clean isolated given inputs.
+                solution = {k: v for k, v in solution.items() if k in outputs}
 
             return solution
         except Exception as ex:

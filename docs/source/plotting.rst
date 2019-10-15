@@ -80,8 +80,10 @@ with the folllowing properties, as a debug aid:
 ...     pprint(ex.graphtik_jetsam)
 {'args': {'args': [None], 'kwargs': {}},
  'executed': set(),
- 'network':
-  ...
+ 'network': Network(
+    +--a
+    +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'])
+    +--foo),
  'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo']),
  'outputs': None,
  'plan': ExecutionPlan(inputs=('a',), outputs=(), steps:
