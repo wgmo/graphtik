@@ -207,9 +207,9 @@ class ExecutionPlan(
         """
         Retuen the data node from a graph using its name, or None.
         """
-        node = self.dag.nodes[name]
-        if isinstance(node, _DataNode):
-            return node
+        for node in self.dag.nodes:
+            if node == name and isinstance(node, _DataNode):
+                return node
 
     def _can_schedule_operation(self, op, executed):
         """
