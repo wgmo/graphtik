@@ -285,7 +285,7 @@ def test_pruning_not_overrides_given_intermediate():
     )
 
     inputs = {"a": 5, "overriden": 1, "c": 2}
-    exp = {"a": 5, "overriden": 1, "c": 2, "asked": 3}
+    exp = {"overriden": 1, "c": 2, "asked": 3}
     # v1.2.4.ok
     assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
     # FAILs
@@ -427,7 +427,7 @@ def test_pruning_with_given_intermediate_and_asked_out():
         operation(name="good_op", needs=["a", "given-2"], provides=["asked"])(add),
     )
 
-    exp = {"given-1": 5, "b": 2, "given-2": 2, "a": 5, "asked": 7}
+    exp = {"given-1": 5, "given-2": 2, "a": 5, "asked": 7}
     # v1.2.4 is ok
     assert pipeline({"given-1": 5, "b": 2, "given-2": 2}) == exp
     # FAILS
@@ -591,11 +591,11 @@ def test_sideffect_no_real_data(bools):
 
     sol = graph({"box": [0], "a": True})
     # Nothing run if no sideffect inputs given.
-    assert sol == {"box": [0]}
+    assert sol == {}
 
     # Nothing run if no sideffect inputs given.
     sol = graph({"box": [0], "a": True}, outputs=["box", sideffect("b")])
-    assert sol == {"box": [0]}
+    assert sol == {}
 
     ## OK INPUT SIDEFFECTS
     #
@@ -605,7 +605,7 @@ def test_sideffect_no_real_data(bools):
     #
     # bad, not asked the out-sideffect
     sol = graph({"box": [0], sideffect("a"): True}, "box")
-    assert sol == {"box": [0]}
+    assert sol == {}
     #
     # ok, asked the 1st out-sideffect
     sol = graph({"box": [0], sideffect("a"): True}, ["box", sideffect("b")])

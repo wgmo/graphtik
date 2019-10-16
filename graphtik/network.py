@@ -569,8 +569,6 @@ class Network(plot.Plotter):
         broken_dag.remove_edges_from(broken_edges)
 
         # Drop stray input values and operations (if any).
-        broken_dag.remove_nodes_from(list(nx.isolates(broken_dag)))
-
         if outputs:
             # If caller requested specific outputs, we can prune any
             # unrelated nodes further up the dag.
@@ -584,6 +582,8 @@ class Network(plot.Plotter):
         unsatisfied = self._collect_unsatisfied_operations(broken_dag, inputs)
         # Clone it so that it is picklable.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
+
+        pruned_dag.remove_nodes_from(list(nx.isolates(pruned_dag)))
 
         assert all(
             isinstance(n, (Operation, _DataNode)) for n in pruned_dag
