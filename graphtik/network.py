@@ -230,8 +230,10 @@ class ExecutionPlan(
         """
         from multiprocessing.dummy import Pool
 
-        # Keep original inputs for pinning
-        inputs = solution.copy()
+        # Keep original inputs for pinning.
+        pinned_values = {
+            n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
+        }
 
         # if we have not already created a thread_pool, create one
         if not hasattr(self.net, "_thread_pool"):
@@ -279,7 +281,9 @@ class ExecutionPlan(
                     # providers of the data have executed.
                     # An optional need may not have a value in the solution.
                     if node in solution:
-                        self._pin_data_in_solution(node, solution, inputs, overwrites)
+                        self._pin_data_in_solution(
+                            node, solution, pinned_values, overwrites
+                        )
 
             # stop if no nodes left to schedule, exit out of the loop
             if len(upnext) == 0:
@@ -301,8 +305,10 @@ class ExecutionPlan(
         :param solution:
             must contain the input values only, gets modified
         """
-        # Keep original inputs for pinning
-        inputs = solution.copy()
+        # Keep original inputs for pinning.
+        pinned_values = {
+            n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
+        }
 
         self.times = {}
         for step in self.steps:
@@ -333,7 +339,7 @@ class ExecutionPlan(
                     del solution[step]
 
             elif isinstance(step, _PinInstruction):
-                self._pin_data_in_solution(step, solution, inputs, overwrites)
+                self._pin_data_in_solution(step, solution, pinned_values, overwrites)
             else:
                 raise AssertionError("Unrecognized instruction.%r" % step)
 
