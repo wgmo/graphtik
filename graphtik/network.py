@@ -203,51 +203,6 @@ class ExecutionPlan(
             "".join(steps),
         )
 
-    def get_data_node(self, name):
-        """
-        Retuen the data node from a graph using its name, or None.
-        """
-        for node in self.dag.nodes:
-            if node == name and isinstance(node, _DataNode):
-                return node
-
-    def _can_schedule_operation(self, op, executed):
-        """
-        Determines if a Operation is ready to be scheduled for execution
-
-        based on what has already been executed.
-
-        :param op:
-            The Operation object to check
-        :param set executed:
-            An empty set to collect all operations that have been executed so far.
-        :return:
-            A boolean indicating whether the operation may be scheduled for
-            execution based on what has already been executed.
-        """
-        # Use `broken_dag` to allow executing operations after given inputs
-        # regardless of whether their producers have yet to run.
-        dependencies = set(
-            n for n in nx.ancestors(self.broken_dag, op) if isinstance(n, Operation)
-        )
-        return dependencies.issubset(executed)
-
-    def _can_evict_value(self, name, executed):
-        """
-        Determines if a _DataNode is ready to be evicted from solution.
-
-        :param name:
-            The name of the data node to check
-        :return:
-            A boolean indicating whether the data node can be evicted or not.
-        """
-        data_node = self.get_data_node(name)
-        # Use `broken_dag` not to block a successor waiting for this data,
-        # since in any case will use a given input, not some pipe of this data.
-        return data_node and set(self.broken_dag.successors(data_node)).issubset(
-            executed
-        )
-
     def _pin_data_in_solution(self, value_name, solution, inputs, overwrites):
         value_name = str(value_name)
         if overwrites is not None:
@@ -292,17 +247,31 @@ class ExecutionPlan(
             # in the current round of scheduling
             upnext = []
             for node in self.steps:
+                ## Determines if a Operation is ready to be scheduled for execution
+                #  based on what has already been executed.
                 if (
                     isinstance(node, Operation)
                     and node not in executed
-                    and self._can_schedule_operation(node, executed)
+                    #  Use `broken_dag` to allow executing operations from given inputs
+                    #  regardless of whether their producers have yet to re-calc them.
+                    and set(
+                        n
+                        for n in nx.ancestors(self.broken_dag, node)
+                        if isinstance(n, Operation)
+                    ).issubset(executed)
                 ):
                     upnext.append(node)
                 elif isinstance(node, _EvictInstruction):
                     # Only evict if all successors for the data node
                     # have been executed.
-                    # An optional need may not have a value in the solution.
-                    if node in solution and self._can_evict_value(node, executed):
+                    if (
+                        # An optional need may not have a value in the solution.
+                        node in solution
+                        and node in self.dag.nodes
+                        # Scan node's successors in `broken_dag`, not to block
+                        # an op waiting for calced data already given as input.
+                        and set(self.broken_dag.successors(node)).issubset(executed)
+                    ):
                         log.debug("removing data '%s' from solution.", node)
                         del solution[node]
                 elif isinstance(node, _PinInstruction):
@@ -310,9 +279,7 @@ class ExecutionPlan(
                     # providers of the data have executed.
                     # An optional need may not have a value in the solution.
                     if node in solution:
-                        self._pin_data_in_solution(
-                            node, solution, inputs, overwrites
-                        )
+                        self._pin_data_in_solution(node, solution, inputs, overwrites)
 
             # stop if no nodes left to schedule, exit out of the loop
             if len(upnext) == 0:
