@@ -358,8 +358,13 @@ class ExecutionPlan(
                 else self._execute_sequential_method
             )
 
-            # Put only relevant inputs in solution.
-            solution = {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
+            # If certain outputs asked, put relevant-only inputs in solution,
+            # otherwise, keep'em all.
+            solution = (
+                {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
+                if self.outputs
+                else named_inputs.copy()
+            )
             executed = set()
 
             # clone and keep orignal inputs in solution intact
