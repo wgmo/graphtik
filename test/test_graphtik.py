@@ -462,6 +462,51 @@ def test_pruning_with_given_intermediate_and_asked_out():
     )
 
 
+def test_same_outputs_operations_order():
+    # Test operations providing the same output ordered as given.
+    op1 = operation(name="add", needs=["a", "b"], provides=["ab"])(add)
+    op2 = operation(name="sub", needs=["a", "b"], provides=["ab"])(sub)
+    addsub = compose(name="add_sub")(op1, op2)
+    subadd = compose(name="sub_add")(op2, op1)
+
+    inp = {"a": 3, "b": 1}
+    assert addsub(inp) == {"a": 3, "b": 1, "ab": 4}
+    assert addsub(inp, "ab") == {"ab": 4}
+    assert subadd(inp) == {"a": 3, "b": 1, "ab": 2}
+    assert subadd(inp, "ab") == {"ab": 2}
+
+    ## Check it does not duplicate evictions
+    assert len(subadd.net.last_plan.steps) == 4
+
+    ## Add another step to test evictions
+    #
+    op3 = operation(name="pipe", needs=["ab"], provides=["AB"])(identity)
+    addsub = compose(name="add_sub")(op1, op2, op3)
+    subadd = compose(name="sub_add")(op2, op1, op3)
+
+    inp = {"a": 3, "b": 1}
+    assert addsub(inp) == {"a": 3, "b": 1, "ab": 4, "AB": 4}
+    assert addsub(inp, "AB") == {"AB": 4}
+    assert subadd(inp) == {"a": 3, "b": 1, "ab": 2, "AB": 2}
+    assert subadd(inp, "AB") == {"AB": 2}
+
+    assert len(subadd.net.last_plan.steps) == 6
+
+
+def test_same_inputs_evictions():
+    # Test operations providing the same output ordered as given.
+    pipeline = compose(name="add_sub")(
+        operation(name="x2", needs=["a", "a"], provides=["2a"])(add),
+        operation(name="pipe", needs=["2a"], provides=["@S"])(identity),
+    )
+
+    inp = {"a": 3}
+    assert pipeline(inp) == {"a": 3, "2a": 6, "@S": 6}
+    assert pipeline(inp, "@S") == {"@S": 6}
+    ## Check it does not duplicate evictions
+    assert len(pipeline.net.last_plan.steps) == 4
+
+
 def test_unsatisfied_operations():
     # Test that operations with partial inputs are culled and not failing.
     pipeline = compose(name="pipeline")(
@@ -893,6 +938,44 @@ def test_multi_threading():
         pool = Pool(i)
         pool.map(infer, range(N))
         pool.close()
+
+
+@pytest.mark.parametrize("bools", range(4))
+def test_compose_another_network(bools):
+    # Code from `compose.rst` examples
+
+    parallel1 = bools >> 0 & 1
+    parallel2 = bools >> 1 & 1
+
+    graphop = compose(name="graphop")(
+        operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
+        operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
+        operation(
+            name="abspow1",
+            needs=["a_minus_ab"],
+            provides=["abs_a_minus_ab_cubed"],
+            params={"p": 3},
+        )(abspow),
+    )
+    if parallel1:
+        graphop.set_execution_method("parallel")
+
+    assert graphop({"a_minus_ab": -8}) == {
+        "a_minus_ab": -8,
+        "abs_a_minus_ab_cubed": 512,
+    }
+
+    bigger_graph = compose(name="bigger_graph")(
+        graphop,
+        operation(
+            name="sub2", needs=["a_minus_ab", "c"], provides="a_minus_ab_minus_c"
+        )(sub),
+    )
+    if parallel2:
+        bigger_graph.set_execution_method("parallel")
+
+    sol = bigger_graph({"a": 2, "b": 5, "c": 5}, outputs=["a_minus_ab_minus_c"])
+    assert sol == {"a_minus_ab_minus_c": -13}
 
 
 ####################################
