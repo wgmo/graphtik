@@ -617,6 +617,9 @@ class Network(plot.Plotter):
                 # bc these are preds of data (provides), and we scan here
                 # preds of ops (need).
                 for need in dag.pred[node]:
+                    if need in outputs:
+                        continue
+                    
                     log.debug("checking if node %s can be evicted", need)
                     for future_node in ordered_nodes[i + 1 :]:
                         if (
@@ -625,9 +628,8 @@ class Network(plot.Plotter):
                         ):
                             break
                     else:
-                        if need not in outputs:
-                            log.debug("  adding evict-instruction for %s", need)
-                            steps.append(_EvictInstruction(need))
+                        log.debug("  adding evict-instruction for %s", need)
+                        steps.append(_EvictInstruction(need))
 
             else:
                 raise AssertionError("Unrecognized network graph node %r" % node)
