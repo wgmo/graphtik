@@ -430,6 +430,7 @@ class Network(plot.Plotter):
         # assert layer is only added once to graph
         assert operation not in self.graph.nodes, "Operation may only be added once"
 
+        graph = self.graph
         self._cached_plans = {}
 
         # add nodes and edges to graph describing the data needs for this layer
@@ -439,14 +440,16 @@ class Network(plot.Plotter):
                 kw["optional"] = True
             if isinstance(n, sideffect):
                 kw["sideffect"] = True
-            self.graph.add_edge(_DataNode(n), operation, **kw)
+                graph.add_node(_DataNode(n), sideffect=True)
+            graph.add_edge(_DataNode(n), operation, **kw)
 
         # add nodes and edges to graph describing what this layer provides
         for n in operation.provides:
             kw = {}
             if isinstance(n, sideffect):
                 kw["sideffect"] = True
-            self.graph.add_edge(operation, _DataNode(n), **kw)
+                graph.add_node(_DataNode(n), sideffect=True)
+            graph.add_edge(operation, _DataNode(n), **kw)
 
     def _collect_unsatisfied_operations(self, dag, inputs):
         """
@@ -598,7 +601,7 @@ class Network(plot.Plotter):
         for i, node in enumerate(ordered_nodes):
 
             if isinstance(node, _DataNode):
-                if node in inputs and dag.pred[node]:
+                if node in inputs and "sideffect" not in dag.nodes[node] and dag.pred[node]:
                     # Add a pin-instruction only when there is another operation
                     # generating this data as output.
                     steps.append(_PinInstruction(node))

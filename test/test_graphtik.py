@@ -688,6 +688,25 @@ def test_sideffect_real_input(bools):
     assert graph({"box": [0], "a": True}, ["box", "c"]) == {"box": [1, 2, 3], "c": None}
 
 
+def test_sideffect_steps():
+    netop = compose("mygraph")(
+        operation(
+            name="extend", needs=["box", sideffect("a")], provides=[sideffect("b")]
+        )(_box_extend),
+        operation(
+            name="increment", needs=["box", sideffect("b")], provides=sideffect("c")
+        )(_box_increment),
+    )
+    sol = netop({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
+    assert sol == {"box": [1, 2, 3]}
+    assert len(netop.net.last_plan.steps) == 4
+
+    ## Check sideffect links plotted as blue
+    #  (assumes color used only for this!).
+    dot = netop.net.plot()
+    assert "blue" in str(dot)
+
+
 @pytest.mark.xfail(
     sys.version_info < (3, 6),
     reason="PY3.5- have unstable dicts."
