@@ -269,10 +269,13 @@ class ExecutionPlan(
                     if (
                         # An optional need may not have a value in the solution.
                         node in solution
-                        and node in self.dag.nodes
-                        # Scan node's successors in `broken_dag`, not to block
-                        # an op waiting for calced data already given as input.
-                        and set(self.broken_dag.successors(node)).issubset(executed)
+                        and (
+                            # The 2nd eviction branch for unused provides.
+                            node not in self.dag.nodes
+                            # Scan node's successors in `broken_dag`, not to block
+                            # an op waiting for calced data already given as input.
+                            or set(self.broken_dag.successors(node)).issubset(executed)
+                        )
                     ):
                         log.debug("removing data '%s' from solution.", node)
                         del solution[node]
@@ -572,14 +575,14 @@ class Network(plot.Plotter):
 
         return pruned_dag, broken_edges
 
-    def _build_execution_steps(self, dag, inputs, outputs):
+    def _build_execution_steps(self, pruned_dag, inputs, outputs):
         """
         Create the list of operation-nodes & *instructions* evaluating all
 
         operations & instructions needed a) to free memory and b) avoid
         overwritting given intermediate inputs.
 
-        :param dag:
+        :param pruned_dag:
             The original dag, pruned; not broken.
         :param outputs:
             outp-names to decide whether to add (and which) evict-instructions
@@ -594,45 +597,73 @@ class Network(plot.Plotter):
         steps = []
 
         # create an execution order such that each layer's needs are provided.
-        ordered_nodes = iset(nx.topological_sort(dag))
+        ordered_nodes = iset(nx.topological_sort(pruned_dag))
 
         # Add Operations evaluation steps, and instructions to free and "pin"
         # data.
         for i, node in enumerate(ordered_nodes):
 
             if isinstance(node, _DataNode):
-                if node in inputs and "sideffect" not in dag.nodes[node] and dag.pred[node]:
-                    # Add a pin-instruction only when there is another operation
-                    # generating this data as output.
+                ## Add PIN-instruction if data node matches an input.
+                #
+                #  + Links MUST NOT be broken, check if provided depends on them.
+                #  + Pin decision can happen when visiting this data-node
+                #    because all operations producing it have run,
+                #    and none needing it has begun running.
+                #  + Pin happens before any eviction-instruction - actually
+                #    an operation execution must seprate them.
+                #
+                if (
+                    node in inputs
+                    # Don't pin sideffect nodes.
+                    and "sideffect" not in pruned_dag.nodes[node]
+                    # Pin only if non-prune operation generating it.
+                    and pruned_dag.pred[node]
+                ):
                     steps.append(_PinInstruction(node))
 
             elif isinstance(node, Operation):
                 steps.append(node)
 
-                # Keep all values in solution if not specific outputs asked.
+                # NO EVICTIONS when no specific outputs asked.
                 if not outputs:
                     continue
 
-                # Add instructions to evict predecessors as possible.  A
-                # predecessor may be evicted if it is a data placeholder that
-                # is no longer needed by future Operations.
-                # It shouldn't make a difference if it were the broken dag
-                # bc these are preds of data (provides), and we scan here
-                # preds of ops (need).
-                for need in dag.pred[node]:
+                # Add EVICT (1) for operation's needs.
+                #
+                # Broken links are irrelevant because they are preds of data (provides),
+                # but here we scan for preds of the operation (needs).
+                #
+                for need in pruned_dag.pred[node]:
+                    # Do not evict asked outputs or sideffects.
                     if need in outputs:
                         continue
-                    
-                    log.debug("checking if node %s can be evicted", need)
+
+                    # A needed-data of this operation may be evicted if
+                    # no future Operations needs it.
+                    #
                     for future_node in ordered_nodes[i + 1 :]:
                         if (
                             isinstance(future_node, Operation)
-                            and need in future_node.needs
+                            and need in pruned_dag.pred[future_node]
                         ):
                             break
                     else:
-                        log.debug("  adding evict-instruction for %s", need)
                         steps.append(_EvictInstruction(need))
+
+                # Add EVICT (2) for unused operation's provides.
+                #
+                # A provided-data is evicted if no future operation needs it
+                # (and is not an asked output).
+                # It MUST use the broken dag, not to evict data
+                # that will be pinned, but to populate overwrites with them.
+                #
+                # .. image:: doc/source/images/unpruned_useless_provides.svg
+                #
+                for provide in node.provides:
+                    # Do not evict asked outputs or sideffects.
+                    if provide not in outputs and provide not in pruned_dag.nodes:
+                        steps.append(_EvictInstruction(provide))
 
             else:
                 raise AssertionError("Unrecognized network graph node %r" % node)
@@ -728,12 +759,9 @@ class Network(plot.Plotter):
 
             solution = plan.execute(named_inputs, overwrites_collector, method)
 
-            if outputs:
-                # Filter outputs to just return what's requested.
-                # Otherwise, return the whole solution as output,
-                # including input and intermediate data nodes.
-                # Filtering needed, despite eviction, to clean isolated given inputs.
-                solution = {k: v for k, v in solution.items() if k in outputs}
+            # Validate eviction was perfect
+            # It is a proper subset when not all poutputs calculated. 
+            assert not outputs or set(solution).issubset(outputs), (list(solution), outputs)
 
             return solution
         except Exception as ex:
