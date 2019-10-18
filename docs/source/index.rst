@@ -27,13 +27,13 @@ a workflow-processor for interdependent files and processes.
 
 .. toctree::
    :maxdepth: 3
-   :numbered:
+   :numbered: 1
 
    operations
    composition
    plotting
    reference
-   changes
+   Changes <changes>
 
 
 .. _quick-start:
@@ -81,6 +81,11 @@ Run the graph-operation and request a subset of the outputs::
 
 As you can see, any function can be used as an operation in Graphtik,
 even ones imported from system modules!
+
+.. |sample-plot| image:: images/barebone_2ops.svg
+    :alt: sample graphtik plot
+    :width: 120px
+    :align: middle
 
 .. include:: ../../README.rst
     :start-after: _substs:

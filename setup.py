@@ -28,8 +28,8 @@ setup(
     author_email="ankostis@gmail.com",
     url="http://github.com/pygraphkit/graphtik",
     project_urls={
-        "Documentation": "https://pythonhosted.org/graphtik/",
-        "Release Notes": "https://pythonhosted.org/graphtik/changes.html",
+        "Documentation": "https://graphtik.readthedocs.io/",
+        "Release Notes": "https://graphtik.readthedocs.io/en/latest/changes.html",
         "Sources": "https://github.com/pygraphkit/graphtik",
         "Bug Tracker": "https://github.com/pygraphkit/graphtik/issues",
     },
