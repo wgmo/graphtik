@@ -8,7 +8,27 @@ TODO
 + [ ] typo(test): overriden-->overriDDen
 
 
-v2.0.0b1 (15 Oct 2019): Rebranded as *Graphtik* for Pythos 3.6+
+v2.0.1b0 (18 Oct 2019): better plan with perfect evictions 
+==========================================================
++ ENH(NET): new PLAN BULDING algorithm produces PERFECT EVICTIONS,
+  that is, it gradually eliminates from the solution all non-asked outputs.
+
+  + enh: pruning now cleans isolated data.
+  + enh: eviction-instructions are inserted due to two different conditions:
+    once for unneeded data in the past, and another for unused produced data
+    (those not belonging typo the pruned dag).
+  + enh: discard immediately irrelevant inputs.
+
++ ENH(net): changed results, now unrelated inputs are not included in solution.
+
++ refact(sideffect): store them as node-attributes in DAG, fix their combination
+  with pinning & eviction.
+
++ fix(parallel): eviction was not working due to a typo 65 commits back!
+
+
+
+v2.0.0b1 (15 Oct 2019): Rebranded as *Graphtik* for Python 3.6+
 ===============================================================
 Continuation of :gh:`30` as :gh:`31`, containing review-fixes in huyng/graphkit#1.
 

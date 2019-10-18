@@ -3,8 +3,8 @@
 """Lightweight computation graphs for Python."""
 
 __author__ = "hnguyen"
-__version__ = "2.0.0b1"
-__release_date__ = "15 Oct 2019, 21:00"
+__version__ = "2.0.1b0"
+__release_date__ = "18 Oct 2019, 18:30"
 __license__ = "Apache-2.0"
 __title__ = "graphtik"
 __summary__ = __doc__.splitlines()[0]
