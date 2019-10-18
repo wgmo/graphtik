@@ -15,8 +15,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
+import io
 import os
+import re
+import sys
 import packaging.version
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -63,9 +65,12 @@ copyright = u'2016, Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cor
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
+
 # Parse the Travis tag as a version, if it's available, or else use a default.
-version_str = os.environ.get('TRAVIS_TAG', '1.0')
+with io.open("../../graphtik/__init__.py", "rt", encoding="utf8") as f:
+    version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
+
+version_str = os.environ.get('TRAVIS_TAG', version)
 version_parse = packaging.version.parse(version_str)
 
 # The short X.Y version.
