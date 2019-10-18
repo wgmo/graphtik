@@ -3,7 +3,8 @@
 Graphtik
 ========
 
-|python-ver| |dev-status| |gh-version| |pypi-version| |travis-status|
+|python-ver| |dev-status| |release|, |today|
+|gh-version| |pypi-version| |travis-status|
 |doc-status| |cover-status| |downloads-count| |codestyle| |proj-lic|
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
@@ -15,9 +16,10 @@ Lightweight computation graphs for Python
 
 **Graphtik** is an an understandable and lightweight Python module for building and running
 ordered graphs of computations.
-The API posits a fair compromise between features and complexity without precluding any.
-It might be of use in computer vision, machine learning and other data science domains,
-or become the core of a custom ETL pipelne.
+The API posits a fair compromise between features and complexity, without precluding any.
+It can be used as is to build machine learning pipelines for data science projects.
+It should be extendable to act as the core for a custom ETL engine or
+a workflow-processor for interdependent files and processes.
 
 .. note::
     *Graphtik* is a temporary fork of `Graphkit <https://github.com/yahoo/graphkit>`_
