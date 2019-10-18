@@ -596,6 +596,13 @@ class Network(plot.Plotter):
 
         steps = []
 
+        def add_step_once(step):
+            # For functions with repeated needs, like ['a', 'a'].
+            if steps and step == steps[-1] and type(step) == type(steps[-1]):
+                log.warning("Skipped dupe step %s in position %i.", step, len(steps))
+            else:
+                steps.append(step)
+
         # create an execution order such that each layer's needs are provided.
         ordered_nodes = iset(nx.topological_sort(pruned_dag))
 
@@ -620,7 +627,7 @@ class Network(plot.Plotter):
                     # Pin only if non-prune operation generating it.
                     and pruned_dag.pred[node]
                 ):
-                    steps.append(_PinInstruction(node))
+                    add_step_once(_PinInstruction(node))
 
             elif isinstance(node, Operation):
                 steps.append(node)
@@ -649,7 +656,7 @@ class Network(plot.Plotter):
                         ):
                             break
                     else:
-                        steps.append(_EvictInstruction(need))
+                        add_step_once(_EvictInstruction(need))
 
                 # Add EVICT (2) for unused operation's provides.
                 #
@@ -663,7 +670,7 @@ class Network(plot.Plotter):
                 for provide in node.provides:
                     # Do not evict asked outputs or sideffects.
                     if provide not in outputs and provide not in pruned_dag.nodes:
-                        steps.append(_EvictInstruction(provide))
+                        add_step_once(_EvictInstruction(provide))
 
             else:
                 raise AssertionError("Unrecognized network graph node %r" % node)
