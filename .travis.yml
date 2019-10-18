@@ -17,11 +17,11 @@ install:
 script:
 - |
   if [[ "$TRAVIS_PYTHON_VERSION" = '3.7' ]]; then
-    pytest --cov=graphtik -m 'slow or not slow'
+    pytest --cov=graphtik -m 'slow or not slow' --log-level=DEBUG
   else
     # Undo configs in setup.cfg
     echo -e '[pytest]\nmarkers: slow' > pytest.ini
-    pytest --cov=graphtik
+    pytest  --log-level=DEBUG --cov=graphtik
   fi
 deploy:
   provider: pypi
