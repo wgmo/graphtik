@@ -14,6 +14,13 @@ from . import plot
 log = logging.getLogger(__name__)
 
 
+def aslist(i):
+    """utility used through out"""
+    if i and not isinstance(i, str):
+        return list(i)
+    return i
+
+
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
     Annotate exception with salvaged values from locals() and raise!
@@ -174,6 +181,35 @@ class Operation(object):
         """
         raise NotImplementedError("Abstract %r! cannot compute()!" % self)
 
+    def _validate(self):
+        from .modifiers import optional
+
+        if not self.name:
+            raise ValueError(f"Operation needs a name, got: {self.name}")
+
+        needs = self.needs
+        # Allow single value for needs parameter
+        if isinstance(needs, str) and not isinstance(needs, optional):
+            needs = [needs]
+        if not needs:
+            raise ValueError(f"Empty `needs` given: {needs!r}")
+        if not all(n for n in needs):
+            raise ValueError(f"One item in `needs` is null: {needs!r}")
+        if not isinstance(needs, (list, tuple)):
+            raise ValueError(f"Bad `needs`, not (list, tuple): {needs!r}")
+        self.needs = needs
+
+        # Allow single value for provides parameter
+        provides = self.provides
+        if isinstance(provides, str):
+            provides = [provides]
+        if provides and not all(n for n in provides):
+            raise ValueError(f"One item in `provides` is null: {provides!r}")
+        provides = provides or ()
+        if not isinstance(provides, (list, tuple)):
+            raise ValueError(f"Bad `provides`, not (list, tuple): {provides!r}")
+        self.provides = provides or ()
+
     def _after_init(self):
         """
         This method is a hook for you to override. It gets called after this
@@ -188,18 +224,10 @@ class Operation(object):
         """
         Display more informative names for the Operation class
         """
-
-        def aslist(i):
-            if i and not isinstance(i, str):
-                return list(i)
-            return i
-
-        return u"%s(name='%s', needs=%s, provides=%s)" % (
-            self.__class__.__name__,
-            getattr(self, "name", None),
-            aslist(getattr(self, "needs", None)),
-            aslist(getattr(self, "provides", None)),
-        )
+        clsname = type(self).__name__
+        needs = aslist(self.needs)
+        provides = aslist(self.provides)
+        return f"{clsname}(name={self.name!r}, needs={needs!r}, provides={provides!r})"
 
 
 class NetworkOperation(Operation, plot.Plotter):

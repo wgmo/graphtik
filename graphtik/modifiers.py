@@ -104,7 +104,7 @@ class sideffect(str):
         ...           name="upd_prices",
         ...           needs=["sales_df", "price"],
         ...           provides=[sideffect("price")])
-        operation(name='upd_prices', needs=['sales_df', 'price'], provides=['sideffect(price)'], fn=upd_prices)
+        operation(name='upd_prices', needs=['sales_df', 'price'], provides=['sideffect(price)'], fn='upd_prices')
 
     .. note::
         An ``operation`` with *sideffects* outputs only, have functions that return

@@ -3,15 +3,31 @@
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import jetsam, NetworkOperation, Operation
+from .base import NetworkOperation, Operation, aslist, jetsam
 from .modifiers import optional, sideffect
 from .network import Network
 
 
 class FunctionalOperation(Operation):
+    """Use operation() to build instances of this class instead"""
     def __init__(self, fn=None, **kwargs):
         self.fn = fn
         Operation.__init__(self, **kwargs)
+        self._validate()
+
+    def __repr__(self):
+        """
+        Display more informative names for the Operation class
+        """
+        needs = aslist(self.needs)
+        provides = aslist(self.provides)
+        fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
+        return f"FunctionalOperation(name={self.name!r}, needs={needs!r}, provides={provides!r}, fn={fn_name!r})"
+
+    def _validate(self):
+        super()._validate()
+        if not self.fn or not callable(self.fn):
+            raise ValueError(f"Operation was not provided with a callable: {self.fn}")
 
     def compute(self, named_inputs, outputs=None):
         try:
@@ -65,57 +81,63 @@ class FunctionalOperation(Operation):
         return self.fn(*args, **kwargs)
 
 
-class operation(Operation):
+class operation:
     """
-    This object represents an operation in a computation graph.  Its
-    relationship to other operations in the graph is specified via its
-    ``needs`` and ``provides`` arguments.
+    A builder for graph-operations wrapping functions.
 
     :param function fn:
         The function used by this operation.  This does not need to be
         specified when the operation object is instantiated and can instead
         be set via ``__call__`` later.
-
     :param str name:
         The name of the operation in the computation graph.
-
     :param list needs:
         Names of input data objects this operation requires.  These should
         correspond to the ``args`` of ``fn``.
-
     :param list provides:
         Names of output data objects this operation provides.
 
+    :return:
+        when called, it returns a :class:`FunctionalOperation`
+
+    **Example:**
+    
+    Here it is an example of it use with the "builder pattern"::
+
+        >>> from graphtik import operation
+
+        >>> opb = operation(name='add_op')
+        >>> opb.withset(needs=['a', 'b'])
+        operation(name='add_op', needs=['a', 'b'], provides=None, fn=None)
+        >>> opb.withset(provides='SUM', fn=sum)
+        operation(name='add_op', needs=['a', 'b'], provides='SUM', fn='sum')
+    
+    You may keep calling ``withset()`` till you invoke ``__call__()`` on the builder;
+    then you get te actual :class:`Operation` instance::
+
+        >>> # Create `Operation` and overwrite function at the last moment.
+        >>> opb(sum)
+        FunctionalOperation(name='add_op', needs=['a', 'b'], provides=['SUM'], fn='sum')
     """
 
-    def __init__(self, fn=None, **kwargs):
-        self.fn = fn
-        Operation.__init__(self, **kwargs)
+    fn = name = needs = provides = None
 
-    def _normalize_kwargs(self, kwargs):
+    def __init__(self, fn=None, *, name=None, needs=None, provides=None):
+        self.withset(fn=fn, name=name, needs=needs, provides=provides)
 
-        # Allow single value for needs parameter
-        needs = kwargs["needs"]
-        if isinstance(needs, str) and not isinstance(needs, optional):
-            assert needs, "empty string provided for `needs` parameters"
-            kwargs["needs"] = [needs]
+    def withset(self, *, fn=None, name=None, needs=None, provides=None):
+        if fn is not None:
+            self.fn = fn
+        if name is not None:
+            self.name = name
+        if needs is not None:
+            self.needs = needs
+        if provides is not None:
+            self.provides = provides
 
-        # Allow single value for provides parameter
-        provides = kwargs.get("provides")
-        if isinstance(provides, str):
-            assert provides, "empty string provided for `needs` parameters"
-            kwargs["provides"] = [provides]
+        return self
 
-        assert kwargs["name"], "operation needs a name"
-        assert isinstance(kwargs["needs"], list), "no `needs` parameter provided"
-        assert isinstance(kwargs["provides"], list), "no `provides` parameter provided"
-        assert hasattr(
-            kwargs["fn"], "__call__"
-        ), "operation was not provided with a callable"
-
-        return kwargs
-
-    def __call__(self, fn=None, **kwargs):
+    def __call__(self, fn=None, *, name=None, needs=None, provides=None):
         """
         This enables ``operation`` to act as a decorator or as a functional
         operation, for example::
@@ -138,35 +160,18 @@ class operation(Operation):
             composed into a computation graph.
         """
 
-        if fn is not None:
-            self.fn = fn
+        self.withset(fn=fn, name=name, needs=needs, provides=provides)
 
-        total_kwargs = {}
-        total_kwargs.update(vars(self))
-        total_kwargs.update(kwargs)
-        total_kwargs = self._normalize_kwargs(total_kwargs)
-
-        return FunctionalOperation(**total_kwargs)
+        return FunctionalOperation(**vars(self))
 
     def __repr__(self):
         """
         Display more informative names for the Operation class
         """
-
-        def aslist(i):
-            if i and not isinstance(i, str):
-                return list(i)
-            return i
-
-        func_name = getattr(self, "fn")
-        func_name = func_name and getattr(func_name, "__name__", None)
-        return u"%s(name='%s', needs=%s, provides=%s, fn=%s)" % (
-            self.__class__.__name__,
-            getattr(self, "name", None),
-            aslist(getattr(self, "needs", None)),
-            aslist(getattr(self, "provides", None)),
-            func_name,
-        )
+        needs = aslist(self.needs)
+        provides = aslist(self.provides)
+        fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
+        return f"operation(name={self.name!r}, needs={needs!r}, provides={provides!r}, fn={fn_name!r})"
 
 
 class compose(object):

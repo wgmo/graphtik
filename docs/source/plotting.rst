@@ -83,12 +83,12 @@ with the folllowing properties, as a debug aid:
  'executed': set(),
  'network': Network(
     +--a
-    +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'])
+    +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')
     +--foo),
- 'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo']),
+ 'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream'),
  'outputs': None,
  'plan': ExecutionPlan(inputs=('a',), outputs=(), steps:
-  +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'])),
+  +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')),
  'provides': ['foo'],
  'results': None,
  'solution': {'a': None}}

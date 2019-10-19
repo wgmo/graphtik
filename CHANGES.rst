@@ -4,8 +4,11 @@ Graphtik Changelog
 
 TODO
 ====
+See also `gg:`1`.
+
 + [ ] use a "start-node" to insert input-values in solution
 + [ ] typo(test): overriden-->overriDDen
++ [ ] support functions with ``*args`` and ``**kwargs``.
 
 
 v2.0.1b0 (18 Oct 2019): better plan with perfect evictions 
