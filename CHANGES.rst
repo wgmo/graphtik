@@ -11,8 +11,8 @@ See also :gg:`1`.
 + [ ] support functions with ``*args`` and ``**kwargs``.
 
 
-v2.1.0 (20 Oct 2019): DROP BW-compatible, Restruct modules/API, Plan perfect evictions
-======================================================================================
+v2.1.0 (20 Oct 2019, @ankostis): DROP BW-compatible, Restruct modules/API, Plan perfect evictions
+=================================================================================================
 The first non pre-release for 2.x train.
 
 + BRAKE API:  DROP Operation's ``params`` - use funtools.partial() instead.
@@ -49,8 +49,8 @@ The first non pre-release for 2.x train.
 + fix(parallel): eviction was not working due to a typo 65 commits back!
 
 
-v2.0.0b1 (15 Oct 2019): Rebranded as *Graphtik* for Python 3.6+
-===============================================================
+v2.0.0b1 (15 Oct 2019, @ankostis): Rebranded as *Graphtik* for Python 3.6+
+==========================================================================
 Continuation of :gh:`30` as :gh:`31`, containing review-fixes in huyng/graphkit#1.
 
 Network
@@ -92,8 +92,8 @@ Testing & other code:
 
 
 
-v1.3.0 (Oct 2019): New DAG solver, better plotting & "sideffect"
-================================================================
+v1.3.0 (Oct 2019, @ankostis): NEVER RELEASED: new DAG solver, better plotting & "sideffect"
+===========================================================================================
 
 Kept external API (hopefully) the same, but revamped pruning algorithm and
 refactored network compute/compile structure, so results may change; significantly
