@@ -38,10 +38,11 @@ dependencies, and the sequence of the execution-plan.
     :alt: barebone graph
 
 But as soon as you run it, the net plot calls will print more of the internals.
-These are based on the ``graph_op.net.last_plan`` attribute which *caches*
-the last run to inspect it.  If you want the bare-bone diagram, simply reset it::
+Internally it delegates to :meth:`ExecutionPlan.plot() of ``graph_op.last_plan``
+attribute, which *caches* the last run to facilitate debugging.
+If you want the bare-bone diagram, plot network::
 
-   netop.net.last_plan = None
+   netop.net.plot(...)
 
 .. Note::
    For plots, `Graphviz <https://graphviz.org>`_ program must be in your PATH,

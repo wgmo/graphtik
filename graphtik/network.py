@@ -379,6 +379,13 @@ class ExecutionPlan(
             # clone and keep orignal inputs in solution intact
             executor(solution, overwrites, executed)
 
+            # Validate eviction was perfect
+            # It is a proper subset when not all outputs calculated.
+            assert not self.outputs or set(solution).issubset(self.outputs), (
+                list(solution),
+                self.outputs,
+            )
+
             return solution
         except Exception as ex:
             jetsam(ex, locals(), "solution", "executed")
@@ -400,10 +407,6 @@ class Network(plot.Plotter):
         #: Speed up :meth:`compile()` call and avoid a multithreading issue(?)
         #: that is occuring when accessing the dag in networkx.
         self._cached_plans = {}
-
-        #: the execution_plan of the last call to :meth:`compute()`
-        #: (not ``compile()``!), for debugging purposes.
-        self.last_plan = None
 
     def __repr__(self):
         steps = ["\n  +--%s" % s for s in self.graph.nodes]
@@ -726,50 +729,3 @@ class Network(plot.Plotter):
             self._cached_plans[cache_key] = plan
 
         return plan
-
-    def compute(self, named_inputs, outputs, method=None, overwrites_collector=None):
-        """
-        Solve & execute the graph, sequentially or parallel.
-
-        :param dict named_inputs:
-            A maping of names --> values that must contain at least
-            the compulsory inputs that were specified when the plan was built
-            (but cannot enforce that!).
-            Cloned, not modified.
-
-        :param outputs:
-            a string or a list of strings with all data asked to compute.
-            If you set this variable to ``None``, all data nodes will be kept
-            and returned at runtime.
-
-        :param method:
-            if ``"parallel"``, launches multi-threading.
-            Set when invoking a composed graph or by
-            :meth:`~NetworkOperation.set_execution_method()`.
-
-        :param overwrites_collector:
-            (optional) a mutable dict to be fillwed with named values.
-            If missing, values are simply discarded.
-
-        :returns: a dictionary of output data objects, keyed by name.
-        """
-        try:
-            if isinstance(outputs, str):
-                outputs = [outputs]
-            elif not isinstance(outputs, (list, tuple)) and outputs is not None:
-                raise ValueError(
-                    "The outputs argument must be a list, was: %s", outputs
-                )
-
-            # Build the execution plan.
-            self.last_plan = plan = self.compile(named_inputs.keys(), outputs)
-
-            solution = plan.execute(named_inputs, overwrites_collector, method)
-
-            # Validate eviction was perfect
-            # It is a proper subset when not all poutputs calculated. 
-            assert not outputs or set(solution).issubset(outputs), (list(solution), outputs)
-
-            return solution
-        except Exception as ex:
-            jetsam(ex, locals(), "plan", "solution", "outputs", network="self")

@@ -344,7 +344,7 @@ def test_pruning_multiouts_not_override_intermediates1():
     assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
     # Plan must contain "overriden" step twice, for pin & evict.
     # Plot it to see, or check https://github.com/huyng/graphtik/pull/1#discussion_r334226396.
-    datasteps = [s for s in pipeline.net.last_plan.steps if s == "overriden"]
+    datasteps = [s for s in pipeline.last_plan.steps if s == "overriden"]
     assert len(datasteps) == 2
     assert isinstance(datasteps[0], network._PinInstruction)
     assert isinstance(datasteps[1], network._EvictInstruction)
@@ -476,7 +476,7 @@ def test_same_outputs_operations_order():
     assert subadd(inp, "ab") == {"ab": 2}
 
     ## Check it does not duplicate evictions
-    assert len(subadd.net.last_plan.steps) == 4
+    assert len(subadd.last_plan.steps) == 4
 
     ## Add another step to test evictions
     #
@@ -490,7 +490,7 @@ def test_same_outputs_operations_order():
     assert subadd(inp) == {"a": 3, "b": 1, "ab": 2, "AB": 2}
     assert subadd(inp, "AB") == {"AB": 2}
 
-    assert len(subadd.net.last_plan.steps) == 6
+    assert len(subadd.last_plan.steps) == 6
 
 
 def test_same_inputs_evictions():
@@ -504,7 +504,7 @@ def test_same_inputs_evictions():
     assert pipeline(inp) == {"a": 3, "2a": 6, "@S": 6}
     assert pipeline(inp, "@S") == {"@S": 6}
     ## Check it does not duplicate evictions
-    assert len(pipeline.net.last_plan.steps) == 4
+    assert len(pipeline.last_plan.steps) == 4
 
 
 def test_unsatisfied_operations():
@@ -699,7 +699,7 @@ def test_sideffect_steps():
     )
     sol = netop({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
     assert sol == {"box": [1, 2, 3]}
-    assert len(netop.net.last_plan.steps) == 4
+    assert len(netop.last_plan.steps) == 4
 
     ## Check sideffect links plotted as blue
     #  (assumes color used only for this!).
@@ -1070,15 +1070,18 @@ def test_backwards_compatibility():
         "sum_ab_p3": 27.0,
         "sum_ab_times_b": 6,
     }
-    assert net.compute(outputs=None, named_inputs={"a": 1, "b": 2}) == exp
+
+    inputs = {"a": 1, "b": 2}
+    plan = net.compile(outputs=None, inputs=inputs.keys())
+    assert plan.execute(named_inputs=inputs) == exp
 
     # get specific outputs
     exp = {"sum_ab_times_b": 6}
-    assert net.compute(outputs=["sum_ab_times_b"], named_inputs={"a": 1, "b": 2}) == exp
+    plan = net.compile(outputs=["sum_ab_times_b"], inputs=list(inputs))
+    assert plan.execute(named_inputs=inputs) == exp
 
     # start with inputs already computed
+    inputs = {"sum_ab": 1, "b": 2}
     exp = {"sum_ab_times_b": 2}
-    assert (
-        net.compute(outputs=["sum_ab_times_b"], named_inputs={"sum_ab": 1, "b": 2})
-        == exp
-    )
+    plan = net.compile(outputs=["sum_ab_times_b"], inputs=inputs)
+    assert plan.execute(named_inputs={"sum_ab": 1, "b": 2}) == exp

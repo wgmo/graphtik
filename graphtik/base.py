@@ -14,7 +14,9 @@ from . import plot
 log = logging.getLogger(__name__)
 
 
-def jetsam(ex, locs, *salvage_vars: str, annotation="graphtik_jetsam", **salvage_mappings):
+def jetsam(
+    ex, locs, *salvage_vars: str, annotation="graphtik_jetsam", **salvage_mappings
+):
     """
     Annotate exception with salvaged values from locals() and raise!
 
@@ -281,6 +283,9 @@ class Operation(object):
 
 
 class NetworkOperation(Operation, plot.Plotter):
+    #: The execution_plan- of the last call to compute(), cached as debugging aid.
+    last_plan = None
+
     def __init__(self, **kwargs):
         self.net = kwargs.pop("net")
         Operation.__init__(self, **kwargs)
@@ -292,16 +297,45 @@ class NetworkOperation(Operation, plot.Plotter):
     def _build_pydot(self, **kws):
         """delegate to network"""
         kws.setdefault("title", self.name)
-        plotter = self.net.last_plan or self.net
+        plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
     def _compute(self, named_inputs, outputs=None):
-        return self.net.compute(
-            named_inputs,
-            outputs,
-            method=self._execution_method,
-            overwrites_collector=self._overwrites_collector,
-        )
+        """
+        Solve & execute the graph, sequentially or parallel.
+
+        :param dict named_inputs:
+            A maping of names --> values that must contain at least
+            the compulsory inputs that were specified when the plan was built
+            (but cannot enforce that!).
+            Cloned, not modified.
+
+        :param outputs:
+            a string or a list of strings with all data asked to compute.
+            If you set this variable to ``None``, all data nodes will be kept
+            and returned at runtime.
+
+        :returns: a dictionary of output data objects, keyed by name.
+        """
+        try:
+            if isinstance(outputs, str):
+                outputs = [outputs]
+            elif not isinstance(outputs, (list, tuple)) and outputs is not None:
+                raise ValueError(
+                    "The outputs argument must be a list or None, was: %s", outputs
+                )
+            net = self.net
+
+            # Build the execution plan.
+            self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
+
+            solution = plan.execute(
+                named_inputs, self._overwrites_collector, self._execution_method
+            )
+
+            return solution
+        except Exception as ex:
+            jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
 
     def __call__(self, *args, **kwargs):
         return self._compute(*args, **kwargs)

@@ -118,8 +118,8 @@ def test_plotters_hierarchy(pipeline, inputs, outputs):
     assert sol_plan_dot != plan_dot
     assert pipeline.name in str(plan_dot)
 
-    plan = pipeline.net.last_plan
-    pipeline.net.last_plan = None
+    plan = pipeline.last_plan
+    pipeline.last_plan = None
 
     # We resetted last_plan to check if it reproduces original.
     base_dot2 = str(pipeline.plot(inputs=inputs, outputs=outputs))
