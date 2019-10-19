@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 def jetsam(
-    ex, locs, *salvage_vars: str, annotation="graphtik_jetsam", **salvage_mappings
+    ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
 ):
     """
     Annotate exception with salvaged values from locals() and raise!
@@ -43,7 +43,7 @@ def jetsam(
         assigned as atrributes on this context-manager
 
     - Any attrributes attached on this manager are attached as a new dict on
-      the raised exception as new  ``graphtik_jetsam`` attrribute with a dict as value.
+      the raised exception as new  ``jetsam`` attrribute with a dict as value.
     - If the exception is already annotated, any new items are inserted,
       but existing ones are preserved.
 
@@ -63,7 +63,7 @@ def jetsam(
     And then from a REPL::
 
         import sys
-        sys.last_value.graphtik_jetsam
+        sys.last_value.jetsam
         {'a': 1, 'salvaged_b': 2, "c_var": None}
 
     ** Reason:**

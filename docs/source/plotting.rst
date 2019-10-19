@@ -78,7 +78,7 @@ with the folllowing properties, as a debug aid:
 ...        operation(name="screamer", needs=['a'], provides=["foo"])(scream)
 ...     )({'a': None})
 ... except ValueError as ex:
-...     pprint(ex.graphtik_jetsam)
+...     pprint(ex.jetsam)
 {'args': {'args': [None], 'kwargs': {}},
  'executed': set(),
  'network': Network(
@@ -98,7 +98,7 @@ In interactive *REPL* console you may use this to get the last raised exception:
 
      import sys
 
-     sys.last_value.graphtik_jetsam
+     sys.last_value.jetsam
 
 
 The following annotated attributes *might* have meaningfull value on an exception:
