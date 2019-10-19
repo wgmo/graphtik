@@ -1,15 +1,15 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """ Plotting graphtik graps"""
+import abc
 import io
 import logging
 import os
 
-
 log = logging.getLogger(__name__)
 
 
-class Plotter(object):
+class Plotter(abc.ABC):
     """
     Classes wishing to plot their graphs should inherit this and ...
 
@@ -130,8 +130,9 @@ class Plotter(object):
         dot = self._build_pydot(**kws)
         return render_pydot(dot, filename=filename, show=show)
 
+    @abc.abstractmethod
     def _build_pydot(self, **kws):
-        raise AssertionError("Must implement that!")
+        pass
 
 
 def _is_class_value_in_list(lst, cls, value):
@@ -187,7 +188,7 @@ def build_pydot(
     the legend of the plots.
     """
     import pydot
-    from .base import NetworkOperation, Operation
+    from .operations import NetworkOperation, Operation
     from .modifiers import optional
     from .network import _EvictInstruction, _PinInstruction
 

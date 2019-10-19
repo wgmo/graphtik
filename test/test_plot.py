@@ -56,7 +56,7 @@ def test_plotting_docstring():
 def test_plot_formats(pipeline, tmp_path):
     ## Generate all formats  (not needing to save files)
 
-    # run it here (and not in ficture) to ansure `last_plan` exists.
+    # run it here (and not in ficture) to ensure `last_plan` exists.
     inputs = {"a": 1, "b1": 2}
     outputs = ["asked", "b1"]
     solution = pipeline(inputs, outputs)

@@ -13,6 +13,3 @@ __uri__ = "https://github.com/pygraphkit/graphtik"
 from .functional import operation, compose
 from .modifiers import *  # noqa, on purpose to include any new modifiers
 
-# For backwards compatibility
-from .base import Operation
-from .network import Network

@@ -2,7 +2,6 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 
 import math
-import pickle
 import sys
 from operator import add, floordiv, mul, sub
 from pprint import pprint
@@ -39,7 +38,7 @@ def abspow(a, p):
     return c
 
 
-def test_network_smoke():
+def test_smoke_test():
 
     # Sum operation, late-bind compute function
     sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum_ab")(add)
@@ -65,7 +64,7 @@ def test_network_smoke():
     def pow_op1(a, exponent=2):
         return [math.pow(a, y) for y in range(1, exponent + 1)]
 
-    assert pow_op1._compute({"sum_ab": 2}, ["sum_ab_p2"]) == {"sum_ab_p2": 4.0}
+    assert pow_op1.compute({"sum_ab": 2}, ["sum_ab_p2"]) == {"sum_ab_p2": 4.0}
 
     # Partial operation that is bound at a later time
     partial_op = operation(
@@ -84,7 +83,7 @@ def test_network_smoke():
     assert sum_op3(5, 6) == 11
 
     # compose network
-    net = compose(name="my network")(sum_op1, mul_op1, pow_op1, sum_op2, sum_op3)
+    netop = compose(name="my network")(sum_op1, mul_op1, pow_op1, sum_op2, sum_op3)
 
     #
     # Running the network
@@ -102,20 +101,20 @@ def test_network_smoke():
         "sum_ab_p3": 27.0,
         "sum_ab_times_b": 6,
     }
-    assert net({"a": 1, "b": 2}) == exp
+    assert netop({"a": 1, "b": 2}) == exp
 
     # get specific outputs
     exp = {"sum_ab_times_b": 6}
-    assert net({"a": 1, "b": 2}, outputs=["sum_ab_times_b"]) == exp
+    assert netop({"a": 1, "b": 2}, outputs=["sum_ab_times_b"]) == exp
 
     # start with inputs already computed
     exp = {"sum_ab_times_b": 2}
-    assert net({"sum_ab": 1, "b": 2}, outputs=["sum_ab_times_b"]) == exp
+    assert netop({"sum_ab": 1, "b": 2}, outputs=["sum_ab_times_b"]) == exp
 
     with pytest.raises(ValueError, match="Unknown output node"):
-        net({"sum_ab": 1, "b": 2}, outputs="bad_node")
+        netop({"sum_ab": 1, "b": 2}, outputs="bad_node")
     with pytest.raises(ValueError, match="Unknown output node"):
-        net({"sum_ab": 1, "b": 2}, outputs=["b", "bad_node"])
+        netop({"sum_ab": 1, "b": 2}, outputs=["b", "bad_node"])
 
 
 def test_network_simple_merge():
@@ -812,20 +811,20 @@ def test_evict_instructions_vary_with_inputs():
     exp.update({"aa": 2, "ab": 5, "asked": 7})
     res = pipeline(inp)
     assert res == exp  # ok
-    steps11 = pipeline.compile(inp).steps
+    steps11 = pipeline.net.compile(inp).steps
     res = pipeline(inp, outputs=["asked"])
     assert res == filtdict(exp, "asked")  # ok
-    steps12 = pipeline.compile(inp, ["asked"]).steps
+    steps12 = pipeline.net.compile(inp, ["asked"]).steps
 
     inp = {"a": 2}
     exp = inp.copy()
     exp.update({"aa": 2, "asked": 12})
     res = pipeline(inp)
     assert res == exp  # ok
-    steps21 = pipeline.compile(inp).steps
+    steps21 = pipeline.net.compile(inp).steps
     res = pipeline(inp, outputs=["asked"])
     assert res == filtdict(exp, "asked")  # ok
-    steps22 = pipeline.compile(inp, ["asked"]).steps
+    steps22 = pipeline.net.compile(inp, ["asked"]).steps
 
     # When no outs, no evict-instructions.
     assert steps11 != steps12
@@ -995,93 +994,3 @@ def test_compose_another_network(bools):
 
     sol = bigger_graph({"a": 2, "b": 5, "c": 5}, outputs=["a_minus_ab_minus_c"])
     assert sol == {"a_minus_ab_minus_c": -13}
-
-
-####################################
-# Backwards compatibility
-####################################
-
-# Classes must be defined as members of __main__ for pickleability
-
-# We first define some basic operations
-class Sum(Operation):
-    def compute(self, inputs):
-        a = inputs[0]
-        b = inputs[1]
-        return [a + b]
-
-
-class Mul(Operation):
-    def compute(self, inputs):
-        a = inputs[0]
-        b = inputs[1]
-        return [a * b]
-
-
-# This is an example of an operation that takes a parameter.
-# It also illustrates an operation that returns multiple outputs
-class Pow(Operation):
-    def compute(self, inputs):
-
-        a = inputs[0]
-        outputs = []
-        for y in range(1, self.params["exponent"] + 1):
-            p = math.pow(a, y)
-            outputs.append(p)
-        return outputs
-
-
-def test_backwards_compatibility():
-
-    sum_op1 = Sum(name="sum_op1", provides=["sum_ab"], needs=["a", "b"])
-    mul_op1 = Mul(name="mul_op1", provides=["sum_ab_times_b"], needs=["sum_ab", "b"])
-    pow_op1 = Pow(
-        name="pow_op1",
-        needs=["sum_ab"],
-        provides=["sum_ab_p1", "sum_ab_p2", "sum_ab_p3"],
-        params={"exponent": 3},
-    )
-    sum_op2 = Sum(
-        name="sum_op2", provides=["p1_plus_p2"], needs=["sum_ab_p1", "sum_ab_p2"]
-    )
-
-    net = network.Network()
-    net.add_op(sum_op1)
-    net.add_op(mul_op1)
-    net.add_op(pow_op1)
-    net.add_op(sum_op2)
-    net.compile()
-
-    # try the pickling part
-    pickle.dumps(net)
-
-    #
-    # Running the network
-    #
-
-    # get all outputs
-    exp = {
-        "a": 1,
-        "b": 2,
-        "p1_plus_p2": 12.0,
-        "sum_ab": 3,
-        "sum_ab_p1": 3.0,
-        "sum_ab_p2": 9.0,
-        "sum_ab_p3": 27.0,
-        "sum_ab_times_b": 6,
-    }
-
-    inputs = {"a": 1, "b": 2}
-    plan = net.compile(outputs=None, inputs=inputs.keys())
-    assert plan.execute(named_inputs=inputs) == exp
-
-    # get specific outputs
-    exp = {"sum_ab_times_b": 6}
-    plan = net.compile(outputs=["sum_ab_times_b"], inputs=list(inputs))
-    assert plan.execute(named_inputs=inputs) == exp
-
-    # start with inputs already computed
-    inputs = {"sum_ab": 1, "b": 2}
-    exp = {"sum_ab_times_b": 2}
-    plan = net.compile(outputs=["sum_ab_times_b"], inputs=inputs)
-    assert plan.execute(named_inputs={"sum_ab": 1, "b": 2}) == exp

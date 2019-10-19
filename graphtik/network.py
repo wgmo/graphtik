@@ -213,7 +213,7 @@ class ExecutionPlan(
         # Although `plan` have added to jetsam in `compute()``,
         # add it again, in case compile()/execute is called separately.
         try:
-            return op._compute(solution)
+            return op.compute(solution)
         except Exception as ex:
             jetsam(ex, locals(), plan="self")
 

@@ -9,11 +9,11 @@ from .network import Network
 
 
 class FunctionalOperation(Operation):
-    def __init__(self, **kwargs):
-        self.fn = kwargs.pop("fn")
+    def __init__(self, fn=None, **kwargs):
+        self.fn = fn
         Operation.__init__(self, **kwargs)
 
-    def _compute(self, named_inputs, outputs=None):
+    def compute(self, named_inputs, outputs=None):
         try:
             args = [
                 named_inputs[n]
@@ -28,7 +28,6 @@ class FunctionalOperation(Operation):
                 for n in self.needs
                 if isinstance(n, optional) and n in named_inputs
             }
-
             # Combine params and optionals into one big glob of keyword arguments.
             kwargs = {k: v for d in (self.params, optionals) for k, v in d.items()}
 
@@ -66,11 +65,6 @@ class FunctionalOperation(Operation):
 
     def __call__(self, *args, **kwargs):
         return self.fn(*args, **kwargs)
-
-    def __getstate__(self):
-        state = Operation.__getstate__(self)
-        state["fn"] = self.__dict__["fn"]
-        return state
 
 
 class operation(Operation):
@@ -210,7 +204,7 @@ class compose(object):
         self.name = name
         self.merge = merge
 
-    def __call__(self, *operations):
+    def __call__(self, *operations, **kwargs):
         """
         Composes a collection of operations into a single computation graph,
         obeying the ``merge`` property, if set in the constructor.
@@ -247,5 +241,5 @@ class compose(object):
             net.add_op(op)
 
         return NetworkOperation(
-            name=self.name, needs=needs, provides=provides, params={}, net=net
+            net, name=self.name, needs=needs, provides=provides, params={}, **kwargs
         )

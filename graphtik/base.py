@@ -119,34 +119,10 @@ def jetsam(
     raise  # noqa #re-raise without ex-arg, not to insert my frame
 
 
-class Data(object):
-    """
-    This wraps any data that is consumed or produced
-    by a Operation. This data should also know how to serialize
-    itself appropriately.
-
-    This class an "abstract" class that should be extended by
-    any class working with data in the HiC framework.
-    """
-
-    def __init__(self, **kwargs):
-        pass
-
-    def get_data(self):
-        raise NotImplementedError
-
-    def set_data(self, data):
-        raise NotImplementedError
-
-
 class Operation(object):
-    """
-    This is an abstract class representing a data transformation. To use this,
-    please inherit from this class and customize the ``.compute`` method to your
-    specific application.
-    """
+    """An abstract class representing a data transformation by :meth:`.compute()`."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, name=None, needs=None, provides=None, params=None, **kwargs):
         """
         Create a new layer instance.
         Names may be given to this layer and its inputs and outputs. This is
@@ -171,10 +147,10 @@ class Operation(object):
         """
 
         # (Optional) names for this layer, and the data it needs and provides
-        self.name = kwargs.get("name")
-        self.needs = kwargs.get("needs")
-        self.provides = kwargs.get("provides")
-        self.params = kwargs.get("params", {})
+        self.name = name
+        self.needs = needs
+        self.provides = provides
+        self.params = params or {}
 
         # call _after_init as final step of initialization
         self._after_init()
@@ -193,39 +169,19 @@ class Operation(object):
         """
         return hash(self.name)
 
-    def compute(self, inputs):
+    def compute(self, named_inputs, outputs=None):
         """
-        This method must be implemented to perform this layer's feed-forward
-        computation on a given set of inputs.
+        Compute from a given set of inputs an optional set of outputs.
 
         :param list inputs:
             A list of :class:`Data` objects on which to run the layer's
             feed-forward computation.
         :returns list:
-            Should return a list of :class:`Data` objects representing
+            Should return a list values representing
             the results of running the feed-forward computation on
             ``inputs``.
         """
-
-        raise NotImplementedError("Define callable of %r!" % self)
-
-    def _compute(self, named_inputs, outputs=None):
-        try:
-            provides = self.provides
-            args = [named_inputs[d] for d in self.needs]
-            results = self.compute(args)
-
-            results = zip(provides, results)
-
-            if outputs:
-                outs = set(outputs)
-                results = filter(lambda x: x[0] in outs, results)
-
-            return dict(results)
-        except Exception as ex:
-            jetsam(
-                ex, locals(), "outputs", "provides", "args", "results", operation="self"
-            )
+        raise NotImplementedError("Abstract %r! cannot compute()!" % self)
 
     def _after_init(self):
         """
@@ -236,33 +192,6 @@ class Operation(object):
         for initialization of c++ dependencies.
         """
         pass
-
-    def __getstate__(self):
-        """
-        This allows your operation to be pickled.
-        Everything needed to instantiate your operation should be defined by the
-        following attributes: params, needs, provides, and name
-        No other piece of state should leak outside of these 4 variables
-        """
-
-        result = {}
-        # this check should get deprecated soon. its for downward compatibility
-        # with earlier pickled operation objects
-        if hasattr(self, "params"):
-            result["params"] = self.__dict__["params"]
-        result["needs"] = self.__dict__["needs"]
-        result["provides"] = self.__dict__["provides"]
-        result["name"] = self.__dict__["name"]
-
-        return result
-
-    def __setstate__(self, state):
-        """
-        load from pickle and instantiate the detector
-        """
-        for k in iter(state):
-            self.__setattr__(k, state[k])
-        self._after_init()
 
     def __repr__(self):
         """
@@ -283,16 +212,28 @@ class Operation(object):
 
 
 class NetworkOperation(Operation, plot.Plotter):
-    #: The execution_plan- of the last call to compute(), cached as debugging aid.
+    #: The execution_plan of the last call to compute(), cached as debugging aid.
     last_plan = None
+    #: set execution mode to single-threaded sequential by default
+    method = "sequential"
+    overwrites_collector = None
 
-    def __init__(self, **kwargs):
-        self.net = kwargs.pop("net")
+    def __init__(self, net, method="sequential", overwrites_collector=None, **kwargs):
+        """
+        :param method:
+            if ``"parallel"``, launches multi-threading.
+            Set when invoking a composed graph or by
+            :meth:`~NetworkOperation.set_execution_method()`.
+
+        :param overwrites_collector:
+            (optional) a mutable dict to be fillwed with named values.
+            If missing, values are simply discarded.
+
+        """
+        self.net = net
         Operation.__init__(self, **kwargs)
-
-        # set execution mode to single-threaded sequential by default
-        self._execution_method = "sequential"
-        self._overwrites_collector = None
+        self.set_execution_method(method)
+        self.set_overwrites_collector(overwrites_collector)
 
     def _build_pydot(self, **kws):
         """delegate to network"""
@@ -300,7 +241,7 @@ class NetworkOperation(Operation, plot.Plotter):
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
-    def _compute(self, named_inputs, outputs=None):
+    def compute(self, named_inputs, outputs=None):
         """
         Solve & execute the graph, sequentially or parallel.
 
@@ -324,24 +265,24 @@ class NetworkOperation(Operation, plot.Plotter):
                 raise ValueError(
                     "The outputs argument must be a list or None, was: %s", outputs
                 )
+
             net = self.net
 
             # Build the execution plan.
             self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
 
             solution = plan.execute(
-                named_inputs, self._overwrites_collector, self._execution_method
+                named_inputs, self.overwrites_collector, self.execution_method
             )
 
             return solution
         except Exception as ex:
             jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
 
-    def __call__(self, *args, **kwargs):
-        return self._compute(*args, **kwargs)
-
-    def compile(self, *args, **kwargs):
-        return self.net.compile(*args, **kwargs)
+    def __call__(
+        self, named_inputs, outputs=None, method=None, overwrites_collector=None
+    ):
+        return self.compute(named_inputs, outputs=outputs)
 
     def set_execution_method(self, method):
         """
@@ -356,7 +297,7 @@ class NetworkOperation(Operation, plot.Plotter):
             raise ValueError(
                 "Invalid computation method %r!  Must be one of %s" % (method, choices)
             )
-        self._execution_method = method
+        self.execution_method = method
 
     def set_overwrites_collector(self, collector):
         """
@@ -374,9 +315,4 @@ class NetworkOperation(Operation, plot.Plotter):
             raise ValueError(
                 "Overwrites collector was not a MutableMapping, but: %r" % collector
             )
-        self._overwrites_collector = collector
-
-    def __getstate__(self):
-        state = Operation.__getstate__(self)
-        state["net"] = self.__dict__["net"]
-        return state
+        self.overwrites_collector = collector

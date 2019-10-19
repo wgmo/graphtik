@@ -123,7 +123,7 @@ def test_jetsam_nested():
 def screaming_dumy_op():
     # No jetsam, in particular, to check sites.
     class Op:
-        _compute = _scream
+        compute = _scream
 
     return Op()
 
@@ -134,7 +134,7 @@ def screaming_dumy_op():
         # NO old-stuff Operation(fn=_jetsamed_fn, name="test", needs="['a']", provides=[]),
         (
             fnt.partial(
-                operation(name="test", needs=["a"], provides=["b"])(_scream)._compute,
+                operation(name="test", needs=["a"], provides=["b"])(_scream).compute,
                 named_inputs={"a": 1},
             ),
             "outputs provides results operation args".split(),
@@ -166,7 +166,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         # NO old-stuff Operation(fn=_jetsamed_fn, name="test", needs="['a']", provides=[]),
         (
             fnt.partial(
-                operation(name="test", needs=["a"], provides=["b"])(_scream)._compute,
+                operation(name="test", needs=["a"], provides=["b"])(_scream).compute,
                 named_inputs=None,
             ),
             "outputs provides results operation args".split(),
@@ -186,9 +186,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
             ["solution", "executed"],
         ),
         (
-            fnt.partial(
-                base.NetworkOperation(net=None), named_inputs=None, outputs=None
-            ),
+            fnt.partial(base.NetworkOperation(None), named_inputs=None, outputs=None),
             "network plan solution outputs".split(),
         ),
     ],
