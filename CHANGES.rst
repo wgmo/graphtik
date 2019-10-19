@@ -4,15 +4,34 @@ Graphtik Changelog
 
 TODO
 ====
-See also `gg:`1`.
+See also :gg:`1`.
 
 + [ ] use a "start-node" to insert input-values in solution
 + [ ] typo(test): overriden-->overriDDen
 + [ ] support functions with ``*args`` and ``**kwargs``.
 
 
-v2.0.1b0 (18 Oct 2019): better plan with perfect evictions 
-==========================================================
+v2.1.0 (20 Oct 2019): DROP BW-compatible, Restruct modules/API, Plan perfect evictions
+======================================================================================
+The first non pre-release for 2.x train.
+
++ BRAKE API:  DROP Operation's ``params`` - use funtools.partial() instead.
+
++ BRAKE API: DROP Backward-Compatible ``Data`` & ``Operation`` classes,
+
++ BRAKE: DROP Pickle workarounds - expected to use ``dill`` instead.
+
++ break(jetsam): drop "graphtik_` prefix from annotated attribute
+
++ ENH(op): now ``operation()`` supported the "builder pattern" with
+  :meth:`.operation.withset()`.
+
++ REFACT: renamed internal package `functional --> nodes` and moved classes around,
+  to break cycles easier, (``base`` works as suppposed to), not to import early  everything,
+  but to fail plot early if ``pydot`` dependency missing.
+
++ REFACT: move PLAN and ``compute()`` up, from ``Network --> NetworkOperation``.
+
 + ENH(NET): new PLAN BULDING algorithm produces PERFECT EVICTIONS,
   that is, it gradually eliminates from the solution all non-asked outputs.
 
@@ -28,7 +47,6 @@ v2.0.1b0 (18 Oct 2019): better plan with perfect evictions
   with pinning & eviction.
 
 + fix(parallel): eviction was not working due to a typo 65 commits back!
-
 
 
 v2.0.0b1 (15 Oct 2019): Rebranded as *Graphtik* for Python 3.6+
