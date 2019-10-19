@@ -7,6 +7,7 @@ import logging
 import pytest
 
 from graphtik import base, network, operation
+from graphtik.nodes import NetworkOperation
 
 
 @pytest.mark.parametrize("locs", [None, (), [], [0], "bad"])
@@ -186,7 +187,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
             ["solution", "executed"],
         ),
         (
-            fnt.partial(base.NetworkOperation(None), named_inputs=None, outputs=None),
+            fnt.partial(NetworkOperation(None), named_inputs=None, outputs=None),
             "network plan solution outputs".split(),
         ),
     ],

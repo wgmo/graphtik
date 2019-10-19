@@ -17,7 +17,7 @@ Module: `base`
 Module: `operations`
 ====================
 
-.. automodule:: graphtik.operations
+.. automodule:: graphtik.nodes
      :members:
      :undoc-members:
 
@@ -29,7 +29,7 @@ Module: `network`
      :undoc-members:
 
 Module: `plot`
-==============
+===============
 
 .. automodule:: graphtik.plot
      :members:

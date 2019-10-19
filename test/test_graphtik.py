@@ -10,7 +10,8 @@ from pprint import pprint
 import pytest
 
 import graphtik.network as network
-from graphtik import Operation, compose, operation, optional, sideffect
+from graphtik import compose, operation, optional, sideffect
+from graphtik.base import Operation
 from graphtik.network import _EvictInstruction
 
 

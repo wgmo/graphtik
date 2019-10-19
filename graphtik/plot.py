@@ -1,138 +1,13 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """ Plotting graphtik graps"""
-import abc
 import io
 import logging
 import os
 
+import pydot
+
 log = logging.getLogger(__name__)
-
-
-class Plotter(abc.ABC):
-    """
-    Classes wishing to plot their graphs should inherit this and ...
-
-    implement property ``_plot`` to return a "partial" callable that somehow
-    ends up calling  :func:`plot.render_pydot()` with the `graph` or any other
-    args binded appropriately.
-    The purpose is to avoid copying this function & documentation here around.
-    """
-
-    def plot(self, filename=None, show=False, **kws):
-        """
-        :param str filename:
-            Write diagram into a file.
-            Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
-            call :func:`plot.supported_plot_formats()` for more.
-        :param show:
-            If it evaluates to true, opens the  diagram in a  matplotlib window.
-            If it equals `-1`, it plots but does not open the Window.
-        :param inputs:
-            an optional name list, any nodes in there are plotted
-            as a "house"
-        :param outputs:
-            an optional name list, any nodes in there are plotted
-            as an "inverted-house"
-        :param solution:
-            an optional dict with values to annotate nodes, drawn "filled"
-            (currently content not shown, but node drawn as "filled")
-        :param executed:
-            an optional container with operations executed, drawn "filled"
-        :param title:
-            an optional string to display at the bottom of the graph
-        :param node_props:
-            an optional nested dict of Grapvhiz attributes for certain nodes
-        :param edge_props:
-            an optional nested dict of Grapvhiz attributes for certain edges
-        :param clusters:
-            an optional mapping of nodes --> cluster-names, to group them
-
-        :return:
-            A ``pydot.Dot`` instance.
-            NOTE that the returned instance is monkeypatched to support
-            direct rendering in *jupyter cells* as SVG.
-
-
-        Note that the `graph` argument is absent - Each Plotter provides
-        its own graph internally;  use directly :func:`render_pydot()` to provide
-        a different graph.
-
-        .. image:: images/GraphtikLegend.svg
-            :alt: Graphtik Legend
-
-        *NODES:*
-
-        oval
-            function
-        egg
-            subgraph operation
-        house
-            given input
-        inversed-house
-            asked output
-        polygon
-            given both as input & asked as output (what?)
-        square
-            intermediate data, neither given nor asked.
-        red frame
-            evict-instruction, to free up memory.
-        blue frame
-            pinned-instruction, not to overwrite intermediate inputs.
-        filled
-            data node has a value in `solution` OR function has been executed.
-        thick frame
-            function/data node in execution `steps`.
-
-        *ARROWS*
-
-        solid black arrows
-            dependencies (source-data *need*-ed by target-operations,
-            sources-operations *provides* target-data)
-        dashed black arrows
-            optional needs
-        blue arrows
-            sideffect needs/provides
-        wheat arrows
-            broken dependency (``provide``) during pruning
-        green-dotted arrows
-            execution steps labeled in succession
-
-
-        To generate the **legend**, see :func:`legend()`.
-
-        **Sample code:**
-
-        >>> from graphtik import compose, operation
-        >>> from graphtik.modifiers import optional
-        >>> from operator import add
-
-        >>> graphop = compose(name="graphop")(
-        ...     operation(name="add", needs=["a", "b1"], provides=["ab1"])(add),
-        ...     operation(name="sub", needs=["a", optional("b2")], provides=["ab2"])(lambda a, b=1: a-b),
-        ...     operation(name="abb", needs=["ab1", "ab2"], provides=["asked"])(add),
-        ... )
-
-        >>> graphop.plot(show=True);           # plot just the graph in a matplotlib window # doctest: +SKIP
-        >>> inputs = {'a': 1, 'b1': 2}
-        >>> solution = graphop(inputs)           # now plots will include the execution-plan
-
-        >>> graphop.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);           # doctest: +SKIP
-        >>> dot = graphop.plot(solution=solution);   # just get the `pydoit.Dot` object, renderable in Jupyter
-        >>> print(dot)
-        digraph G {
-        fontname=italic;
-        label=graphop;
-        a [fillcolor=wheat, shape=invhouse, style=filled];
-        ...
-        ...
-        """
-        dot = self._build_pydot(**kws)
-        return render_pydot(dot, filename=filename, show=show)
-
-    @abc.abstractmethod
-    def _build_pydot(self, **kws):
-        pass
 
 
 def _is_class_value_in_list(lst, cls, value):
@@ -187,8 +62,7 @@ def build_pydot(
     See :meth:`Plotter.plot()` for the arguments, sample code, and
     the legend of the plots.
     """
-    import pydot
-    from .operations import NetworkOperation, Operation
+    from .nodes import NetworkOperation, Operation
     from .modifiers import optional
     from .network import _EvictInstruction, _PinInstruction
 

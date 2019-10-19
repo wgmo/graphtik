@@ -7,6 +7,7 @@ from operator import add
 import pytest
 
 from graphtik import base, compose, network, operation, plot
+from graphtik.nodes import NetworkOperation
 from graphtik.modifiers import optional
 
 
@@ -48,7 +49,7 @@ def solution(pipeline, inputs, outputs, request):
 def test_plotting_docstring():
     common_formats = ".png .dot .jpg .jpeg .pdf .svg".split()
     for ext in common_formats:
-        assert ext in base.NetworkOperation.plot.__doc__
+        assert ext in NetworkOperation.plot.__doc__
         assert ext in network.Network.plot.__doc__
 
 

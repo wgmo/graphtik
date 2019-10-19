@@ -65,19 +65,15 @@ Computations are based on 5 data-structures:
     (aka "pinned") input-values.
 """
 import logging
-import os
 import sys
 import time
 from collections import defaultdict, namedtuple
-from io import StringIO
-from itertools import chain
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 from networkx import DiGraph
 
-from . import plot
-from .base import Operation, jetsam
+from .base import Operation, Plotter, jetsam
 from .modifiers import optional, sideffect
 
 log = logging.getLogger(__name__)
@@ -142,7 +138,7 @@ class _PinInstruction(str):
 
 
 class ExecutionPlan(
-    namedtuple("_ExePlan", "net inputs outputs dag broken_edges steps"), plot.Plotter
+    namedtuple("_ExePlan", "net inputs outputs dag broken_edges steps"), Plotter
 ):
     """
     The result of the network's compilation phase.
@@ -391,7 +387,7 @@ class ExecutionPlan(
             jetsam(ex, locals(), "solution", "executed")
 
 
-class Network(plot.Plotter):
+class Network(Plotter):
     """
     Assemble operations & data into a directed-acyclic-graph (DAG) to run them.
 

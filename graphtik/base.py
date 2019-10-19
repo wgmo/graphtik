@@ -1,17 +1,12 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
+import abc
 import logging
 from collections import namedtuple
 
-try:
-    from collections import abc
-except ImportError:
-    import collections as abc
-
-from . import plot
-
-
 log = logging.getLogger(__name__)
+
+from .modifiers import optional
 
 
 def aslist(i):
@@ -124,7 +119,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
     raise  # noqa #re-raise without ex-arg, not to insert my frame
 
 
-class Operation(object):
+class Operation(abc.ABC):
     """An abstract class representing a data transformation by :meth:`.compute()`."""
 
     def __init__(self, name=None, needs=None, provides=None, **kwargs):
@@ -167,6 +162,7 @@ class Operation(object):
         """
         return hash(self.name)
 
+    @abc.abstractmethod
     def compute(self, named_inputs, outputs=None):
         """
         Compute from a given set of inputs an optional set of outputs.
@@ -179,11 +175,9 @@ class Operation(object):
             the results of running the feed-forward computation on
             ``inputs``.
         """
-        raise NotImplementedError("Abstract %r! cannot compute()!" % self)
+        pass
 
     def _validate(self):
-        from .modifiers import optional
-
         if not self.name:
             raise ValueError(f"Operation needs a name, got: {self.name}")
 
@@ -230,108 +224,129 @@ class Operation(object):
         return f"{clsname}(name={self.name!r}, needs={needs!r}, provides={provides!r})"
 
 
-class NetworkOperation(Operation, plot.Plotter):
-    #: The execution_plan of the last call to compute(), cached as debugging aid.
-    last_plan = None
-    #: set execution mode to single-threaded sequential by default
-    method = "sequential"
-    overwrites_collector = None
+class Plotter(abc.ABC):
+    """
+    Classes wishing to plot their graphs should inherit this and ...
 
-    def __init__(self, net, method="sequential", overwrites_collector=None, **kwargs):
+    implement property ``plot`` to return a "partial" callable that somehow
+    ends up calling  :func:`plot.render_pydot()` with the `graph` or any other
+    args binded appropriately.
+    The purpose is to avoid copying this function & documentation here around.
+    """
+
+    def plot(self, filename=None, show=False, **kws):
         """
-        :param method:
-            if ``"parallel"``, launches multi-threading.
-            Set when invoking a composed graph or by
-            :meth:`~NetworkOperation.set_execution_method()`.
-
-        :param overwrites_collector:
-            (optional) a mutable dict to be fillwed with named values.
-            If missing, values are simply discarded.
-
-        """
-        self.net = net
-        Operation.__init__(self, **kwargs)
-        self.set_execution_method(method)
-        self.set_overwrites_collector(overwrites_collector)
-
-    def _build_pydot(self, **kws):
-        """delegate to network"""
-        kws.setdefault("title", self.name)
-        plotter = self.last_plan or self.net
-        return plotter._build_pydot(**kws)
-
-    def compute(self, named_inputs, outputs=None):
-        """
-        Solve & execute the graph, sequentially or parallel.
-
-        :param dict named_inputs:
-            A maping of names --> values that must contain at least
-            the compulsory inputs that were specified when the plan was built
-            (but cannot enforce that!).
-            Cloned, not modified.
-
+        :param str filename:
+            Write diagram into a file.
+            Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
+            call :func:`plot.supported_plot_formats()` for more.
+        :param show:
+            If it evaluates to true, opens the  diagram in a  matplotlib window.
+            If it equals `-1`, it plots but does not open the Window.
+        :param inputs:
+            an optional name list, any nodes in there are plotted
+            as a "house"
         :param outputs:
-            a string or a list of strings with all data asked to compute.
-            If you set this variable to ``None``, all data nodes will be kept
-            and returned at runtime.
+            an optional name list, any nodes in there are plotted
+            as an "inverted-house"
+        :param solution:
+            an optional dict with values to annotate nodes, drawn "filled"
+            (currently content not shown, but node drawn as "filled")
+        :param executed:
+            an optional container with operations executed, drawn "filled"
+        :param title:
+            an optional string to display at the bottom of the graph
+        :param node_props:
+            an optional nested dict of Grapvhiz attributes for certain nodes
+        :param edge_props:
+            an optional nested dict of Grapvhiz attributes for certain edges
+        :param clusters:
+            an optional mapping of nodes --> cluster-names, to group them
 
-        :returns: a dictionary of output data objects, keyed by name.
+        :return:
+            A ``pydot.Dot`` instance.
+            NOTE that the returned instance is monkeypatched to support
+            direct rendering in *jupyter cells* as SVG.
+
+
+        Note that the `graph` argument is absent - Each Plotter provides
+        its own graph internally;  use directly :func:`render_pydot()` to provide
+        a different graph.
+
+        .. image:: images/GraphtikLegend.svg
+            :alt: Graphtik Legend
+
+        *NODES:*
+
+        oval
+            function
+        egg
+            subgraph operation
+        house
+            given input
+        inversed-house
+            asked output
+        polygon
+            given both as input & asked as output (what?)
+        square
+            intermediate data, neither given nor asked.
+        red frame
+            evict-instruction, to free up memory.
+        blue frame
+            pinned-instruction, not to overwrite intermediate inputs.
+        filled
+            data node has a value in `solution` OR function has been executed.
+        thick frame
+            function/data node in execution `steps`.
+
+        *ARROWS*
+
+        solid black arrows
+            dependencies (source-data *need*-ed by target-operations,
+            sources-operations *provides* target-data)
+        dashed black arrows
+            optional needs
+        blue arrows
+            sideffect needs/provides
+        wheat arrows
+            broken dependency (``provide``) during pruning
+        green-dotted arrows
+            execution steps labeled in succession
+
+
+        To generate the **legend**, see :func:`legend()`.
+
+        **Sample code:**
+
+        >>> from graphtik import compose, operation
+        >>> from graphtik.modifiers import optional
+        >>> from operator import add
+
+        >>> graphop = compose(name="graphop")(
+        ...     operation(name="add", needs=["a", "b1"], provides=["ab1"])(add),
+        ...     operation(name="sub", needs=["a", optional("b2")], provides=["ab2"])(lambda a, b=1: a-b),
+        ...     operation(name="abb", needs=["ab1", "ab2"], provides=["asked"])(add),
+        ... )
+
+        >>> graphop.plot(show=True);           # plot just the graph in a matplotlib window # doctest: +SKIP
+        >>> inputs = {'a': 1, 'b1': 2}
+        >>> solution = graphop(inputs)           # now plots will include the execution-plan
+
+        >>> graphop.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);           # doctest: +SKIP
+        >>> dot = graphop.plot(solution=solution);   # just get the `pydoit.Dot` object, renderable in Jupyter
+        >>> print(dot)
+        digraph G {
+        fontname=italic;
+        label=graphop;
+        a [fillcolor=wheat, shape=invhouse, style=filled];
+        ...
+        ...
         """
-        try:
-            if isinstance(outputs, str):
-                outputs = [outputs]
-            elif not isinstance(outputs, (list, tuple)) and outputs is not None:
-                raise ValueError(
-                    "The outputs argument must be a list or None, was: %s", outputs
-                )
+        from .plot import render_pydot
 
-            net = self.net
+        dot = self._build_pydot(**kws)
+        return render_pydot(dot, filename=filename, show=show)
 
-            # Build the execution plan.
-            self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
-
-            solution = plan.execute(
-                named_inputs, self.overwrites_collector, self.execution_method
-            )
-
-            return solution
-        except Exception as ex:
-            jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
-
-    def __call__(
-        self, named_inputs, outputs=None, method=None, overwrites_collector=None
-    ):
-        return self.compute(named_inputs, outputs=outputs)
-
-    def set_execution_method(self, method):
-        """
-        Determine how the network will be executed.
-
-        :param str method:
-            If "parallel", execute graph operations concurrently
-            using a threadpool.
-        """
-        choices = ["parallel", "sequential"]
-        if method not in choices:
-            raise ValueError(
-                "Invalid computation method %r!  Must be one of %s" % (method, choices)
-            )
-        self.execution_method = method
-
-    def set_overwrites_collector(self, collector):
-        """
-        Asks to put all *overwrites* into the `collector` after computing
-
-        An "overwrites" is intermediate value calculated but NOT stored
-        into the results, becaues it has been given also as an intemediate
-        input value, and the operation that would overwrite it MUST run for
-        its other results.
-
-        :param collector:
-            a mutable dict to be fillwed with named values
-        """
-        if collector is not None and not isinstance(collector, abc.MutableMapping):
-            raise ValueError(
-                "Overwrites collector was not a MutableMapping, but: %r" % collector
-            )
-        self.overwrites_collector = collector
+    @abc.abstractmethod
+    def _build_pydot(self, **kws):
+        pass
