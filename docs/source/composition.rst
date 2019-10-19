@@ -23,6 +23,7 @@ Simple composition of operations
 The simplest use case for ``compose`` is assembling a collection of individual operations into a runnable computation graph.  The example script from :ref:`quick-start` illustrates this well::
 
    >>> from operator import mul, sub
+   >>> from functools import partial
    >>> from graphtik import compose, operation
 
    >>> # Computes |a|^p.
@@ -34,7 +35,8 @@ The simplest use case for ``compose`` is assembling a collection of individual o
    >>> graphop = compose(name="graphop")(
    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
    ...    operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
-   ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"], params={"p": 3})(abspow)
+   ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
+   ...    (partial(abspow, p=3))
    ... )
 
 The call here to ``compose()`` yields a runnable computation graph that looks like this (where the circles are operations, squares are data, and octagons are parameters):

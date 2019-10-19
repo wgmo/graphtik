@@ -44,6 +44,7 @@ When many operations are composed into a computation graph (see :ref:`graph-comp
 Let's look again at the operations from the script in :ref:`quick-start`, for example::
 
    >>> from operator import mul, sub
+   >>> from functools import partial
    >>> from graphtik import compose, operation
 
    >>> # Computes |a|^p.
@@ -55,23 +56,21 @@ Let's look again at the operations from the script in :ref:`quick-start`, for ex
    >>> graphop = compose(name="graphop")(
    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
    ...    operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
-   ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"], params={"p": 3})(abspow)
+   ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
+   ...    (partial(abspow, p=3))
    ... )
 
-The ``needs`` and ``provides`` arguments to the operations in this script define a computation graph that looks like this (where the oval are operations, squares/houses are data):
+.. Tip::
+   Notice the use of :func:`functools.partial()` to set parameter ``p`` to a contant value.
+
+The ``needs`` and ``provides`` arguments to the operations in this script define
+a computation graph that looks like this (where the oval are *operations*,
+squares/houses are *data*):
 
 .. image:: images/barebone_3ops.svg
 
 .. Tip::
   See :ref:`plotting` on how to make diagrams like this.
-
-
-Constant operation parameters: ``params``
------------------------------------------
-
-Sometimes an ``operation`` will have a customizable parameter you want to hold constant across all runs of a computation graph.  Usually, this will be a keyword argument of the underlying function.  The ``params`` argument to the ``operation`` constructor provides a mechanism for setting such parameters.
-
-``params`` should be a dictionary whose keys correspond to keyword parameter names from the function underlying an ``operation`` and whose values are passed as constant arguments to those keyword parameters in all computations utilizing the ``operation``.
 
 
 Instantiating operations
@@ -105,31 +104,36 @@ If the functions underlying your computation graph operations are defined elsewh
 
    >>> graphop = compose(name='add_mul_graph')(add_op, mul_op)
 
-The functional specification is also useful if you want to create multiple ``operation`` instances from the same function, perhaps with different parameter values, e.g.::
+The functional specification is also useful if you want to create multiple ``operation``
+instances from the same function, perhaps with different parameter values, e.g.::
 
-   >>> from graphtik import operation, compose
+   >>> from functools import partial
 
    >>> def mypow(a, p=2):
    ...    return a ** p
 
    >>> pow_op1 = operation(name='pow_op1', needs=['a'], provides='a_squared')(mypow)
-   >>> pow_op2 = operation(name='pow_op2', needs=['a'], params={'p': 3}, provides='a_cubed')(mypow)
+   >>> pow_op2 = operation(name='pow_op2', needs=['a'], provides='a_cubed')(partial(mypow, p=3))
 
    >>> graphop = compose(name='two_pows_graph')(pow_op1, pow_op2)
 
 A slightly different approach can be used here to accomplish the same effect by creating an operation "factory"::
 
-   from graphtik import operation, compose
+   >>> def mypow(a, p=2):
+   ...    return a ** p
 
-   def mypow(a, p=2):
-      return a ** p
+   >>> pow_op_factory = operation(mypow, needs=['a'], provides='a_squared')
 
-   pow_op_factory = operation(mypow)
+   >>> pow_op1 = pow_op_factory(name='pow_op1')
+   >>> pow_op2 = pow_op_factory(name='pow_op2', provides='a_cubed', fn=partial(mypow, p=3))
 
-   pow_op1 = pow_op_factory(name='pow_op1', needs=['a'], provides='a_squared')
-   pow_op2 = pow_op_factory(name='pow_op2', needs=['a'], params={'p': 3}, provides='a_cubed')
+   >>> graphop = compose(name='two_pows_graph')(pow_op1, pow_op2)
+   >>> graphop({'a': 2})
+   {'a': 2, 'a_cubed': 8, 'a_squared': 4}
 
-   graphop = compose(name='two_pows_graph')(pow_op1, pow_op2)
+.. Note::
+   You cannot call again the factory to overwrite the *function*,
+   you have to use the ``fn=`` keyword.
 
 
 Modifiers on ``operation`` inputs and outputs

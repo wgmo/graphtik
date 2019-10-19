@@ -3,6 +3,7 @@
 
 import math
 import sys
+from functools import partial
 from operator import add, floordiv, mul, sub
 from pprint import pprint
 
@@ -56,12 +57,9 @@ def test_smoke_test():
 
     # Pow operation
     @operation(
-        name="pow_op1",
-        needs="sum_ab",
-        provides=["sum_ab_p1", "sum_ab_p2", "sum_ab_p3"],
-        params={"exponent": 3},
+        name="pow_op1", needs="sum_ab", provides=["sum_ab_p1", "sum_ab_p2", "sum_ab_p3"]
     )
-    def pow_op1(a, exponent=2):
+    def pow_op1(a, exponent=3):
         return [math.pow(a, y) for y in range(1, exponent + 1)]
 
     assert pow_op1.compute({"sum_ab": 2}, ["sum_ab_p2"]) == {"sum_ab_p2": 4.0}
@@ -115,6 +113,70 @@ def test_smoke_test():
         netop({"sum_ab": 1, "b": 2}, outputs="bad_node")
     with pytest.raises(ValueError, match="Unknown output node"):
         netop({"sum_ab": 1, "b": 2}, outputs=["b", "bad_node"])
+
+
+def test_network_plan_execute():
+    def powers_in_trange(a, exponent):
+        outputs = []
+        for y in range(1, exponent + 1):
+            p = math.pow(a, y)
+            outputs.append(p)
+        return outputs
+
+    sum_op1 = operation(name="sum1", provides=["sum_ab"], needs=["a", "b"])(add)
+    mul_op1 = operation(name="mul", provides=["sum_ab_times_b"], needs=["sum_ab", "b"])(
+        mul
+    )
+    pow_op1 = operation(
+        name="pow",
+        needs=["sum_ab", "exponent"],
+        provides=["sum_ab_p1", "sum_ab_p2", "sum_ab_p3"],
+    )(powers_in_trange)
+    sum_op2 = operation(
+        name="sum2", provides=["p1_plus_p2"], needs=["sum_ab_p1", "sum_ab_p2"]
+    )(add)
+
+    net = network.Network()
+    net.add_op(sum_op1)
+    net.add_op(mul_op1)
+    net.add_op(pow_op1)
+    net.add_op(sum_op2)
+    net.compile()
+
+    #
+    # Running the network
+    #
+
+    # get all outputs
+    exp = {
+        "a": 1,
+        "b": 2,
+        "exponent": 3,
+        "p1_plus_p2": 12.0,
+        "sum_ab": 3,
+        "sum_ab_p1": 3.0,
+        "sum_ab_p2": 9.0,
+        "sum_ab_p3": 27.0,
+        "sum_ab_times_b": 6,
+    }
+
+    inputs = {"a": 1, "b": 2, "exponent": 3}
+    plan = net.compile(outputs=None, inputs=inputs.keys())
+    sol = plan.execute(named_inputs=inputs)
+    assert sol == exp
+
+    # get specific outputs
+    exp = {"sum_ab_times_b": 6}
+    plan = net.compile(outputs=["sum_ab_times_b"], inputs=list(inputs))
+    sol = plan.execute(named_inputs=inputs)
+    assert sol == exp
+
+    # start with inputs already computed
+    inputs = {"sum_ab": 1, "b": 2, "exponent": 3}
+    exp = {"sum_ab_times_b": 2}
+    plan = net.compile(outputs=["sum_ab_times_b"], inputs=inputs)
+    sol = plan.execute(named_inputs={"sum_ab": 1, "b": 2})
+    assert sol == exp
 
 
 def test_network_simple_merge():
@@ -178,11 +240,8 @@ def test_network_merge_in_doctests():
         operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
         operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
         operation(
-            name="abspow1",
-            needs=["a_minus_ab"],
-            provides=["abs_a_minus_ab_cubed"],
-            params={"p": 3},
-        )(abspow),
+            name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"]
+        )(partial(abspow, p=3)),
     )
 
     another_graph = compose(name="another_graph")(
@@ -853,11 +912,8 @@ def test_multithreading_plan_execution():
         operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
         operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
         operation(
-            name="abspow1",
-            needs=["a_minus_ab"],
-            provides=["abs_a_minus_ab_cubed"],
-            params={"p": 3},
-        )(abspow),
+            name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"]
+        )(partial(abspow, p=3)),
     )
 
     pool = Pool(10)
@@ -969,11 +1025,8 @@ def test_compose_another_network(bools):
         operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
         operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
         operation(
-            name="abspow1",
-            needs=["a_minus_ab"],
-            provides=["abs_a_minus_ab_cubed"],
-            params={"p": 3},
-        )(abspow),
+            name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"]
+        )(partial(abspow, p=3)),
     )
     if parallel1:
         graphop.set_execution_method("parallel")

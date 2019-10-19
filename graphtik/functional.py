@@ -28,13 +28,11 @@ class FunctionalOperation(Operation):
                 for n in self.needs
                 if isinstance(n, optional) and n in named_inputs
             }
-            # Combine params and optionals into one big glob of keyword arguments.
-            kwargs = {k: v for d in (self.params, optionals) for k, v in d.items()}
 
             # Don't expect sideffect outputs.
             provides = [n for n in self.provides if not isinstance(n, sideffect)]
 
-            results = self.fn(*args, **kwargs)
+            results = self.fn(*args, **optionals)
 
             if not provides:
                 # All outputs were sideffects.
@@ -59,7 +57,7 @@ class FunctionalOperation(Operation):
                 operation="self",
                 args=lambda locs: {
                     "args": locs.get("args"),
-                    "kwargs": locs.get("kwargs"),
+                    "kwargs": locs.get("optionals"),
                 },
             )
 
@@ -88,10 +86,6 @@ class operation(Operation):
     :param list provides:
         Names of output data objects this operation provides.
 
-    :param dict params:
-        A dict of key/value pairs representing constant parameters
-        associated with your operation.  These can correspond to either
-        ``args`` or ``kwargs`` of ``fn``.
     """
 
     def __init__(self, fn=None, **kwargs):
@@ -118,9 +112,6 @@ class operation(Operation):
         assert hasattr(
             kwargs["fn"], "__call__"
         ), "operation was not provided with a callable"
-
-        if type(kwargs["params"]) is not dict:
-            kwargs["params"] = {}
 
         return kwargs
 
@@ -241,5 +232,5 @@ class compose(object):
             net.add_op(op)
 
         return NetworkOperation(
-            net, name=self.name, needs=needs, provides=provides, params={}, **kwargs
+            net, name=self.name, needs=needs, provides=provides, **kwargs
         )

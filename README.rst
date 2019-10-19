@@ -41,6 +41,7 @@ produces multiple outputs (``a * b``, ``a - a * b``, and
 ``abs(a - a * b) ** 3``)::
 
    >>> from operator import mul, sub
+   >>> from functools import partial
    >>> from graphtik import compose, operation
 
    >>> # Computes |a|^p.
@@ -53,7 +54,8 @@ Compose the ``mul``, ``sub``, and ``abspow`` functions into a computation graph:
    >>> graphop = compose(name="graphop")(
    ...     operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
    ...     operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
-   ...     operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"], params={"p": 3})(abspow)
+   ...     operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
+   ...     (partial(abspow, p=3))
    ... )
 
 

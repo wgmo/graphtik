@@ -14,9 +14,7 @@ from . import plot
 log = logging.getLogger(__name__)
 
 
-def jetsam(
-    ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
-):
+def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
     Annotate exception with salvaged values from locals() and raise!
 
@@ -122,7 +120,7 @@ def jetsam(
 class Operation(object):
     """An abstract class representing a data transformation by :meth:`.compute()`."""
 
-    def __init__(self, name=None, needs=None, provides=None, params=None, **kwargs):
+    def __init__(self, name=None, needs=None, provides=None, **kwargs):
         """
         Create a new layer instance.
         Names may be given to this layer and its inputs and outputs. This is
@@ -138,19 +136,12 @@ class Operation(object):
         :param list provides:
             Names of output data objects this provides.
 
-        :param dict params:
-            A dict of key/value pairs representing parameters
-            associated with your operation. These values will be
-            accessible using the ``.params`` attribute of your object.
-            NOTE: It's important that any values stored in this
-            argument must be pickelable.
         """
 
         # (Optional) names for this layer, and the data it needs and provides
         self.name = name
         self.needs = needs
         self.provides = provides
-        self.params = params or {}
 
         # call _after_init as final step of initialization
         self._after_init()
@@ -186,8 +177,8 @@ class Operation(object):
     def _after_init(self):
         """
         This method is a hook for you to override. It gets called after this
-        object has been initialized with its ``needs``, ``provides``, ``name``,
-        and ``params`` attributes. People often override this method to implement
+        object has been initialized with its ``name``, ``needs`` and ``provides``
+        attributes. People often override this method to implement
         custom loading logic required for objects that do not pickle easily, and
         for initialization of c++ dependencies.
         """
