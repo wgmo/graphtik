@@ -10,6 +10,6 @@ __title__ = "graphtik"
 __summary__ = __doc__.splitlines()[0]
 __uri__ = "https://github.com/pygraphkit/graphtik"
 
-from .functional import operation, compose
+from .operations import operation, compose
 from .modifiers import *  # noqa, on purpose to include any new modifiers
 

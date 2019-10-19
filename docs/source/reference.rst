@@ -14,10 +14,10 @@ Module: `base`
      :members:
      :undoc-members:
 
-Module: `functional`
+Module: `operations`
 ====================
 
-.. automodule:: graphtik.functional
+.. automodule:: graphtik.operations
      :members:
      :undoc-members:
 
