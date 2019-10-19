@@ -20,9 +20,7 @@ It can be used as is to build machine learning pipelines for data science projec
 It should be extendable to act as the core for a custom ETL engine or
 a workflow-processor for interdependent files and processes.
 
-.. note::
-    *Graphtik* is a temporary fork of `Graphkit <https://github.com/yahoo/graphkit>`_
-    to experiment with Python 3.6+ features.
+*Graphtik* sprang from `Graphkit`_ to experiment with Python 3.6+ features.
 
 .. toctree::
    :maxdepth: 3

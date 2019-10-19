@@ -18,9 +18,8 @@ It can be used as is to build machine learning pipelines for data science projec
 It should be extendable to act as the core for a custom ETL engine or
 a workflow-processor for interdependent files and processes.
 
-.. note:
-    *Graphtik* is a temporary fork of `Graphkit`_ to experiment with Python
-    3.6+ features.
+*Graphtik* sprang from `Graphkit`_ to experiment with Python 3.6+ features.
+
 
 Quick start
 -----------
@@ -67,15 +66,15 @@ Run the graph and request all of the outputs::
    >>> graphop({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
    {'a_minus_ab': -8}
 
-.. _Graphkit: https://github.com/yahoo/graphkit
-.. _`Graphviz`: https://graphviz.org
-
 .. |sample-plot| image:: docs/source/images/barebone_2ops
     :alt: sample graphtik plot
     :width: 120px
     :align: middle
 
 .. _substs:
+
+.. _Graphkit: https://github.com/yahoo/graphkit
+.. _`Graphviz`: https://graphviz.org
 
 .. |travis-status| image:: https://img.shields.io/travis/pygraphkit/graphtik
     :alt: Travis continuous integration testing ok? (Linux)
