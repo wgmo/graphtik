@@ -15,6 +15,10 @@ install:
 - make clean html
 - cd ..
 script:
+# OVERRIDE pytest-defaults adopted in `setup.cfg`:
+#
+# Run doctests in latest Python; certainly not < PY3.6 due to unstable dicts.
+# Also give `-m 'slow or not slow'` since `not slow` adopted in `setup.cfg`.
 - |
   if [[ "$TRAVIS_PYTHON_VERSION" = '3.7' ]]; then
     pytest --cov=graphtik -m 'slow or not slow' --log-level=DEBUG
@@ -26,7 +30,10 @@ script:
 deploy:
   provider: pypi
   user: __token__
-  password: "pypi-AgEIcHlwaS5vcmcCJDNjNDc4YzFiLTllZjAtNDcyZi1hYWRjLTU2YzRhMmVjMTMzOAACOXsicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJncmFwaHRpayJdfSwgInZlcnNpb24iOiAxfQAABiA7Xh6TmWlv3dMLtOkE7Izr8lG53cUQh14mbII4FtjPjg"
+  password:
+    secure: "hWcr/hdrk88VhCiu6a864EWv5kONGV/ZHnh2BlzbxirM+xZxbKX/ZLhoUNBBeOUGY3bRHLVcKqmOqoIQCqLvVADeLWEfEFyFSJOAUtFh8KFdGaXVeHFuWVRij5UFBeIfFlHuBwe9kLNTTmCCZwZjiA22rVaS8H6oLgV0kuw4tP6oWUkpZqUO8xl6wcDLQeoDyqHfy8f/9YhTmbEAEiPaojhSkUov4+koavmxASWOHcaSxCWxMJRLX6iWkh9OpsGKLZmvsonW9jDe5re139esvbJqV06r0ilpgNe0Il6De9is4eDKLnkom98PhWKlahfhIT7rFk3RA/j80Mq7lzkViO2h2qZ/bmGGW9O+c8RsNOQ7v4Bzql1dJbWYr4GYBDeiAxdyBdcakoQiu4wqQZ6wZcFNJeq+qPkM7xEu9+JfGq6yfB7usm67OAB6nio3wNHD2n16v86RiQMnlw78WEtWoYXDkcIZLeWKLTqSHJKAdJFwBJchs1eiL8L62mVSctopHOZksIdP849It3foYdDFv8T8sH8S2qKQ1oUnVVtAo31X3sqraSFbhlrkQlTnXgV/KksUidCEUwufHD5njscXlsiv5bi3LvxB1JEaa/bsKsWLlnmjQJvcLxaZwdrvS7g4fXA5kRE178q4UhrZjX0gwtP96U2boKJcCNfgTRwIUFU="
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
   on:
     repo: pygraphkit/graphtik
     branch: publish
