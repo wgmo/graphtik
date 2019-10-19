@@ -2,7 +2,7 @@ Graphtik
 ========
 
 |python-ver| |dev-status| |gh-version| |pypi-version| |travis-status|
-|doc-status| |cover-status| |downloads-count| |codestyle| |proj-lic|
+|doc-status| |cover-status| |codestyle| |proj-lic|
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
 
@@ -103,10 +103,6 @@ Run the graph and request all of the outputs::
 .. |dev-status| image:: https://pypip.in/status/graphtik/badge
     :target: https://pypi.python.org/pypi/graphtik/
     :alt: Development Status
-
-.. |downloads-count| image:: https://pypip.in/download/graphtik/badge.svg?period=month&label=PyPi%20downloads
-    :target: https://pypi.python.org/pypi/graphtik/
-    :alt: PyPi downloads
 
 .. |codestyle| image:: https://img.shields.io/badge/code%20style-black-black
     :target: https://github.com/ambv/black
