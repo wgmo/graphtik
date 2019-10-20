@@ -106,8 +106,8 @@ class operation:
         when called, it returns a :class:`FunctionalOperation`
 
     **Example:**
-    
-    Here it is an example of it use with the "builder pattern"::
+
+    This is an example of its use, based on the "builder pattern"::
 
         >>> from graphtik import operation
 
@@ -116,9 +116,9 @@ class operation:
         operation(name='add_op', needs=['a', 'b'], provides=None, fn=None)
         >>> opb.withset(provides='SUM', fn=sum)
         operation(name='add_op', needs=['a', 'b'], provides='SUM', fn='sum')
-    
-    You may keep calling ``withset()`` till you invoke ``__call__()`` on the builder;
-    then you get te actual :class:`Operation` instance::
+
+    You may keep calling ``withset()`` till you invoke a final ``__call__()``
+    on the builder;  then you get the actual :class:`.FunctionalOperation` instance::
 
         >>> # Create `Operation` and overwrite function at the last moment.
         >>> opb(sum)
@@ -130,7 +130,7 @@ class operation:
     def __init__(self, fn=None, *, name=None, needs=None, provides=None):
         self.withset(fn=fn, name=name, needs=needs, provides=provides)
 
-    def withset(self, *, fn=None, name=None, needs=None, provides=None):
+    def withset(self, fn=None, *, name=None, needs=None, provides=None):
         if fn is not None:
             self.fn = fn
         if name is not None:

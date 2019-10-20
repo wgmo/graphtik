@@ -117,7 +117,8 @@ instances from the same function, perhaps with different parameter values, e.g.:
 
    >>> graphop = compose(name='two_pows_graph')(pow_op1, pow_op2)
 
-A slightly different approach can be used here to accomplish the same effect by creating an operation "factory"::
+A slightly different approach can be used here to accomplish the same effect
+by creating an operation "builder pattern"::
 
    >>> def mypow(a, p=2):
    ...    return a ** p
@@ -125,15 +126,17 @@ A slightly different approach can be used here to accomplish the same effect by 
    >>> pow_op_factory = operation(mypow, needs=['a'], provides='a_squared')
 
    >>> pow_op1 = pow_op_factory(name='pow_op1')
-   >>> pow_op2 = pow_op_factory(name='pow_op2', provides='a_cubed', fn=partial(mypow, p=3))
+   >>> pow_op2 = pow_op_factory.withset(name='pow_op2', provides='a_cubed')(partial(mypow, p=3))
+   >>> pow_op3 = pow_op_factory(lambda a: 1, name='pow_op0')
 
-   >>> graphop = compose(name='two_pows_graph')(pow_op1, pow_op2)
+   >>> graphop = compose(name='two_pows_graph')(pow_op1, pow_op2, pow_op3)
    >>> graphop({'a': 2})
    {'a': 2, 'a_cubed': 8, 'a_squared': 4}
 
 .. Note::
    You cannot call again the factory to overwrite the *function*,
-   you have to use the ``fn=`` keyword.
+   you have to use either the ``fn=`` keyword with ``withset()`` method or
+   call once more.
 
 
 Modifiers on ``operation`` inputs and outputs
