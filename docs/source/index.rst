@@ -3,12 +3,15 @@
 Graphtik
 ========
 
-|python-ver| |dev-status| |release|, |today| |gh-version| |pypi-version|
+|python-ver| |dev-status| (|release|, |today|) |gh-version| |pypi-version|
 |travis-status| |doc-status| |cover-status| |codestyle| |proj-lic|
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
 
-**It's a DAG all the way down!** |sample-plot|
+.. epigraph::
+   It's a DAG all the way down!
+
+   |sample-plot|
 
 Lightweight computation graphs for Python
 -----------------------------------------

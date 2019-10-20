@@ -6,7 +6,11 @@ Graphtik
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
 
-   It’s a DAG all the way down
+.. epigraph::
+
+    It's a DAG all the way down!
+
+    |sample-plot|
 
 Lightweight computation graphs for Python
 -----------------------------------------

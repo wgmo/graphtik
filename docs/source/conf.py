@@ -18,6 +18,7 @@
 import io
 import os
 import re
+import subprocess as sbp
 import sys
 import packaging.version
 
@@ -72,6 +73,13 @@ try:
         version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 except FileNotFoundError:
     version = "0.0.0"
+version = f"src: {version}"
+
+try:
+    gitver = sbp.check_output('git describe --always'.split(), universal_newlines=True)
+    version = f"{version}, git: {gitver}"
+except Exception:
+    pass
 
 version_str = os.environ.get("TRAVIS_TAG", version)
 version_parse = packaging.version.parse(version_str)
@@ -155,7 +163,7 @@ html_theme_options = {}
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-# html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
