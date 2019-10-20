@@ -82,19 +82,6 @@ log = logging.getLogger(__name__)
 
 thread_pool: ContextVar[Pool] = ContextVar("thread_pool", default=Pool(7))
 
-if sys.version_info < (3, 6):
-    """
-    Consistently ordered variant of :class:`~networkx.DiGraph`.
-
-    PY3.6 has inmsertion-order dicts, but PY3.5 has not.
-    And behvavior *and TCs) in these environments may fail spuriously!
-    Still *subgraphs* may not patch!
-
-    Fix from:
-    https://networkx.github.io/documentation/latest/reference/classes/ordered.html#module-networkx.classes.ordered
-    """
-    from networkx import OrderedDiGraph as DiGraph
-
 
 class _DataNode(str):
     """

@@ -161,13 +161,6 @@ def _check_plt_img(img):
 def test_plot_matpotlib(pipeline, tmp_path):
     ## Try matplotlib Window, but # without opening a Window.
 
-    if sys.version_info < (3, 5):
-        # On PY< 3.5 it fails with:
-        #   nose.proxy.TclError: no display name and no $DISPLAY environment variable
-        # eg https://travis-ci.org/ankostis/graphtik/jobs/593957996
-        import matplotlib
-
-        matplotlib.use("Agg")
     # do not open window in headless travis
     img = pipeline.plot(show=-1)
     _check_plt_img(img)
