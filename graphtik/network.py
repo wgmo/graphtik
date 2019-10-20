@@ -68,6 +68,8 @@ import logging
 import sys
 import time
 from collections import defaultdict, namedtuple
+from contextvars import ContextVar
+from multiprocessing.dummy import Pool
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -78,6 +80,7 @@ from .modifiers import optional, sideffect
 
 log = logging.getLogger(__name__)
 
+thread_pool: ContextVar[Pool] = ContextVar("thread_pool", default=Pool(7))
 
 if sys.version_info < (3, 6):
     """
@@ -213,9 +216,7 @@ class ExecutionPlan(
         except Exception as ex:
             jetsam(ex, locals(), plan="self")
 
-    def _execute_thread_pool_barrier_method(
-        self, solution, overwrites, executed, thread_pool_size=10
-    ):
+    def _execute_thread_pool_barrier_method(self, solution, overwrites, executed):
         """
         This method runs the graph using a parallel pool of thread executors.
         You may achieve lower total latency if your graph is sufficiently
@@ -224,17 +225,12 @@ class ExecutionPlan(
         :param solution:
             must contain the input values only, gets modified
         """
-        from multiprocessing.dummy import Pool
-
         # Keep original inputs for pinning.
         pinned_values = {
             n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
         }
 
-        # if we have not already created a thread_pool, create one
-        if not hasattr(self.net, "_thread_pool"):
-            self.net._thread_pool = Pool(thread_pool_size)
-        pool = self.net._thread_pool
+        pool = thread_pool.get()
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
@@ -288,7 +284,6 @@ class ExecutionPlan(
             if len(upnext) == 0:
                 break
 
-            ## TODO: accept pool from caller
             done_iterator = pool.imap_unordered(
                 (lambda op: (op, self._call_operation(op, solution))), upnext
             )
