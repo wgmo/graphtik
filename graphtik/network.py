@@ -83,7 +83,7 @@ log = logging.getLogger(__name__)
 
 execution_configs: ContextVar[dict] = ContextVar(
     "execution_configs",
-    default={"thread_pool": Pool(7), "abort": False},
+    default={"thread_pool": Pool(7), "abort": False, "skip_evictions": False},
 )
 
 
@@ -101,6 +101,10 @@ def _reset_abort():
 
 def is_abort():
     return execution_configs.get()["abort"]
+
+
+def is_skip_evictions():
+    return execution_configs.get()["skip_evictions"]
 
 
 class _DataNode(str):
@@ -642,7 +646,7 @@ class Network(Plotter):
                 steps.append(node)
 
                 # NO EVICTIONS when no specific outputs asked.
-                if not outputs:
+                if not outputs or is_skip_evictions():
                     continue
 
                 # Add EVICT (1) for operation's needs.
