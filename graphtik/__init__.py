@@ -10,5 +10,6 @@ __title__ = "graphtik"
 __summary__ = __doc__.splitlines()[0]
 __uri__ = "https://github.com/pygraphkit/graphtik"
 
-from .nodes import operation, compose
 from .modifiers import *  # noqa, on purpose to include any new modifiers
+from .network import abort_run, AbortedException
+from .nodes import compose, operation

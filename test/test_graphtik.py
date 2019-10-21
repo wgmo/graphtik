@@ -10,9 +10,20 @@ from pprint import pprint
 import pytest
 
 import graphtik.network as network
-from graphtik import compose, operation, optional, sideffect
+from graphtik import (
+    abort_run,
+    AbortedException,
+    compose,
+    operation,
+    optional,
+    sideffect,
+)
 from graphtik.base import Operation
-from graphtik.network import _EvictInstruction
+
+
+@pytest.fixture(params=["sequential", "parallel"])
+def exemethod(request):
+    return request.param
 
 
 def scream(*args, **kwargs):
@@ -21,8 +32,8 @@ def scream(*args, **kwargs):
     )
 
 
-def identity(x):
-    return x
+def identity(*x):
+    return x[0] if len(x) == 1 else x
 
 
 def filtdict(d, *keys):
@@ -856,7 +867,7 @@ def test_evicted_optional():
 def test_evict_instructions_vary_with_inputs():
     # Check #21: _EvictInstructions positions vary when inputs change.
     def count_evictions(steps):
-        return sum(isinstance(n, _EvictInstruction) for n in steps)
+        return sum(isinstance(n, network._EvictInstruction) for n in steps)
 
     pipeline = compose(name="pipeline")(
         operation(name="a free without b", needs=["a"], provides=["aa"])(identity),
@@ -1048,3 +1059,23 @@ def test_compose_another_network(bools):
 
     sol = bigger_graph({"a": 2, "b": 5, "c": 5}, outputs=["a_minus_ab_minus_c"])
     assert sol == {"a_minus_ab_minus_c": -13}
+
+
+def test_abort(exemethod):
+    pipeline = compose(name="pipeline")(
+        operation(name="A", needs=["a"], provides=["b"])(identity),
+        operation(name="B", needs=["b"], provides=["c"])(lambda x: abort_run()),
+        operation(name="C", needs=["c"], provides=["d"])(identity),
+    )
+    pipeline.set_execution_method(exemethod)
+    with pytest.raises(AbortedException) as exinfo:
+        pipeline({"a": 1})
+    assert exinfo.value.jetsam["solution"] == {"a": 1, "b": 1, "c": None}
+    executed = {op.name: val for op, val in exinfo.value.args[0].items()}
+    assert executed == {"A": True, "B": True, "C": False}
+
+    pipeline = compose(name="pipeline")(
+        operation(name="A", needs=["a"], provides=["b"])(identity)
+    )
+    pipeline.set_execution_method(exemethod)
+    assert pipeline({"a": 1}) == {"a": 1, "b": 1}

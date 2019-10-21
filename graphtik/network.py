@@ -80,7 +80,27 @@ from .modifiers import optional, sideffect
 
 log = logging.getLogger(__name__)
 
-thread_pool: ContextVar[Pool] = ContextVar("thread_pool", default=Pool(7))
+
+execution_configs: ContextVar[dict] = ContextVar(
+    "execution_configs",
+    default={"thread_pool": Pool(7), "abort": False},
+)
+
+
+class AbortedException(Exception):
+    pass
+
+
+def abort_run():
+    execution_configs.get()["abort"] = True
+
+
+def _reset_abort():
+    execution_configs.get()["abort"] = False
+
+
+def is_abort():
+    return execution_configs.get()["abort"]
 
 
 class _DataNode(str):
@@ -195,6 +215,12 @@ class ExecutionPlan(
             overwrites[value_name] = solution[value_name]
         solution[value_name] = inputs[value_name]
 
+    def _check_if_aborted(self, executed):
+        if is_abort():
+            # Restore `abort` flag for next run.
+            _reset_abort()
+            raise AbortedException({s: s in executed for s in self.steps})
+
     def _call_operation(self, op, solution):
         # Although `plan` have added to jetsam in `compute()``,
         # add it again, in case compile()/execute is called separately.
@@ -217,12 +243,13 @@ class ExecutionPlan(
             n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
         }
 
-        pool = thread_pool.get()
+        pool = execution_configs.get()["thread_pool"]
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
         # results onto a memory solution for use upon the next iteration.
         while True:
+            self._check_if_aborted(executed)
 
             # the upnext list contains a list of operations for scheduling
             # in the current round of scheduling
@@ -293,6 +320,7 @@ class ExecutionPlan(
 
         self.times = {}
         for step in self.steps:
+            self._check_if_aborted(executed)
 
             if isinstance(step, Operation):
 
