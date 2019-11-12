@@ -10,6 +10,16 @@ See also :gg:`1`.
 + [ ] support functions with ``*args`` and ``**kwargs``.
 
 
+v2.1.1 (12 Oct 2019, @ankostis):
+=================================================================================================
+- BREAK: drop Python-3.6 compatibility.
+- FEAT: Use (possibly multiple) global configurations for all networks,
+  stored in a :class:`contextvars.ContextVar`.
+- ENH/BREAK: Use a (possibly) single `execution_pool` in global-configs.
+- feat: add `abort` flag in global-configs.
+- feat: add `skip_evictions` flag in global-configs.
+
+
 v2.1.0 (20 Oct 2019, @ankostis): DROP BW-compatible, Restruct modules/API, Plan perfect evictions
 =================================================================================================
 The first non pre-release for 2.x train.
