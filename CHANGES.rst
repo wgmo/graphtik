@@ -7,7 +7,6 @@ TODO
 See also :gg:`1`.
 
 + [ ] use a "start-node" to insert input-values in solution
-+ [ ] typo(test): overriden-->overriDDen
 + [ ] support functions with ``*args`` and ``**kwargs``.
 
 

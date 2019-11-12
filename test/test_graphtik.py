@@ -350,17 +350,17 @@ def test_pruning_raises_for_bad_output():
 def test_pruning_not_overrides_given_intermediate():
     # Test #25: v1.2.4 overwrites intermediate data when no output asked
     pipeline = compose(name="pipeline")(
-        operation(name="not run", needs=["a"], provides=["overriden"])(scream),
-        operation(name="op", needs=["overriden", "c"], provides=["asked"])(add),
+        operation(name="not run", needs=["a"], provides=["overidden"])(scream),
+        operation(name="op", needs=["overidden", "c"], provides=["asked"])(add),
     )
 
-    inputs = {"a": 5, "overriden": 1, "c": 2}
-    exp = {"a": 5, "overriden": 1, "c": 2, "asked": 3}
+    inputs = {"a": 5, "overidden": 1, "c": 2}
+    exp = {"a": 5, "overidden": 1, "c": 2, "asked": 3}
     # v1.2.4.ok
     assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
     # FAILs
-    # - on v1.2.4 with (overriden, asked): = (5, 7) instead of (1, 3)
-    # - on #18(unsatisfied) + #23(ordered-sets) with (overriden, asked) = (5, 7) instead of (1, 3)
+    # - on v1.2.4 with (overidden, asked): = (5, 7) instead of (1, 3)
+    # - on #18(unsatisfied) + #23(ordered-sets) with (overidden, asked) = (5, 7) instead of (1, 3)
     # FIXED on #26
     assert pipeline(inputs) == exp
 
@@ -394,27 +394,27 @@ def test_pruning_multiouts_not_override_intermediates1():
     # Test #25: v.1.2.4 overwrites intermediate data when a previous operation
     # must run for its other outputs (outputs asked or not)
     pipeline = compose(name="graph")(
-        operation(name="must run", needs=["a"], provides=["overriden", "calced"])(
+        operation(name="must run", needs=["a"], provides=["overidden", "calced"])(
             lambda x: (x, 2 * x)
         ),
-        operation(name="add", needs=["overriden", "calced"], provides=["asked"])(add),
+        operation(name="add", needs=["overidden", "calced"], provides=["asked"])(add),
     )
 
-    inputs = {"a": 5, "overriden": 1, "c": 2}
-    exp = {"a": 5, "overriden": 1, "calced": 10, "asked": 11}
+    inputs = {"a": 5, "overidden": 1, "c": 2}
+    exp = {"a": 5, "overidden": 1, "calced": 10, "asked": 11}
     # FAILs
-    # - on v1.2.4 with (overriden, asked) = (5, 15) instead of (1, 11)
+    # - on v1.2.4 with (overidden, asked) = (5, 15) instead of (1, 11)
     # - on #18(unsatisfied) + #23(ordered-sets) like v1.2.4.
     # FIXED on #26
-    assert pipeline({"a": 5, "overriden": 1}) == exp
+    assert pipeline({"a": 5, "overidden": 1}) == exp
     # FAILs
     # - on v1.2.4 with KeyError: 'e',
     # - on #18(unsatisfied) + #23(ordered-sets) with empty result.
     # FIXED on #26
     assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
-    # Plan must contain "overriden" step twice, for pin & evict.
+    # Plan must contain "overidden" step twice, for pin & evict.
     # Plot it to see, or check https://github.com/huyng/graphtik/pull/1#discussion_r334226396.
-    datasteps = [s for s in pipeline.last_plan.steps if s == "overriden"]
+    datasteps = [s for s in pipeline.last_plan.steps if s == "overidden"]
     assert len(datasteps) == 2
     assert isinstance(datasteps[0], network._PinInstruction)
     assert isinstance(datasteps[1], network._EvictInstruction)
@@ -423,18 +423,18 @@ def test_pruning_multiouts_not_override_intermediates1():
     #
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline({"a": 5, "overriden": 1}) == exp
-    assert overwrites == {"overriden": 5}
+    assert pipeline({"a": 5, "overidden": 1}) == exp
+    assert overwrites == {"overidden": 5}
 
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
     assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
-    assert overwrites == {"overriden": 5}
+    assert overwrites == {"overidden": 5}
 
     ## Test parallel
     #
     pipeline.set_execution_method("parallel")
-    assert pipeline({"a": 5, "overriden": 1}) == exp
+    assert pipeline({"a": 5, "overidden": 1}) == exp
     assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
 
 
@@ -449,17 +449,17 @@ def test_pruning_multiouts_not_override_intermediates2():
     # SPURIOUS FAILS in < PY3.6 due to unordered dicts,
     # eg https://travis-ci.org/ankostis/graphtik/jobs/594813119
     pipeline = compose(name="pipeline")(
-        operation(name="must run", needs=["a"], provides=["overriden", "e"])(
+        operation(name="must run", needs=["a"], provides=["overidden", "e"])(
             lambda x: (x, 2 * x)
         ),
-        operation(name="op1", needs=["overriden", "c"], provides=["d"])(add),
+        operation(name="op1", needs=["overidden", "c"], provides=["d"])(add),
         operation(name="op2", needs=["d", "e"], provides=["asked"])(mul),
     )
 
-    inputs = {"a": 5, "overriden": 1, "c": 2}
-    exp = {"a": 5, "overriden": 1, "c": 2, "d": 3, "e": 10, "asked": 30}
+    inputs = {"a": 5, "overidden": 1, "c": 2}
+    exp = {"a": 5, "overidden": 1, "c": 2, "d": 3, "e": 10, "asked": 30}
     # FAILs
-    # - on v1.2.4 with (overriden, asked) = (5, 70) instead of (1, 13)
+    # - on v1.2.4 with (overidden, asked) = (5, 70) instead of (1, 13)
     # - on #18(unsatisfied) + #23(ordered-sets) like v1.2.4.
     # FIXED on #26
     assert pipeline(inputs) == exp
@@ -474,12 +474,12 @@ def test_pruning_multiouts_not_override_intermediates2():
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
     assert pipeline(inputs) == exp
-    assert overwrites == {"overriden": 5}
+    assert overwrites == {"overidden": 5}
 
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
     assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
-    assert overwrites == {"overriden": 5}
+    assert overwrites == {"overidden": 5}
 
     ## Test parallel
     #
