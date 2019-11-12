@@ -65,9 +65,11 @@ class FunctionalOperation(Operation):
             results = zip(provides, results)
             if outputs:
                 outputs = set(n for n in outputs if not isinstance(n, sideffect))
-                results = filter(lambda x: x[0] in outputs, results)
+                results = {key: val for key, val in results if key in outputs}
+            else:
+                results = dict(results)
 
-            return dict(results)
+            return results
         except Exception as ex:
             jetsam(
                 ex,

@@ -299,7 +299,7 @@ class ExecutionPlan(
                         )
 
             # stop if no nodes left to schedule, exit out of the loop
-            if len(upnext) == 0:
+            if not upnext:
                 break
 
             done_iterator = pool.imap_unordered(
