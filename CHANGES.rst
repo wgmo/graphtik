@@ -4,14 +4,11 @@ Graphtik Changelog
 
 TODO
 ====
-See also :gg:`1`.
-
-+ [ ] use a "start-node" to insert input-values in solution
-+ [ ] support functions with ``*args`` and ``**kwargs``.
+See :gg:`1`.
 
 
-v2.1.1 (12 Oct 2019, @ankostis):
-=================================================================================================
+v2.1.1 (12 Nov 2019, @ankostis): global configs
+===============================================
 - BREAK: drop Python-3.6 compatibility.
 - FEAT: Use (possibly multiple) global configurations for all networks,
   stored in a :class:`contextvars.ContextVar`.
