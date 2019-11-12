@@ -81,9 +81,10 @@ from .modifiers import optional, sideffect
 log = logging.getLogger(__name__)
 
 
+#: Global configurations for all networks in some computaion.
 execution_configs: ContextVar[dict] = ContextVar(
     "execution_configs",
-    default={"thread_pool": Pool(7), "abort": False, "skip_evictions": False},
+    default={"execution_pool": Pool(7), "abort": False, "skip_evictions": False},
 )
 
 
@@ -247,7 +248,7 @@ class ExecutionPlan(
             n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
         }
 
-        pool = execution_configs.get()["thread_pool"]
+        pool = execution_configs.get()["execution_pool"]
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
