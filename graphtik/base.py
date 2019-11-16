@@ -154,9 +154,6 @@ class Operation(abc.ABC):
         self.needs = needs
         self.provides = provides
 
-        # call _after_init as final step of initialization
-        self._after_init()
-
     def __eq__(self, other):
         """
         Operation equality is based on name of layer.
@@ -212,16 +209,6 @@ class Operation(abc.ABC):
         if not isinstance(provides, (list, tuple)):
             raise ValueError(f"Bad `provides`, not (list, tuple): {provides!r}")
         self.provides = provides or ()
-
-    def _after_init(self):
-        """
-        This method is a hook for you to override. It gets called after this
-        object has been initialized with its ``name``, ``needs`` and ``provides``
-        attributes. People often override this method to implement
-        custom loading logic required for objects that do not pickle easily, and
-        for initialization of c++ dependencies.
-        """
-        pass
 
     def __repr__(self):
         """
