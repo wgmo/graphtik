@@ -3,7 +3,7 @@
 
 import pytest
 
-from graphtik import operation
+from graphtik import operation, optional
 from graphtik.op import Operation, reparse_operation_data
 
 
@@ -42,10 +42,24 @@ def test_operation_repr(opname, opneeds, opprovides):
 @pytest.mark.parametrize(
     "opargs, exp",
     [
-        ((None, None, None), ValueError("Empty `needs`")),
-        (("_", "a", "A"), ("_", ["a"], ["A"])),
-        (((), "a", None), ((), ["a"], ())),
+        ((None, None, None), ValueError("At least 1 non-optional")),
+        ## Check name
+        (("_", "a", ("A",)), ("_", ["a"], ("A",))),
+        (((), ("a",), None), ((), ("a",), [])),
         ((("a",), "a", "b"), (("a",), ["a"], ["b"])),
+        ((("a",), "a", "b"), (("a",), ["a"], ["b"])),
+        ## Check needs
+        (("", object(), None), ValueError("Argument 'needs' not an iterable")),
+        (("", [None], None), ValueError("All `needs` must be str")),
+        (("", [()], None), ValueError("All `needs` must be str")),
+        (("", optional("a"), None), ValueError("At least 1 non-optional `needs`")),
+        (("", [optional("a")], None), ValueError("At least 1 non-optional `needs`")),
+        ## Check provides
+        (((), "a", ()), ((), ["a"], ())),
+        (((), "a", []), ((), ["a"], [])),
+        (("", "a", object()), ValueError("Argument 'provides' not an iterable")),
+        (("", "a", (None,)), ValueError("All `provides` must be str")),
+        (("", "a", [()]), ValueError("All `provides` must be str")),
     ],
 )
 def test_operation_validation(opargs, exp):

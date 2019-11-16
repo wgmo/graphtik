@@ -20,7 +20,9 @@ def aslist(i, argname, allowed_types=list):
         try:
             i = list(i)
         except Exception as ex:
-            raise ValueError(f"Argument {argname!r} not an iterable, but {i!r}\n  {ex}")
+            raise ValueError(
+                f"Argument {argname!r} not an iterable, but {i!r}\n  {ex}"
+            ) from None
 
     return i
 

@@ -18,26 +18,21 @@ def reparse_operation_data(name, needs, provides):
     """
 
     if not isinstance(name, Hashable):
-        raise ValueError(f"Operation needs a hashable object as `name`, got: {name}")
+        raise ValueError(f"Operation `name` must be hashable, got: {name}")
 
-    # Allow single value for needs parameter
-    if isinstance(needs, str) and not isinstance(needs, optional):
-        needs = [needs]
-    if not needs:
-        raise ValueError(f"Empty `needs` given: {needs!r}")
-    if not all(n for n in needs):
-        raise ValueError(f"One item in `needs` is null: {needs!r}")
-    if not isinstance(needs, (list, tuple)):
-        raise ValueError(f"Bad `needs`, not (list, tuple): {needs!r}")
+    # Allow single string-value for needs parameter
+    needs = aslist(needs, "needs", allowed_types=(list, tuple))
+    if not all(isinstance(i, str) for i in needs):
+        raise ValueError(f"All `needs` must be str, got: {needs!r}")
+    if not sum(1 for i in needs if not isinstance(i, optional)):
+        raise ValueError(
+            f"At least 1 non-optional `needs` must be given, got: {needs!r}"
+        )
 
     # Allow single value for provides parameter
-    if isinstance(provides, str):
-        provides = [provides]
-    if provides and not all(n for n in provides):
-        raise ValueError(f"One item in `provides` is null: {provides!r}")
-    provides = provides or ()
-    if not isinstance(provides, (list, tuple)):
-        raise ValueError(f"Bad `provides`, not (list, tuple): {provides!r}")
+    provides = aslist(provides, "provides", allowed_types=(list, tuple))
+    if not all(isinstance(i, str) for i in provides):
+        raise ValueError(f"All `provides` must be str, got: {provides!r}")
 
     return name, needs, provides
 
