@@ -81,8 +81,8 @@ from .modifiers import optional, sideffect
 log = logging.getLogger(__name__)
 
 
-#: Global configurations for all networks in some computaion.
-execution_configs: ContextVar[dict] = ContextVar(
+#: Global configurations for all (nested) networks in a computaion run.
+_execution_configs: ContextVar[dict] = ContextVar(
     "execution_configs",
     default={"execution_pool": Pool(7), "abort": False, "skip_evictions": False},
 )
@@ -93,19 +93,23 @@ class AbortedException(Exception):
 
 
 def abort_run():
-    execution_configs.get()["abort"] = True
+    _execution_configs.get()["abort"] = True
 
 
 def _reset_abort():
-    execution_configs.get()["abort"] = False
+    _execution_configs.get()["abort"] = False
 
 
 def is_abort():
-    return execution_configs.get()["abort"]
+    return _execution_configs.get()["abort"]
+
+
+def set_evictions_skipped(skipped):
+    _execution_configs.get()["skip_evictions"] = skipped
 
 
 def is_skip_evictions():
-    return execution_configs.get()["skip_evictions"]
+    return _execution_configs.get()["skip_evictions"]
 
 
 class _DataNode(str):
@@ -248,7 +252,7 @@ class ExecutionPlan(
             n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
         }
 
-        pool = execution_configs.get()["execution_pool"]
+        pool = _execution_configs.get()["execution_pool"]
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their

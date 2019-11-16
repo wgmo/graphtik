@@ -11,5 +11,11 @@ __summary__ = __doc__.splitlines()[0]
 __uri__ = "https://github.com/pygraphkit/graphtik"
 
 from .modifiers import *  # noqa, on purpose to include any new modifiers
-from .network import abort_run, AbortedException
+from .network import (
+    AbortedException,
+    abort_run,
+    is_abort,
+    is_skip_evictions,
+    set_evictions_skipped,
+)
 from .nodes import compose, operation
