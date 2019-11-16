@@ -18,4 +18,5 @@ from .network import (
     is_skip_evictions,
     set_evictions_skipped,
 )
-from .nodes import compose, operation
+from .netop import compose
+from .op import operation

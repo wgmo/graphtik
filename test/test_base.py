@@ -7,7 +7,7 @@ import logging
 import pytest
 
 from graphtik import base, network, operation
-from graphtik.nodes import NetworkOperation
+from graphtik.netop import NetworkOperation
 
 
 @pytest.mark.parametrize("locs", [None, (), [], [0], "bad"])

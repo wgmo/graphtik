@@ -14,10 +14,17 @@ Module: `base`
      :members:
      :undoc-members:
 
-Module: `operations`
+Module: `op`
 ====================
 
-.. automodule:: graphtik.nodes
+.. automodule:: graphtik.op
+     :members:
+     :undoc-members:
+
+Module: `netop`
+====================
+
+.. automodule:: graphtik.netop
      :members:
      :undoc-members:
 

@@ -7,8 +7,8 @@ from operator import add
 import pytest
 
 from graphtik import base, compose, network, operation, plot
-from graphtik.nodes import NetworkOperation
 from graphtik.modifiers import optional
+from graphtik.netop import NetworkOperation
 
 
 @pytest.fixture

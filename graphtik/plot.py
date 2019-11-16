@@ -62,7 +62,8 @@ def build_pydot(
     See :meth:`Plotter.plot()` for the arguments, sample code, and
     the legend of the plots.
     """
-    from .nodes import NetworkOperation, Operation
+    from .op import Operation
+    from .netop import NetworkOperation
     from .modifiers import optional
     from .network import _EvictInstruction, _PinInstruction
 

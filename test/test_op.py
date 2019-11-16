@@ -4,7 +4,7 @@
 import pytest
 
 from graphtik import operation
-from graphtik.base import Operation
+from graphtik.op import Operation
 
 
 @pytest.fixture(params=[None, ["some"]])
