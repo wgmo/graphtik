@@ -444,11 +444,6 @@ class Network(Plotter):
         :param Operation operation: Operation object to add.
         """
 
-        # assert layer and its data requirements are named.
-        assert operation.name, "Operation must be named"
-        assert operation.needs is not None, "Operation's 'needs' must be named"
-        assert operation.provides is not None, "Operation's 'provides' must be named"
-
         # assert layer is only added once to graph
         assert operation not in self.graph.nodes, "Operation may only be added once"
 

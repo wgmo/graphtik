@@ -3,6 +3,7 @@
 """About operation nodes (but not net-ops to break cycle)."""
 
 import abc
+from collections.abc import Hashable
 
 from .base import Plotter, aslist, jetsam
 from .modifiers import optional, sideffect
@@ -16,8 +17,8 @@ def reparse_operation_data(name, needs, provides):
     when building operations and detect errors aearly.
     """
 
-    if not name:
-        raise ValueError(f"Operation needs a name, got: {name}")
+    if not isinstance(name, Hashable):
+        raise ValueError(f"Operation needs a hashable object as `name`, got: {name}")
 
     # Allow single value for needs parameter
     if isinstance(needs, str) and not isinstance(needs, optional):

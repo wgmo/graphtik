@@ -4,7 +4,7 @@
 import pytest
 
 from graphtik import operation
-from graphtik.op import Operation
+from graphtik.op import Operation, reparse_operation_data
 
 
 @pytest.fixture(params=[None, ["some"]])
@@ -37,3 +37,20 @@ def test_operation_repr(opname, opneeds, opprovides):
 
     op = MyOp(**kw)
     str(op)
+
+
+@pytest.mark.parametrize(
+    "opargs, exp",
+    [
+        ((None, None, None), ValueError("Empty `needs`")),
+        (("_", "a", "A"), ("_", ["a"], ["A"])),
+        (((), "a", None), ((), ["a"], ())),
+        ((("a",), "a", "b"), (("a",), ["a"], ["b"])),
+    ],
+)
+def test_operation_validation(opargs, exp):
+    if isinstance(exp, Exception):
+        with pytest.raises(type(exp), match=str(exp)):
+            reparse_operation_data(*opargs)
+    else:
+        assert reparse_operation_data(*opargs) == exp
