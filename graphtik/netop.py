@@ -7,8 +7,9 @@ from collections import abc
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Operation, Plotter, jetsam
 from .modifiers import optional
+from .network import Network
+from .op import Operation, Plotter, jetsam
 
 
 class NetworkOperation(Operation, Plotter):
@@ -175,9 +176,8 @@ class compose(object):
         # non-fully satisfied operations.
         needs = iset(optional(n) for op in operations for n in op.needs) - provides
 
-        # Build network
-        from .network import Network
-
+        ## Build network
+        #
         net = Network()
         for op in operations:
             net.add_op(op)

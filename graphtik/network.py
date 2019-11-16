@@ -75,8 +75,9 @@ import networkx as nx
 from boltons.setutils import IndexedSet as iset
 from networkx import DiGraph
 
-from .base import Operation, Plotter, jetsam
+from .base import Plotter, jetsam
 from .modifiers import optional, sideffect
+from .op import Operation
 
 log = logging.getLogger(__name__)
 

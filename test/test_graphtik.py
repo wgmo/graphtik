@@ -10,15 +10,9 @@ from pprint import pprint
 import pytest
 
 import graphtik.network as network
-from graphtik import (
-    abort_run,
-    AbortedException,
-    compose,
-    operation,
-    optional,
-    sideffect,
-)
-from graphtik.base import Operation
+from graphtik import (AbortedException, abort_run, compose, operation,
+                      optional, sideffect)
+from graphtik.op import Operation
 
 
 @pytest.fixture(params=["sequential", "parallel"])

@@ -4,7 +4,7 @@
 
 import abc
 
-from .base import Operation, Plotter, aslist, jetsam
+from .base import Plotter, aslist, jetsam
 from .modifiers import optional, sideffect
 
 
@@ -39,6 +39,71 @@ def reparse_operation_data(name, needs, provides):
         raise ValueError(f"Bad `provides`, not (list, tuple): {provides!r}")
 
     return name, needs, provides
+
+
+class Operation(abc.ABC):
+    """An abstract class representing a data transformation by :meth:`.compute()`."""
+
+    def __init__(self, name=None, needs=None, provides=None):
+        """
+        Create a new layer instance.
+        Names may be given to this layer and its inputs and outputs. This is
+        important when connecting layers and data in a Network object, as the
+        names are used to construct the graph.
+
+        :param str name:
+            The name the operation (e.g. conv1, conv2, etc..)
+
+        :param list needs:
+            Names of input data objects this layer requires.
+
+        :param list provides:
+            Names of output data objects this provides.
+
+        """
+
+        # (Optional) names for this layer, and the data it needs and provides
+        self.name = name
+        self.needs = needs
+        self.provides = provides
+
+    def __eq__(self, other):
+        """
+        Operation equality is based on name of layer.
+        (__eq__ and __hash__ must be overridden together)
+        """
+        return bool(self.name is not None and self.name == getattr(other, "name", None))
+
+    def __hash__(self):
+        """
+        Operation equality is based on name of layer.
+        (__eq__ and __hash__ must be overridden together)
+        """
+        return hash(self.name)
+
+    @abc.abstractmethod
+    def compute(self, named_inputs, outputs=None):
+        """
+        Compute from a given set of inputs an optional set of outputs.
+
+        :param list inputs:
+            A list of :class:`Data` objects on which to run the layer's
+            feed-forward computation.
+        :returns list:
+            Should return a list values representing
+            the results of running the feed-forward computation on
+            ``inputs``.
+        """
+        pass
+
+    def __repr__(self):
+        """
+        Display more informative names for the Operation class
+        """
+        clsname = type(self).__name__
+        needs = aslist(self.needs, "needs")
+        provides = aslist(self.provides, "provides")
+        return f"{clsname}(name={self.name!r}, needs={needs!r}, provides={provides!r})"
 
 
 class FunctionalOperation(Operation):
