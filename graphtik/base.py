@@ -9,10 +9,19 @@ log = logging.getLogger(__name__)
 from .modifiers import optional
 
 
-def aslist(i):
-    """utility used through out"""
-    if i and not isinstance(i, str):
-        return list(i)
+def aslist(i, argname, allowed_types=list):
+    """Utility to accept singular strings as lists, and None --> []."""
+    if not i:
+        return i if isinstance(i, allowed_types) else []
+
+    if isinstance(i, str):
+        i = [i]
+    elif not isinstance(i, allowed_types):
+        try:
+            i = list(i)
+        except Exception as ex:
+            raise ValueError(f"Argument {argname!r} not an iterable, but {i!r}\n  {ex}")
+
     return i
 
 
@@ -219,8 +228,8 @@ class Operation(abc.ABC):
         Display more informative names for the Operation class
         """
         clsname = type(self).__name__
-        needs = aslist(self.needs)
-        provides = aslist(self.provides)
+        needs = aslist(self.needs, "needs")
+        provides = aslist(self.provides, "provides")
         return f"{clsname}(name={self.name!r}, needs={needs!r}, provides={provides!r})"
 
 

@@ -21,8 +21,8 @@ class FunctionalOperation(Operation):
         """
         Display more informative names for the Operation class
         """
-        needs = aslist(self.needs)
-        provides = aslist(self.provides)
+        needs = aslist(self.needs, "needs")
+        provides = aslist(self.provides, "provides")
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         return f"FunctionalOperation(name={self.name!r}, needs={needs!r}, provides={provides!r}, fn={fn_name!r})"
 
@@ -112,9 +112,9 @@ class operation:
 
         >>> opb = operation(name='add_op')
         >>> opb.withset(needs=['a', 'b'])
-        operation(name='add_op', needs=['a', 'b'], provides=None, fn=None)
+        operation(name='add_op', needs=['a', 'b'], provides=[], fn=None)
         >>> opb.withset(provides='SUM', fn=sum)
-        operation(name='add_op', needs=['a', 'b'], provides='SUM', fn='sum')
+        operation(name='add_op', needs=['a', 'b'], provides=['SUM'], fn='sum')
 
     You may keep calling ``withset()`` till you invoke a final ``__call__()``
     on the builder;  then you get the actual :class:`.FunctionalOperation` instance::
@@ -172,8 +172,8 @@ class operation:
         """
         Display more informative names for the Operation class
         """
-        needs = aslist(self.needs)
-        provides = aslist(self.provides)
+        needs = aslist(self.needs, "needs")
+        provides = aslist(self.provides, "provides")
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         return f"operation(name={self.name!r}, needs={needs!r}, provides={provides!r}, fn={fn_name!r})"
 
