@@ -1,23 +1,20 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
+from collections import abc
+
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
 from .base import Operation, Plotter, aslist, jetsam
 from .modifiers import optional, sideffect
 
-try:
-    from collections import abc
-except ImportError:
-    import collections as abc
-
 
 class FunctionalOperation(Operation):
     """Use operation() to build instances of this class instead"""
 
-    def __init__(self, fn=None, **kwargs):
+    def __init__(self, fn=None, name=None, needs=None, provides=None):
         self.fn = fn
-        Operation.__init__(self, **kwargs)
+        Operation.__init__(self, name=name, needs=needs, provides=provides)
         self._validate()
 
     def __repr__(self):

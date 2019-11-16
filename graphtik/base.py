@@ -122,7 +122,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
 class Operation(abc.ABC):
     """An abstract class representing a data transformation by :meth:`.compute()`."""
 
-    def __init__(self, name=None, needs=None, provides=None, **kwargs):
+    def __init__(self, name=None, needs=None, provides=None):
         """
         Create a new layer instance.
         Names may be given to this layer and its inputs and outputs. This is
