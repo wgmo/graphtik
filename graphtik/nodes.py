@@ -9,13 +9,52 @@ from .base import Operation, Plotter, aslist, jetsam
 from .modifiers import optional, sideffect
 
 
+def reparse_operation_data(name, needs, provides):
+    """
+    Validate & reparse operation data as lists.
+
+    As a separate function to be reused by client code
+    when building operations and detect errors aearly.
+    """
+
+    if not name:
+        raise ValueError(f"Operation needs a name, got: {name}")
+
+    # Allow single value for needs parameter
+    if isinstance(needs, str) and not isinstance(needs, optional):
+        needs = [needs]
+    if not needs:
+        raise ValueError(f"Empty `needs` given: {needs!r}")
+    if not all(n for n in needs):
+        raise ValueError(f"One item in `needs` is null: {needs!r}")
+    if not isinstance(needs, (list, tuple)):
+        raise ValueError(f"Bad `needs`, not (list, tuple): {needs!r}")
+
+    # Allow single value for provides parameter
+    if isinstance(provides, str):
+        provides = [provides]
+    if provides and not all(n for n in provides):
+        raise ValueError(f"One item in `provides` is null: {provides!r}")
+    provides = provides or ()
+    if not isinstance(provides, (list, tuple)):
+        raise ValueError(f"Bad `provides`, not (list, tuple): {provides!r}")
+
+    return name, needs, provides
+
+
 class FunctionalOperation(Operation):
     """Use operation() to build instances of this class instead"""
 
     def __init__(self, fn=None, name=None, needs=None, provides=None):
         self.fn = fn
+        ## Set op-data early, for repr() to work on errors.
         Operation.__init__(self, name=name, needs=needs, provides=provides)
-        self._validate()
+        if not fn or not callable(fn):
+            raise ValueError(f"Operation was not provided with a callable: {self.fn}")
+        ## Overwrite reparsed op-data.
+        self.name, self.needs, self.provides = reparse_operation_data(
+            name, needs, provides
+        )
 
     def __repr__(self):
         """
@@ -25,11 +64,6 @@ class FunctionalOperation(Operation):
         provides = aslist(self.provides, "provides")
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         return f"FunctionalOperation(name={self.name!r}, needs={needs!r}, provides={provides!r}, fn={fn_name!r})"
-
-    def _validate(self):
-        super()._validate()
-        if not self.fn or not callable(self.fn):
-            raise ValueError(f"Operation was not provided with a callable: {self.fn}")
 
     def compute(self, named_inputs, outputs=None):
         try:

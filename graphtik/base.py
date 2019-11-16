@@ -183,33 +183,6 @@ class Operation(abc.ABC):
         """
         pass
 
-    def _validate(self):
-        if not self.name:
-            raise ValueError(f"Operation needs a name, got: {self.name}")
-
-        needs = self.needs
-        # Allow single value for needs parameter
-        if isinstance(needs, str) and not isinstance(needs, optional):
-            needs = [needs]
-        if not needs:
-            raise ValueError(f"Empty `needs` given: {needs!r}")
-        if not all(n for n in needs):
-            raise ValueError(f"One item in `needs` is null: {needs!r}")
-        if not isinstance(needs, (list, tuple)):
-            raise ValueError(f"Bad `needs`, not (list, tuple): {needs!r}")
-        self.needs = needs
-
-        # Allow single value for provides parameter
-        provides = self.provides
-        if isinstance(provides, str):
-            provides = [provides]
-        if provides and not all(n for n in provides):
-            raise ValueError(f"One item in `provides` is null: {provides!r}")
-        provides = provides or ()
-        if not isinstance(provides, (list, tuple)):
-            raise ValueError(f"Bad `provides`, not (list, tuple): {provides!r}")
-        self.provides = provides or ()
-
     def __repr__(self):
         """
         Display more informative names for the Operation class
