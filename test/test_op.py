@@ -42,18 +42,18 @@ def test_operation_repr(opname, opneeds, opprovides):
 @pytest.mark.parametrize(
     "opargs, exp",
     [
-        ((None, None, None), ValueError("At least 1 non-optional")),
+        ((None, None, None), (None, [], [])),
         ## Check name
         (("_", "a", ("A",)), ("_", ["a"], ("A",))),
         (((), ("a",), None), ((), ("a",), [])),
         ((("a",), "a", "b"), (("a",), ["a"], ["b"])),
-        ((("a",), "a", "b"), (("a",), ["a"], ["b"])),
+        ((("a",), None, None), (("a",), [], [])),
         ## Check needs
+        (((), (), None), ((), (), [])),
+        (((), [], None), ((), [], [])),
         (("", object(), None), ValueError("Argument 'needs' not an iterable")),
         (("", [None], None), ValueError("All `needs` must be str")),
         (("", [()], None), ValueError("All `needs` must be str")),
-        (("", optional("a"), None), ValueError("At least 1 non-optional `needs`")),
-        (("", [optional("a")], None), ValueError("At least 1 non-optional `needs`")),
         ## Check provides
         (((), "a", ()), ((), ["a"], ())),
         (((), "a", []), ((), ["a"], [])),

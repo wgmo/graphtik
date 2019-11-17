@@ -24,10 +24,6 @@ def reparse_operation_data(name, needs, provides):
     needs = aslist(needs, "needs", allowed_types=(list, tuple))
     if not all(isinstance(i, str) for i in needs):
         raise ValueError(f"All `needs` must be str, got: {needs!r}")
-    if not sum(1 for i in needs if not isinstance(i, optional)):
-        raise ValueError(
-            f"At least 1 non-optional `needs` must be given, got: {needs!r}"
-        )
 
     # Allow single value for provides parameter
     provides = aslist(provides, "provides", allowed_types=(list, tuple))
