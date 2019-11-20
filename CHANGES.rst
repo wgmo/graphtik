@@ -7,6 +7,24 @@ TODO
 See :gg:`1`.
 
 
+v2.2.0 (20 Nov 2019, @ankostis): enhance OPERATIONS & restruct their modules
+============================================================================
+- REFACT(src): split module ``nodes.py`` --> ``op.py`` + `netop.py` and
+  move :class:`Operation` from ``base.py`` --> ``op.py``, in order to break cycle
+  of `base(op) <-- net <-- netop`, and keep utils only in `base.py`.
+- ENH(op): allow Operations WITHOUT any NEEDS.
+- ENH(op): allow Operation FUNCTIONS to return directly Dictionaries.
+- ENH(op): validate function Results against operation `provides`;
+  *jetsam* now includes `results` variables: ``results_fn`` & ``results_op``.
+- BREAK(op): drop unused `Operation._after_init()` pickle-hook; use `dill` instead.
+- refact(op): convert :meth:`Operation._validate()` into a function,
+  to be called by clients wishing to automate operation construction.
+- refact(op): replace ``**kwargs`` with named-args in class:`FunctionalOperation`,
+  because it allowed too wide args, and offered no help to the user.
+- REFACT(configs): privatize :data:`network._execution_configs`; expose more
+  config-methods from base package.
+
+
 v2.1.1 (12 Nov 2019, @ankostis): global configs
 ===============================================
 - BREAK: drop Python-3.6 compatibility.
