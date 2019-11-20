@@ -80,9 +80,8 @@ class NetworkOperation(Operation, Plotter):
         except Exception as ex:
             jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
 
-    def __call__(
-        self, named_inputs, outputs=None, method=None, overwrites_collector=None
-    ) -> dict:
+    # TODO: def __call__(self, **kwargs) -> tuple:
+    def __call__(self, named_inputs, outputs=None) -> dict:
         return self.compute(named_inputs, outputs=outputs)
 
     def set_execution_method(self, method):
