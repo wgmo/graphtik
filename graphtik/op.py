@@ -128,7 +128,7 @@ class FunctionalOperation(Operation):
             f"provides={provides!r}, fn{returns_dict_marker}={fn_name!r})"
         )
 
-    def compute(self, named_inputs, outputs=None):
+    def compute(self, named_inputs, outputs=None) -> dict:
         try:
             args = [
                 named_inputs[n]
@@ -239,7 +239,7 @@ class operation:
 
     def withset(
         self, *, fn=None, name=None, needs=None, provides=None, returns_dict=None
-    ):
+    ) -> "operation":
         if fn is not None:
             self.fn = fn
         if name is not None:
@@ -255,7 +255,7 @@ class operation:
 
     def __call__(
         self, fn=None, *, name=None, needs=None, provides=None, returns_dict=None
-    ):
+    ) -> FunctionalOperation:
         """
         This enables ``operation`` to act as a decorator or as a functional
         operation, for example::

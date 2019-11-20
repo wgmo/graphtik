@@ -42,7 +42,7 @@ class NetworkOperation(Operation, Plotter):
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
-    def compute(self, named_inputs, outputs=None):
+    def compute(self, named_inputs, outputs=None) -> dict:
         """
         Solve & execute the graph, sequentially or parallel.
 
@@ -82,7 +82,7 @@ class NetworkOperation(Operation, Plotter):
 
     def __call__(
         self, named_inputs, outputs=None, method=None, overwrites_collector=None
-    ):
+    ) -> dict:
         return self.compute(named_inputs, outputs=outputs)
 
     def set_execution_method(self, method):
@@ -145,7 +145,7 @@ class compose(object):
         self.name = name
         self.merge = merge
 
-    def __call__(self, *operations, **kwargs):
+    def __call__(self, *operations, **kwargs) -> NetworkOperation:
         """
         Composes a collection of operations into a single computation graph,
         obeying the ``merge`` property, if set in the constructor.
