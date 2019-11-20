@@ -128,6 +128,12 @@ class FunctionalOperation(Operation):
             f"provides={provides!r}, fn{returns_dict_marker}={fn_name!r})"
         )
 
+    def _validate_results(self, results: dict, real_provides: list):
+        if set(results) != set(real_provides):
+            raise ValueError(
+                f"Results({results}) mismatched provides({real_provides})!\n  {self}"
+            )
+
     def compute(self, named_inputs, outputs=None) -> dict:
         try:
             args = [
@@ -151,18 +157,19 @@ class FunctionalOperation(Operation):
 
             if not provides:
                 # All outputs were sideffects?
-                return {}
+                results = {}
 
-            if not self.returns_dict:
+            elif not self.returns_dict:
                 if len(provides) == 1:
                     results = [results]
 
-                results = zip(provides, results)
-                if outputs:
-                    outputs = set(n for n in outputs if not isinstance(n, sideffect))
-                    results = {key: val for key, val in results if key in outputs}
-                else:
-                    results = dict(results)
+                results = dict(zip(provides, results))
+
+            self._validate_results(results, provides)
+
+            if outputs:
+                outputs = set(n for n in outputs if not isinstance(n, sideffect))
+                results = {key: val for key, val in results.items() if key in outputs}
 
             return results
         except Exception as ex:
