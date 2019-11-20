@@ -27,7 +27,7 @@ class MyOp(Operation):
         pass
 
 
-def test_operation_repr_smoke(opname, opneeds, opprovides):
+def test_repr_smoke(opname, opneeds, opprovides):
     # Simply check __repr__() does not crash on partial attributes.
     kw = locals().copy()
     kw = {name[2:]: arg for name, arg in kw.items()}
@@ -39,7 +39,7 @@ def test_operation_repr_smoke(opname, opneeds, opprovides):
     str(op)
 
 
-def test_operation_repr_returns_dict():
+def test_repr_returns_dict():
     assert (
         str(operation(lambda: None, returns_dict=True)())
         == "FunctionalOperation(name=None, needs=[], provides=[], fn{}='<lambda>')"
@@ -69,7 +69,7 @@ def test_operation_repr_returns_dict():
         (("", "a", [()]), ValueError("All `provides` must be str")),
     ],
 )
-def test_operation_validation(opargs, exp):
+def test_validation(opargs, exp):
     if isinstance(exp, Exception):
         with pytest.raises(type(exp), match=str(exp)):
             reparse_operation_data(*opargs)
@@ -77,7 +77,7 @@ def test_operation_validation(opargs, exp):
         assert reparse_operation_data(*opargs) == exp
 
 
-def test_operation_returns_dict():
+def test_returns_dict():
     result = {"a": 1}
 
     op = operation(lambda: result, provides="a", returns_dict=True)()
@@ -85,3 +85,31 @@ def test_operation_returns_dict():
 
     op = operation(lambda: 1, provides="a", returns_dict=False)()
     assert op.compute({}) == result
+
+
+@pytest.fixture(params=[None, ["a", "b"]])
+def asked_outputs(request):
+    return request.param
+
+
+@pytest.mark.parametrize(
+    "result", [None, 3.14, (), "", "foobar", ["b", "c", "e"], {"f"}]
+)
+def test_results_validation_iterable_BAD(result, asked_outputs):
+    op = operation(lambda: result, provides=["a", "b"], returns_dict=False)()
+    with pytest.raises(ValueError, match="Expected x2 ITERABLE results"):
+        op.compute({}, outputs=asked_outputs)
+
+
+@pytest.mark.parametrize("result", [None, 3.14, [], "foo", ["b", "c", "e"], {"a", "b"}])
+def test_dict_results_validation_BAD(result, asked_outputs):
+    op = operation(lambda: result, provides=["a", "b"], returns_dict=True)()
+    with pytest.raises(ValueError, match="Expected dict-results"):
+        op.compute({}, outputs=asked_outputs)
+
+
+@pytest.mark.parametrize("result", [{"a": 1}, {"a": 1, "b": 2, "c": 3}])
+def test_dict_results_validation_MISMATCH(result, asked_outputs):
+    op = operation(lambda: result, provides=["a", "b"], returns_dict=True)()
+    with pytest.raises(ValueError, match="mismatched provides"):
+        op.compute({}, outputs=asked_outputs)

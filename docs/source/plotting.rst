@@ -89,8 +89,9 @@ with the folllowing properties, as a debug aid:
  'outputs': None,
  'plan': ExecutionPlan(inputs=('a',), outputs=(), steps:
   +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')),
- 'provides': ['foo'],
- 'results': None,
+ 'provides': None,
+ 'results_fn': None,
+ 'results_op': None,
  'solution': {'a': None}}
 
 
@@ -123,9 +124,11 @@ The following annotated attributes *might* have meaningfull value on an exceptio
     the names eventually the graph needed from the operation;
     a subset of the above, and not always what has been declared in the operation.
 
-``results``
-    the values dict, if any; it maybe a *zip* of the provides
-    with the actual returned values of the function, ot the raw results.
+``fn_results``
+    the raw results of the operation's fuction, if any
+
+``op_results``
+    the results, always a dictionary, as matched with operation's `provides`
 
 ``executed```
     a set with the operation nodes & instructions executed till the error happened.

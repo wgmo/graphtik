@@ -138,7 +138,7 @@ def screaming_dumy_op():
                 operation(name="test", needs=["a"], provides=["b"])(_scream).compute,
                 named_inputs={"a": 1},
             ),
-            "outputs provides results operation args".split(),
+            "outputs provides results_fn results_op operation args".split(),
         ),
         (
             fnt.partial(
@@ -170,7 +170,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
                 operation(name="test", needs=["a"], provides=["b"])(_scream).compute,
                 named_inputs=None,
             ),
-            "outputs provides results operation args".split(),
+            "outputs provides results_fn results_op operation args".split(),
         ),
         (
             fnt.partial(

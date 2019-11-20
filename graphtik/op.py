@@ -3,10 +3,15 @@
 """About operation nodes (but not net-ops to break cycle)."""
 
 import abc
-from collections.abc import Hashable
+import logging
+from collections.abc import Hashable, Iterable, Mapping
+
+from boltons.setutils import IndexedSet as iset
 
 from .base import Plotter, aslist, jetsam
 from .modifiers import optional, sideffect
+
+log = logging.getLogger(__name__)
 
 
 def reparse_operation_data(name, needs, provides):
@@ -128,11 +133,43 @@ class FunctionalOperation(Operation):
             f"provides={provides!r}, fn{returns_dict_marker}={fn_name!r})"
         )
 
-    def _validate_results(self, results: dict, real_provides: list):
-        if set(results) != set(real_provides):
+    def _zip_results_with_provides(self, results, real_provides: iset) -> dict:
+        """Zip results with expected "real" (without sideffects) `provides`."""
+        if not real_provides:  # All outputs were sideffects?
+            if results:
+                ## Do not scream,
+                #  it is common to call a function for its sideffects,
+                # which happens to return an irrelevant value.
+                log.warning(
+                    "Ignoring result(%s) because no `provides` given!\n  %s",
+                    results,
+                    self,
+                )
+            results = {}
+        elif not self.returns_dict:
+            nexpected = len(real_provides)
+
+            if nexpected > 1 and (
+                not isinstance(results, Iterable) or len(results) != nexpected
+            ):
+                raise ValueError(
+                    f"Expected x{nexpected} ITERABLE results, got: {results}"
+                )
+
+            if nexpected == 1:
+                results = [results]
+
+            results = dict(zip(real_provides, results))
+
+        if self.returns_dict:
+            if not isinstance(results, Mapping):
+                raise ValueError(f"Expected dict-results, got: {results}\n  {self}")
+        if set(results) != real_provides:
             raise ValueError(
                 f"Results({results}) mismatched provides({real_provides})!\n  {self}"
             )
+
+        return results
 
     def compute(self, named_inputs, outputs=None) -> dict:
         try:
@@ -150,35 +187,27 @@ class FunctionalOperation(Operation):
                 if isinstance(n, optional) and n in named_inputs
             }
 
-            # Don't expect sideffect outputs.
-            provides = [n for n in self.provides if not isinstance(n, sideffect)]
+            results_fn = self.fn(*args, **optionals)
 
-            results = self.fn(*args, **optionals)
-
-            if not provides:
-                # All outputs were sideffects?
-                results = {}
-
-            elif not self.returns_dict:
-                if len(provides) == 1:
-                    results = [results]
-
-                results = dict(zip(provides, results))
-
-            self._validate_results(results, provides)
+            provides = iset(n for n in self.provides if not isinstance(n, sideffect))
+            results_op = self._zip_results_with_provides(results_fn, provides)
 
             if outputs:
                 outputs = set(n for n in outputs if not isinstance(n, sideffect))
-                results = {key: val for key, val in results.items() if key in outputs}
+                # Ignore sideffect outputs.
+                results_op = {
+                    key: val for key, val in results_op.items() if key in outputs
+                }
 
-            return results
+            return results_op
         except Exception as ex:
             jetsam(
                 ex,
                 locals(),
                 "outputs",
                 "provides",
-                "results",
+                "results_fn",
+                "results_op",
                 operation="self",
                 args=lambda locs: {
                     "args": locs.get("args"),

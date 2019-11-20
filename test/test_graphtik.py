@@ -10,8 +10,14 @@ from pprint import pprint
 import pytest
 
 import graphtik.network as network
-from graphtik import (AbortedException, abort_run, compose, operation,
-                      optional, sideffect)
+from graphtik import (
+    AbortedException,
+    abort_run,
+    compose,
+    operation,
+    optional,
+    sideffect,
+)
 from graphtik.op import Operation
 
 
