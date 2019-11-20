@@ -101,8 +101,11 @@ class Operation(abc.ABC):
 class FunctionalOperation(Operation):
     """Use operation() to build instances of this class instead"""
 
-    def __init__(self, fn=None, name=None, needs=None, provides=None):
+    def __init__(
+        self, fn=None, name=None, needs=None, provides=None, *, returns_dict=None
+    ):
         self.fn = fn
+        self.returns_dict = returns_dict
         ## Set op-data early, for repr() to work on errors.
         Operation.__init__(self, name=name, needs=needs, provides=provides)
         if not fn or not callable(fn):
@@ -119,7 +122,11 @@ class FunctionalOperation(Operation):
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
-        return f"FunctionalOperation(name={self.name!r}, needs={needs!r}, provides={provides!r}, fn={fn_name!r})"
+        returns_dict_marker = self.returns_dict and "{}" or ""
+        return (
+            f"FunctionalOperation(name={self.name!r}, needs={needs!r}, "
+            f"provides={provides!r}, fn{returns_dict_marker}={fn_name!r})"
+        )
 
     def compute(self, named_inputs, outputs=None):
         try:
@@ -143,18 +150,19 @@ class FunctionalOperation(Operation):
             results = self.fn(*args, **optionals)
 
             if not provides:
-                # All outputs were sideffects.
+                # All outputs were sideffects?
                 return {}
 
-            if len(provides) == 1:
-                results = [results]
+            if not self.returns_dict:
+                if len(provides) == 1:
+                    results = [results]
 
-            results = zip(provides, results)
-            if outputs:
-                outputs = set(n for n in outputs if not isinstance(n, sideffect))
-                results = {key: val for key, val in results if key in outputs}
-            else:
-                results = dict(results)
+                results = zip(provides, results)
+                if outputs:
+                    outputs = set(n for n in outputs if not isinstance(n, sideffect))
+                    results = {key: val for key, val in results if key in outputs}
+                else:
+                    results = dict(results)
 
             return results
         except Exception as ex:
@@ -190,6 +198,12 @@ class operation:
         correspond to the ``args`` of ``fn``.
     :param list provides:
         Names of output data objects this operation provides.
+        If more than one given, those must be returned in an iterable,
+        unless `returns_dict` is true, in which cae a dictionary with as many
+        elements must be returned
+    :param bool returns_dict:
+        if true, it means the `fn` returns a dictionary with all `provides`,
+        and no further processing is done on them.
 
     :return:
         when called, it returns a :class:`FunctionalOperation`
@@ -216,10 +230,16 @@ class operation:
 
     fn = name = needs = provides = None
 
-    def __init__(self, fn=None, *, name=None, needs=None, provides=None):
-        self.withset(fn=fn, name=name, needs=needs, provides=provides)
+    def __init__(
+        self, fn=None, *, name=None, needs=None, provides=None, returns_dict=None
+    ):
+        self.withset(
+            fn=fn, name=name, needs=needs, provides=provides, returns_dict=returns_dict
+        )
 
-    def withset(self, fn=None, *, name=None, needs=None, provides=None):
+    def withset(
+        self, *, fn=None, name=None, needs=None, provides=None, returns_dict=None
+    ):
         if fn is not None:
             self.fn = fn
         if name is not None:
@@ -228,10 +248,14 @@ class operation:
             self.needs = needs
         if provides is not None:
             self.provides = provides
+        if returns_dict is not None:
+            self.returns_dict = returns_dict
 
         return self
 
-    def __call__(self, fn=None, *, name=None, needs=None, provides=None):
+    def __call__(
+        self, fn=None, *, name=None, needs=None, provides=None, returns_dict=None
+    ):
         """
         This enables ``operation`` to act as a decorator or as a functional
         operation, for example::
@@ -254,7 +278,9 @@ class operation:
             composed into a computation graph.
         """
 
-        self.withset(fn=fn, name=name, needs=needs, provides=provides)
+        self.withset(
+            fn=fn, name=name, needs=needs, provides=provides, returns_dict=returns_dict
+        )
 
         return FunctionalOperation(**vars(self))
 

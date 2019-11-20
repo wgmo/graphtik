@@ -27,7 +27,7 @@ class MyOp(Operation):
         pass
 
 
-def test_operation_repr(opname, opneeds, opprovides):
+def test_operation_repr_smoke(opname, opneeds, opprovides):
     # Simply check __repr__() does not crash on partial attributes.
     kw = locals().copy()
     kw = {name[2:]: arg for name, arg in kw.items()}
@@ -37,6 +37,13 @@ def test_operation_repr(opname, opneeds, opprovides):
 
     op = MyOp(**kw)
     str(op)
+
+
+def test_operation_repr_returns_dict():
+    assert (
+        str(operation(lambda: None, returns_dict=True)())
+        == "FunctionalOperation(name=None, needs=[], provides=[], fn{}='<lambda>')"
+    )
 
 
 @pytest.mark.parametrize(
@@ -68,3 +75,13 @@ def test_operation_validation(opargs, exp):
             reparse_operation_data(*opargs)
     else:
         assert reparse_operation_data(*opargs) == exp
+
+
+def test_operation_returns_dict():
+    result = {"a": 1}
+
+    op = operation(lambda: result, provides="a", returns_dict=True)()
+    assert op.compute({}, ["a"]) == result
+
+    op = operation(lambda: 1, provides="a", returns_dict=False)()
+    assert op.compute({}, ["a"]) == result
