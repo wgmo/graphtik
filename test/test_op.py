@@ -81,7 +81,7 @@ def test_operation_returns_dict():
     result = {"a": 1}
 
     op = operation(lambda: result, provides="a", returns_dict=True)()
-    assert op.compute({}, ["a"]) == result
+    assert op.compute({}) == result
 
     op = operation(lambda: 1, provides="a", returns_dict=False)()
-    assert op.compute({}, ["a"]) == result
+    assert op.compute({}) == result
