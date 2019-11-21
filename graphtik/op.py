@@ -41,7 +41,7 @@ def reparse_operation_data(name, needs, provides):
 class Operation(abc.ABC):
     """An abstract class representing a data transformation by :meth:`.compute()`."""
 
-    def __init__(self, name=None, needs=None, provides=None):
+    def __init__(self, name, needs=None, provides=None):
         """
         Create a new layer instance.
         Names may be given to this layer and its inputs and outputs. This is
@@ -104,15 +104,17 @@ class Operation(abc.ABC):
 
 
 class FunctionalOperation(Operation):
-    """Use operation() to build instances of this class instead"""
+    """
+    An Operation performing a callable (ie function, method, lambda).
 
-    def __init__(
-        self, fn=None, name=None, needs=None, provides=None, *, returns_dict=None
-    ):
+    Use :class:`operation()` to build instances of this class instead.
+    """
+
+    def __init__(self, fn, name, needs=None, provides=None, *, returns_dict=None):
         self.fn = fn
         self.returns_dict = returns_dict
         ## Set op-data early, for repr() to work on errors.
-        Operation.__init__(self, name=name, needs=needs, provides=provides)
+        super().__init__(name, needs, provides)
         if not fn or not callable(fn):
             raise ValueError(f"Operation was not provided with a callable: {self.fn}")
         ## Overwrite reparsed op-data.
@@ -264,14 +266,14 @@ class operation:
         FunctionalOperation(name='add_op', needs=['a', 'b'], provides=['SUM'], fn='sum')
     """
 
-    fn = name = needs = provides = None
-
     def __init__(
         self, fn=None, *, name=None, needs=None, provides=None, returns_dict=None
     ):
-        self.withset(
-            fn=fn, name=name, needs=needs, provides=provides, returns_dict=returns_dict
-        )
+        self.fn = fn
+        self.name = name
+        self.needs = needs
+        self.provides = provides
+        self.returns_dict = returns_dict
 
     def withset(
         self, *, fn=None, name=None, needs=None, provides=None, returns_dict=None

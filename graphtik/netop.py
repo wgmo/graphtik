@@ -13,13 +13,21 @@ from .op import Operation, Plotter, jetsam
 
 
 class NetworkOperation(Operation, Plotter):
+    """
+    An Operation performing a network-graph of other operations.
+
+    Use :class:`compose()` to prepare the `net` and build instances of this class.
+    """
+
     #: The execution_plan of the last call to compute(), cached as debugging aid.
     last_plan = None
     #: set execution mode to single-threaded sequential by default
     method = None
     overwrites_collector = None
 
-    def __init__(self, net, method=None, overwrites_collector=None, **kwargs):
+    def __init__(
+        self, net, name, needs, provides, *, method=None, overwrites_collector=None
+    ):
         """
         :param method:
             either `parallel` or None (default);
@@ -33,7 +41,7 @@ class NetworkOperation(Operation, Plotter):
 
         """
         self.net = net
-        Operation.__init__(self, **kwargs)
+        super().__init__(name, needs, provides)
         self.set_execution_method(method)
         self.set_overwrites_collector(overwrites_collector)
 
@@ -145,7 +153,9 @@ class compose(object):
         self.name = name
         self.merge = merge
 
-    def __call__(self, *operations, **kwargs) -> NetworkOperation:
+    def __call__(
+        self, *operations, method=None, overwrites_collector=None
+    ) -> NetworkOperation:
         """
         Composes a collection of operations into a single computation graph,
         obeying the ``merge`` property, if set in the constructor.
@@ -193,5 +203,10 @@ class compose(object):
             net.add_op(op)
 
         return NetworkOperation(
-            net, name=self.name, needs=needs, provides=provides, **kwargs
+            net,
+            self.name,
+            needs,
+            provides,
+            method=method,
+            overwrites_collector=overwrites_collector,
         )
