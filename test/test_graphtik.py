@@ -21,7 +21,7 @@ from graphtik import (
 from graphtik.op import Operation
 
 
-@pytest.fixture(params=["sequential", "parallel"])
+@pytest.fixture(params=[None, "parallel"])
 def exemethod(request):
     return request.param
 
@@ -976,7 +976,7 @@ def test_parallel_execution():
     print(result_threaded)
 
     t0 = time.time()
-    pipeline.set_execution_method("sequential")
+    pipeline.set_execution_method(None)
     result_sequential = pipeline({"x": 10}, ["co", "go", "do"])
     print("sequential result")
     print(result_sequential)

@@ -16,12 +16,13 @@ class NetworkOperation(Operation, Plotter):
     #: The execution_plan of the last call to compute(), cached as debugging aid.
     last_plan = None
     #: set execution mode to single-threaded sequential by default
-    method = "sequential"
+    method = None
     overwrites_collector = None
 
-    def __init__(self, net, method="sequential", overwrites_collector=None, **kwargs):
+    def __init__(self, net, method=None, overwrites_collector=None, **kwargs):
         """
         :param method:
+            either `parallel` or None (default);
             if ``"parallel"``, launches multi-threading.
             Set when invoking a composed graph or by
             :meth:`~NetworkOperation.set_execution_method()`.
@@ -92,7 +93,7 @@ class NetworkOperation(Operation, Plotter):
             If "parallel", execute graph operations concurrently
             using a threadpool.
         """
-        choices = ["parallel", "sequential"]
+        choices = ["parallel", None]
         if method not in choices:
             raise ValueError(
                 "Invalid computation method %r!  Must be one of %s" % (method, choices)
@@ -152,6 +153,16 @@ class compose(object):
         :param operations:
             Each argument should be an operation instance created using
             ``operation``.
+
+        :param method:
+            either `parallel` or None (default);
+            if ``"parallel"``, launches multi-threading.
+            Set when invoking a composed graph or by
+            :meth:`~NetworkOperation.set_execution_method()`.
+
+        :param overwrites_collector:
+            (optional) a mutable dict to be fillwed with named values.
+            If missing, values are simply discarded.
 
         :return:
             Returns a special type of operation class, which represents an
