@@ -146,16 +146,27 @@ class compose(object):
         this ``compose`` instance).  If any two operations are the same
         (based on name), then that operation is computed only once, instead
         of multiple times (one for each time the operation appears).
+
+    :param method:
+        either `parallel` or None (default);
+        if ``"parallel"``, launches multi-threading.
+        Set when invoking a composed graph or by
+        :meth:`~NetworkOperation.set_execution_method()`.
+
+    :param overwrites_collector:
+        (optional) a mutable dict to be fillwed with named values.
+        If missing, values are simply discarded.
+
     """
 
-    def __init__(self, name=None, merge=False):
+    def __init__(self, name, *, merge=False, method=None, overwrites_collector=None):
         assert name, "compose needs a name"
         self.name = name
         self.merge = merge
+        self.method = method
+        self.overwrites_collector = overwrites_collector
 
-    def __call__(
-        self, *operations, method=None, overwrites_collector=None
-    ) -> NetworkOperation:
+    def __call__(self, *operations) -> NetworkOperation:
         """
         Composes a collection of operations into a single computation graph,
         obeying the ``merge`` property, if set in the constructor.
@@ -163,16 +174,6 @@ class compose(object):
         :param operations:
             Each argument should be an operation instance created using
             ``operation``.
-
-        :param method:
-            either `parallel` or None (default);
-            if ``"parallel"``, launches multi-threading.
-            Set when invoking a composed graph or by
-            :meth:`~NetworkOperation.set_execution_method()`.
-
-        :param overwrites_collector:
-            (optional) a mutable dict to be fillwed with named values.
-            If missing, values are simply discarded.
 
         :return:
             Returns a special type of operation class, which represents an
@@ -207,6 +208,6 @@ class compose(object):
             self.name,
             needs,
             provides,
-            method=method,
-            overwrites_collector=overwrites_collector,
+            method=self.method,
+            overwrites_collector=self.overwrites_collector,
         )
