@@ -58,13 +58,13 @@ def test_repr_returns_dict():
         ## Check needs
         (((), (), None), ((), (), [])),
         (((), [], None), ((), [], [])),
-        (("", object(), None), ValueError("Argument 'needs' not an iterable")),
+        (("", object(), None), ValueError("Cannot list-ize needs")),
         (("", [None], None), ValueError("All `needs` must be str")),
         (("", [()], None), ValueError("All `needs` must be str")),
         ## Check provides
         (((), "a", ()), ((), ["a"], ())),
         (((), "a", []), ((), ["a"], [])),
-        (("", "a", object()), ValueError("Argument 'provides' not an iterable")),
+        (("", "a", object()), ValueError("Cannot list-ize provides")),
         (("", "a", (None,)), ValueError("All `provides` must be str")),
         (("", "a", [()]), ValueError("All `provides` must be str")),
     ],

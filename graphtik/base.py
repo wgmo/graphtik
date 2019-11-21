@@ -20,9 +20,7 @@ def aslist(i, argname, allowed_types=list):
         try:
             i = list(i)
         except Exception as ex:
-            raise ValueError(
-                f"Argument {argname!r} not an iterable, but {i!r}\n  {ex}"
-            ) from None
+            raise ValueError(f"Cannot list-ize {argname}({i!r}) due to: {ex}") from None
 
     return i
 
@@ -242,9 +240,9 @@ class Plotter(abc.ABC):
         >>> dot = graphop.plot(solution=solution);   # just get the `pydoit.Dot` object, renderable in Jupyter
         >>> print(dot)
         digraph G {
-        fontname=italic;
-        label=graphop;
-        a [fillcolor=wheat, shape=invhouse, style=filled];
+          fontname=italic;
+          label=graphop;
+          a [fillcolor=wheat, shape=invhouse, style=filled];
         ...
         ...
         """
