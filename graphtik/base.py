@@ -242,7 +242,7 @@ class Plotter(abc.ABC):
         digraph G {
           fontname=italic;
           label=graphop;
-          a [fillcolor=wheat, shape=invhouse, style=filled];
+          a [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
         ...
         ...
         """

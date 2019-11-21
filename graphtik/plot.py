@@ -128,7 +128,9 @@ def build_pydot(
             if solution and nx_node in solution:
                 kw["style"] = "filled"
                 kw["fillcolor"] = fill_color
-                # kw["tooltip"] = str(solution.get(nx_node))  # not working :-()
+                ## NOTE: SVG tooltips not working without URL:
+                #  https://gitlab.com/graphviz/graphviz/issues/1425
+                kw["tooltip"] = str(solution.get(nx_node))
             node = pydot.Node(name=quote_dot_kws(nx_node), shape=shape, **kw)
         else:  # Operation
             kw = {"fontname": "italic"}
