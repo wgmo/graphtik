@@ -445,7 +445,8 @@ class Network(Plotter):
         """
 
         # assert layer is only added once to graph
-        assert operation not in self.graph.nodes, "Operation may only be added once"
+        if operation in self.graph.nodes:
+            raise ValueError(f"Operation {operation} may only be added once!")
 
         graph = self.graph
         self._cached_plans = {}
