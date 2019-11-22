@@ -1,6 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """ Plotting graphtik graps"""
+import inspect
 import io
 import logging
 import os
@@ -141,7 +142,13 @@ def build_pydot(
             if executed and nx_node in executed:
                 kw["style"] = "filled"
                 kw["fillcolor"] = fill_color
-            node = pydot.Node(name=quote_dot_kws(nx_node.name), shape=shape, **kw)
+            node = pydot.Node(
+                name=quote_dot_kws(nx_node.name),
+                shape=shape,
+                ## NOTE: Jupyter lab is bocking local-urls (e.g. on SVGs).
+                URL=f"file://{inspect.getfile(nx_node.fn)}",
+                **kw,
+            )
 
         _apply_user_props(node, node_props, key=node.get_name())
 
