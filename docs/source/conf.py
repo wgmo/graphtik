@@ -40,6 +40,7 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.imgmath",
     "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
 ]
 
 extlinks = {
@@ -60,8 +61,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"graphtik"
-copyright = u"2016, Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess"
+project = "graphtik"
+copyright = "2016, Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -76,7 +77,7 @@ except FileNotFoundError:
 version = f"src: {version}"
 
 try:
-    gitver = sbp.check_output('git describe --always'.split(), universal_newlines=True)
+    gitver = sbp.check_output("git describe --always".split(), universal_newlines=True)
     version = f"{version}, git: {gitver}"
 except Exception:
     pass
@@ -163,7 +164,7 @@ html_theme_options = {}
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = "%b %d, %Y"
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -224,8 +225,8 @@ latex_documents = [
     (
         "index",
         "graphtik.tex",
-        u"graphtik Documentation",
-        u"Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess",
+        "graphtik Documentation",
+        "Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess",
         "manual",
     )
 ]
@@ -259,9 +260,9 @@ man_pages = [
     (
         "index",
         "graphtik",
-        u"graphtik Documentation",
+        "graphtik Documentation",
         [
-            u"Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess"
+            "Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess"
         ],
         1,
     )
@@ -280,8 +281,8 @@ texinfo_documents = [
     (
         "index",
         "graphtik",
-        u"graphtik Documentation",
-        u"Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess",
+        "graphtik Documentation",
+        "Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess",
         "graphtik",
         "It's DAGs all the way down.",
         "Miscellaneous",
@@ -300,3 +301,10 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
 
+# Example configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {
+    ## `pydot` does not generate documentation
+    #   see https://github.com/pydot/pydot/issues/130
+    "pydot": ("https://pydotplus.readthedocs.io/", None),
+    "networkx": ("https://pydotplus.readthedocs.io/", None),
+}
