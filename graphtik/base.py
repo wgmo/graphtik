@@ -9,6 +9,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
+def ifnone(item, default):
+    return default if item is None else item
+
+
 def aslist(i, argname, allowed_types=list):
     """Utility to accept singular strings as lists, and None --> []."""
     if not i:
@@ -138,7 +142,15 @@ class Plotter(abc.ABC):
     The purpose is to avoid copying this function & documentation here around.
     """
 
-    def plot(self, filename=None, show=False, **kws):
+    def plot(
+        self,
+        filename=None,
+        show=False,
+        svg_pan_zoom_json=None,
+        svg_element_styles=None,
+        svg_container_styles=None,
+        **kws,
+    ):
         """
         Entry-point for plotting ready made operation graphs.
 
@@ -168,12 +180,27 @@ class Plotter(abc.ABC):
             an optional nested dict of Grapvhiz attributes for certain edges
         :param clusters:
             an optional mapping of nodes --> cluster-names, to group them
-
+        :param svg_pan_zoom_json:
+            arguments controlling the rendering of a zoomable SVG in
+            Jupyter notebooks, as defined in https://github.com/ariutta/svg-pan-zoom#how-to-use
+            Defaults apply if `None`; read about the defaults in :func:`.render_pydot()`.
+        :param svg_element_styles:
+            mostly for sizing the zoomable SVG in Jupyter notebooks.
+            Defaults apply if `None`; read about the defaults in :func:`.render_pydot()`, and
+            inspect & experiment on the html page of the notebook with browser tools.
+        :param svg_container_styles:
+            like `svg_element_styles`
         :return:
-            A ``pydot.Dot`` instance.
-            NOTE that the returned instance is monkeypatched to support
-            direct rendering in *jupyter cells* as SVG.
+            a `pydot.Dot <https://pypi.org/project/pydot/>`_ instance
 
+            .. Tip::
+                The :class:`pydot.Dot` instance returned is rendered directly
+                in *Jupyter/IPython* notebooks as SVG images.
+
+                You may increase the height of the SVG cell output with
+                something like this::
+
+                    graphop.plot(svg_element_styles="height: 600px; width: 100%")
 
         Note that the `graph` argument is absent - Each Plotter provides
         its own graph internally;  use directly :func:`.render_pydot()` to provide
@@ -251,7 +278,14 @@ class Plotter(abc.ABC):
         from .plot import render_pydot
 
         dot = self._build_pydot(**kws)
-        return render_pydot(dot, filename=filename, show=show)
+        return render_pydot(
+            dot,
+            filename=filename,
+            show=show,
+            svg_pan_zoom_json=svg_pan_zoom_json,
+            svg_element_styles=svg_element_styles,
+            svg_container_styles=svg_container_styles,
+        )
 
     @abc.abstractmethod
     def _build_pydot(self, **kws):

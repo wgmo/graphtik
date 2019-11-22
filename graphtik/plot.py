@@ -8,6 +8,8 @@ import os
 
 import pydot
 
+from .base import ifnone
+
 log = logging.getLogger(__name__)
 
 
@@ -34,15 +36,55 @@ def _report_unmatched_user_props(user_props, kind):
 
 
 def _monkey_patch_for_jupyter(pydot):
-    # Ensure Dot nstance render in Jupyter
-    # (see pydot/pydot#220)
-    if not hasattr(pydot.Dot, "_repr_svg_"):
+    """
+    Make Dot instance render in Jupyter notebooks.
+
+    .. Note::
+        Had to use ``_repr_html_()`` and not simply ``_repr_svg_()`` because
+        (due to https://github.com/jupyterlab/jupyterlab/issues/7497)
+
+    Old ``_repr_svg_()`` trick was suggested in https://github.com/pydot/pydot/issues/220.
+
+    .. TODO:
+        Render fully client-side with:
+        https://visjs.github.io/vis-network/docs/network/#importDot
+    """
+    import re
+    import textwrap
+
+    if not hasattr(pydot.Dot, "_repr_html_"):
 
         def make_svg(self):
-            return self.create_svg().decode()
+            ## Discard everything above and including `<svg>` element.
+            svg_txt = self.create_svg().decode()
+            m = re.search("<svg[^>]+>", svg_txt)
+            svg_txt = svg_txt[m.end() :]
+
+            html = f"""
+                <div class="svg_container">
+                    <style>
+                        .svg_container {{
+                            {self._svg_container_styles}
+                        }}
+                        .svg_container SVG {{
+                            {self._svg_element_styles}
+                        }}
+                    </style>
+                    <script src="http://ariutta.github.io/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
+                    <script type="text/javascript">
+                        var scriptTag = document.scripts[document.scripts.length - 1];
+                        var parentTag = scriptTag.parentNode;
+                        svg_el = parentTag.querySelector(".svg_container svg");
+                        svgPanZoom(svg_el, {self._svg_pan_zoom_json});
+                    </script>
+                    <svg>
+                        {svg_txt}
+                </div>
+            """
+            return html
 
         # monkey patch class
-        pydot.Dot._repr_svg_ = make_svg
+        pydot.Dot._repr_html_ = make_svg
 
 
 def build_pydot(
@@ -142,11 +184,16 @@ def build_pydot(
             if executed and nx_node in executed:
                 kw["style"] = "filled"
                 kw["fillcolor"] = fill_color
+            try:
+                kw["URL"] = f"file://{inspect.getfile(nx_node.fn)}"
+            except Exception as ex:
+                log.debug(
+                    "Ignoring error while inspecting file of %s: %s", nx_node.fn, ex
+                )
             node = pydot.Node(
                 name=quote_dot_kws(nx_node.name),
                 shape=shape,
                 ## NOTE: Jupyter lab is bocking local-urls (e.g. on SVGs).
-                URL=f"file://{inspect.getfile(nx_node.fn)}",
                 **kw,
             )
 
@@ -211,7 +258,14 @@ def supported_plot_formats():
     return [".%s" % f for f in pydot.Dot().formats]
 
 
-def render_pydot(dot, filename=None, show=False):
+def render_pydot(
+    dot,
+    filename=None,
+    show=False,
+    svg_pan_zoom_json: str = None,
+    svg_element_styles: str = None,
+    svg_container_styles: str = None,
+):
     """
     Plot a *Graphviz* dot in a matplotlib, in file or return it for Jupyter.
 
@@ -224,6 +278,22 @@ def render_pydot(dot, filename=None, show=False):
     :param show:
         If it evaluates to true, opens the  diagram in a  matplotlib window.
         If it equals `-1`, it returns the image but does not open the Window.
+    :param svg_pan_zoom_json:
+        arguments controlling the rendering of a zoomable SVG in
+        Jupyter notebooks, as defined in https://github.com/ariutta/svg-pan-zoom#how-to-use
+        if `None`, defaults to string::
+
+                {controlIconsEnabled: true, zoomScaleSensitivity: 0.4, fit: true}",
+
+    :param svg_element_styles:
+        mostly for sizing the zoomable SVG in Jupyter notebooks.
+        Inspect & experiment on the html page of the notebook with browser tools.
+        if `None`, defaults to string::
+
+            width: 100%; height: 300px;
+
+    :param svg_container_styles:
+        like `svg_element_styles`, if `None`, defaults to empty string.
 
     :return:
         the matplotlib image if ``show=-1``, or the `dot`.
@@ -259,11 +329,26 @@ def render_pydot(dot, filename=None, show=False):
 
         return img
 
+    ## Set properties for rendering in Jupyter as zoomable SVG
+    #
+    dot._svg_pan_zoom_json = ifnone(
+        svg_pan_zoom_json,
+        "{controlIconsEnabled: true, zoomScaleSensitivity: 0.4, fit: true}",
+    )
+    dot._svg_element_styles = ifnone(svg_element_styles, "width: 100%; height: 300px;")
+    dot._svg_container_styles = ifnone(svg_container_styles, "")
+
     return dot
 
 
-def legend(filename=None, show=None):
-    """Generate a legend for all plots (see Plotter.plot() for args)"""
+def legend(
+    filename=None,
+    show=None,
+    svg_pan_zoom_json: str = None,
+    svg_element_styles: str = None,
+    svg_container_styles: str = None,
+):
+    """Generate a legend for all plots (see :meth:`.Plotter.plot()` for args)"""
     import pydot
 
     _monkey_patch_for_jupyter(pydot)

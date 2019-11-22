@@ -171,8 +171,8 @@ def test_plot_jupyter(pipeline, tmp_path):
     ## Try returned  Jupyter SVG.
 
     dot = pipeline.plot()
-    s = dot._repr_svg_()
-    assert "SVG" in s
+    s = dot._repr_html_()
+    assert "<svg" in s.lower()
 
 
 def test_plot_legend(pipeline, tmp_path):

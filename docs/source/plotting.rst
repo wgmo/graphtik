@@ -52,8 +52,14 @@ If you want the bare-bone diagram, plot network::
       pip install graphtik[plot]
 
 .. Tip::
-   The `pydot.Dot <https://pypi.org/project/pydot/>`_ instances returned by ``plot()``
-   are rendered directly in *Jupyter/IPython* notebooks as SVG images.
+   The `pydot.Dot <https://pypi.org/project/pydot/>`_ instances returned by
+   :meth:`.Plotter.plot()` are rendered directly in *Jupyter/IPython* notebooks
+   as SVG images.
+
+   You may increase the height of the SVG cell output with something like this::
+
+        graphop.plot(svg_element_styles="height: 600px; width: 100%")
+
 
 
 .. _debugging:
