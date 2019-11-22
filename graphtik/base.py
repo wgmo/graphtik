@@ -133,13 +133,15 @@ class Plotter(abc.ABC):
     Classes wishing to plot their graphs should inherit this and ...
 
     implement property ``plot`` to return a "partial" callable that somehow
-    ends up calling  :func:`plot.render_pydot()` with the `graph` or any other
+    ends up calling  :func:`.plot.render_pydot()` with the `graph` or any other
     args binded appropriately.
     The purpose is to avoid copying this function & documentation here around.
     """
 
     def plot(self, filename=None, show=False, **kws):
         """
+        Entry-point for plotting ready made operation graphs.
+
         :param str filename:
             Write diagram into a file.
             Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
@@ -174,7 +176,7 @@ class Plotter(abc.ABC):
 
 
         Note that the `graph` argument is absent - Each Plotter provides
-        its own graph internally;  use directly :func:`render_pydot()` to provide
+        its own graph internally;  use directly :func:`.render_pydot()` to provide
         a different graph.
 
         .. image:: images/GraphtikLegend.svg
@@ -218,7 +220,7 @@ class Plotter(abc.ABC):
             execution steps labeled in succession
 
 
-        To generate the **legend**, see :func:`legend()`.
+        To generate the **legend**, see :func:`.legend()`.
 
         **Sample code:**
 
@@ -244,7 +246,7 @@ class Plotter(abc.ABC):
           label=graphop;
           a [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
         ...
-        ...
+
         """
         from .plot import render_pydot
 

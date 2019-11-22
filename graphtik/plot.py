@@ -60,7 +60,7 @@ def build_pydot(
     """
     Build a *Graphviz* out of a Network graph/steps/inputs/outputs and return it.
 
-    See :meth:`Plotter.plot()` for the arguments, sample code, and
+    See :meth:`.Plotter.plot()` for the arguments, sample code, and
     the legend of the plots.
     """
     from .op import Operation
@@ -228,7 +228,7 @@ def render_pydot(dot, filename=None, show=False):
     :return:
         the matplotlib image if ``show=-1``, or the `dot`.
 
-    See :meth:`Plotter.plot()` for sample code.
+    See :meth:`.Plotter.plot()` for sample code.
     """
     # TODO: research https://plot.ly/~empet/14007.embed
     # Save plot
