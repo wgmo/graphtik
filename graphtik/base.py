@@ -4,13 +4,9 @@
 
 import abc
 import logging
-
+from typing import Mapping, Union
 
 log = logging.getLogger(__name__)
-
-
-def ifnone(item, default):
-    return default if item is None else item
 
 
 def aslist(i, argname, allowed_types=list):
@@ -132,6 +128,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
     raise  # noqa #re-raise without ex-arg, not to insert my frame
 
 
+## Defined here, to avoid subclasses importig `plot` module.
 class Plotter(abc.ABC):
     """
     Classes wishing to plot their graphs should inherit this and ...
@@ -146,9 +143,7 @@ class Plotter(abc.ABC):
         self,
         filename=None,
         show=False,
-        svg_pan_zoom_json=None,
-        svg_element_styles=None,
-        svg_container_styles=None,
+        jupyter_render: Union[None, Mapping, str] = None,
         **kws,
     ):
         """
@@ -180,16 +175,11 @@ class Plotter(abc.ABC):
             an optional nested dict of Grapvhiz attributes for certain edges
         :param clusters:
             an optional mapping of nodes --> cluster-names, to group them
-        :param svg_pan_zoom_json:
-            arguments controlling the rendering of a zoomable SVG in
-            Jupyter notebooks, as defined in https://github.com/ariutta/svg-pan-zoom#how-to-use
-            Defaults apply if `None`; read about the defaults in :func:`.render_pydot()`.
-        :param svg_element_styles:
-            mostly for sizing the zoomable SVG in Jupyter notebooks.
-            Defaults apply if `None`; read about the defaults in :func:`.render_pydot()`, and
-            inspect & experiment on the html page of the notebook with browser tools.
-        :param svg_container_styles:
-            like `svg_element_styles`
+        :param jupyter_render:
+            a nested dictionary controlling the rendering of graph-plots in Jupyter cells,
+            if `None`, defaults to :data:`jupyter_render` (you may modify it in place
+            and apply for all future calls).
+
         :return:
             a `pydot.Dot <https://pypi.org/project/pydot/>`_ instance
 
@@ -201,6 +191,8 @@ class Plotter(abc.ABC):
                 something like this::
 
                     graphop.plot(svg_element_styles="height: 600px; width: 100%")
+
+                Check :data:`.default_jupyter_render` for defaults.
 
         Note that the `graph` argument is absent - Each Plotter provides
         its own graph internally;  use directly :func:`.render_pydot()` to provide
@@ -279,12 +271,7 @@ class Plotter(abc.ABC):
 
         dot = self._build_pydot(**kws)
         return render_pydot(
-            dot,
-            filename=filename,
-            show=show,
-            svg_pan_zoom_json=svg_pan_zoom_json,
-            svg_element_styles=svg_element_styles,
-            svg_container_styles=svg_container_styles,
+            dot, filename=filename, show=show, jupyter_render=jupyter_render
         )
 
     @abc.abstractmethod

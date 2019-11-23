@@ -58,8 +58,9 @@ If you want the bare-bone diagram, plot network::
 
    You may increase the height of the SVG cell output with something like this::
 
-        graphop.plot(svg_element_styles="height: 600px; width: 100%")
+        graphop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
 
+   Check :data:`.default_jupyter_render` for defaults.
 
 
 .. _debugging:
