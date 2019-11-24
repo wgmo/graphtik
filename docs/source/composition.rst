@@ -3,24 +3,24 @@
 Graph Composition
 =================
 
-Graphtik's ``compose`` class handles the work of tying together ``operation`` instances into a runnable computation graph.
+Graphtik's ``compose`` factory handles the work of tying together ``operation``
+instances into a runnable computation graph.
 
-The ``compose`` class
----------------------
+The ``compose`` factory
+-----------------------
 
 For now, here's the specification of ``compose``.  We'll get into how to use it in a second.
 
-.. autoclass:: graphtik.compose
-   :members: __call__
-   :special-members:
-
+.. autofunction:: graphtik.compose
 
 .. _simple-graph-composition:
 
 Simple composition of operations
 --------------------------------
 
-The simplest use case for ``compose`` is assembling a collection of individual operations into a runnable computation graph.  The example script from :ref:`quick-start` illustrates this well::
+The simplest use case for ``compose`` is assembling a collection of individual operations
+into a runnable computation graph.
+The example script from :ref:`quick-start` illustrates this well::
 
    >>> from operator import mul, sub
    >>> from functools import partial
@@ -32,14 +32,15 @@ The simplest use case for ``compose`` is assembling a collection of individual o
    ...    return c
 
    >>> # Compose the mul, sub, and abspow operations into a computation graph.
-   >>> graphop = compose(name="graphop")(
+   >>> graphop = compose("graphop",
    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
    ...    operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
    ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
    ...    (partial(abspow, p=3))
    ... )
 
-The call here to ``compose()`` yields a runnable computation graph that looks like this (where the circles are operations, squares are data, and octagons are parameters):
+The call here to ``compose()`` yields a runnable computation graph that looks like this
+(where the circles are operations, squares are data, and octagons are parameters):
 
 .. image:: images/barebone_3ops.svg
 
@@ -97,7 +98,7 @@ This is simple, since ``compose`` can compose whole graphs along with individual
 For example, if we have ``graph`` as above, we can add another operation to it to create a new graph::
 
    >>> # Add another subtraction operation to the graph.
-   >>> bigger_graph = compose(name="bigger_graph")(
+   >>> bigger_graph = compose("bigger_graph",
    ...    graphop,
    ...    operation(name="sub2", needs=["a_minus_ab", "c"], provides="a_minus_ab_minus_c")(sub)
    ... )
@@ -120,22 +121,22 @@ More complicated composition: merging computation graphs
 
 Sometimes you will have two computation graphs---perhaps ones that share operations---you want to combine into one.  In the simple case, where the graphs don't share operations or where you don't care whether a duplicated operation is run multiple (redundant) times, you can just do something like this::
 
-   combined_graph = compose(name="combined_graph")(graph1, graph2)
+   combined_graph = compose("combined_graph", graph1, graph2)
 
 However, if you want to combine graphs that share operations and don't want to pay the price of running redundant computations, you can set the ``merge`` parameter of ``compose()`` to ``True``.  This will consolidate redundant ``operation`` nodes (based on ``name``) into a single node.  For example, let's say we have ``graphop``, as in the examples above, along with this graph::
 
    >>> # This graph shares the "mul1" operation with graph.
-   >>> another_graph = compose(name="another_graph")(
+   >>> another_graph = compose("another_graph",
    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
    ...    operation(name="mul2", needs=["c", "ab"], provides=["cab"])(mul)
    ... )
 
 We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``mul1`` operation::
 
-   >>> merged_graph = compose(name="merged_graph", merge=True)(graphop, another_graph)
+   >>> merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
    >>> print(merged_graph)
    NetworkOperation(name='merged_graph',
-                    needs=[optional('a'), optional('b'), optional('c')],
+                    needs=['a', 'b', 'c'],
                     provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'])
 
 This ``merged_graph`` will look like this:

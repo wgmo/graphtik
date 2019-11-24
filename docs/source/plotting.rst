@@ -11,10 +11,10 @@ For :ref:`debugging` it is necessary to visualize the graph-operation.
 You may plot the original plot and annotate on top the *execution plan* and
 solution of the last computation, calling methods with arguments like this::
 
-   graphop.plot(show=True)                # open a matplotlib window
-   graphop.plot("graphop.svg")            # other supported formats: png, jpg, pdf, ...
-   graphop.plot()                         # without arguments return a pydot.DOT object
-   graphop.plot(solution=out)             # annotate graph with solution values
+   netop.plot(show=True)                # open a matplotlib window
+   netop.plot("netop.svg")            # other supported formats: png, jpg, pdf, ...
+   netop.plot()                         # without arguments return a pydot.DOT object
+   netop.plot(solution=out)             # annotate graph with solution values
 
 .. image:: images/executed_3ops.svg
     :alt: execution plan
@@ -58,7 +58,7 @@ If you want the bare-bone diagram, plot network::
 
    You may increase the height of the SVG cell output with something like this::
 
-        graphop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
+        netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
 
    Check :data:`.default_jupyter_render` for defaults.
 
@@ -81,8 +81,8 @@ with the folllowing properties, as a debug aid:
 ...     raise ValueError("Wrong!")
 
 >>> try:
-...     compose("errgraph")(
-...        operation(name="screamer", needs=['a'], provides=["foo"])(scream)
+...     compose("errgraph",
+...             operation(name="screamer", needs=['a'], provides=["foo"])(scream)
 ...     )({'a': None})
 ... except ValueError as ex:
 ...     pprint(ex.jetsam)

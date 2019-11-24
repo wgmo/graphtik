@@ -2,33 +2,50 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """About network-operations (those based on graphs)"""
 
+import copy
+import logging
 from collections import abc
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
+from .base import Plotter, aslist, jetsam
 from .modifiers import optional
 from .network import Network
-from .op import Operation, Plotter, jetsam
+from .op import Operation, reparse_operation_data
+
+log = logging.getLogger(__name__)
 
 
 class NetworkOperation(Operation, Plotter):
     """
     An Operation performing a network-graph of other operations.
 
-    Use :class:`compose()` to prepare the `net` and build instances of this class.
+    Use :func:`compose()` to prepare the `net` and build instances of this class.
     """
 
-    #: The execution_plan of the last call to compute(), cached as debugging aid.
-    last_plan = None
     #: set execution mode to single-threaded sequential by default
     method = None
     overwrites_collector = None
+    #: The execution_plan of the last call to compute(),
+    #: stored as debugging aid.
+    last_plan = None
 
     def __init__(
-        self, net, name, needs, provides, *, method=None, overwrites_collector=None
+        self,
+        net,
+        name,
+        *,
+        needs=None,
+        provides=None,
+        method=None,
+        overwrites_collector=None,
     ):
         """
+        :param needs:
+            if not None, network is pruned to consume just these
+        :param provides:
+            if not None, network is pruned to produce just these
         :param method:
             either `parallel` or None (default);
             if ``"parallel"``, launches multi-threading.
@@ -41,9 +58,61 @@ class NetworkOperation(Operation, Plotter):
 
         """
         self.net = net
+        ## Set data asap, for debugging, although `prune()` will reset them.
         super().__init__(name, needs, provides)
         self.set_execution_method(method)
         self.set_overwrites_collector(overwrites_collector)
+        self._prune(needs, provides)
+        self.name, self.needs, self.provides = reparse_operation_data(
+            self.name, self.needs, self.provides
+        )
+
+    def copy(self, needs=None, provides=None):
+        """
+        Makes a copy with a network pruned for the given `needs` & `provides`.
+
+        If both `needs` & `provides` are `None`, they are compiled from the net.
+        """
+        netop = copy.copy(self)
+        netop.net = netop.net.copy()
+        netop.last_plan = None
+
+        netop._prune(needs, provides)
+
+        return netop
+
+    def _prune(self, needs=None, provides=None):
+        """
+        Prunes internal network  for the given `needs` & `provides`.
+
+        - If both `needs` & `provides` are `None`, they are compiled from the net.
+        - Private to discourage mutating callables - use :meth:`copy()`.
+        """
+        operations = [op for op in self.net.graph.nodes if isinstance(op, Operation)]
+        all_provides = iset(p for op in operations for p in op.provides)
+        all_needs = iset(n for op in operations for n in op.needs) - all_provides
+
+        if needs is None and provides is None:
+            self.needs = all_needs
+            self.provides = all_provides
+        else:
+            plan = self.net.compile(needs, provides, skip_cache_update=True)
+            self.net.graph.remove_nodes_from(plan.steps)
+
+            if needs is not None:
+                needs = aslist(needs, "needs")
+                unknown = iset(needs) - all_needs
+                if unknown:
+                    log.warning("Unused `needs`: %s", unknown)
+                self.needs = needs
+
+            if provides is not None:
+                provides = aslist(provides, "provides")
+                assert set(provides) < all_provides, (
+                    "Expected compile() above to have detected unknown outputs!",
+                    iset(provides) - all_provides,
+                )
+                self.provides = provides
 
     def _build_pydot(self, **kws):
         """delegate to network"""
@@ -127,13 +196,28 @@ class NetworkOperation(Operation, Plotter):
         self.overwrites_collector = collector
 
 
-class compose(object):
+def compose(
+    name,
+    op1,
+    *operations,
+    needs=None,
+    provides=None,
+    merge=False,
+    method=None,
+    overwrites_collector=None,
+) -> NetworkOperation:
     """
-    This is a simple class that's used to compose ``operation`` instances into
-    a computation graph.
+    Composes a collection of operations into a single computation graph,
+    obeying the ``merge`` property, if set in the constructor.
 
     :param str name:
-        A name for the graph being composed by this object.
+        A optional name for the graph being composed by this object.
+
+    :param op1:
+        syntactically force at least 1 operation
+    :param operations:
+        Each argument should be an operation instance created using
+        ``operation``.
 
     :param bool merge:
         If ``True``, this compose object will attempt to merge together
@@ -157,57 +241,36 @@ class compose(object):
         (optional) a mutable dict to be fillwed with named values.
         If missing, values are simply discarded.
 
+    :return:
+        Returns a special type of operation class, which represents an
+        entire computation graph as a single operation.
     """
+    operations = (op1,) + operations
+    if not all(isinstance(op, Operation) for op in operations):
+        raise ValueError(f"Non-Operation instances given: {operations}")
 
-    def __init__(self, name, *, merge=False, method=None, overwrites_collector=None):
-        assert name, "compose needs a name"
-        self.name = name
-        self.merge = merge
-        self.method = method
-        self.overwrites_collector = overwrites_collector
-
-    def __call__(self, *operations) -> NetworkOperation:
-        """
-        Composes a collection of operations into a single computation graph,
-        obeying the ``merge`` property, if set in the constructor.
-
-        :param operations:
-            Each argument should be an operation instance created using
-            ``operation``.
-
-        :return:
-            Returns a special type of operation class, which represents an
-            entire computation graph as a single operation.
-        """
-        assert len(operations), "no operations provided to compose"
-
-        # If merge is desired, deduplicate operations before building network
-        if self.merge:
-            merge_set = iset()  # Preseve given node order.
-            for op in operations:
-                if isinstance(op, NetworkOperation):
-                    netop_nodes = nx.topological_sort(op.net.graph)
-                    merge_set.update(s for s in netop_nodes if isinstance(s, Operation))
-                else:
-                    merge_set.add(op)
-            operations = merge_set
-
-        provides = iset(p for op in operations for p in op.provides)
-        # Mark them all as optional, now that #18 calmly ignores
-        # non-fully satisfied operations.
-        needs = iset(optional(n) for op in operations for n in op.needs) - provides
-
-        ## Build network
-        #
-        net = Network()
+    # If merge is desired, deduplicate operations before building network
+    if merge:
+        merge_set = iset()  # Preseve given node order.
         for op in operations:
-            net.add_op(op)
+            if isinstance(op, NetworkOperation):
+                netop_nodes = nx.topological_sort(op.net.graph)
+                merge_set.update(s for s in netop_nodes if isinstance(s, Operation))
+            else:
+                merge_set.add(op)
+        operations = merge_set
 
-        return NetworkOperation(
-            net,
-            self.name,
-            needs,
-            provides,
-            method=self.method,
-            overwrites_collector=self.overwrites_collector,
-        )
+    ## Build network
+    #
+    net = Network()
+    for op in operations:
+        net.add_op(op)
+
+    return NetworkOperation(
+        net,
+        name,
+        needs=needs,
+        provides=provides,
+        method=method,
+        overwrites_collector=overwrites_collector,
+    )

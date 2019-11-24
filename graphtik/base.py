@@ -190,7 +190,7 @@ class Plotter(abc.ABC):
                 You may increase the height of the SVG cell output with
                 something like this::
 
-                    graphop.plot(svg_element_styles="height: 600px; width: 100%")
+                    netop.plot(svg_element_styles="height: 600px; width: 100%")
 
                 Check :data:`.default_jupyter_render` for defaults.
 
@@ -247,22 +247,22 @@ class Plotter(abc.ABC):
         >>> from graphtik.modifiers import optional
         >>> from operator import add
 
-        >>> graphop = compose(name="graphop")(
+        >>> netop = compose("netop",
         ...     operation(name="add", needs=["a", "b1"], provides=["ab1"])(add),
         ...     operation(name="sub", needs=["a", optional("b2")], provides=["ab2"])(lambda a, b=1: a-b),
         ...     operation(name="abb", needs=["ab1", "ab2"], provides=["asked"])(add),
         ... )
 
-        >>> graphop.plot(show=True);           # plot just the graph in a matplotlib window # doctest: +SKIP
+        >>> netop.plot(show=True);           # plot just the graph in a matplotlib window # doctest: +SKIP
         >>> inputs = {'a': 1, 'b1': 2}
-        >>> solution = graphop(inputs)           # now plots will include the execution-plan
+        >>> solution = netop(inputs)           # now plots will include the execution-plan
 
-        >>> graphop.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);           # doctest: +SKIP
-        >>> dot = graphop.plot(solution=solution);   # just get the `pydoit.Dot` object, renderable in Jupyter
+        >>> netop.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);           # doctest: +SKIP
+        >>> dot = netop.plot(solution=solution);   # just get the `pydoit.Dot` object, renderable in Jupyter
         >>> print(dot)
         digraph G {
           fontname=italic;
-          label=graphop;
+          label=netop;
           a [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
         ...
 

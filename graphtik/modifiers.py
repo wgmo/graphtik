@@ -29,12 +29,12 @@ class optional(str):
         ...    return a + b + c
 
         >>> # Designate c as an optional argument.
-        >>> graph = compose('mygraph')(
+        >>> graph = compose('mygraph',
         ...     operation(name='myadd', needs=['a', 'b', optional('c')], provides='sum')(myadd)
         ... )
         >>> graph
         NetworkOperation(name='mygraph',
-                         needs=[optional('a'), optional('b'), optional('c')],
+                         needs=['a', 'b', optional('c')],
                          provides=['sum'])
 
         >>> # The graph works with and without 'c' provided as input.
@@ -79,14 +79,14 @@ class sideffect(str):
         ...    df['sum'] = df['a'] + df['b']
 
         >>> # Designate `a`, `b` & `sum` column names as an sideffect arguments.
-        >>> graph = compose('mygraph')(
+        >>> graph = compose('mygraph',
         ...     operation(
         ...         name='addcolumns',
         ...         needs=['df', sideffect('a'), sideffect('b')],
         ...         provides=[sideffect('sum')])(addcolumns)
         ... )
         >>> graph
-        NetworkOperation(name='mygraph', needs=[optional('df'), optional('sideffect(a)'), optional('sideffect(b)')], provides=['sideffect(sum)'])
+        NetworkOperation(name='mygraph', needs=['df', 'sideffect(a)', 'sideffect(b)'], provides=['sideffect(sum)'])
 
         >>> # The graph works with and without 'c' provided as input.
         >>> df = pd.DataFrame({'a': [5], 'b': [2]})         # doctest: +SKIP

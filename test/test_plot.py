@@ -14,7 +14,8 @@ from graphtik.netop import NetworkOperation
 
 @pytest.fixture
 def pipeline():
-    return compose(name="netop")(
+    return compose(
+        "netop",
         operation(name="add", needs=["a", "b1"], provides=["ab1"])(add),
         operation(name="sub", needs=["a", optional("b2")], provides=["ab2"])(
             lambda a, b=1: a - b

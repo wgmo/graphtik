@@ -53,7 +53,7 @@ Let's look again at the operations from the script in :ref:`quick-start`, for ex
    ...   return c
 
    >>> # Compose the mul, sub, and abspow operations into a computation graph.
-   >>> graphop = compose(name="graphop")(
+   >>> graphop = compose("graphop",
    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
    ...    operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
    ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
@@ -89,7 +89,7 @@ If you are defining your computation graph and the functions that comprise it al
    ... def foo(a, b, c):
    ...   return c * (a + b)
 
-   >>> graphop = compose(name='foo_graph')(foo)
+   >>> graphop = compose('foo_graph', foo)
 
 Functional specification
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -102,7 +102,7 @@ If the functions underlying your computation graph operations are defined elsewh
    >>> add_op = operation(name='add_op', needs=['a', 'b'], provides='sum')(add)
    >>> mul_op = operation(name='mul_op', needs=['c', 'sum'], provides='product')(mul)
 
-   >>> graphop = compose(name='add_mul_graph')(add_op, mul_op)
+   >>> graphop = compose('add_mul_graph', add_op, mul_op)
 
 The functional specification is also useful if you want to create multiple ``operation``
 instances from the same function, perhaps with different parameter values, e.g.::
@@ -115,7 +115,7 @@ instances from the same function, perhaps with different parameter values, e.g.:
    >>> pow_op1 = operation(name='pow_op1', needs=['a'], provides='a_squared')(mypow)
    >>> pow_op2 = operation(name='pow_op2', needs=['a'], provides='a_cubed')(partial(mypow, p=3))
 
-   >>> graphop = compose(name='two_pows_graph')(pow_op1, pow_op2)
+   >>> graphop = compose('two_pows_graph', pow_op1, pow_op2)
 
 A slightly different approach can be used here to accomplish the same effect
 by creating an operation "builder pattern"::
@@ -129,7 +129,7 @@ by creating an operation "builder pattern"::
    >>> pow_op2 = pow_op_factory.withset(name='pow_op2', provides='a_cubed')(partial(mypow, p=3))
    >>> pow_op3 = pow_op_factory(lambda a: 1, name='pow_op0')
 
-   >>> graphop = compose(name='two_pows_graph')(pow_op1, pow_op2, pow_op3)
+   >>> graphop = compose('two_pows_graph', pow_op1, pow_op2, pow_op3)
    >>> graphop({'a': 2})
    {'a': 2, 'a_cubed': 8, 'a_squared': 4}
 

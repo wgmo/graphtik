@@ -70,6 +70,7 @@ import time
 from collections import defaultdict, namedtuple
 from contextvars import ContextVar
 from multiprocessing.dummy import Pool
+from typing import Iterable, Optional
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -692,7 +693,13 @@ class Network(Plotter):
 
         return steps
 
-    def compile(self, inputs=(), outputs=()):
+    def compile(
+        self,
+        inputs: Optional[Iterable] = (),
+        outputs: Optional[Iterable] = (),
+        *,
+        skip_cache_update=False,
+    ) -> ExecutionPlan:
         """
         Create or get from cache an execution-plan for the given inputs/outputs.
 
@@ -738,6 +745,7 @@ class Network(Plotter):
 
             # Cache compilation results to speed up future runs
             # with different values (but same number of inputs/outputs).
-            self._cached_plans[cache_key] = plan
+            if not skip_cache_update:
+                self._cached_plans[cache_key] = plan
 
         return plan
