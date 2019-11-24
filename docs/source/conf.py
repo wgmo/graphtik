@@ -306,5 +306,7 @@ intersphinx_mapping = {
     ## `pydot` does not generate documentation
     #   see https://github.com/pydot/pydot/issues/130
     "pydot": ("https://pydotplus.readthedocs.io/", None),
-    "networkx": ("https://pydotplus.readthedocs.io/", None),
+    "networkx": ("https://networkx.github.io/documentation/latest/", None),
+    "boltons": ("https://boltons.readthedocs.io/en/latest/", None),
 }
+autodoc_mock_imports = ["boltons", "networkx", "pydot"]
