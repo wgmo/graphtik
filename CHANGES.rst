@@ -7,32 +7,41 @@ TODO
 See :gg:`1`.
 
 
+v2.3.0 (24 Nov 2019, @ankostis): Zoomable SVGs & more op jobs
+=============================================================
++ FEAT(plot): render Zoomable SVGs in jupyter(lab) notebooks.
++ break(netop): rename execution-method ``"sequential" --> None``.
++ break(netop): move ``overwrites_collector`` & ``method`` args
+  from ``netop.__call__()`` --> cstor
++ refact(netop): convert remaining ``**kwargs`` into named args, tighten up API.
+
+
 v2.2.0 (20 Nov 2019, @ankostis): enhance OPERATIONS & restruct their modules
 ============================================================================
-- REFACT(src): split module ``nodes.py`` --> ``op.py`` + `netop.py` and
++ REFACT(src): split module ``nodes.py`` --> ``op.py`` + `netop.py` and
   move :class:`Operation` from ``base.py`` --> ``op.py``, in order to break cycle
   of `base(op) <-- net <-- netop`, and keep utils only in `base.py`.
-- ENH(op): allow Operations WITHOUT any NEEDS.
-- ENH(op): allow Operation FUNCTIONS to return directly Dictionaries.
-- ENH(op): validate function Results against operation `provides`;
++ ENH(op): allow Operations WITHOUT any NEEDS.
++ ENH(op): allow Operation FUNCTIONS to return directly Dictionaries.
++ ENH(op): validate function Results against operation `provides`;
   *jetsam* now includes `results` variables: ``results_fn`` & ``results_op``.
-- BREAK(op): drop unused `Operation._after_init()` pickle-hook; use `dill` instead.
-- refact(op): convert :meth:`Operation._validate()` into a function,
++ BREAK(op): drop unused `Operation._after_init()` pickle-hook; use `dill` instead.
++ refact(op): convert :meth:`Operation._validate()` into a function,
   to be called by clients wishing to automate operation construction.
-- refact(op): replace ``**kwargs`` with named-args in class:`FunctionalOperation`,
++ refact(op): replace ``**kwargs`` with named-args in class:`FunctionalOperation`,
   because it allowed too wide args, and offered no help to the user.
-- REFACT(configs): privatize :data:`network._execution_configs`; expose more
++ REFACT(configs): privatize :data:`network._execution_configs`; expose more
   config-methods from base package.
 
 
 v2.1.1 (12 Nov 2019, @ankostis): global configs
 ===============================================
-- BREAK: drop Python-3.6 compatibility.
-- FEAT: Use (possibly multiple) global configurations for all networks,
++ BREAK: drop Python-3.6 compatibility.
++ FEAT: Use (possibly multiple) global configurations for all networks,
   stored in a :class:`contextvars.ContextVar`.
-- ENH/BREAK: Use a (possibly) single `execution_pool` in global-configs.
-- feat: add `abort` flag in global-configs.
-- feat: add `skip_evictions` flag in global-configs.
++ ENH/BREAK: Use a (possibly) single `execution_pool` in global-configs.
++ feat: add `abort` flag in global-configs.
++ feat: add `skip_evictions` flag in global-configs.
 
 
 v2.1.0 (20 Oct 2019, @ankostis): DROP BW-compatible, Restruct modules/API, Plan perfect evictions
