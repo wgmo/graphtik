@@ -9,7 +9,7 @@ from collections.abc import Hashable, Iterable, Mapping
 from boltons.setutils import IndexedSet as iset
 
 from .base import Plotter, aslist, jetsam
-from .modifiers import optional, sideffect
+from .modifiers import optional, sideffect, vararg
 
 log = logging.getLogger(__name__)
 
@@ -176,17 +176,27 @@ class FunctionalOperation(Operation):
     def compute(self, named_inputs, outputs=None) -> dict:
         try:
             args = [
+                ## Network expected to ensure all compulsory inputs exist,
+                #  so no special handling for key errors here.
                 named_inputs[n]
                 for n in self.needs
                 if not isinstance(n, optional) and not isinstance(n, sideffect)
             ]
+
+            args.extend(
+                named_inputs[n]
+                for n in self.needs
+                if isinstance(n, vararg) and n in named_inputs
+            )
 
             # Find any optional inputs in named_inputs.  Get only the ones that
             # are present there, no extra `None`s.
             optionals = {
                 n: named_inputs[n]
                 for n in self.needs
-                if isinstance(n, optional) and n in named_inputs
+                if isinstance(n, optional)
+                and not isinstance(n, vararg)
+                and n in named_inputs
             }
 
             results_fn = self.fn(*args, **optionals)

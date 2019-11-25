@@ -17,6 +17,7 @@ from graphtik import (
     operation,
     optional,
     sideffect,
+    vararg,
 )
 from graphtik.op import Operation
 
@@ -44,6 +45,11 @@ def filtdict(d, *keys):
     {'b': 2}
     """
     return type(d)(i for i in d.items() if i[0] in keys)
+
+
+def addall(*a):
+    "Same as a + b + ...."
+    return sum(a)
 
 
 def abspow(a, p):
@@ -225,11 +231,19 @@ def test_network_simple_merge():
     sol = net3({"c": 5, "d": 1, "e": 2, "f": 4})
     assert sol == exp
 
+    assert (
+        repr(net3)
+        == "NetworkOperation(name='merged', needs=['c', 'd', 'e', 'f'], provides=['sum1', 'sum2', 'sum3', 'a', 'b'])"
+    )
+
 
 def test_network_deep_merge():
-
-    sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
-    sum_op2 = operation(name="sum_op2", needs=["a", "b"], provides="sum2")(add)
+    sum_op1 = operation(
+        name="sum_op1", needs=[vararg("a"), vararg("b")], provides="sum1"
+    )(addall)
+    sum_op2 = operation(name="sum_op2", needs=["a", vararg("b")], provides="sum2")(
+        addall
+    )
     sum_op3 = operation(name="sum_op3", needs=["sum1", "c"], provides="sum3")(add)
     net1 = compose("my network 1", sum_op1, sum_op2, sum_op3)
 
@@ -245,6 +259,11 @@ def test_network_deep_merge():
     net3 = compose("merged", net1, net2, merge=True)
     exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
     assert net3({"a": 1, "b": 2, "c": 4}) == exp
+
+    assert (
+        repr(net3)
+        == "NetworkOperation(name='merged', needs=['a', vararg('b'), 'c'], provides=['sum2', 'sum1', 'sum3'])"
+    )
 
 
 def test_network_merge_in_doctests():
@@ -265,6 +284,11 @@ def test_network_merge_in_doctests():
     merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
     assert merged_graph.needs
     assert merged_graph.provides
+
+    assert (
+        repr(merged_graph)
+        == "NetworkOperation(name='merged_graph', needs=['a', 'b', 'c'], provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'])"
+    )
 
 
 def test_input_based_pruning():

@@ -51,6 +51,45 @@ class optional(str):
         return "optional('%s')" % self
 
 
+class vararg(optional):
+    """
+    Like :class:`optional` but fed as ``*args`` (instead of ``**kwargs``) into the function.
+
+    For instance::
+
+        >>> from graphtik import operation, compose, vararg
+
+        >>> def addall(a, *b):
+        ...    return a + sum(b)
+
+    Designate `b` & `c` as an `vararg` arguments::
+
+        >>> graph = compose('mygraph',
+        ...     operation(name='addall', needs=['a', vararg('b'), vararg('c')],
+        ...     provides='sum')(addall)
+        ... )
+        >>> graph
+        NetworkOperation(name='mygraph',
+                         needs=['a', vararg('b'), vararg('c')],
+                         provides=['sum'])
+
+    The graph works with and without any of `b` and `c` inputs::
+
+        >>> graph({'a': 5, 'b': 2, 'c': 4})['sum']
+        11
+        >>> graph({'a': 5, 'b': 2})
+        {'a': 5, 'b': 2, 'sum': 7}
+        >>> graph({'a': 5})
+        {'a': 5, 'sum': 5}
+
+    """
+
+    __slots__ = ()  # avoid __dict__ on instances
+
+    def __repr__(self):
+        return "vararg('%s')" % self
+
+
 class sideffect(str):
     """
     A sideffect data-dependency participates in the graph but never given/asked in functions.

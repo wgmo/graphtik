@@ -149,6 +149,10 @@ Optionals
 ^^^^^^^^^
 .. autoclass:: graphtik.modifiers.optional
 
+Varargs
+^^^^^^^
+.. autoclass:: graphtik.modifiers.vararg
+
 Sideffects
 ^^^^^^^^^^
 .. autoclass:: graphtik.modifiers.sideffect
