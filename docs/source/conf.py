@@ -303,9 +303,6 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    ## `pydot` does not generate documentation
-    #   see https://github.com/pydot/pydot/issues/130
-    "pydot": ("https://pydotplus.readthedocs.io/", None),
     "networkx": ("https://networkx.github.io/documentation/latest/", None),
     "boltons": ("https://boltons.readthedocs.io/en/latest/", None),
 }

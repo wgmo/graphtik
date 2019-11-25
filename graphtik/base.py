@@ -182,6 +182,8 @@ class Plotter(abc.ABC):
 
         :return:
             a `pydot.Dot <https://pypi.org/project/pydot/>`_ instance
+            (for for API reference visit:
+            https://pydotplus.readthedocs.io/reference.html#pydotplus.graphviz.Dot)
 
             .. Tip::
                 The :class:`pydot.Dot` instance returned is rendered directly
