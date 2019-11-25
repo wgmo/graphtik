@@ -119,6 +119,8 @@ class _DataNode(str):
     Dag node naming a data-value produced or required by an operation.
     """
 
+    __slots__ = ()  # avoid __dict__ on instances
+
     def __repr__(self):
         return 'DataNode("%s")' % self
 
@@ -131,6 +133,8 @@ class _EvictInstruction(str):
     frees its data-value from `solution` after it is no longer needed,
     to reduce memory footprint while computing the graph.
     """
+
+    __slots__ = ()  # avoid __dict__ on instances
 
     def __repr__(self):
         return 'EvictInstruction("%s")' % self
@@ -148,6 +152,8 @@ class _PinInstruction(str):
     its providing function(s) could not be pruned, because their other outputs
     are needed elesewhere.
     """
+
+    __slots__ = ()  # avoid __dict__ on instances
 
     def __repr__(self):
         return 'PinInstruction("%s")' % self
