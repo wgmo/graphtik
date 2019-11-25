@@ -525,20 +525,20 @@ class Network(Plotter):
 
         return unsatisfied
 
-    def _prune_graph(self, outputs, inputs):
+    def _prune_graph(self, inputs, outputs):
         """
         Determines what graph steps need to run to get to the requested
         outputs from the provided inputs. :
         - Eliminate steps that are not on a path arriving to requested outputs.
         - Eliminate unsatisfied operations: partial inputs or no outputs needed.
 
+        :param iterable inputs:
+            The inputs names of all given inputs.
+
         :param iterable outputs:
             A list of desired output names.  This can also be ``None``, in which
             case the necessary steps are all graph nodes that are reachable
             from one of the provided inputs.
-
-        :param iterable inputs:
-            The inputs names of all given inputs.
 
         :return:
             the *pruned_dag*
@@ -732,7 +732,7 @@ class Network(Plotter):
         else:
             # Build a new execution plan for the given inputs & outputs.
             #
-            pruned_dag, broken_edges = self._prune_graph(outputs, inputs)
+            pruned_dag, broken_edges = self._prune_graph(inputs, outputs)
             steps = self._build_execution_steps(pruned_dag, inputs, outputs)
             plan = ExecutionPlan(
                 self,
