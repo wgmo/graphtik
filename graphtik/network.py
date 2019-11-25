@@ -67,10 +67,10 @@ Computations are based on 5 data-structures:
 import logging
 import sys
 import time
-from collections import defaultdict, namedtuple
+from collections import abc, defaultdict, namedtuple
 from contextvars import ContextVar
 from multiprocessing.dummy import Pool
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Tuple
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -741,3 +741,33 @@ class Network(Plotter):
                 self._cached_plans[cache_key] = plan
 
         return plan
+
+    def dependencies(self) -> Tuple[iset, iset]:
+        """Collect the base `needs` & `provides` from operations contained."""
+        operations = [op for op in self.graph.nodes if isinstance(op, Operation)]
+        all_provides = iset(p for op in operations for p in op.provides)
+        all_needs = iset(n for op in operations for n in op.needs) - all_provides
+        return all_needs, all_provides
+
+    def narrow(self, needs=None, provides=None):
+        """
+        Prune internal dag for the given `needs` & `provides`.
+
+        If both `needs` & `provides` are `None`, they are collected from the dag
+        by :meth:`dependencies()`.
+
+        :raise ValueError:
+            if `provides` asked are not produced by the narrowed dag
+        """
+        if needs is None or provides is None:
+            all_needs, all_provides = self.dependencies()
+            if needs is None:
+                needs = all_needs
+            if provides is None:
+                provides = all_provides
+
+        needs = astuple(needs, "needs", allowed_types=abc.Iterable)
+        provides = astuple(provides, "provides", allowed_types=abc.Iterable)
+
+        self.graph = self._prune_graph(needs, provides)[0]
+        self._cached_plans = {}
