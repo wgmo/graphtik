@@ -4,13 +4,14 @@
 
 import copy
 import logging
+import re
 from collections import abc
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Plotter, aslist, jetsam
-from .modifiers import optional
+from .base import Plotter, aslist, astuple, jetsam
+from .modifiers import optional, sideffect
 from .network import Network
 from .op import Operation, reparse_operation_data
 
@@ -62,57 +63,75 @@ class NetworkOperation(Operation, Plotter):
         super().__init__(name, needs, provides)
         self.set_execution_method(method)
         self.set_overwrites_collector(overwrites_collector)
-        self._prune(needs, provides)
+        self._narrow(needs, provides)
         self.name, self.needs, self.provides = reparse_operation_data(
             self.name, self.needs, self.provides
         )
 
-    def copy(self, needs=None, provides=None):
+    def narrow(self, needs=None, provides=None):
         """
         Makes a copy with a network pruned for the given `needs` & `provides`.
 
         If both `needs` & `provides` are `None`, they are compiled from the net.
         """
         netop = copy.copy(self)
-        netop.net = netop.net.copy()
+        netop.net = copy.copy(self.net)
+        self.net.graph = self.net.graph.copy()
         netop.last_plan = None
 
-        netop._prune(needs, provides)
+        netop._narrow(needs, provides)
 
         return netop
 
-    def _prune(self, needs=None, provides=None):
+    def _narrow(self, needs=None, provides=None):
         """
-        Prunes internal network  for the given `needs` & `provides`.
+        Prune internal network for the given `needs` & `provides`.
 
-        - If both `needs` & `provides` are `None`, they are compiled from the net.
-        - Private to discourage mutating callables - use :meth:`copy()`.
+        If both `needs` & `provides` are `None`, they are compiled from the net.
+
+        .. Attention::
+            Private method, to discourage mutating callables - use :meth:`narrow()` instead.
+            But needed for constructor.
         """
-        operations = [op for op in self.net.graph.nodes if isinstance(op, Operation)]
-        all_provides = iset(p for op in operations for p in op.provides)
-        all_needs = iset(n for op in operations for n in op.needs) - all_provides
+        if needs is not None or provides is not None:
+            # Narrowing is needed if any needs/provides change.
+            self.net.narrow(needs, provides)
+        all_needs, all_provides = self.net.dependencies()
 
-        if needs is None and provides is None:
-            self.needs = all_needs
-            self.provides = all_provides
+        if needs is None:
+            needs = all_needs
         else:
-            plan = self.net.compile(needs, provides, skip_cache_update=True)
-            self.net.graph.remove_nodes_from(plan.steps)
+            needs = astuple(needs, "needs", allowed_types=abc.Collection)
+            unknown = iset(needs) - all_needs
+            if unknown:
+                log.warning("Unused needs%s for %s!", list(unknown), self.net)
 
-            if needs is not None:
-                needs = aslist(needs, "needs")
-                unknown = iset(needs) - all_needs
-                if unknown:
-                    log.warning("Unused `needs`: %s", unknown)
-                self.needs = needs
+        if provides is None:
+            provides = all_provides
+        else:
+            provides = aslist(provides, "provides", allowed_types=abc.Collection)
+            unknown = iset(provides) - all_provides
+            if unknown:
+                raise ValueError(f"Invalid provides{list(unknown)} for {self.net}!")
 
-            if provides is not None:
-                provides = aslist(provides, "provides")
-                assert set(provides) < all_provides, (
-                    "Expected compile() above to have detected unknown outputs!",
-                    iset(provides) - all_provides,
-                )
-                self.provides = provides
+        ## Retain optionality of `needs`.
+        # TODO: Unify _DataNode + modifiers to avoid ugly hacks on ``netop._narrow()``.
+        #
+        def optionalized(node):
+            dag = self.net.graph
+            all_optionals = all(e[2] for e in dag.out_edges(node, "optional", False))
+            sideffector = dag.nodes(data="sideffect")
+            return (
+                optional(node)
+                if all_optionals
+                # Nodes are _DataNode instances, not `optional` or `sideffect`
+                else sideffect(re.match(r"sideffect\((.*)\)", node).group(1))
+                if sideffector[node]
+                else str(node)  # un-optionalize
+            )
+
+        self.needs = [optionalized(n) for n in needs]
+        self.provides = provides
 
     def _build_pydot(self, **kws):
         """delegate to network"""
@@ -138,12 +157,7 @@ class NetworkOperation(Operation, Plotter):
         :returns: a dictionary of output data objects, keyed by name.
         """
         try:
-            if isinstance(outputs, str):
-                outputs = [outputs]
-            elif not isinstance(outputs, (list, tuple)) and outputs is not None:
-                raise ValueError(
-                    "The outputs argument must be a list or None, was: %s", outputs
-                )
+            outputs = astuple(outputs, "outputs", allowed_types=abc.Collection)
 
             net = self.net
 

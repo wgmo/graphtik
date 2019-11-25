@@ -749,7 +749,7 @@ class Network(Plotter):
         return plan
 
     def dependencies(self) -> Tuple[iset, iset]:
-        """Collect the base `needs` & `provides` from operations contained."""
+        """Collect the base `needs` & `provides` from all operations contained."""
         operations = [op for op in self.graph.nodes if isinstance(op, Operation)]
         all_provides = iset(p for op in operations for p in op.provides)
         all_needs = iset(n for op in operations for n in op.needs) - all_provides
@@ -772,8 +772,8 @@ class Network(Plotter):
             if provides is None:
                 provides = all_provides
 
-        needs = astuple(needs, "needs", allowed_types=abc.Iterable)
-        provides = astuple(provides, "provides", allowed_types=abc.Iterable)
+        needs = astuple(needs, "needs", allowed_types=abc.Collection)
+        provides = astuple(provides, "provides", allowed_types=abc.Collection)
 
         self.graph = self._prune_graph(needs, provides)[0]
         self._cached_plans = {}

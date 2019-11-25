@@ -241,20 +241,29 @@ def test_network_deep_merge():
     sum_op1 = operation(
         name="sum_op1", needs=[vararg("a"), vararg("b")], provides="sum1"
     )(addall)
-    sum_op2 = operation(name="sum_op2", needs=["a", vararg("b")], provides="sum2")(
+    sum_op2 = operation(name="sum_op2", needs=[vararg("a"), "b"], provides="sum2")(
         addall
     )
     sum_op3 = operation(name="sum_op3", needs=["sum1", "c"], provides="sum3")(add)
     net1 = compose("my network 1", sum_op1, sum_op2, sum_op3)
-
     exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
     assert net1({"a": 1, "b": 2, "c": 4}) == exp
+    assert (
+        repr(net1)
+        == "NetworkOperation(name='my network 1', needs=[optional('a'), 'b', 'c'], provides=['sum1', 'sum2', 'sum3'])"
+    )
 
-    sum_op4 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
+    sum_op4 = operation(name="sum_op1", needs=[vararg("a"), "b"], provides="sum1")(
+        addall
+    )
     sum_op5 = operation(name="sum_op4", needs=["sum1", "b"], provides="sum2")(add)
     net2 = compose("my network 2", sum_op4, sum_op5)
     exp = {"a": 1, "b": 2, "sum1": 3, "sum2": 5}
     assert net2({"a": 1, "b": 2}) == exp
+    assert (
+        repr(net2)
+        == "NetworkOperation(name='my network 2', needs=[optional('a'), 'b'], provides=['sum1', 'sum2'])"
+    )
 
     net3 = compose("merged", net1, net2, merge=True)
     exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
@@ -262,7 +271,18 @@ def test_network_deep_merge():
 
     assert (
         repr(net3)
-        == "NetworkOperation(name='merged', needs=['a', vararg('b'), 'c'], provides=['sum2', 'sum1', 'sum3'])"
+        == "NetworkOperation(name='merged', needs=[optional('a'), 'b', 'c'], provides=['sum2', 'sum1', 'sum3'])"
+    )
+
+    ## Reverse ops, change results and `needs` optionality.
+    #
+    net3 = compose("merged", net2, net1, merge=True)
+    exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 5, "sum3": 7}
+    assert net3({"a": 1, "b": 2, "c": 4}) == exp
+
+    assert (
+        repr(net3)
+        == "NetworkOperation(name='merged', needs=[optional('a'), 'b', 'c'], provides=['sum1', 'sum2', 'sum3'])"
     )
 
 
@@ -349,6 +369,14 @@ def test_input_output_based_pruning():
     net = compose("test_net", sum_op1, sum_op2, sum_op3)
 
     results = net({"c": c, "sum2": sum2}, outputs=["sum3"])
+
+    # Make sure we got expected result without having to pass a, b, or d.
+    assert "sum3" in results
+    assert results["sum3"] == add(c, sum2)
+
+    # Compare with `narrow()`.
+    net = net.narrow(needs=["c", "sum2"], provides=["sum3"])
+    results = net({"c": c, "sum2": sum2})
 
     # Make sure we got expected result without having to pass a, b, or d.
     assert "sum3" in results
@@ -699,6 +727,72 @@ def test_optional():
     results = net(named_inputs)
     assert "sum" in results
     assert results["sum"] == sum(named_inputs.values())
+
+
+@pytest.mark.parametrize("reverse", [0, 1])
+def test_narrow_and_optionality(reverse):
+    def add(a=0, b=0):
+        return a + b
+
+    op1 = operation(name="op1", needs=[optional("a"), optional("bb")], provides="sum1")(
+        add
+    )
+    op2 = operation(name="op2", needs=["a", optional("bb")], provides="sum2")(add)
+    ops = [op1, op2]
+    provs = "'sum1', 'sum2'"
+    if reversed:
+        ops = list(reversed(ops))
+        provs = "'sum2', 'sum1'"
+
+    netop = compose("t", *ops)
+    assert (
+        repr(netop)
+        == f"NetworkOperation(name='t', needs=['a', optional('bb')], provides=[{provs}])"
+    )
+
+    ## Narrow by `needs`
+    #
+    netop = compose("t", *ops, needs=["a"])
+    assert repr(netop) == f"NetworkOperation(name='t', needs=['a'], provides=[{provs}])"
+
+    netop = compose("t", *ops, needs=["bb"])
+    assert (
+        repr(netop)
+        == "NetworkOperation(name='t', needs=[optional('bb')], provides=['sum1'])"
+    )
+
+    ## Narrow by `provides`
+    #
+    netop = compose("t", *ops, provides="sum1")
+    assert (
+        repr(netop)
+        == "NetworkOperation(name='t', needs=[optional('a'), optional('bb')], provides=['sum1'])"
+    )
+
+    netop = compose("t", *ops, provides=["sum2"])
+    assert (
+        repr(netop)
+        == "NetworkOperation(name='t', needs=['a', optional('bb')], provides=['sum2'])"
+    )
+
+    ## Narrow by BOTH
+    #
+    netop = compose("t", *ops, needs="a", provides=["sum1"])
+    assert (
+        repr(netop)
+        == "NetworkOperation(name='t', needs=[optional('a')], provides=['sum1'])"
+    )
+
+    with pytest.raises(ValueError, match="Invalid provides.+sum2'"):
+        compose("t", *ops, needs="bb", provides=["sum2"])
+
+    ## Narrow by unknown needs
+    #
+    netop = compose("t", *ops, needs="BAD")
+    assert (
+        repr(netop)
+        == "NetworkOperation(name='t', needs=[optional('BAD')], provides=['sum1'])"
+    )
 
 
 # Function without return value.

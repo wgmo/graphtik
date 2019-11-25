@@ -71,7 +71,7 @@ class vararg(optional):
         ... )
         >>> graph
         NetworkOperation(name='mygraph',
-                         needs=['a', vararg('b'), vararg('c')],
+                         needs=['a', optional('b'), optional('c')],
                          provides=['sum'])
 
     The graph works with and without any of `b` and `c` inputs::
