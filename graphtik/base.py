@@ -25,6 +25,23 @@ def aslist(i, argname, allowed_types=list):
     return i
 
 
+def astuple(i, argname, allowed_types=tuple):
+    if not i:
+        return i if isinstance(i, allowed_types) else ()
+
+    if isinstance(i, str):
+        i = (i,)
+    elif not isinstance(i, allowed_types):
+        try:
+            i = tuple(i)
+        except Exception as ex:
+            raise ValueError(
+                f"Cannot tuple-ize {argname}({i!r}) due to: {ex}"
+            ) from None
+
+    return i
+
+
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
     Annotate exception with salvaged values from locals() and raise!

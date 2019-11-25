@@ -76,7 +76,7 @@ import networkx as nx
 from boltons.setutils import IndexedSet as iset
 from networkx import DiGraph
 
-from .base import Plotter, jetsam
+from .base import Plotter, astuple, jetsam
 from .modifiers import optional, sideffect
 from .op import Operation
 
@@ -717,11 +717,8 @@ class Network(Plotter):
         :return:
             the cached or fresh new execution-plan
         """
-        # outputs must be iterable
-        if not outputs:
-            outputs = ()
-        elif isinstance(outputs, str):
-            outputs = (outputs,)
+        outputs = astuple(outputs, "outputs")
+        inputs = astuple(inputs, "inputs")
 
         # Make a stable cache-key
         cache_key = (tuple(sorted(inputs)), tuple(sorted(outputs)))
@@ -735,12 +732,7 @@ class Network(Plotter):
             pruned_dag, broken_edges = self._prune_graph(inputs, outputs)
             steps = self._build_execution_steps(pruned_dag, inputs, outputs)
             plan = ExecutionPlan(
-                self,
-                tuple(inputs),
-                outputs,
-                pruned_dag,
-                tuple(broken_edges),
-                tuple(steps),
+                self, inputs, outputs, pruned_dag, tuple(broken_edges), tuple(steps)
             )
 
             # Cache compilation results to speed up future runs

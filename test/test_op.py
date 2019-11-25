@@ -49,22 +49,22 @@ def test_repr_returns_dict():
 @pytest.mark.parametrize(
     "opargs, exp",
     [
-        ((None, None, None), (None, [], [])),
+        ((None, None, None), (None, (), ())),
         ## Check name
-        (("_", "a", ("A",)), ("_", ["a"], ("A",))),
-        (((), ("a",), None), ((), ("a",), [])),
-        ((("a",), "a", "b"), (("a",), ["a"], ["b"])),
-        ((("a",), None, None), (("a",), [], [])),
+        (("_", "a", ("A",)), ("_", ("a",), ("A",))),
+        (((), ("a",), None), ((), ("a",), ())),
+        ((("a",), "a", "b"), (("a",), ("a",), ("b",))),
+        ((("a",), None, None), (("a",), (), ())),
         ## Check needs
-        (((), (), None), ((), (), [])),
-        (((), [], None), ((), [], [])),
-        (("", object(), None), ValueError("Cannot list-ize needs")),
+        (((), (), None), ((), (), ())),
+        (((), [], None), ((), [], ())),
+        (("", object(), None), ValueError("Cannot tuple-ize needs")),
         (("", [None], None), ValueError("All `needs` must be str")),
         (("", [()], None), ValueError("All `needs` must be str")),
         ## Check provides
-        (((), "a", ()), ((), ["a"], ())),
-        (((), "a", []), ((), ["a"], [])),
-        (("", "a", object()), ValueError("Cannot list-ize provides")),
+        (((), "a", ()), ((), ("a",), ())),
+        (((), "a", []), ((), ("a",), [])),
+        (("", "a", object()), ValueError("Cannot tuple-ize provides")),
         (("", "a", (None,)), ValueError("All `provides` must be str")),
         (("", "a", [()]), ValueError("All `provides` must be str")),
     ],

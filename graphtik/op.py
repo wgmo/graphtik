@@ -4,11 +4,11 @@
 
 import abc
 import logging
-from collections.abc import Hashable, Iterable, Mapping
+from collections import abc as cabc
 
 from boltons.setutils import IndexedSet as iset
 
-from .base import Plotter, aslist, jetsam
+from .base import Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect, vararg
 
 log = logging.getLogger(__name__)
@@ -22,16 +22,16 @@ def reparse_operation_data(name, needs, provides):
     when building operations and detect errors aearly.
     """
 
-    if not isinstance(name, Hashable):
+    if not isinstance(name, cabc.Hashable):
         raise ValueError(f"Operation `name` must be hashable, got: {name}")
 
     # Allow single string-value for needs parameter
-    needs = aslist(needs, "needs", allowed_types=(list, tuple))
+    needs = astuple(needs, "needs", allowed_types=cabc.Collection)
     if not all(isinstance(i, str) for i in needs):
         raise ValueError(f"All `needs` must be str, got: {needs!r}")
 
     # Allow single value for provides parameter
-    provides = aslist(provides, "provides", allowed_types=(list, tuple))
+    provides = astuple(provides, "provides", allowed_types=cabc.Collection)
     if not all(isinstance(i, str) for i in provides):
         raise ValueError(f"All `provides` must be str, got: {provides!r}")
 
@@ -152,7 +152,7 @@ class FunctionalOperation(Operation):
             nexpected = len(real_provides)
 
             if nexpected > 1 and (
-                not isinstance(results, Iterable) or len(results) != nexpected
+                not isinstance(results, cabc.Iterable) or len(results) != nexpected
             ):
                 raise ValueError(
                     f"Expected x{nexpected} ITERABLE results, got: {results}"
@@ -164,7 +164,7 @@ class FunctionalOperation(Operation):
             results = dict(zip(real_provides, results))
 
         if self.returns_dict:
-            if not isinstance(results, Mapping):
+            if not isinstance(results, cabc.Mapping):
                 raise ValueError(f"Expected dict-results, got: {results}\n  {self}")
         if set(results) != real_provides:
             raise ValueError(
