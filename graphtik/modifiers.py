@@ -24,11 +24,11 @@ class optional(str):
 
         >>> from graphtik import operation, compose, optional
 
-        >>> # Function that adds either two or three numbers.
         >>> def myadd(a, b, c=0):
         ...    return a + b + c
 
-        >>> # Designate c as an optional argument.
+    Designate c as an optional argument::
+
         >>> graph = compose('mygraph',
         ...     operation(name='myadd', needs=['a', 'b', optional('c')], provides='sum')(myadd)
         ... )
@@ -37,7 +37,8 @@ class optional(str):
                          needs=['a', 'b', optional('c')],
                          provides=['sum'])
 
-        >>> # The graph works with and without 'c' provided as input.
+    The graph works with and without `c` provided as input::
+
         >>> graph({'a': 5, 'b': 2, 'c': 4})['sum']
         11
         >>> graph({'a': 5, 'b': 2})
@@ -117,20 +118,31 @@ class sideffect(str):
         >>> def addcolumns(df):
         ...    df['sum'] = df['a'] + df['b']
 
-        >>> # Designate `a`, `b` & `sum` column names as an sideffect arguments.
+    Designate `a`, `b` & `sum` column names as an sideffect arguments::
+
         >>> graph = compose('mygraph',
         ...     operation(
         ...         name='addcolumns',
-        ...         needs=['df', sideffect('a'), sideffect('b')],
-        ...         provides=[sideffect('sum')])(addcolumns)
+        ...         needs=['df', sideffect('df.b')],  # sideffect names can be anything
+        ...         provides=[sideffect('df.sum')])(addcolumns)
         ... )
         >>> graph
-        NetworkOperation(name='mygraph', needs=['df', 'sideffect(a)', 'sideffect(b)'], provides=['sideffect(sum)'])
+        NetworkOperation(name='mygraph', needs=['df', 'sideffect(df.b)'],
+                         provides=['sideffect(df.sum)'])
 
-        >>> # The graph works with and without 'c' provided as input.
-        >>> df = pd.DataFrame({'a': [5], 'b': [2]})         # doctest: +SKIP
-        >>> graph({'df': df})['sum'] == 11                  # doctest: +SKIP
-        True
+        >>> df = pd.DataFrame({'a': [5, 0], 'b': [2, 1]})   # doctest: +SKIP
+        >>> graph({'df': df})['df']                         # doctest: +SKIP
+        	a	b
+        0	5	2
+        1	0	1
+
+    We didn't get the ``sum`` column because the `b` sideffect was unsatisfied.
+    We have to add its key to the inputs (with _any_ value)::
+
+        >>> graph({'df': df, sideffect("df.b"): 0})['df']   # doctest: +SKIP
+        	a	b	sum
+        0	5	2	7
+        1	0	1	1
 
     Note that regular data in *needs* and *provides* do not match same-named *sideffects*.
     That is, in the following operation, the ``prices`` input is different from
@@ -143,7 +155,8 @@ class sideffect(str):
         ...           name="upd_prices",
         ...           needs=["sales_df", "price"],
         ...           provides=[sideffect("price")])
-        operation(name='upd_prices', needs=['sales_df', 'price'], provides=['sideffect(price)'], fn='upd_prices')
+        operation(name='upd_prices', needs=['sales_df', 'price'],
+                  provides=['sideffect(price)'], fn='upd_prices')
 
     .. note::
         An ``operation`` with *sideffects* outputs only, have functions that return
