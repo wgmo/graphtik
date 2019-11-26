@@ -6,6 +6,7 @@ import copy
 import logging
 import re
 from collections import abc
+from typing import Collection
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -28,6 +29,9 @@ class NetworkOperation(Operation, Plotter):
     #: set execution mode to single-threaded sequential by default
     method = None
     overwrites_collector = None
+    #: The default plan, enforcing stable `needs` & `provides`
+    #: when :meth:`compute()` called with ``recompile=False`` (default).
+    plan = None
     #: The execution_plan of the last call to compute(),
     #: stored as debugging aid.
     last_plan = None
@@ -44,9 +48,9 @@ class NetworkOperation(Operation, Plotter):
     ):
         """
         :param needs:
-            if not None, network is pruned to consume just these
+            see :meth:`narrow()`
         :param provides:
-            if not None, network is pruned to produce just these
+            see :meth:`narrow()`
         :param method:
             either `parallel` or None (default);
             if ``"parallel"``, launches multi-threading.
@@ -63,40 +67,67 @@ class NetworkOperation(Operation, Plotter):
         super().__init__(name, needs, provides)
         self.set_execution_method(method)
         self.set_overwrites_collector(overwrites_collector)
-        self._narrow(needs, provides)
+
+        ## Mimic `narrow()` but mutating myself.
+        #
+        orig_needs = needs
+        if needs is None:
+            all_needs, _all_provides = self.net.dependencies()
+            needs = all_needs
+        self.plan = self.net.compile(needs, provides)
+        self._narrow_dependencies(orig_needs, provides)
         self.name, self.needs, self.provides = reparse_operation_data(
             self.name, self.needs, self.provides
         )
 
-    def narrow(self, needs=None, provides=None):
-        """
-        Makes a copy with a network pruned for the given `needs` & `provides`.
+    def dependencies(self):
+        return self.needs, self.provides
 
-        If both `needs` & `provides` are `None`, they are compiled from the net.
+    def narrow(
+        self, needs: Collection = None, provides: Collection = None
+    ) -> "NetworkOperation":
         """
+        Return a copy with a network pruned for the given `needs` & `provides`.
+
+        :param inputs:
+            a collection of inputs that must be given to :meth:`compute()`;
+            a WARNing is issued for any irrelevant arguments.
+            If `None`, they are collected from the :attr:`net`.
+            They become the `needs` of the returned `netop`.
+        :param outputs:
+            a collection of outputs that will be asked from :meth:`compute()`;
+            RAISES if those cannnot be satisfied.
+            If `None`, they are collected from the :attr:`net`.
+            They become the `provides` of the returned `netop`.
+
+        :raise ValueError:
+            IF `outputs` asked cannot be produced by the narrowed dag.
+
+        If `inputs` or `outputs` are `None`, they are collected from
+        the :attr:`net`.
+
+        """
+        if needs is None:
+            all_needs, _all_provides = self.net.dependencies()
+            needs = all_needs
+
         netop = copy.copy(self)
-        netop.net = copy.copy(self.net)
-        self.net.graph = self.net.graph.copy()
         netop.last_plan = None
-
-        netop._narrow(needs, provides)
+        # Will scream on unknown `outputs`.
+        netop.plan = self.net.compile(needs, provides)
+        netop._narrow_dependencies(needs, provides)
 
         return netop
 
-    def _narrow(self, needs=None, provides=None):
+    def _narrow_dependencies(
+        self, needs: Collection = None, provides: Collection = None
+    ):
         """
-        Prune internal network for the given `needs` & `provides`.
+        Prune dependencies based on :attr:`plan` and the given `needs` & `provides`.
 
-        If both `needs` & `provides` are `None`, they are compiled from the net.
-
-        .. Attention::
-            Private method, to discourage mutating callables - use :meth:`narrow()` instead.
-            But needed for constructor.
+        If both `needs` & `provides` are `None`, they are collected from the plan.
         """
-        if needs is not None or provides is not None:
-            # Narrowing is needed if any needs/provides change.
-            self.net.narrow(needs, provides)
-        all_needs, all_provides = self.net.dependencies()
+        all_needs, all_provides = self.plan.dependencies()
 
         if needs is None:
             needs = all_needs
@@ -112,13 +143,13 @@ class NetworkOperation(Operation, Plotter):
             provides = aslist(provides, "provides", allowed_types=abc.Collection)
             unknown = iset(provides) - all_provides
             if unknown:
-                raise ValueError(f"Invalid provides{list(unknown)} for {self.net}!")
+                raise ValueError(f"Impossible provides{list(unknown)} for {self.net}!")
 
         ## Retain optionality of `needs`.
         # TODO: Unify _DataNode + modifiers to avoid ugly hacks on ``netop._narrow()``.
         #
         def optionalized(node):
-            dag = self.net.graph
+            dag = self.plan.dag
             all_optionals = all(e[2] for e in dag.out_edges(node, "optional", False))
             sideffector = dag.nodes(data="sideffect")
             return (
@@ -139,7 +170,7 @@ class NetworkOperation(Operation, Plotter):
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
-    def compute(self, named_inputs, outputs=None) -> dict:
+    def compute(self, named_inputs, outputs=None, recompile=True) -> dict:
         """
         Solve & execute the graph, sequentially or parallel.
 
@@ -148,11 +179,13 @@ class NetworkOperation(Operation, Plotter):
             the compulsory inputs that were specified when the plan was built
             (but cannot enforce that!).
             Cloned, not modified.
-
         :param outputs:
             a string or a list of strings with all data asked to compute.
             If you set this variable to ``None``, all data nodes will be kept
             and returned at runtime.
+        :param recompile:
+            if false, uses fixed :attr:`plan`, else recompiles a temporary plan
+            from network.  In all cases, the `:attr:`last_plan` is updated.
 
         :returns: a dictionary of output data objects, keyed by name.
         """
@@ -162,7 +195,9 @@ class NetworkOperation(Operation, Plotter):
             net = self.net
 
             # Build the execution plan.
-            self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
+            self.last_plan = plan = (
+                net.compile(named_inputs.keys(), outputs) if recompile else self.plan
+            )
 
             solution = plan.execute(
                 named_inputs, self.overwrites_collector, self.execution_method

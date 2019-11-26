@@ -783,7 +783,7 @@ def test_narrow_and_optionality(reverse):
         == "NetworkOperation(name='t', needs=[optional('a')], provides=['sum1'])"
     )
 
-    with pytest.raises(ValueError, match="Invalid provides.+sum2'"):
+    with pytest.raises(ValueError, match="Impossible provides.+sum2'"):
         compose("t", *ops, needs="bb", provides=["sum2"])
 
     ## Narrow by unknown needs

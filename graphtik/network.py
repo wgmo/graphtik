@@ -413,6 +413,14 @@ class ExecutionPlan(
         except Exception as ex:
             jetsam(ex, locals(), "solution", "executed")
 
+    def dependencies(self) -> Tuple[iset, iset]:
+        """Collect the base `needs` & `provides` from all operations contained."""
+        operations = [op for op in self.dag if isinstance(op, Operation)]
+        all_provides = iset(p for op in operations for p in op.provides)
+        all_needs = iset(n for op in operations for n in op.needs) - all_provides
+
+        return all_needs, all_provides
+
 
 class Network(Plotter):
     """
@@ -750,30 +758,8 @@ class Network(Plotter):
 
     def dependencies(self) -> Tuple[iset, iset]:
         """Collect the base `needs` & `provides` from all operations contained."""
-        operations = [op for op in self.graph.nodes if isinstance(op, Operation)]
+        operations = [op for op in self.graph if isinstance(op, Operation)]
         all_provides = iset(p for op in operations for p in op.provides)
         all_needs = iset(n for op in operations for n in op.needs) - all_provides
+
         return all_needs, all_provides
-
-    def narrow(self, needs=None, provides=None):
-        """
-        Prune internal dag for the given `needs` & `provides`.
-
-        If both `needs` & `provides` are `None`, they are collected from the dag
-        by :meth:`dependencies()`.
-
-        :raise ValueError:
-            if `provides` asked are not produced by the narrowed dag
-        """
-        if needs is None or provides is None:
-            all_needs, all_provides = self.dependencies()
-            if needs is None:
-                needs = all_needs
-            if provides is None:
-                provides = all_provides
-
-        needs = astuple(needs, "needs", allowed_types=abc.Collection)
-        provides = astuple(provides, "provides", allowed_types=abc.Collection)
-
-        self.graph = self._prune_graph(needs, provides)[0]
-        self._cached_plans = {}
