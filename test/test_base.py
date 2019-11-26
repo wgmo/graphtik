@@ -188,9 +188,9 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         ),
         (
             fnt.partial(
-                NetworkOperation(network.Network(), None),
+                NetworkOperation(network.Network(), None).compute,
                 named_inputs=None,
-                outputs=None,
+                outputs="bad",
             ),
             "network plan solution outputs".split(),
         ),

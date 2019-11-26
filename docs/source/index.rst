@@ -73,12 +73,12 @@ Compose the ``mul``, ``sub``, and ``abspow`` functions into a computation graph:
 
 Run the graph-operation and request all of the outputs::
 
-   >>> graphop({'a': 2, 'b': 5})
+   >>> graphop(**{'a': 2, 'b': 5})
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
 Run the graph-operation and request a subset of the outputs::
 
-   >>> graphop({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+   >>> graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
    {'a_minus_ab': -8}
 
 As you can see, any function can be used as an operation in Graphtik,

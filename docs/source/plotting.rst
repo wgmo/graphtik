@@ -83,7 +83,7 @@ with the folllowing properties, as a debug aid:
 >>> try:
 ...     compose("errgraph",
 ...             operation(name="screamer", needs=['a'], provides=["foo"])(scream)
-...     )({'a': None})
+...     )(a=None)
 ... except ValueError as ex:
 ...     pprint(ex.jetsam)
 {'args': {'args': [None], 'kwargs': {}},

@@ -272,9 +272,9 @@ class Plotter(abc.ABC):
         ...     operation(name="abb", needs=["ab1", "ab2"], provides=["asked"])(add),
         ... )
 
-        >>> netop.plot(show=True);           # plot just the graph in a matplotlib window # doctest: +SKIP
+        >>> netop.plot(show=True);                 # plot just the graph in a matplotlib window # doctest: +SKIP
         >>> inputs = {'a': 1, 'b1': 2}
-        >>> solution = netop(inputs)           # now plots will include the execution-plan
+        >>> solution = netop(**inputs)             # now plots will include the execution-plan
 
         >>> netop.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);           # doctest: +SKIP
         >>> dot = netop.plot(solution=solution);   # just get the `pydoit.Dot` object, renderable in Jupyter

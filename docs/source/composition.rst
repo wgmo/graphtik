@@ -56,7 +56,7 @@ to the graph and whose values are the corresponding input values.
 For example, if ``graph`` is as defined above, we can run it like this::
 
    # Run the graph and request all of the outputs.
-   >>> out = graphop({'a': 2, 'b': 5})
+   >>> out = graphop(a=2, b=5)
    >>> out
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
@@ -68,7 +68,7 @@ You can use the ``outputs`` parameter to request only a subset.
 For example, if ``graphop`` is as above::
 
    # Run the graph-operation and request a subset of the outputs.
-   >>> out = graphop({'a': 2, 'b': 5}, outputs="a_minus_ab")
+   >>> out = graphop.compute({'a': 2, 'b': 5}, outputs="a_minus_ab")
    >>> out
    {'a_minus_ab': -8}
 
@@ -82,7 +82,7 @@ Short-circuiting a graph computation
 You can short-circuit a graph computation, making certain inputs unnecessary, by providing a value in the graph that is further downstream in the graph than those inputs.  For example, in the graph-operation we've been working with, you could provide the value of ``a_minus_ab`` to make the inputs ``a`` and ``b`` unnecessary::
 
    # Run the graph-operation and request a subset of the outputs.
-   >>> out = graphop({'a_minus_ab': -8})
+   >>> out = graphop(a_minus_ab=-8)
    >>> out
    {'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
@@ -104,7 +104,7 @@ For example, if we have ``graph`` as above, we can add another operation to it t
    ... )
 
    >>> # Run the graph and print the output.
-   >>> sol = bigger_graph({'a': 2, 'b': 5, 'c': 5}, outputs=["a_minus_ab_minus_c"])
+   >>> sol = bigger_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["a_minus_ab_minus_c"])
    >>> sol
    {'a_minus_ab_minus_c': -13}
 
@@ -145,5 +145,5 @@ This ``merged_graph`` will look like this:
 
 As always, we can run computations with this graph by simply calling it::
 
-   >>> merged_graph({'a': 2, 'b': 5, 'c': 5}, outputs=["cab"])
+   >>> merged_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["cab"])
    {'cab': 50}

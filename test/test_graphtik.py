@@ -117,20 +117,20 @@ def test_smoke_test():
         "sum_ab_p3": 27.0,
         "sum_ab_times_b": 6,
     }
-    assert netop({"a": 1, "b": 2}) == exp
+    assert netop(a=1, b=2) == exp
 
     # get specific outputs
     exp = {"sum_ab_times_b": 6}
-    assert netop({"a": 1, "b": 2}, outputs=["sum_ab_times_b"]) == exp
+    assert netop.compute({"a": 1, "b": 2}, ["sum_ab_times_b"]) == exp
 
     # start with inputs already computed
     exp = {"sum_ab_times_b": 2}
-    assert netop({"sum_ab": 1, "b": 2}, outputs=["sum_ab_times_b"]) == exp
+    assert netop.compute({"sum_ab": 1, "b": 2}, ["sum_ab_times_b"]) == exp
 
     with pytest.raises(ValueError, match="Unknown output node"):
-        netop({"sum_ab": 1, "b": 2}, outputs="bad_node")
+        netop.compute({"sum_ab": 1, "b": 2}, "bad_node")
     with pytest.raises(ValueError, match="Unknown output node"):
-        netop({"sum_ab": 1, "b": 2}, outputs=["b", "bad_node"])
+        netop.compute({"sum_ab": 1, "b": 2}, ["b", "bad_node"])
 
 
 def test_network_plan_execute():
@@ -205,7 +205,7 @@ def test_network_simple_merge():
     net1 = compose("my network 1", sum_op1, sum_op2, sum_op3)
 
     exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
-    sol = net1({"a": 1, "b": 2, "c": 4})
+    sol = net1(a=1, b=2, c=4)
     assert sol == exp
 
     sum_op4 = operation(name="sum_op1", needs=["d", "e"], provides="a")(add)
@@ -213,7 +213,7 @@ def test_network_simple_merge():
 
     net2 = compose("my network 2", sum_op4, sum_op5)
     exp = {"a": 3, "b": 7, "d": 1, "e": 2, "f": 4}
-    sol = net2({"d": 1, "e": 2, "f": 4})
+    sol = net2(**{"d": 1, "e": 2, "f": 4})
     assert sol == exp
 
     net3 = compose("merged", net1, net2)
@@ -228,7 +228,7 @@ def test_network_simple_merge():
         "sum2": 10,
         "sum3": 15,
     }
-    sol = net3({"c": 5, "d": 1, "e": 2, "f": 4})
+    sol = net3(**{"c": 5, "d": 1, "e": 2, "f": 4})
     assert sol == exp
 
     assert (
@@ -247,7 +247,7 @@ def test_network_deep_merge():
     sum_op3 = operation(name="sum_op3", needs=["sum1", "c"], provides="sum3")(add)
     net1 = compose("my network 1", sum_op1, sum_op2, sum_op3)
     exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
-    assert net1({"a": 1, "b": 2, "c": 4}) == exp
+    assert net1(a=1, b=2, c=4) == exp
     assert (
         repr(net1)
         == "NetworkOperation(name='my network 1', needs=[optional('a'), 'b', 'c'], provides=['sum1', 'sum2', 'sum3'])"
@@ -259,7 +259,7 @@ def test_network_deep_merge():
     sum_op5 = operation(name="sum_op4", needs=["sum1", "b"], provides="sum2")(add)
     net2 = compose("my network 2", sum_op4, sum_op5)
     exp = {"a": 1, "b": 2, "sum1": 3, "sum2": 5}
-    assert net2({"a": 1, "b": 2}) == exp
+    assert net2(**{"a": 1, "b": 2}) == exp
     assert (
         repr(net2)
         == "NetworkOperation(name='my network 2', needs=[optional('a'), 'b'], provides=['sum1', 'sum2'])"
@@ -267,7 +267,7 @@ def test_network_deep_merge():
 
     net3 = compose("merged", net1, net2, merge=True)
     exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
-    assert net3({"a": 1, "b": 2, "c": 4}) == exp
+    assert net3(a=1, b=2, c=4) == exp
 
     assert (
         repr(net3)
@@ -278,7 +278,7 @@ def test_network_deep_merge():
     #
     net3 = compose("merged", net2, net1, merge=True)
     exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 5, "sum3": 7}
-    assert net3({"a": 1, "b": 2, "c": 4}) == exp
+    assert net3(**{"a": 1, "b": 2, "c": 4}) == exp
 
     assert (
         repr(net3)
@@ -325,7 +325,7 @@ def test_input_based_pruning():
     sum_op3 = operation(name="sum_op3", needs=["sum1", "sum2"], provides="sum3")(add)
     net = compose("test_net", sum_op1, sum_op2, sum_op3)
 
-    results = net({"sum1": sum1, "sum2": sum2})
+    results = net(**{"sum1": sum1, "sum2": sum2})
 
     # Make sure we got expected result without having to pass a or b.
     assert "sum3" in results
@@ -346,14 +346,14 @@ def test_output_based_pruning():
     sum_op3 = operation(name="sum_op3", needs=["c", "sum2"], provides="sum3")(add)
     net = compose("test_net", sum_op1, sum_op2, sum_op3)
 
-    results = net({"a": 0, "b": 0, "c": c, "d": d}, outputs=["sum3"])
+    results = net.compute({"a": 0, "b": 0, "c": c, "d": d}, ["sum3"])
 
     # Make sure we got expected result without having to pass a or b.
     assert "sum3" in results
     assert results["sum3"] == add(c, add(c, d))
 
 
-def test_input_output_based_pruning():
+def test_deps_pruning_vs_narrowing():
     # Tests to make sure we don't need to pass graph inputs if they're not
     # needed to compute the requested outputs or of we're provided with
     # inputs that are further downstream in the graph.
@@ -368,15 +368,15 @@ def test_input_output_based_pruning():
     sum_op3 = operation(name="sum_op3", needs=["c", "sum2"], provides="sum3")(add)
     net = compose("test_net", sum_op1, sum_op2, sum_op3)
 
-    results = net({"c": c, "sum2": sum2}, outputs=["sum3"])
+    results = net.compute({"c": c, "sum2": sum2}, ["sum3"])
 
     # Make sure we got expected result without having to pass a, b, or d.
     assert "sum3" in results
     assert results["sum3"] == add(c, sum2)
 
-    # Compare with `narrow()`.
+    # Compare with both `narrow()`.
     net = net.narrow(needs=["c", "sum2"], provides=["sum3"])
-    results = net({"c": c, "sum2": sum2})
+    results = net(c=c, sum2=sum2)
 
     # Make sure we got expected result without having to pass a, b, or d.
     assert "sum3" in results
@@ -397,7 +397,7 @@ def test_pruning_raises_for_bad_output():
     # Request two outputs we can compute and one we can't compute.  Assert
     # that this raises a ValueError.
     with pytest.raises(ValueError) as exinfo:
-        net({"a": 1, "b": 2, "c": 3, "d": 4}, outputs=["sum1", "sum3", "sum4"])
+        net.compute({"a": 1, "b": 2, "c": 3, "d": 4}, ["sum1", "sum3", "sum4"])
     assert exinfo.match("sum4")
 
 
@@ -412,23 +412,23 @@ def test_pruning_not_overrides_given_intermediate():
     inputs = {"a": 5, "overidden": 1, "c": 2}
     exp = {"a": 5, "overidden": 1, "c": 2, "asked": 3}
     # v1.2.4.ok
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
     # FAILs
     # - on v1.2.4 with (overidden, asked): = (5, 7) instead of (1, 3)
     # - on #18(unsatisfied) + #23(ordered-sets) with (overidden, asked) = (5, 7) instead of (1, 3)
     # FIXED on #26
-    assert pipeline(inputs) == exp
+    assert pipeline(**inputs) == exp
 
     ## Test OVERWITES
     #
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline.compute(inputs, ["asked"]) == filtdict(exp, "asked")
     assert overwrites == {}  # unjust must have been pruned
 
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(inputs) == exp
+    assert pipeline(**inputs) == exp
     assert overwrites == {}  # unjust must have been pruned
 
     ## Test Parallel
@@ -436,12 +436,12 @@ def test_pruning_not_overrides_given_intermediate():
     pipeline.set_execution_method("parallel")
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
     assert overwrites == {}  # unjust must have been pruned
 
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(inputs) == exp
+    assert pipeline(**inputs) == exp
     assert overwrites == {}  # unjust must have been pruned
 
 
@@ -462,12 +462,12 @@ def test_pruning_multiouts_not_override_intermediates1():
     # - on v1.2.4 with (overidden, asked) = (5, 15) instead of (1, 11)
     # - on #18(unsatisfied) + #23(ordered-sets) like v1.2.4.
     # FIXED on #26
-    assert pipeline({"a": 5, "overidden": 1}) == exp
+    assert pipeline(**{"a": 5, "overidden": 1}) == exp
     # FAILs
     # - on v1.2.4 with KeyError: 'e',
     # - on #18(unsatisfied) + #23(ordered-sets) with empty result.
     # FIXED on #26
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
     # Plan must contain "overidden" step twice, for pin & evict.
     # Plot it to see, or check https://github.com/huyng/graphtik/pull/1#discussion_r334226396.
     datasteps = [s for s in pipeline.last_plan.steps if s == "overidden"]
@@ -479,19 +479,19 @@ def test_pruning_multiouts_not_override_intermediates1():
     #
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline({"a": 5, "overidden": 1}) == exp
+    assert pipeline(**{"a": 5, "overidden": 1}) == exp
     assert overwrites == {"overidden": 5}
 
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
     assert overwrites == {"overidden": 5}
 
     ## Test parallel
     #
     pipeline.set_execution_method("parallel")
-    assert pipeline({"a": 5, "overidden": 1}) == exp
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline(**{"a": 5, "overidden": 1}) == exp
+    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
 
 
 @pytest.mark.xfail(
@@ -519,30 +519,30 @@ def test_pruning_multiouts_not_override_intermediates2():
     # - on v1.2.4 with (overidden, asked) = (5, 70) instead of (1, 13)
     # - on #18(unsatisfied) + #23(ordered-sets) like v1.2.4.
     # FIXED on #26
-    assert pipeline(inputs) == exp
+    assert pipeline(**inputs) == exp
     # FAILs
     # - on v1.2.4 with KeyError: 'e',
     # - on #18(unsatisfied) + #23(ordered-sets) with empty result.
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
     # FIXED on #26
 
     ## Test OVERWITES
     #
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(inputs) == exp
+    assert pipeline(**inputs) == exp
     assert overwrites == {"overidden": 5}
 
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
     assert overwrites == {"overidden": 5}
 
     ## Test parallel
     #
     pipeline.set_execution_method("parallel")
-    assert pipeline(inputs) == exp
-    assert pipeline(inputs, ["asked"]) == filtdict(exp, "asked")
+    assert pipeline(**inputs) == exp
+    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
 
 
 def test_pruning_with_given_intermediate_and_asked_out():
@@ -557,37 +557,36 @@ def test_pruning_with_given_intermediate_and_asked_out():
 
     exp = {"given-1": 5, "given-2": 2, "a": 5, "b": 2, "asked": 7}
     # v1.2.4 is ok
-    assert pipeline({"given-1": 5, "b": 2, "given-2": 2}) == exp
+    assert pipeline(**{"given-1": 5, "b": 2, "given-2": 2}) == exp
     # FAILS
     # - on v1.2.4 with KeyError: 'a',
     # - on #18 (unsatisfied) with no result.
     # FIXED on #18+#26 (new dag solver).
-    assert pipeline({"given-1": 5, "b": 2, "given-2": 2}, ["asked"]) == filtdict(
-        exp, "asked"
-    )
+    assert pipeline.compute(
+        {"given-1": 5, "b": 2, "given-2": 2}, "asked"
+    ) == filtdict(exp, "asked")
 
     ## Test OVERWITES
     #
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline({"given-1": 5, "b": 2, "given-2": 2}) == exp
+    assert pipeline(**{"given-1": 5, "b": 2, "given-2": 2}) == exp
     assert overwrites == {}
 
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline({"given-1": 5, "b": 2, "given-2": 2}, ["asked"]) == filtdict(
-        exp, "asked"
-    )
+    assert pipeline.compute(
+        {"given-1": 5, "b": 2, "given-2": 2}, "asked"
+    ) == filtdict(exp, "asked")
     assert overwrites == {}
 
     ## Test parallel
     #  FAIL! in #26!
     #
     pipeline.set_execution_method("parallel")
-    assert pipeline({"given-1": 5, "b": 2, "given-2": 2}) == exp
-    assert pipeline({"given-1": 5, "b": 2, "given-2": 2}, ["asked"]) == filtdict(
-        exp, "asked"
-    )
+    assert pipeline(**{"given-1": 5, "b": 2, "given-2": 2}) == exp
+    assert pipeline.compute({"given-1": 5, "b": 2, "given-2": 2}, "asked"
+    ) == filtdict(exp, "asked")
 
 
 def test_same_outputs_operations_order():
@@ -598,10 +597,10 @@ def test_same_outputs_operations_order():
     subadd = compose("sub_add", op2, op1)
 
     inp = {"a": 3, "b": 1}
-    assert addsub(inp) == {"a": 3, "b": 1, "ab": 4}
-    assert addsub(inp, "ab") == {"ab": 4}
-    assert subadd(inp) == {"a": 3, "b": 1, "ab": 2}
-    assert subadd(inp, "ab") == {"ab": 2}
+    assert addsub(**inp) == {"a": 3, "b": 1, "ab": 4}
+    assert addsub.compute(inp, "ab") == {"ab": 4}
+    assert subadd(**inp) == {"a": 3, "b": 1, "ab": 2}
+    assert subadd.compute(inp, "ab") == {"ab": 2}
 
     ## Check it does not duplicate evictions
     assert len(subadd.last_plan.steps) == 4
@@ -613,10 +612,10 @@ def test_same_outputs_operations_order():
     subadd = compose("sub_add", op2, op1, op3)
 
     inp = {"a": 3, "b": 1}
-    assert addsub(inp) == {"a": 3, "b": 1, "ab": 4, "AB": 4}
-    assert addsub(inp, "AB") == {"AB": 4}
-    assert subadd(inp) == {"a": 3, "b": 1, "ab": 2, "AB": 2}
-    assert subadd(inp, "AB") == {"AB": 2}
+    assert addsub(**inp) == {"a": 3, "b": 1, "ab": 4, "AB": 4}
+    assert addsub.narrow(provides="AB")(**inp) == {"AB": 4}
+    assert subadd(**inp) == {"a": 3, "b": 1, "ab": 2, "AB": 2}
+    assert subadd.compute(inp, "AB") == {"AB": 2}
 
     assert len(subadd.last_plan.steps) == 6
 
@@ -630,8 +629,8 @@ def test_same_inputs_evictions():
     )
 
     inp = {"a": 3}
-    assert pipeline(inp) == {"a": 3, "2a": 6, "@S": 6}
-    assert pipeline(inp, "@S") == {"@S": 6}
+    assert pipeline(**inp) == {"a": 3, "2a": 6, "@S": 6}
+    assert pipeline.compute(inp, "@S") == {"@S": 6}
     ## Check it does not duplicate evictions
     assert len(pipeline.last_plan.steps) == 4
 
@@ -645,23 +644,24 @@ def test_unsatisfied_operations():
     )
 
     exp = {"a": 10, "b1": 2, "a+b1": 12}
-    assert pipeline({"a": 10, "b1": 2}) == exp
-    assert pipeline({"a": 10, "b1": 2}, outputs=["a+b1"]) == filtdict(exp, "a+b1")
+    assert pipeline(**{"a": 10, "b1": 2}) == exp
+    assert pipeline.compute({"a": 10, "b1": 2}, ["a+b1"]) == filtdict(exp, "a+b1")
+    assert pipeline.narrow(provides=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(exp, "a+b1")
 
     exp = {"a": 10, "b2": 2, "a-b2": 8}
-    assert pipeline({"a": 10, "b2": 2}) == exp
-    assert pipeline({"a": 10, "b2": 2}, outputs=["a-b2"]) == filtdict(exp, "a-b2")
+    assert pipeline(**{"a": 10, "b2": 2}) == exp
+    assert pipeline.compute({"a": 10, "b2": 2}, ["a-b2"]) == filtdict(exp, "a-b2")
 
     ## Test parallel
     #
     pipeline.set_execution_method("parallel")
     exp = {"a": 10, "b1": 2, "a+b1": 12}
-    assert pipeline({"a": 10, "b1": 2}) == exp
-    assert pipeline({"a": 10, "b1": 2}, outputs=["a+b1"]) == filtdict(exp, "a+b1")
+    assert pipeline(**{"a": 10, "b1": 2}) == exp
+    assert pipeline.compute({"a": 10, "b1": 2}, ["a+b1"]) == filtdict(exp, "a+b1")
 
     exp = {"a": 10, "b2": 2, "a-b2": 8}
-    assert pipeline({"a": 10, "b2": 2}) == exp
-    assert pipeline({"a": 10, "b2": 2}, outputs=["a-b2"]) == filtdict(exp, "a-b2")
+    assert pipeline(**{"a": 10, "b2": 2}) == exp
+    assert pipeline.compute({"a": 10, "b2": 2}, ["a-b2"]) == filtdict(exp, "a-b2")
 
 
 def test_unsatisfied_operations_same_out():
@@ -674,14 +674,14 @@ def test_unsatisfied_operations_same_out():
     )
 
     exp = {"a": 10, "b1": 2, "c": 1, "ab": 20, "ab_plus_c": 21}
-    assert pipeline({"a": 10, "b1": 2, "c": 1}) == exp
-    assert pipeline({"a": 10, "b1": 2, "c": 1}, outputs=["ab_plus_c"]) == filtdict(
+    assert pipeline(**{"a": 10, "b1": 2, "c": 1}) == exp
+    assert pipeline.compute({"a": 10, "b1": 2, "c": 1}, ["ab_plus_c"]) == filtdict(
         exp, "ab_plus_c"
     )
 
     exp = {"a": 10, "b2": 2, "c": 1, "ab": 5, "ab_plus_c": 6}
-    assert pipeline({"a": 10, "b2": 2, "c": 1}) == exp
-    assert pipeline({"a": 10, "b2": 2, "c": 1}, outputs=["ab_plus_c"]) == filtdict(
+    assert pipeline(**{"a": 10, "b2": 2, "c": 1}) == exp
+    assert pipeline.compute({"a": 10, "b2": 2, "c": 1}, ["ab_plus_c"]) == filtdict(
         exp, "ab_plus_c"
     )
 
@@ -690,15 +690,15 @@ def test_unsatisfied_operations_same_out():
     #  FAIL! in #26
     pipeline.set_execution_method("parallel")
     exp = {"a": 10, "b1": 2, "c": 1, "ab": 20, "ab_plus_c": 21}
-    assert pipeline({"a": 10, "b1": 2, "c": 1}) == exp
-    assert pipeline({"a": 10, "b1": 2, "c": 1}, outputs=["ab_plus_c"]) == filtdict(
+    assert pipeline(**{"a": 10, "b1": 2, "c": 1}) == exp
+    assert pipeline.compute({"a": 10, "b1": 2, "c": 1}, ["ab_plus_c"]) == filtdict(
         exp, "ab_plus_c"
     )
     #
     #  FAIL! in #26
     exp = {"a": 10, "b2": 2, "c": 1, "ab": 5, "ab_plus_c": 6}
-    assert pipeline({"a": 10, "b2": 2, "c": 1}) == exp
-    assert pipeline({"a": 10, "b2": 2, "c": 1}, outputs=["ab_plus_c"]) == filtdict(
+    assert pipeline(**{"a": 10, "b2": 2, "c": 1}) == exp
+    assert pipeline.compute({"a": 10, "b2": 2, "c": 1}, ["ab_plus_c"]) == filtdict(
         exp, "ab_plus_c"
     )
 
@@ -718,13 +718,13 @@ def test_optional():
 
     # Make sure output with optional arg is as expected.
     named_inputs = {"a": 4, "b": 3, "c": 2}
-    results = net(named_inputs)
+    results = net(**named_inputs)
     assert "sum" in results
     assert results["sum"] == sum(named_inputs.values())
 
     # Make sure output without optional arg is as expected.
     named_inputs = {"a": 4, "b": 3}
-    results = net(named_inputs)
+    results = net(**named_inputs)
     assert "sum" in results
     assert results["sum"] == sum(named_inputs.values())
 
@@ -827,11 +827,11 @@ def test_sideffect_no_real_data(bools):
 
     # Normal data must not match sideffects
     with pytest.raises(ValueError, match="Unknown output node"):
-        graph({"box": [0], "a": True}, outputs=["a"])
+        graph.compute({"box": [0], "a": True}, ["a"])
     with pytest.raises(ValueError, match="Unknown output node"):
-        graph({"box": [0], "a": True}, outputs=["b"])
+        graph.compute({"box": [0], "a": True}, ["b"])
 
-    sol = graph({"box": [0], "a": True})
+    sol = graph(**{"box": [0], "a": True})
     # Nothing run if no sideffect inputs given.
     assert sol == {
         "box": [0],
@@ -839,25 +839,25 @@ def test_sideffect_no_real_data(bools):
     }  # just the inputs FIXME: must raise if it cannot run!
 
     # Nothing run if no sideffect inputs given.
-    sol = graph({"box": [0], "a": True}, outputs=["box", sideffect("b")])
+    sol = graph.compute({"box": [0], "a": True}, ["box", sideffect("b")])
     assert sol == {}  # FIXME: must raise if it cannot run!
 
     ## OK INPUT SIDEFFECTS
     #
     # ok, no asked out
-    sol = graph({"box": [0], sideffect("a"): True})
+    sol = graph.compute({"box": [0], sideffect("a"): True})
     assert sol == {"box": [1, 2, 3], sideffect("a"): True}
     #
     # bad, not asked the out-sideffect
-    sol = graph({"box": [0], sideffect("a"): True}, "box")
+    sol = graph.compute({"box": [0], sideffect("a"): True}, "box")
     assert sol == {}
     #
     # ok, asked the 1st out-sideffect
-    sol = graph({"box": [0], sideffect("a"): True}, ["box", sideffect("b")])
+    sol = graph.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("b")])
     assert sol == {"box": [0, 1, 2]}
     #
     # ok, asked the 2nd out-sideffect
-    sol = graph({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
+    sol = graph.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
     assert sol == {"box": [1, 2, 3]}
 
 
@@ -881,8 +881,8 @@ def test_sideffect_real_input(bools):
     if parallel:
         graph.set_execution_method("parallel")
 
-    assert graph({"box": [0], "a": True}) == {"a": True, "box": [1, 2, 3], "c": None}
-    assert graph({"box": [0], "a": True}, ["box", "c"]) == {"box": [1, 2, 3], "c": None}
+    assert graph(**{"box": [0], "a": True}) == {"a": True, "box": [1, 2, 3], "c": None}
+    assert graph.compute({"box": [0], "a": True}, ["box", "c"]) == {"box": [1, 2, 3], "c": None}
 
 
 def test_sideffect_steps():
@@ -895,7 +895,7 @@ def test_sideffect_steps():
             name="increment", needs=["box", sideffect("b")], provides=sideffect("c")
         )(_box_increment),
     )
-    sol = netop({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
+    sol = netop.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
     assert sol == {"box": [1, 2, 3]}
     assert len(netop.last_plan.steps) == 4
 
@@ -926,24 +926,24 @@ def test_optional_per_function_with_same_output():
     pipeline = compose("partial_optionals", add_op, sub_op_optional)
     #
     named_inputs = {"a": 1, "b": 2}
-    assert pipeline(named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
-    assert pipeline(named_inputs, ["a+-b"]) == {"a+-b": 3}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
     #
     named_inputs = {"a": 1}
-    assert pipeline(named_inputs) == {"a": 1, "a+-b": -9}
-    assert pipeline(named_inputs, ["a+-b"]) == {"a+-b": -9}
+    assert pipeline.compute(named_inputs, recompile=True) == {"a": 1, "a+-b": -9}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -9}
 
     # Inverse op order
     #
     pipeline = compose("partial_optionals", sub_op_optional, add_op)
     #
     named_inputs = {"a": 1, "b": 2}
-    assert pipeline(named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
-    assert pipeline(named_inputs, ["a+-b"]) == {"a+-b": -1}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -1}
     #
     named_inputs = {"a": 1}
-    assert pipeline(named_inputs) == {"a": 1, "a+-b": -9}
-    assert pipeline(named_inputs, ["a+-b"]) == {"a+-b": -9}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -9}
 
     # PARALLEL + Normal order
     #
@@ -951,12 +951,12 @@ def test_optional_per_function_with_same_output():
     pipeline.set_execution_method("parallel")
     #
     named_inputs = {"a": 1, "b": 2}
-    assert pipeline(named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
-    assert pipeline(named_inputs, ["a+-b"]) == {"a+-b": 3}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
     #
     named_inputs = {"a": 1}
-    assert pipeline(named_inputs) == {"a": 1, "a+-b": -9}
-    assert pipeline(named_inputs, ["a+-b"]) == {"a+-b": -9}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -9}
 
     # PARALLEL + Inverse op order
     #
@@ -964,12 +964,12 @@ def test_optional_per_function_with_same_output():
     pipeline.set_execution_method("parallel")
     #
     named_inputs = {"a": 1, "b": 2}
-    assert pipeline(named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
-    assert pipeline(named_inputs, ["a+-b"]) == {"a+-b": -1}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -1}
     #
     named_inputs = {"a": 1}
-    assert pipeline(named_inputs) == {"a": 1, "a+-b": -9}
-    assert pipeline(named_inputs, ["a+-b"]) == {"a+-b": -9}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -9}
 
 
 def test_evicted_optional():
@@ -988,7 +988,7 @@ def test_evicted_optional():
     net = compose("test_net", sum_op1, sum_op2)
 
     # _EvictInstructions are used only when a subset of outputs are requested.
-    results = net({"a": 4, "b": 3}, outputs=["sum2"])
+    results = net.compute({"a": 4, "b": 3}, ["sum2"])
     assert "sum2" in results
 
 
@@ -1009,20 +1009,20 @@ def test_evict_instructions_vary_with_inputs():
     inp = {"a": 2, "b": 3}
     exp = inp.copy()
     exp.update({"aa": 2, "ab": 5, "asked": 7})
-    res = pipeline(inp)
+    res = pipeline(**inp)
     assert res == exp  # ok
     steps11 = pipeline.net.compile(inp).steps
-    res = pipeline(inp, outputs=["asked"])
+    res = pipeline.compute(inp, ["asked"])
     assert res == filtdict(exp, "asked")  # ok
     steps12 = pipeline.net.compile(inp, ["asked"]).steps
 
     inp = {"a": 2}
     exp = inp.copy()
     exp.update({"aa": 2, "asked": 12})
-    res = pipeline(inp)
+    res = pipeline(**inp)
     assert res == exp  # ok
     steps21 = pipeline.net.compile(inp).steps
-    res = pipeline(inp, outputs=["asked"])
+    res = pipeline.compute(inp, ["asked"])
     assert res == filtdict(exp, "asked")  # ok
     steps22 = pipeline.net.compile(inp, ["asked"]).steps
 
@@ -1061,7 +1061,7 @@ def test_multithreading_plan_execution():
     pool = Pool(10)
     graph.set_execution_method("parallel")
     pool.map(
-        lambda i: graph({"a": 2, "b": 5}, ["a_minus_ab", "abs_a_minus_ab_cubed"]),
+        lambda i: graph.compute({"a": 2, "b": 5}, ["a_minus_ab", "abs_a_minus_ab_cubed"]),
         range(100),
     )
 
@@ -1103,13 +1103,13 @@ def test_parallel_execution():
 
     t0 = time.time()
     pipeline.set_execution_method("parallel")
-    result_threaded = pipeline({"x": 10}, ["co", "go", "do"])
+    result_threaded = pipeline.compute({"x": 10}, ["co", "go", "do"])
     print("threaded result")
     print(result_threaded)
 
     t0 = time.time()
     pipeline.set_execution_method(None)
-    result_sequential = pipeline({"x": 10}, ["co", "go", "do"])
+    result_sequential = pipeline.compute({"x": 10}, ["co", "go", "do"])
     print("sequential result")
     print(result_sequential)
 
@@ -1146,7 +1146,7 @@ def test_multi_threading():
     def infer(i):
         # data = open("616039-bradpitt.jpg").read()
         outputs = ["c", "d", "e"]
-        results = pipeline({"a": 1, "b": 2}, outputs)
+        results = pipeline.compute({"a": 1, "b": 2}, outputs)
         assert tuple(sorted(results.keys())) == tuple(sorted(outputs)), (
             outputs,
             results,
@@ -1178,7 +1178,7 @@ def test_compose_another_network(bools):
     if parallel1:
         graphop.set_execution_method("parallel")
 
-    assert graphop({"a_minus_ab": -8}) == {
+    assert graphop(a_minus_ab=-8) == {
         "a_minus_ab": -8,
         "abs_a_minus_ab_cubed": 512,
     }
@@ -1193,7 +1193,7 @@ def test_compose_another_network(bools):
     if parallel2:
         bigger_graph.set_execution_method("parallel")
 
-    sol = bigger_graph({"a": 2, "b": 5, "c": 5}, outputs=["a_minus_ab_minus_c"])
+    sol = bigger_graph.compute({"a": 2, "b": 5, "c": 5}, ["a_minus_ab_minus_c"])
     assert sol == {"a_minus_ab_minus_c": -13}
 
 
@@ -1206,7 +1206,7 @@ def test_abort(exemethod):
     )
     pipeline.set_execution_method(exemethod)
     with pytest.raises(AbortedException) as exinfo:
-        pipeline({"a": 1})
+        pipeline(a=1)
     assert exinfo.value.jetsam["solution"] == {"a": 1, "b": 1, "c": None}
     executed = {op.name: val for op, val in exinfo.value.args[0].items()}
     assert executed == {"A": True, "B": True, "C": False}
@@ -1215,4 +1215,4 @@ def test_abort(exemethod):
         "pipeline", operation(name="A", needs=["a"], provides=["b"])(identity)
     )
     pipeline.set_execution_method(exemethod)
-    assert pipeline({"a": 1}) == {"a": 1, "b": 1}
+    assert pipeline.compute({"a": 1}) == {"a": 1, "b": 1}

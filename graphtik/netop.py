@@ -30,7 +30,8 @@ class NetworkOperation(Operation, Plotter):
     method = None
     overwrites_collector = None
     #: The default plan, enforcing stable `needs` & `provides`
-    #: when :meth:`compute()` called with ``recompile=False`` (default).
+    #: when :meth:`compute()` called with ``recompile=False``
+    #: (default is ``recompile=None``, which means, only if `output` given).
     plan = None
     #: The execution_plan of the last call to compute(),
     #: stored as debugging aid.
@@ -170,9 +171,11 @@ class NetworkOperation(Operation, Plotter):
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
-    def compute(self, named_inputs, outputs=None, recompile=True) -> dict:
+    def compute(self, named_inputs, outputs=None, recompile=None) -> dict:
         """
         Solve & execute the graph, sequentially or parallel.
+
+        It see also :meth:`.Operation.compute()`.
 
         :param dict named_inputs:
             A maping of names --> values that must contain at least
@@ -184,15 +187,18 @@ class NetworkOperation(Operation, Plotter):
             If you set this variable to ``None``, all data nodes will be kept
             and returned at runtime.
         :param recompile:
-            if false, uses fixed :attr:`plan`, else recompiles a temporary plan
-            from network.  In all cases, the `:attr:`last_plan` is updated.
+            - if `False`, uses fixed :attr:`plan`;
+            - if true, recompiles a temporary plan from network;
+            - if `None`, assumed true if `outputs` given (is not `None`).
+
+            In all cases, the `:attr:`last_plan` is updated.
 
         :returns: a dictionary of output data objects, keyed by name.
         """
         try:
-            outputs = astuple(outputs, "outputs", allowed_types=abc.Collection)
-
             net = self.net
+            if outputs is not None and recompile is None:
+                recompile = True
 
             # Build the execution plan.
             self.last_plan = plan = (
@@ -207,9 +213,11 @@ class NetworkOperation(Operation, Plotter):
         except Exception as ex:
             jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
 
-    # TODO: def __call__(self, **kwargs) -> tuple:
-    def __call__(self, named_inputs, outputs=None) -> dict:
-        return self.compute(named_inputs, outputs=outputs)
+    def __call__(self, **input_kwargs) -> dict:
+        """
+        FIXME: doc netop()
+        """
+        return self.compute(input_kwargs, outputs=self.plan.outputs, recompile=True)
 
     def set_execution_method(self, method):
         """

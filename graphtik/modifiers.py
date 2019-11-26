@@ -39,9 +39,9 @@ class optional(str):
 
     The graph works with and without `c` provided as input::
 
-        >>> graph({'a': 5, 'b': 2, 'c': 4})['sum']
+        >>> graph(a=5, b=2, c=4)['sum']
         11
-        >>> graph({'a': 5, 'b': 2})
+        >>> graph(a=5, b=2)
         {'a': 5, 'b': 2, 'sum': 7}
 
     """
@@ -76,11 +76,11 @@ class vararg(optional):
 
     The graph works with and without any of `b` and `c` inputs::
 
-        >>> graph({'a': 5, 'b': 2, 'c': 4})['sum']
+        >>> graph(a=5, b=2, c=4)['sum']
         11
-        >>> graph({'a': 5, 'b': 2})
+        >>> graph(a=5, b=2)
         {'a': 5, 'b': 2, 'sum': 7}
-        >>> graph({'a': 5})
+        >>> graph(a=5)
         {'a': 5, 'sum': 5}
 
     """

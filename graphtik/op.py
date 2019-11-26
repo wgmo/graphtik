@@ -81,9 +81,12 @@ class Operation(abc.ABC):
     @abc.abstractmethod
     def compute(self, named_inputs, outputs=None):
         """
-        Compute from a given set of inputs an optional set of outputs.
+        Compute (optional) asked `outputs` for the given `named_inputs`.
 
-        :param list inputs:
+        It is called by :class:`.Network`.
+        End-users should simply call the operation with `named_inputs` as kwargs.
+
+        :param list named_inputs:
             A list of :class:`Data` objects on which to run the layer's
             feed-forward computation.
         :returns list:

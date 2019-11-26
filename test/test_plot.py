@@ -62,7 +62,7 @@ def test_plot_formats(pipeline, tmp_path):
     # run it here (and not in ficture) to ensure `last_plan` exists.
     inputs = {"a": 1, "b1": 2}
     outputs = ["asked", "b1"]
-    solution = pipeline(inputs, outputs)
+    solution = pipeline.compute(inputs, outputs)
 
     # The 1st list does not working on my PC, or travis.
     # NOTE: maintain the other lists manually from the Exception message.
@@ -107,7 +107,7 @@ def test_plotters_hierarchy(pipeline, inputs, outputs):
     assert base_dot
     assert pipeline.name in str(base_dot)
 
-    solution = pipeline(inputs, outputs)
+    solution = pipeline.compute(inputs, outputs)
 
     # Plotting delegates to netwrok plan.
     plan_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))

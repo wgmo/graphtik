@@ -130,7 +130,7 @@ by creating an operation "builder pattern"::
    >>> pow_op3 = pow_op_factory(lambda a: 1, name='pow_op0')
 
    >>> graphop = compose('two_pows_graph', pow_op1, pow_op2, pow_op3)
-   >>> graphop({'a': 2})
+   >>> graphop(a=2)
    {'a': 2, 'a_cubed': 8, 'a_squared': 4}
 
 .. Note::

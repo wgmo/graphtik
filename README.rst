@@ -65,10 +65,12 @@ Compose the ``mul``, ``sub``, and ``abspow`` functions into a computation graph:
 
 Run the graph and request all of the outputs::
 
-   >>> graphop({'a': 2, 'b': 5})
+   >>> graphop(a=2, b=5)
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
-   >>> graphop({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+..or request a subset of outputs::
+
+   >>> graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
    {'a_minus_ab': -8}
 
 .. |sample-plot| image:: docs/source/images/barebone_2ops
