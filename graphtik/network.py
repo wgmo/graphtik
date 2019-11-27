@@ -402,11 +402,12 @@ class ExecutionPlan(
             executor(solution, overwrites, executed)
 
             # Validate eviction was perfect
-            # It is a proper subset when not all outputs calculated.
-            assert not self.provides or set(solution).issubset(self.provides), (
-                list(solution),
-                self.provides,
-            )
+            assert (
+                not self.provides
+                or is_skip_evictions()
+                # It is a proper subset when not all outputs calculated.
+                or set(solution).issubset(self.provides)
+            ), (list(solution), self.provides)
 
             return solution
         except Exception as ex:

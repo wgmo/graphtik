@@ -16,6 +16,7 @@ from graphtik import (
     compose,
     operation,
     optional,
+    set_evictions_skipped,
     sideffect,
     vararg,
 )
@@ -1037,6 +1038,20 @@ def test_evict_instructions_vary_with_inputs():
     #
     # FAILs in v1.2.4 + #18, PASS in #26
     assert count_evictions(steps12) != count_evictions(steps22)
+
+
+def test_skip_eviction_flag():
+    graph = compose(
+        "graph",
+        operation(name="add1", needs=["a", "b"], provides=["ab"])(add),
+        operation(name="add2", needs=["a", "ab"], provides=["aab"])(add),
+    )
+    set_evictions_skipped(True)
+    try:
+        exp = {"a": 1, "b": 3, "ab": 4, "aab": 5}
+        assert graph.compute({"a": 1, "b": 3}, "aab") == exp
+    finally:
+        set_evictions_skipped(False)
 
 
 def test_multithreading_plan_execution():
