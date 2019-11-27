@@ -427,9 +427,20 @@ class Network(Plotter):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *operations):
+        ## Check for duplicate, operations can only append  once.
+        #
+        uniques = set(operations)
+        if len(operations) != len(uniques):
+            dupes = list(operations)
+            for i in uniques:
+                dupes.remove(i)
+            raise ValueError(f"Operations may only be added once, dupes: {iset(dupes)}")
+
         # directed graph of layer instances and data-names defining the net.
-        self.graph = DiGraph()
+        graph = self.graph = DiGraph()
+        for op in operations:
+            self._append_operation(graph, op)
 
         # this holds the timing information for each layer
         self.times = {}
@@ -449,22 +460,19 @@ class Network(Plotter):
 
         return build_pydot(**kws)
 
-    def add_op(self, operation):
+    def _append_operation(self, graph, operation: Operation):
         """
-        Adds the given operation and its data requirements to the network graph
-        based on the name of the operation, the names of the operation's needs,
-        and the names of the data it provides.
+        Adds the given operation and its data requirements to the network graph.
 
-        :param Operation operation: Operation object to add.
+        - Invoked dyuring constructor only (immutability).
+        - Identities are based on the name of the operation, the names of the operation's needs,
+          and the names of the data it provides.
+
+        :param graph:
+            the `networkx` graph to append to
+        :param operation:
+            operation instance to append
         """
-
-        # assert layer is only added once to graph
-        if operation in self.graph.nodes:
-            raise ValueError(f"Operation {operation} may only be added once!")
-
-        graph = self.graph
-        self._cached_plans = {}
-
         # add nodes and edges to graph describing the data needs for this layer
         for n in operation.needs:
             kw = {}

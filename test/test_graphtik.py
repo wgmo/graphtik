@@ -154,11 +154,7 @@ def test_network_plan_execute():
         name="sum2", provides=["p1_plus_p2"], needs=["sum_ab_p1", "sum_ab_p2"]
     )(add)
 
-    net = network.Network()
-    net.add_op(sum_op1)
-    net.add_op(mul_op1)
-    net.add_op(pow_op1)
-    net.add_op(sum_op2)
+    net = network.Network(sum_op1, mul_op1, pow_op1, sum_op2)
     net.compile()
 
     #

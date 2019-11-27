@@ -325,11 +325,7 @@ def compose(
                 merge_set.add(op)
         operations = merge_set
 
-    ## Build network
-    #
-    net = Network()
-    for op in operations:
-        net.add_op(op)
+    net = Network(*operations)
 
     return NetworkOperation(
         net,
