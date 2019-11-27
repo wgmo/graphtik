@@ -23,7 +23,9 @@ class NetworkOperation(Operation, Plotter):
     """
     An Operation performing a network-graph of other operations.
 
-    Use :func:`compose()` to prepare the `net` and build instances of this class.
+    .. Tip::
+        Use :func:`compose()` factory to prepare the `net` and build
+        instances of this class.
     """
 
     #: set execution mode to single-threaded sequential by default
@@ -33,24 +35,27 @@ class NetworkOperation(Operation, Plotter):
     #: when :meth:`compute()` called with ``recompile=False``
     #: (default is ``recompile=None``, which means, only if `output` given).
     plan = None
-    #: The execution_plan of the last call to compute(),
-    #: stored as debugging aid.
+    #: The execution_plan of the last call to compute(), stored as debugging aid.
     last_plan = None
+    #: The inputs names (possibly `None`)used to compile the :attr:`plan`.
+    inputs = None
+    #: The outputs names (possibly `None`) used to compile the :attr:`plan`.
+    outputs = None
 
     def __init__(
         self,
         net,
         name,
         *,
-        needs=None,
-        provides=None,
+        inputs=None,
+        outputs=None,
         method=None,
         overwrites_collector=None,
     ):
         """
-        :param needs:
+        :param inputs:
             see :meth:`narrow()`
-        :param provides:
+        :param outputs:
             see :meth:`narrow()`
         :param method:
             either `parallel` or None (default);
@@ -65,18 +70,20 @@ class NetworkOperation(Operation, Plotter):
         """
         self.net = net
         ## Set data asap, for debugging, although `prune()` will reset them.
-        super().__init__(name, needs, provides)
+        super().__init__(name, inputs, outputs)
         self.set_execution_method(method)
         self.set_overwrites_collector(overwrites_collector)
 
-        ## Mimic `narrow()` but mutating myself.
+        ## Mimic `narrow()` but mutate myself
+        #  to setup dependencies & plan.
         #
-        orig_needs = needs
-        if needs is None:
+        orig_inputs = inputs
+        if inputs is None:
             all_needs, _all_provides = self.net.dependencies()
-            needs = all_needs
-        self.plan = self.net.compile(needs, provides)
-        self._narrow_dependencies(orig_needs, provides)
+            inputs = all_needs
+        self.plan = self.net.compile(inputs, outputs)
+        ## Use original `None`, to re-fetch dependencies from plan
+        self._narrow_dependencies(orig_inputs, outputs)
         self.name, self.needs, self.provides = reparse_operation_data(
             self.name, self.needs, self.provides
         )
@@ -85,7 +92,7 @@ class NetworkOperation(Operation, Plotter):
         return self.needs, self.provides
 
     def narrow(
-        self, needs: Collection = None, provides: Collection = None
+        self, inputs: Collection = None, outputs: Collection = None
     ) -> "NetworkOperation":
         """
         Return a copy with a network pruned for the given `needs` & `provides`.
@@ -108,20 +115,20 @@ class NetworkOperation(Operation, Plotter):
         the :attr:`net`.
 
         """
-        if needs is None:
+        if inputs is None:
             all_needs, _all_provides = self.net.dependencies()
-            needs = all_needs
+            inputs = all_needs
 
         netop = copy.copy(self)
         netop.last_plan = None
         # Will scream on unknown `outputs`.
-        netop.plan = self.net.compile(needs, provides)
-        netop._narrow_dependencies(needs, provides)
+        netop.plan = self.net.compile(inputs, outputs)
+        netop._narrow_dependencies(inputs, outputs)
 
         return netop
 
     def _narrow_dependencies(
-        self, needs: Collection = None, provides: Collection = None
+        self, inputs: Collection = None, outputs: Collection = None
     ):
         """
         Prune dependencies based on :attr:`plan` and the given `needs` & `provides`.
@@ -130,19 +137,19 @@ class NetworkOperation(Operation, Plotter):
         """
         all_needs, all_provides = self.plan.dependencies()
 
-        if needs is None:
-            needs = all_needs
+        if inputs is None:
+            inputs = all_needs
         else:
-            needs = astuple(needs, "needs", allowed_types=abc.Collection)
-            unknown = iset(needs) - all_needs
+            inputs = astuple(inputs, "needs", allowed_types=abc.Collection)
+            unknown = iset(inputs) - all_needs
             if unknown:
                 log.warning("Unused needs%s for %s!", list(unknown), self.net)
 
-        if provides is None:
-            provides = all_provides
+        if outputs is None:
+            outputs = all_provides
         else:
-            provides = aslist(provides, "provides", allowed_types=abc.Collection)
-            unknown = iset(provides) - all_provides
+            outputs = aslist(outputs, "provides", allowed_types=abc.Collection)
+            unknown = iset(outputs) - all_provides
             if unknown:
                 raise ValueError(f"Impossible provides{list(unknown)} for {self.net}!")
 
@@ -162,8 +169,8 @@ class NetworkOperation(Operation, Plotter):
                 else str(node)  # un-optionalize
             )
 
-        self.needs = [optionalized(n) for n in needs]
-        self.provides = provides
+        self.needs = [optionalized(n) for n in inputs]
+        self.provides = outputs
 
     def _build_pydot(self, **kws):
         """delegate to network"""
@@ -217,7 +224,8 @@ class NetworkOperation(Operation, Plotter):
         """
         FIXME: doc netop()
         """
-        return self.compute(input_kwargs, outputs=self.plan.outputs, recompile=True)
+        # respect narrowed outputs, even when recompiled
+        return self.compute(input_kwargs, outputs=self.plan.provides, recompile=True)
 
     def set_execution_method(self, method):
         """
@@ -326,8 +334,8 @@ def compose(
     return NetworkOperation(
         net,
         name,
-        needs=needs,
-        provides=provides,
+        inputs=needs,
+        outputs=provides,
         method=method,
         overwrites_collector=overwrites_collector,
     )

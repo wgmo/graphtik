@@ -70,7 +70,7 @@ import time
 from collections import abc, defaultdict, namedtuple
 from contextvars import ContextVar
 from multiprocessing.dummy import Pool
-from typing import Iterable, Optional, Tuple
+from typing import Collection, Iterable, Optional, Tuple
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -165,7 +165,7 @@ class _PinInstruction(str):
 
 
 class ExecutionPlan(
-    namedtuple("_ExePlan", "net inputs outputs dag broken_edges steps"), Plotter
+    namedtuple("_ExePlan", "net needs provides dag broken_edges steps"), Plotter
 ):
     """
     The result of the network's compilation phase.
@@ -175,12 +175,11 @@ class ExecutionPlan(
     :ivar net:
         The parent :class:`Network`
 
-    :ivar inputs:
-        A tuple with the names of the given inputs used to construct the plan.
+    :ivar needs:
+        A tuple with the input names needed to exist in order to produce all `provides`.
 
-    :ivar outputs:
-        A (possibly empy) tuple with the names of the requested outputs
-        used to construct the plan.
+    :ivar provides:
+        A tuple with the outputs names produces when all `inputs` are given.
 
     :ivar dag:
         The regular (not broken) *pruned* subgraph of net-graph.
@@ -207,8 +206,8 @@ class ExecutionPlan(
         mykws = {
             "graph": self.net.graph,
             "steps": self.steps,
-            "inputs": self.inputs,
-            "outputs": self.outputs,
+            "inputs": self.needs,
+            "outputs": self.provides,
             "edge_props": {
                 e: {"color": "wheat", "penwidth": 2} for e in self.broken_edges
             },
@@ -220,9 +219,9 @@ class ExecutionPlan(
 
     def __repr__(self):
         steps = ["\n  +--%s" % s for s in self.steps]
-        return "ExecutionPlan(inputs=%s, outputs=%s, steps:%s)" % (
-            self.inputs,
-            self.outputs,
+        return "ExecutionPlan(needs=%s, provides=%s, steps:%s)" % (
+            self.needs,
+            self.provides,
             "".join(steps),
         )
 
@@ -394,7 +393,7 @@ class ExecutionPlan(
             # otherwise, keep'em all.
             solution = (
                 {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
-                if self.outputs
+                if self.provides
                 else named_inputs.copy()
             )
             executed = set()
@@ -404,9 +403,9 @@ class ExecutionPlan(
 
             # Validate eviction was perfect
             # It is a proper subset when not all outputs calculated.
-            assert not self.outputs or set(solution).issubset(self.outputs), (
+            assert not self.provides or set(solution).issubset(self.provides), (
                 list(solution),
-                self.outputs,
+                self.provides,
             )
 
             return solution
@@ -539,20 +538,20 @@ class Network(Plotter):
 
         return unsatisfied
 
-    def _prune_graph(self, inputs, outputs):
+    def _prune_graph(self, inputs: Collection, outputs: Collection):
         """
         Determines what graph steps need to run to get to the requested
         outputs from the provided inputs. :
         - Eliminate steps that are not on a path arriving to requested outputs.
         - Eliminate unsatisfied operations: partial inputs or no outputs needed.
 
-        :param iterable inputs:
-            The inputs names of all given inputs.
+        :param inputs:
+            The names of all given inputs.
 
-        :param iterable outputs:
-            A list of desired output names.  This can also be ``None``, in which
+        :param outputs:
+            The desired output names.  This can also be ``None``, in which
             case the necessary steps are all graph nodes that are reachable
-            from one of the provided inputs.
+            from the provided inputs.
 
         :return:
             the *pruned_dag*
@@ -722,9 +721,8 @@ class Network(Plotter):
 
         :param inputs:
             An iterable with the names of all the given inputs.
-
         :param outputs:
-            (optional) An iterable or the name of the output name(s).
+            An iterable or the name of the output name(s).
             If missing, requested outputs assumed all graph reachable nodes
             from one of the given inputs.
 

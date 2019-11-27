@@ -38,7 +38,7 @@ dependencies, and the sequence of the execution-plan.
     :alt: barebone graph
 
 But as soon as you run it, the net plot calls will print more of the internals.
-Internally it delegates to :meth:`.ExecutionPlan.plot()` of ``graph_op.last_plan``
+Internally it delegates to :meth:`.ExecutionPlan.plot()` of :attr:`.NetworkOperation.last_plan`
 attribute, which *caches* the last run to facilitate debugging.
 If you want the bare-bone diagram, plot network::
 
@@ -94,7 +94,7 @@ with the folllowing properties, as a debug aid:
     +--foo),
  'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream'),
  'outputs': None,
- 'plan': ExecutionPlan(inputs=('a',), outputs=(), steps:
+ 'plan': ExecutionPlan(needs=('a',), provides=(), steps:
   +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')),
  'provides': None,
  'results_fn': None,

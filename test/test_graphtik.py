@@ -375,7 +375,7 @@ def test_deps_pruning_vs_narrowing():
     assert results["sum3"] == add(c, sum2)
 
     # Compare with both `narrow()`.
-    net = net.narrow(needs=["c", "sum2"], provides=["sum3"])
+    net = net.narrow(inputs=["c", "sum2"], outputs=["sum3"])
     results = net(c=c, sum2=sum2)
 
     # Make sure we got expected result without having to pass a, b, or d.
@@ -613,7 +613,7 @@ def test_same_outputs_operations_order():
 
     inp = {"a": 3, "b": 1}
     assert addsub(**inp) == {"a": 3, "b": 1, "ab": 4, "AB": 4}
-    assert addsub.narrow(provides="AB")(**inp) == {"AB": 4}
+    assert addsub.narrow(outputs="AB")(**inp) == {"AB": 4}
     assert subadd(**inp) == {"a": 3, "b": 1, "ab": 2, "AB": 2}
     assert subadd.compute(inp, "AB") == {"AB": 2}
 
@@ -646,7 +646,7 @@ def test_unsatisfied_operations():
     exp = {"a": 10, "b1": 2, "a+b1": 12}
     assert pipeline(**{"a": 10, "b1": 2}) == exp
     assert pipeline.compute({"a": 10, "b1": 2}, ["a+b1"]) == filtdict(exp, "a+b1")
-    assert pipeline.narrow(provides=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(exp, "a+b1")
+    assert pipeline.narrow(outputs=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(exp, "a+b1")
 
     exp = {"a": 10, "b2": 2, "a-b2": 8}
     assert pipeline(**{"a": 10, "b2": 2}) == exp
