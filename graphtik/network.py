@@ -638,7 +638,7 @@ class Network(Plotter):
         dag = self.graph
 
         # Ignore input names that aren't in the graph.
-        graph_inputs = set(dag.nodes) & set(inputs)  # unordered, iterated, but ok
+        inputs_in_graph = set(dag.nodes) & set(inputs)  # unordered, iterated, but ok
 
         # Scream if some requested outputs aren't in the graph.
         unknown_outputs = iset(outputs) - dag.nodes
@@ -654,7 +654,7 @@ class Network(Plotter):
         # To discover which ones to prune, we break their incoming edges
         # and they will drop out while collecting ancestors from the outputs.
         broken_edges = set()  # unordered, not iterated
-        for given in graph_inputs:
+        for given in inputs_in_graph:
             broken_edges.update(broken_dag.in_edges(given))
         broken_dag.remove_edges_from(broken_edges)
 
@@ -669,7 +669,7 @@ class Network(Plotter):
             broken_dag = broken_dag.subgraph(ending_in_outputs)
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
-        unsatisfied = self._collect_unsatisfied_operations(broken_dag, inputs)
+        unsatisfied = self._collect_unsatisfied_operations(broken_dag, inputs_in_graph)
         # Clone it so that it is picklable.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
 
