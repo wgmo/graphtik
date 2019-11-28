@@ -15,11 +15,17 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import importlib
+import inspect
 import io
+import logging
 import os
 import re
 import subprocess as sbp
 import sys
+
+log = logging.getLogger(__name__)
+
 import packaging.version
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -38,6 +44,7 @@ sys.path.insert(0, os.path.abspath("../../"))
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
+    "sphinx.ext.linkcode",
     "sphinx.ext.imgmath",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
@@ -47,6 +54,44 @@ extlinks = {
     "gh": ("https://github.com/yahoo/graphkit/issues/%s", "yahoo#"),
     "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#"),
 }
+
+try:
+    git_commit = sbp.check_output("git rev-parse HEAD".split()).strip().decode()
+except Exception:
+    git_commit = None
+
+
+def linkcode_resolve(domain, info):
+    """Produce URLs to GitHub sources, for ``sphinx.ext.linkcode``"""
+    if domain != "py":
+        return None
+    if not info["module"]:
+        return None
+
+    modname = info["module"]
+    item = importlib.import_module(modname)
+    filename = modname.replace(".", "/")
+    if git_commit:
+        uri = f"https://github.com/pygraphkit/graphtik/blob/{git_commit}/{filename}.py"
+    else:
+        uri = f"https://github.com/pygraphkit/graphtik/blob/master/{filename}.py"
+
+    itemname = info["fullname"]
+    try:
+        for child in itemname.split("."):
+            item = getattr(item, child, None)
+            if not item:
+                break
+        if item:
+            lineno = inspect.getsourcelines(item)
+            uri = f"{uri}#L{lineno[1]}"
+    except Exception as ex:
+        log.warning(
+            "Cannot link to sources for %s:%s due to: %s", modname, itemname, ex
+        )
+
+    return uri
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
