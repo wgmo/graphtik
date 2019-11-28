@@ -2,6 +2,7 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 
 import math
+import re
 import sys
 from functools import partial
 from operator import add, floordiv, mul, sub
@@ -21,6 +22,7 @@ from graphtik import (
     vararg,
 )
 from graphtik.op import Operation
+from graphtik.netop import NetworkOperation
 
 
 @pytest.fixture(params=[None, "parallel"])
@@ -156,7 +158,13 @@ def test_network_plan_execute():
     )(add)
 
     net = network.Network(sum_op1, mul_op1, pow_op1, sum_op2)
-    net.compile()
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        net.compile()
+    net.compile(net.needs)
+    net.compile(net.needs, net.provides)
+    # FIXME: compile with just `outputs`.
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        net.compile(outputs=net.provides)
 
     #
     # Running the network
@@ -190,7 +198,11 @@ def test_network_plan_execute():
     inputs = {"sum_ab": 1, "b": 2, "exponent": 3}
     exp = {"sum_ab_times_b": 2}
     plan = net.compile(outputs=["sum_ab_times_b"], inputs=inputs)
-    sol = plan.execute(named_inputs={"sum_ab": 1, "b": 2})
+    with pytest.raises(
+        ValueError, match=re.escape("Plan needs more inputs[optional('exponent')]")
+    ):
+        sol = plan.execute(named_inputs={"sum_ab": 1, "b": 2})
+    sol = plan.execute(named_inputs=inputs)
     assert sol == exp
 
 
@@ -559,9 +571,9 @@ def test_pruning_with_given_intermediate_and_asked_out():
     # - on v1.2.4 with KeyError: 'a',
     # - on #18 (unsatisfied) with no result.
     # FIXED on #18+#26 (new dag solver).
-    assert pipeline.compute(
-        {"given-1": 5, "b": 2, "given-2": 2}, "asked"
-    ) == filtdict(exp, "asked")
+    assert pipeline.compute({"given-1": 5, "b": 2, "given-2": 2}, "asked") == filtdict(
+        exp, "asked"
+    )
 
     ## Test OVERWITES
     #
@@ -572,9 +584,9 @@ def test_pruning_with_given_intermediate_and_asked_out():
 
     overwrites = {}
     pipeline.set_overwrites_collector(overwrites)
-    assert pipeline.compute(
-        {"given-1": 5, "b": 2, "given-2": 2}, "asked"
-    ) == filtdict(exp, "asked")
+    assert pipeline.compute({"given-1": 5, "b": 2, "given-2": 2}, "asked") == filtdict(
+        exp, "asked"
+    )
     assert overwrites == {}
 
     ## Test parallel
@@ -582,8 +594,9 @@ def test_pruning_with_given_intermediate_and_asked_out():
     #
     pipeline.set_execution_method("parallel")
     assert pipeline(**{"given-1": 5, "b": 2, "given-2": 2}) == exp
-    assert pipeline.compute({"given-1": 5, "b": 2, "given-2": 2}, "asked"
-    ) == filtdict(exp, "asked")
+    assert pipeline.compute({"given-1": 5, "b": 2, "given-2": 2}, "asked") == filtdict(
+        exp, "asked"
+    )
 
 
 def test_same_outputs_operations_order():
@@ -643,7 +656,9 @@ def test_unsatisfied_operations():
     exp = {"a": 10, "b1": 2, "a+b1": 12}
     assert pipeline(**{"a": 10, "b1": 2}) == exp
     assert pipeline.compute({"a": 10, "b1": 2}, ["a+b1"]) == filtdict(exp, "a+b1")
-    assert pipeline.narrow(outputs=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(exp, "a+b1")
+    assert pipeline.narrow(outputs=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(
+        exp, "a+b1"
+    )
 
     exp = {"a": 10, "b2": 2, "a-b2": 8}
     assert pipeline(**{"a": 10, "b2": 2}) == exp
@@ -780,7 +795,7 @@ def test_narrow_and_optionality(reverse):
         == "NetworkOperation(name='t', needs=[optional('a')], provides=['sum1'])"
     )
 
-    with pytest.raises(ValueError, match="Impossible provides.+sum2'"):
+    with pytest.raises(ValueError, match="Unsolvable graph:"):
         compose("t", *ops, needs="bb", provides=["sum2"])
 
     ## Narrow by unknown needs
@@ -802,11 +817,8 @@ def _box_increment(box):
         box[i] += 1
 
 
-@pytest.mark.parametrize("bools", range(4))
-def test_sideffect_no_real_data(bools):
-    reverse = bools >> 0 & 1
-    parallel = bools >> 1 & 1
-
+@pytest.fixture(params=[0, 1])
+def netop_sideffect1(request) -> NetworkOperation:
     ops = [
         operation(
             name="extend", needs=["box", sideffect("a")], provides=[sideffect("b")]
@@ -815,29 +827,38 @@ def test_sideffect_no_real_data(bools):
             name="increment", needs=["box", sideffect("b")], provides=sideffect("c")
         )(_box_increment),
     ]
-    if reverse:
+    if request.param:
         ops = reversed(ops)
     # Designate `a`, `b` as sideffect inp/out arguments.
-    graph = compose("mygraph", *ops)
-    if parallel:
-        graph.set_execution_method("parallel")
+    graph = compose("sideffect1", *ops)
 
-    # Normal data must not match sideffects
+    return graph
+
+
+def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
+    graph = netop_sideffect1
+    inp = {"box": [0], "a": True}
+
+    ## Normal data must not match sideffects.
+    #
     with pytest.raises(ValueError, match="Unknown output node"):
-        graph.compute({"box": [0], "a": True}, ["a"])
+        graph.compute(inp, ["a"])
     with pytest.raises(ValueError, match="Unknown output node"):
-        graph.compute({"box": [0], "a": True}, ["b"])
+        graph.compute(inp, ["b"])
 
-    sol = graph(**{"box": [0], "a": True})
-    # Nothing run if no sideffect inputs given.
-    assert sol == {
-        "box": [0],
-        "a": True,
-    }  # just the inputs FIXME: must raise if it cannot run!
+    ## Cannot compile due to missing inputs/outputs
+    #
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        assert graph(**inp) == inp
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        assert graph.compute(inp, recompile=True)
 
-    # Nothing run if no sideffect inputs given.
-    sol = graph.compute({"box": [0], "a": True}, ["box", sideffect("b")])
-    assert sol == {}  # FIXME: must raise if it cannot run!
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        graph.compute(inp, ["box", sideffect("b")])
+
+    with pytest.raises(ValueError, match="Plan needs more inputs"):
+        # Cannot run, since no sideffect inputs given.
+        graph.compute(inp)
 
     ## OK INPUT SIDEFFECTS
     #
@@ -846,8 +867,8 @@ def test_sideffect_no_real_data(bools):
     assert sol == {"box": [1, 2, 3], sideffect("a"): True}
     #
     # bad, not asked the out-sideffect
-    sol = graph.compute({"box": [0], sideffect("a"): True}, "box")
-    assert sol == {}
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        sol = graph.compute({"box": [0], sideffect("a"): True}, "box")
     #
     # ok, asked the 1st out-sideffect
     sol = graph.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("b")])
@@ -879,19 +900,14 @@ def test_sideffect_real_input(bools):
         graph.set_execution_method("parallel")
 
     assert graph(**{"box": [0], "a": True}) == {"a": True, "box": [1, 2, 3], "c": None}
-    assert graph.compute({"box": [0], "a": True}, ["box", "c"]) == {"box": [1, 2, 3], "c": None}
+    assert graph.compute({"box": [0], "a": True}, ["box", "c"]) == {
+        "box": [1, 2, 3],
+        "c": None,
+    }
 
 
-def test_sideffect_steps():
-    netop = compose(
-        "mygraph",
-        operation(
-            name="extend", needs=["box", sideffect("a")], provides=[sideffect("b")]
-        )(_box_extend),
-        operation(
-            name="increment", needs=["box", sideffect("b")], provides=sideffect("c")
-        )(_box_increment),
-    )
+def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
+    netop = netop_sideffect1
     sol = netop.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
     assert sol == {"box": [1, 2, 3]}
     assert len(netop.last_plan.steps) == 4
@@ -1072,7 +1088,9 @@ def test_multithreading_plan_execution():
     pool = Pool(10)
     graph.set_execution_method("parallel")
     pool.map(
-        lambda i: graph.compute({"a": 2, "b": 5}, ["a_minus_ab", "abs_a_minus_ab_cubed"]),
+        lambda i: graph.compute(
+            {"a": 2, "b": 5}, ["a_minus_ab", "abs_a_minus_ab_cubed"]
+        ),
         range(100),
     )
 
@@ -1189,10 +1207,7 @@ def test_compose_another_network(bools):
     if parallel1:
         graphop.set_execution_method("parallel")
 
-    assert graphop(a_minus_ab=-8) == {
-        "a_minus_ab": -8,
-        "abs_a_minus_ab_cubed": 512,
-    }
+    assert graphop(a_minus_ab=-8) == {"a_minus_ab": -8, "abs_a_minus_ab_cubed": 512}
 
     bigger_graph = compose(
         "bigger_graph",

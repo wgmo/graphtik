@@ -101,13 +101,13 @@ def test_plot_formats(pipeline, tmp_path):
         raise AssertionError("Failed pydot formats: %s" % "".join(sorted(dupe_errs)))
 
 
-def test_plotters_hierarchy(pipeline, inputs, outputs):
+def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     # Plotting original network, no plan.
     base_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))
     assert base_dot
     assert pipeline.name in str(base_dot)
 
-    solution = pipeline.compute(inputs, outputs)
+    solution = pipeline.compute(inputs, outputs, recompile=True)
 
     # Plotting delegates to netwrok plan.
     plan_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))

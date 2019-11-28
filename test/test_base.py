@@ -6,7 +6,7 @@ import logging
 
 import pytest
 
-from graphtik import base, network, operation
+from graphtik import base, network, op, operation
 from graphtik.netop import NetworkOperation
 
 
@@ -142,7 +142,7 @@ def screaming_dumy_op():
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6))._call_operation,
+                network.ExecutionPlan(*([None] * 7))._call_operation,
                 op=screaming_dumy_op(),
                 solution={},
             ),
@@ -161,6 +161,14 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
     assert set(ex.jetsam.keys()) == set(expected_jetsam)
 
 
+class DummyOperation(op.Operation):
+    def __init__(self):
+        super().__init__("", (), ("a"))
+
+    def compute(self, named_inputs, outputs=None):
+        pass
+
+
 @pytest.mark.parametrize(
     "acallable, expected_jetsam",
     [
@@ -174,7 +182,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6))._call_operation,
+                network.ExecutionPlan(*([None] * 7))._call_operation,
                 op=None,
                 solution={},
             ),
@@ -182,13 +190,13 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6)).execute, named_inputs=None
+                network.ExecutionPlan(*([None] * 7)).execute, named_inputs=None
             ),
             ["solution", "executed"],
         ),
         (
             fnt.partial(
-                NetworkOperation(network.Network(), None).compute,
+                NetworkOperation(network.Network(DummyOperation()), None).compute,
                 named_inputs=None,
                 outputs="bad",
             ),

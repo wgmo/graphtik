@@ -94,7 +94,7 @@ with the folllowing properties, as a debug aid:
     +--foo),
  'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream'),
  'outputs': None,
- 'plan': ExecutionPlan(needs=('a',), provides=(), steps:
+ 'plan': ExecutionPlan(needs=['a'], provides=['foo'], steps:
   +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')),
  'provides': None,
  'results_fn': None,

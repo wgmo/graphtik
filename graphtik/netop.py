@@ -2,7 +2,6 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """About network-operations (those based on graphs)"""
 
-import copy
 import logging
 import re
 from collections import abc
@@ -31,13 +30,13 @@ class NetworkOperation(Operation, Plotter):
     #: set execution mode to single-threaded sequential by default
     method = None
     overwrites_collector = None
-    #: The default plan, enforcing stable `needs` & `provides`
+    #: The *narrowed plan* enforcing unvarying `needs` & `provides`
     #: when :meth:`compute()` called with ``recompile=False``
-    #: (default is ``recompile=None``, which means, only if `output` given).
+    #: (default is ``recompile=None``, which means, recompile only if `outputs` given).
     plan = None
     #: The execution_plan of the last call to compute(), stored as debugging aid.
     last_plan = None
-    #: The inputs names (possibly `None`)used to compile the :attr:`plan`.
+    #: The inputs names (possibly `None`) used to compile the :attr:`plan`.
     inputs = None
     #: The outputs names (possibly `None`) used to compile the :attr:`plan`.
     outputs = None
@@ -62,11 +61,12 @@ class NetworkOperation(Operation, Plotter):
             if ``"parallel"``, launches multi-threading.
             Set when invoking a composed graph or by
             :meth:`~NetworkOperation.set_execution_method()`.
-
         :param overwrites_collector:
             (optional) a mutable dict to be fillwed with named values.
             If missing, values are simply discarded.
 
+        :raises ValueError:
+            see :meth:`narrow()`
         """
         self.net = net
         ## Set data asap, for debugging, although `prune()` will reset them.
@@ -74,25 +74,18 @@ class NetworkOperation(Operation, Plotter):
         self.set_execution_method(method)
         self.set_overwrites_collector(overwrites_collector)
 
-        ## Mimic `narrow()` but mutate myself
-        #  to setup dependencies & plan.
-        #
-        orig_inputs = inputs
-        if inputs is None:
-            all_needs, _all_provides = self.net.dependencies()
-            inputs = all_needs
+        # TODO: Is it really necessary to sroe IO on netop?
+        self.inputs = inputs
+        self.outputs = outputs
+
+        # Fix a narrowed plan for unvarying calls to `compute()``.
         self.plan = self.net.compile(inputs, outputs)
-        ## Use original `None`, to re-fetch dependencies from plan
-        self._narrow_dependencies(orig_inputs, outputs)
         self.name, self.needs, self.provides = reparse_operation_data(
-            self.name, self.needs, self.provides
+            self.name, self.plan.needs, self.plan.provides
         )
 
-    def dependencies(self):
-        return self.needs, self.provides
-
     def narrow(
-        self, inputs: Collection = None, outputs: Collection = None
+        self, inputs: Collection = None, outputs: Collection = None, name=None
     ) -> "NetworkOperation":
         """
         Return a copy with a network pruned for the given `needs` & `provides`.
@@ -107,70 +100,53 @@ class NetworkOperation(Operation, Plotter):
             RAISES if those cannnot be satisfied.
             If `None`, they are collected from the :attr:`net`.
             They become the `provides` of the returned `netop`.
+        :param name:
+            the name for the new netop:
 
-        :raise ValueError:
-            IF `outputs` asked cannot be produced by the narrowed dag.
+            - if `None`, the same name is kept;
+            - if True, a distinct name is  devised::
 
-        If `inputs` or `outputs` are `None`, they are collected from
-        the :attr:`net`.
+                <old-name>-<uid>
 
+            - otherwise, the given `name` is applied.
+
+        :return:
+            a cloned netop with a narrowed plan
+
+        :raises ValueError:
+            - If `outputs` asked do not exist in network, with msg:
+
+                *Unknown output nodes: ...*
+
+            - If `outputs` asked cannot be produced by the `graph`, with msg:
+
+                *Impossible outputs...*
+
+            - If cannot produce any `outputs` from the given `inputs`, with msg:
+
+                *Unsolvable graph: ...*
         """
-        if inputs is None:
-            all_needs, _all_provides = self.net.dependencies()
-            inputs = all_needs
+        if name is None:
+            name = self.name
+        elif name is True:
+            name = self.name
 
-        netop = copy.copy(self)
-        netop.last_plan = None
-        # Will scream on unknown `outputs`.
-        netop.plan = self.net.compile(inputs, outputs)
-        netop._narrow_dependencies(inputs, outputs)
+            ## Devise a new UID based on inputs & outputs.
+            #
+            uid = str(abs(hash(f"{inputs}{outputs}")))[:7]
+            m = re.match(r"^(.*)-(\d+)$", name)
+            if m:
+                name = m.group(1)
+            name = f"{name}-{uid}"
 
-        return netop
-
-    def _narrow_dependencies(
-        self, inputs: Collection = None, outputs: Collection = None
-    ):
-        """
-        Prune dependencies based on :attr:`plan` and the given `needs` & `provides`.
-
-        If both `needs` & `provides` are `None`, they are collected from the plan.
-        """
-        all_needs, all_provides = self.plan.dependencies()
-
-        if inputs is None:
-            inputs = all_needs
-        else:
-            inputs = astuple(inputs, "needs", allowed_types=abc.Collection)
-            unknown = iset(inputs) - all_needs
-            if unknown:
-                log.warning("Unused needs%s for %s!", list(unknown), self.net)
-
-        if outputs is None:
-            outputs = all_provides
-        else:
-            outputs = aslist(outputs, "provides", allowed_types=abc.Collection)
-            unknown = iset(outputs) - all_provides
-            if unknown:
-                raise ValueError(f"Impossible provides{list(unknown)} for {self.net}!")
-
-        ## Retain optionality of `needs`.
-        # TODO: Unify _DataNode + modifiers to avoid ugly hacks on ``netop._narrow()``.
-        #
-        def optionalized(node):
-            dag = self.plan.dag
-            all_optionals = all(e[2] for e in dag.out_edges(node, "optional", False))
-            sideffector = dag.nodes(data="sideffect")
-            return (
-                optional(node)
-                if all_optionals
-                # Nodes are _DataNode instances, not `optional` or `sideffect`
-                else sideffect(re.match(r"sideffect\((.*)\)", node).group(1))
-                if sideffector[node]
-                else str(node)  # un-optionalize
-            )
-
-        self.needs = [optionalized(n) for n in inputs]
-        self.provides = outputs
+        return NetworkOperation(
+            self.net,
+            name,
+            inputs=inputs,
+            outputs=outputs,
+            method=self.method,
+            overwrites_collector=self.overwrites_collector,
+        )
 
     def _build_pydot(self, **kws):
         """delegate to network"""
@@ -200,7 +176,25 @@ class NetworkOperation(Operation, Plotter):
 
             In all cases, the `:attr:`last_plan` is updated.
 
-        :returns: a dictionary of output data objects, keyed by name.
+        :returns:
+            a dictionary of output data objects, keyed by name.
+
+        :raises ValueError:
+            - If given `inputs` mismatched `plan.needs`, with msg:
+
+                *Plan needs more inputs...*
+
+            - If `outputs` asked do not exist in network, with msg:
+
+                *Unknown output nodes: ...*
+
+            - If `outputs` asked cannot be produced by the `graph`, with msg:
+
+                *Impossible outputs...*
+
+            - If cannot produce any `outputs` from the given `inputs`, with msg:
+
+                *Unsolvable graph: ...*
         """
         try:
             net = self.net
@@ -222,10 +216,10 @@ class NetworkOperation(Operation, Plotter):
 
     def __call__(self, **input_kwargs) -> dict:
         """
-        FIXME: doc netop()
+        Delegates to :meth:`compute(recompile=True)`, respecting any narrowed `outputs`.
         """
-        # respect narrowed outputs, even when recompiled
-        return self.compute(input_kwargs, outputs=self.plan.provides, recompile=True)
+        # To respect narrowed `outputs` must send them due to recompilation.
+        return self.compute(input_kwargs, outputs=self.outputs, recompile=True)
 
     def set_execution_method(self, method):
         """
@@ -309,6 +303,9 @@ def compose(
     :return:
         Returns a special type of operation class, which represents an
         entire computation graph as a single operation.
+
+    :raises ValueError:
+        If the `net`` cannot produce the asked `outputs` from the given `inputs`.
     """
     operations = (op1,) + operations
     if not all(isinstance(op, Operation) for op in operations):

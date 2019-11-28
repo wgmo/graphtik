@@ -65,18 +65,19 @@ Computations are based on 5 data-structures:
     (aka "pinned") input-values.
 """
 import logging
+import re
 import sys
 import time
 from collections import abc, defaultdict, namedtuple
 from contextvars import ContextVar
 from multiprocessing.dummy import Pool
-from typing import Collection, Iterable, Optional, Tuple
+from typing import Collection, Iterable, List, Optional, Tuple
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 from networkx import DiGraph
 
-from .base import Plotter, astuple, jetsam
+from .base import Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
 from .op import Operation
 
@@ -164,8 +165,67 @@ class _PinInstruction(str):
 #     overwrites = None
 
 
+def _optionalized(graph, data):
+    """Retain optionality of a `data` node based on all `needs` edges."""
+    all_optionals = all(e[2] for e in graph.out_edges(data, "optional", False))
+    sideffector = graph.nodes(data="sideffect")
+    return (
+        optional(data)
+        if all_optionals
+        # Nodes are _DataNode instances, not `optional` or `sideffect`
+        # TODO: Unify _DataNode + modifiers to avoid ugly hack `net.collect_requirements()`.
+        else sideffect(re.match(r"sideffect\((.*)\)", data).group(1))
+        if sideffector[data]
+        else str(data)  # un-optionalize
+    )
+
+
+def collect_requirements(
+    graph, inputs: Optional[Collection] = None, outputs: Optional[Collection] = None
+) -> Tuple[iset, iset]:
+    """
+    Collect needs/provides from all `graph` ops, and validate them against inputs/outputs.
+
+    - If both `needs` & `provides` are `None`, collected needs/provides
+      are returned as is (no validation).
+    - Any collected `inputs` that are optional-needs for all ops,
+      are returned as such.
+
+    :return:
+        a 2-tuple with the optionalized (`needs`, `provides`), both ordered
+
+    :raises ValueError:
+        If `outputs` asked cannot be produced by the `graph`, with msg:
+
+            *Impossible outputs...*
+    """
+    operations = [op for op in graph if isinstance(op, Operation)]
+    all_provides = iset(p for op in operations for p in op.provides)
+    all_needs = iset(n for op in operations for n in op.needs) - all_provides
+
+    if inputs is None:
+        inputs = all_needs
+    else:
+        inputs = astuple(inputs, "inputs", allowed_types=abc.Collection)
+        unknown = iset(inputs) - all_needs
+        if unknown:
+            log.warning("Unused inputs%s for %s!", list(unknown), graph.nodes)
+
+    if outputs is None:
+        outputs = all_provides
+    else:
+        outputs = astuple(outputs, "provides", allowed_types=abc.Collection)
+        unknown = iset(outputs) - all_provides - all_needs
+        if unknown:
+            raise ValueError(f"Impossible outputs{list(unknown)} for {graph.nodes}!")
+
+    inputs = [_optionalized(graph, n) for n in inputs]
+
+    return inputs, outputs
+
+
 class ExecutionPlan(
-    namedtuple("_ExePlan", "net needs provides dag broken_edges steps"), Plotter
+    namedtuple("_ExePlan", "net needs provides dag broken_edges steps evict"), Plotter
 ):
     """
     The result of the network's compilation phase.
@@ -174,23 +234,20 @@ class ExecutionPlan(
 
     :ivar net:
         The parent :class:`Network`
-
     :ivar needs:
         A tuple with the input names needed to exist in order to produce all `provides`.
-
     :ivar provides:
         A tuple with the outputs names produces when all `inputs` are given.
-
     :ivar dag:
         The regular (not broken) *pruned* subgraph of net-graph.
-
     :ivar broken_edges:
         Tuple of broken incoming edges to given data.
-
     :ivar steps:
         The tuple of operation-nodes & *instructions* needed to evaluate
         the given inputs & asked outputs, free memory and avoid overwritting
         any given intermediate inputs.
+    :ivar evict:
+        when false, keep all inputs & outputs, and skip prefect-evictions check.
     """
 
     @property
@@ -220,8 +277,8 @@ class ExecutionPlan(
     def __repr__(self):
         steps = ["\n  +--%s" % s for s in self.steps]
         return "ExecutionPlan(needs=%s, provides=%s, steps:%s)" % (
-            self.needs,
-            self.provides,
+            aslist(self.needs, "needs", allowed_types=(list, tuple)),
+            aslist(self.provides, "provides", allowed_types=(list, tuple)),
             "".join(steps),
         )
 
@@ -380,7 +437,21 @@ class ExecutionPlan(
             (optional) a mutable dict to collect calculated-but-discarded values
             because they were "pinned" by input vaules.
             If missing, the overwrites values are simply discarded.
+
+        :raises ValueError:
+            If given `inputs` mismatched `plan.needs`, with msg:
+
+                *Plan needs more inputs...*
         """
+        # Check plan<-->inputs mismatch.
+        #
+        missing = iset(self.needs) - iset(named_inputs)
+        if missing:
+            raise ValueError(
+                f"Plan needs more inputs{list(missing)}!"
+                f"\n  given inputs: {list(named_inputs)}\n  {self}"
+            )
+
         try:
             # choose a method of execution
             executor = (
@@ -393,7 +464,7 @@ class ExecutionPlan(
             # otherwise, keep'em all.
             solution = (
                 {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
-                if self.provides
+                if self.evict
                 else named_inputs.copy()
             )
             executed = set()
@@ -403,23 +474,15 @@ class ExecutionPlan(
 
             # Validate eviction was perfect
             assert (
-                not self.provides
+                not self.evict
                 or is_skip_evictions()
                 # It is a proper subset when not all outputs calculated.
                 or set(solution).issubset(self.provides)
-            ), (list(solution), self.provides)
+            ), f"Evictions left more data{list(iset(solution) - iset(self.provides))} than {self}!"
 
             return solution
         except Exception as ex:
             jetsam(ex, locals(), "solution", "executed")
-
-    def dependencies(self) -> Tuple[iset, iset]:
-        """Collect the base `needs` & `provides` from all operations contained."""
-        operations = [op for op in self.dag if isinstance(op, Operation)]
-        all_provides = iset(p for op in operations for p in op.provides)
-        all_needs = iset(n for op in operations for n in op.needs) - all_provides
-
-        return all_needs, all_provides
 
 
 class Network(Plotter):
@@ -442,6 +505,7 @@ class Network(Plotter):
         graph = self.graph = DiGraph()
         for op in operations:
             self._append_operation(graph, op)
+        self.needs, self.provides = collect_requirements(self.graph)
 
         # this holds the timing information for each layer
         self.times = {}
@@ -492,7 +556,7 @@ class Network(Plotter):
                 graph.add_node(_DataNode(n), sideffect=True)
             graph.add_edge(operation, _DataNode(n), **kw)
 
-    def _collect_unsatisfied_operations(self, dag, inputs):
+    def _collect_unsatisfied_operations(self, dag, inputs: Collection):
         """
         Traverse topologically sorted dag to collect un-satisfied operations.
 
@@ -510,8 +574,9 @@ class Network(Plotter):
             a graph with broken edges those arriving to existing inputs
         :param inputs:
             an iterable of the names of the input values
-        return:
+        :return:
             a list of unsatisfied operations to prune
+
         """
         # To collect data that will be produced.
         ok_data = set(inputs)
@@ -564,6 +629,11 @@ class Network(Plotter):
 
         :return:
             the *pruned_dag*
+
+        :raises ValueError:
+            If `outputs` asked do not exist in network, with msg:
+
+                *Unknown output nodes: ...*
         """
         dag = self.graph
 
@@ -573,9 +643,7 @@ class Network(Plotter):
         # Scream if some requested outputs aren't in the graph.
         unknown_outputs = iset(outputs) - dag.nodes
         if unknown_outputs:
-            raise ValueError(
-                "Unknown output node(s) asked: %s" % ", ".join(unknown_outputs)
-            )
+            raise ValueError(f"Unknown output nodes: {list(unknown_outputs)}")
 
         broken_dag = dag.copy()  # preserve net's graph
 
@@ -613,7 +681,9 @@ class Network(Plotter):
 
         return pruned_dag, broken_edges
 
-    def _build_execution_steps(self, pruned_dag, inputs, outputs):
+    def _build_execution_steps(
+        self, pruned_dag, inputs: Collection, outputs: Optional[Collection]
+    ) -> List:
         """
         Create the list of operation-nodes & *instructions* evaluating all
 
@@ -716,11 +786,7 @@ class Network(Plotter):
         return steps
 
     def compile(
-        self,
-        inputs: Optional[Iterable] = (),
-        outputs: Optional[Iterable] = (),
-        *,
-        skip_cache_update=False,
+        self, inputs: Collection = (), outputs: Optional[Collection] = ()
     ) -> ExecutionPlan:
         """
         Create or get from cache an execution-plan for the given inputs/outputs.
@@ -737,9 +803,24 @@ class Network(Plotter):
 
         :return:
             the cached or fresh new execution-plan
+
+        :raises ValueError:
+            - If `outputs` asked do not exist in network, with msg:
+
+                *Unknown output nodes: ...*
+
+            - If `outputs` asked cannot be produced by the `graph`, with msg:
+
+                *Impossible outputs...*
+
+            - If cannot produce any `outputs` from the given `inputs`, with msg:
+
+                *Unsolvable graph: ...*
         """
-        outputs = astuple(outputs, "outputs")
-        inputs = astuple(inputs, "inputs")
+
+        # TODO: smarter null inputs, what if outputs are not None?
+        if inputs is None:
+            inputs = self.needs
 
         ## Make a stable cache-key.
         #
@@ -750,30 +831,30 @@ class Network(Plotter):
             None if outputs is None else tuple(sorted(outputs_list)),
         )
 
+        ## Build (or retrieve from cache) execution plan
+        #  for the given inputs & outputs.
+        #
         if cache_key in self._cached_plans:
-            # An execution plan has been compiled before
-            # for the same inputs & outputs.
             plan = self._cached_plans[cache_key]
         else:
-            # Build a new execution plan for the given inputs & outputs.
-            #
-            pruned_dag, broken_edges = self._prune_graph(inputs, outputs)
-            steps = self._build_execution_steps(pruned_dag, inputs, outputs)
+            pruned_dag, broken_edges = self._prune_graph(inputs_list, outputs_list)
+            if not pruned_dag:
+                raise ValueError(
+                    f"Unsolvable graph:\n  needs{list(inputs_list)}\n  provides{outputs_list}\n  {self}"
+                )
+
+            steps = self._build_execution_steps(pruned_dag, inputs_list, outputs_list)
+            needs, provides = collect_requirements(pruned_dag, inputs, outputs)
             plan = ExecutionPlan(
-                self, inputs, outputs, pruned_dag, tuple(broken_edges), tuple(steps)
+                self,
+                needs,
+                provides,
+                pruned_dag,
+                tuple(broken_edges),
+                tuple(steps),
+                evict=outputs is not None,
             )
 
-            # Cache compilation results to speed up future runs
-            # with different values (but same number of inputs/outputs).
-            if not skip_cache_update:
-                self._cached_plans[cache_key] = plan
+            self._cached_plans[cache_key] = plan
 
         return plan
-
-    def dependencies(self) -> Tuple[iset, iset]:
-        """Collect the base `needs` & `provides` from all operations contained."""
-        operations = [op for op in self.graph if isinstance(op, Operation)]
-        all_provides = iset(p for op in operations for p in op.provides)
-        all_needs = iset(n for op in operations for n in op.needs) - all_provides
-
-        return all_needs, all_provides
