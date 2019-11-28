@@ -44,7 +44,7 @@ extensions = [
 ]
 
 extlinks = {
-    "gh": ("https://github.com/yahoo/graphkit/issues/%s", "#"),
+    "gh": ("https://github.com/yahoo/graphkit/issues/%s", "yahoo#"),
     "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#"),
 }
 
