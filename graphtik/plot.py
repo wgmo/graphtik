@@ -3,9 +3,10 @@
 """ Plotting graphtik graps"""
 import inspect
 import io
+import json
 import logging
 import os
-from typing import Any, Callable, Mapping, Optional, Tuple, Union
+from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
 
 import pydot
 
@@ -42,8 +43,6 @@ default_jupyter_render = {
 
 
 def _parse_jupyter_render(dot) -> Tuple[str, str, str]:
-    import json
-
     jupy_cfg: Mapping[str, Any] = getattr(dot, "_jupyter_render", None)
     if jupy_cfg is None:
         jupy_cfg = default_jupyter_render
@@ -146,7 +145,7 @@ def build_pydot(
     node_props=None,
     edge_props=None,
     clusters=None,
-):
+) -> pydot.Dot:
     """
     Build a *Graphviz* out of a Network graph/steps/inputs/outputs and return it.
 
@@ -299,19 +298,17 @@ def build_pydot(
     return dot
 
 
-def supported_plot_formats():
+def supported_plot_formats() -> List[str]:
     """return automatically all `pydot` extensions"""
-    import pydot
-
     return [".%s" % f for f in pydot.Dot().formats]
 
 
-def render_pydot(dot, filename=None, show=False, jupyter_render: str = None):
+def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str = None):
     """
     Plot a *Graphviz* dot in a matplotlib, in file or return it for Jupyter.
 
     :param dot:
-        the pre-built *Graphviz* dot instance
+        the pre-built *Graphviz* :class:`pydot.Dot` instance
     :param str filename:
         Write diagram into a file.
         Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
@@ -366,7 +363,6 @@ def render_pydot(dot, filename=None, show=False, jupyter_render: str = None):
 
 def legend(filename=None, show=None, jupyter_render: Optional[Mapping] = None):
     """Generate a legend for all plots (see :meth:`.Plotter.plot()` for args)"""
-    import pydot
 
     _monkey_patch_for_jupyter(pydot)
 
