@@ -741,8 +741,15 @@ class Network(Plotter):
         outputs = astuple(outputs, "outputs")
         inputs = astuple(inputs, "inputs")
 
-        # Make a stable cache-key
-        cache_key = (tuple(sorted(inputs)), tuple(sorted(outputs)))
+        ## Make a stable cache-key.
+        #
+        inputs_list = astuple(inputs, "inputs", allowed_types=abc.Collection)
+        outputs_list = astuple(outputs, "outputs", allowed_types=abc.Collection)
+        cache_key = (
+            None if inputs is None else tuple(sorted(inputs_list)),
+            None if outputs is None else tuple(sorted(outputs_list)),
+        )
+
         if cache_key in self._cached_plans:
             # An execution plan has been compiled before
             # for the same inputs & outputs.
