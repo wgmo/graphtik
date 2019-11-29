@@ -142,6 +142,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         log.warning("Supressed error while annotating exception: %r", ex2, exc_info=1)
         raise ex2
 
+    # pylint: disable=misplaced-bare-raise
     raise  # noqa #re-raise without ex-arg, not to insert my frame
 
 
