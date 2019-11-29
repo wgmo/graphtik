@@ -54,7 +54,7 @@ class optional(str):
 
 class vararg(optional):
     """
-    Like :class:`optional` but fed as ``*args`` (instead of ``**kwargs``) into the function.
+    Like :class:`optional` but feeds as ONE OF the ``*args`` into the function (instead of ``**kwargs``).
 
     For instance::
 
@@ -89,6 +89,17 @@ class vararg(optional):
 
     def __repr__(self):
         return "vararg('%s')" % self
+
+
+class varargs(optional):
+    """
+    An optional like :class:`vararg` feeds as MANY ``*args`` into the function (instead of ``**kwargs``).
+    """
+
+    __slots__ = ()  # avoid __dict__ on instances
+
+    def __repr__(self):
+        return "varargs('%s')" % self
 
 
 class sideffect(str):

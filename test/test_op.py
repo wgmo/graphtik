@@ -3,7 +3,7 @@
 
 import pytest
 
-from graphtik import operation, optional
+from graphtik import operation, optional, vararg, varargs
 from graphtik.op import Operation, reparse_operation_data
 
 
@@ -113,3 +113,31 @@ def test_dict_results_validation_MISMATCH(result, asked_outputs):
     op = operation(lambda: result, provides=["a", "b"], returns_dict=True)()
     with pytest.raises(ValueError, match="mismatched provides"):
         op.compute({}, outputs=asked_outputs)
+
+
+def test_varargs():
+    def sumall(a, *args, b=0, **kwargs):
+        return a + sum(args) + b + sum(kwargs.values())
+
+    op = operation(
+        sumall,
+        name="t",
+        needs=[
+            "a",
+            vararg("arg1"),
+            vararg("arg2"),
+            varargs("args"),
+            optional("b"),
+            optional("c"),
+        ],
+        provides="sum",
+    )()
+
+    exp = sum(range(8))
+    assert op.compute(dict(a=1, arg1=2, arg2=3, args=[4, 5], b=6, c=7))["sum"] == exp
+    assert op.compute(dict(a=1, arg1=2, arg2=3, args=[4, 5], c=7))["sum"] == exp - 6
+    assert op.compute(dict(a=1, arg1=2, arg2=3, args=[4, 5], b=6))["sum"] == exp - 7
+    assert op.compute(dict(a=1, arg2=3, args=[4, 5], b=6, c=7))["sum"] == exp - 2
+    assert op.compute(dict(a=1, arg1=2, arg2=3, b=6, c=7))["sum"] == exp - 4 - 5
+    with pytest.raises(KeyError, match="'a'"):
+        assert op.compute(dict(arg1=2, arg2=3, b=6, c=7))

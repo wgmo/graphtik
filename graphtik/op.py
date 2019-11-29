@@ -9,7 +9,7 @@ from collections import abc as cabc
 from boltons.setutils import IndexedSet as iset
 
 from .base import Plotter, aslist, astuple, jetsam
-from .modifiers import optional, sideffect, vararg
+from .modifiers import optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
 
@@ -191,6 +191,12 @@ class FunctionalOperation(Operation):
                 for n in self.needs
                 if isinstance(n, vararg) and n in named_inputs
             )
+            args.extend(
+                nn
+                for n in self.needs
+                if isinstance(n, varargs) and n in named_inputs
+                for nn in named_inputs[n]
+            )
 
             # Find any optional inputs in named_inputs.  Get only the ones that
             # are present there, no extra `None`s.
@@ -198,7 +204,7 @@ class FunctionalOperation(Operation):
                 n: named_inputs[n]
                 for n in self.needs
                 if isinstance(n, optional)
-                and not isinstance(n, vararg)
+                and not isinstance(n, (vararg, varargs))
                 and n in named_inputs
             }
 

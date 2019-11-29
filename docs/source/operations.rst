@@ -152,6 +152,9 @@ Optionals
 Varargs
 ^^^^^^^
 .. autoclass:: graphtik.modifiers.vararg
+.. autoclass:: graphtik.modifiers.varargs
+
+Read also the example test-case in: :file:`test/test_op.py:test_varargs()`
 
 Sideffects
 ^^^^^^^^^^
