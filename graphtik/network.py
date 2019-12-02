@@ -22,13 +22,13 @@ Computations are based on 5 data-structures:
     They are layed out and connected by repeated calls of
     :meth:`~Network.add_OP`.
 
-    The computation starts with :meth:`~Network._prune_graph()` extracting
+    The computation starts with :meth:`~Network.prune()` extracting
     a *DAG subgraph* by *pruning* its nodes based on given inputs and
     requested outputs in :meth:`~Network.compute()`.
 
 :attr:`ExecutionPlan.dag`
     An directed-acyclic-graph containing the *pruned* nodes as build by
-    :meth:`~Network._prune_graph()`. This pruned subgraph is used to decide
+    :meth:`~Network.prune()`. This pruned subgraph is used to decide
     the :attr:`ExecutionPlan.steps` (below).
     The containing :class:`ExecutionPlan.steps` instance is cached
     in :attr:`_cached_plans` across runs with inputs/outputs as key.
@@ -92,7 +92,7 @@ _execution_configs: ContextVar[dict] = ContextVar(
 
 
 class AbortedException(Exception):
-    pass
+    """Raised from the Network code when :func:`abort_run()` is called."""
 
 
 def abort_run():
@@ -165,6 +165,10 @@ class _PinInstruction(str):
 #     overwrites = None
 
 
+def _yield_datanodes(graph):
+    return (n for n in graph if isinstance(n, _DataNode))
+
+
 def _optionalized(graph, data):
     """Retain optionality of a `data` node based on all `needs` edges."""
     all_optionals = all(e[2] for e in graph.out_edges(data, "optional", False))
@@ -180,48 +184,16 @@ def _optionalized(graph, data):
     )
 
 
-def collect_requirements(
-    graph, inputs: Optional[Collection] = None, outputs: Optional[Collection] = None
-) -> Tuple[iset, iset]:
-    """
-    Collect needs/provides from all `graph` ops, and validate them against inputs/outputs.
-
-    - If both `needs` & `provides` are `None`, collected needs/provides
-      are returned as is (no validation).
-    - Any collected `inputs` that are optional-needs for all ops,
-      are returned as such.
-
-    :return:
-        a 2-tuple with the optionalized (`needs`, `provides`), both ordered
-
-    :raises ValueError:
-        If `outputs` asked cannot be produced by the `graph`, with msg:
-
-            *Impossible outputs...*
-    """
+def collect_requirements(graph) -> Tuple[iset, iset]:
+    """Collect and split datanodes all `graph` ops in needs/provides."""
     operations = [op for op in graph if isinstance(op, Operation)]
-    all_provides = iset(p for op in operations for p in op.provides)
-    all_needs = iset(n for op in operations for n in op.needs) - all_provides
-
-    if inputs is None:
-        inputs = all_needs
-    else:
-        inputs = astuple(inputs, "inputs", allowed_types=abc.Collection)
-        unknown = iset(inputs) - all_needs
-        if unknown:
-            log.warning("Unused inputs%s for %s!", list(unknown), graph.nodes)
-
-    if outputs is None:
-        outputs = all_provides
-    else:
-        outputs = astuple(outputs, "provides", allowed_types=abc.Collection)
-        unknown = iset(outputs) - all_provides - all_needs
-        if unknown:
-            raise ValueError(f"Impossible outputs{list(unknown)} for {graph.nodes}!")
-
-    inputs = [_optionalized(graph, n) for n in inputs]
-
-    return inputs, outputs
+    provides = iset(p for op in operations for p in op.provides)
+    needs = (
+        iset(_optionalized(graph, n) for op in operations for n in op.needs) - provides
+    )
+    # TODO: Unify _DataNode + modifiers to avoid ugly hack `net.collect_requirements()`.
+    provides = iset(str(n) if not isinstance(n, sideffect) else n for n in provides)
+    return needs, provides
 
 
 class ExecutionPlan(
@@ -277,8 +249,8 @@ class ExecutionPlan(
     def __repr__(self):
         steps = ["\n  +--%s" % s for s in self.steps]
         return "ExecutionPlan(needs=%s, provides=%s, steps:%s)" % (
-            aslist(self.needs, "needs", allowed_types=(list, tuple)),
-            aslist(self.provides, "provides", allowed_types=(list, tuple)),
+            aslist(self.needs, "needs"),
+            aslist(self.provides, "provides"),
             "".join(steps),
         )
 
@@ -448,7 +420,7 @@ class ExecutionPlan(
         missing = iset(self.needs) - iset(named_inputs)
         if missing:
             raise ValueError(
-                f"Plan needs more inputs{list(missing)}!"
+                f"Plan needs more inputs: {list(missing)}"
                 f"\n  given inputs: {list(named_inputs)}\n  {self}"
             )
 
@@ -489,6 +461,10 @@ class Network(Plotter):
     """
     Assemble operations & data into a directed-acyclic-graph (DAG) to run them.
 
+    :ivar needs:
+        the "base", all data-nodes that are not produced by some operation
+    :ivar provides:
+        the "base", all data-nodes produced by some operation
     """
 
     def __init__(self, *operations):
@@ -499,7 +475,7 @@ class Network(Plotter):
             dupes = list(operations)
             for i in uniques:
                 dupes.remove(i)
-            raise ValueError(f"Operations may only be added once, dupes: {iset(dupes)}")
+            raise ValueError(f"Operations may only be added once, dupes: {list(dupes)}")
 
         # directed graph of layer instances and data-names defining the net.
         graph = self.graph = DiGraph()
@@ -567,7 +543,7 @@ class Network(Plotter):
           all its needs have been accounted, so we can get its satisfaction.
 
         - Their provided outputs are not linked to any data in the dag.
-          An operation might not have any output link when :meth:`_prune_graph()`
+          An operation might not have any output link when :meth:`prune()`
           has broken them, due to given intermediate inputs.
 
         :param dag:
@@ -612,12 +588,15 @@ class Network(Plotter):
 
         return unsatisfied
 
-    def _prune_graph(self, inputs: Collection, outputs: Collection):
+    def prune(
+        self, inputs: Optional[Collection], outputs: Optional[Collection]
+    ) -> Tuple[nx.DiGraph, Collection, Collection, Collection]:
         """
         Determines what graph steps need to run to get to the requested
-        outputs from the provided inputs. :
-        - Eliminate steps that are not on a path arriving to requested outputs.
-        - Eliminate unsatisfied operations: partial inputs or no outputs needed.
+        outputs from the provided inputs:
+        - Eliminate steps that are not on a path arriving to requested outputs;
+        - Eliminate unsatisfied operations: partial inputs or no outputs needed;
+        - consolidate the list of needs & provides.
 
         :param inputs:
             The names of all given inputs.
@@ -628,24 +607,43 @@ class Network(Plotter):
             from the provided inputs.
 
         :return:
-            the *pruned_dag*
+            a 4-tuple with the *pruned_dag*, the out-edges of the inputs,
+            and needs/provides resolved.
 
         :raises ValueError:
-            If `outputs` asked do not exist in network, with msg:
+            - if `outputs` asked do not exist in network, with msg:
 
                 *Unknown output nodes: ...*
+
+            - if `outputs` asked cannot be produced by the `graph`, with msg:
+
+                *Impossible outputs...*
         """
+        # TODO: break cycles here.
         dag = self.graph
 
-        # Ignore input names that aren't in the graph.
-        inputs_in_graph = set(dag.nodes) & set(inputs)  # unordered, iterated, but ok
+        if inputs is None and outputs is None:
+            inputs, outputs = self.needs, self.provides
+        else:
+            if inputs is None:  # means outputs are non-null ...
+                # Consider "preliminary" `inputs` any non-output node.
+                inputs = iset(_yield_datanodes(dag)) - outputs
+            else:
+                # Ignore `inputs` not in the graph.
+                inputs = dag.nodes & inputs
 
-        # Scream if some requested outputs aren't in the graph.
-        unknown_outputs = iset(outputs) - dag.nodes
-        if unknown_outputs:
-            raise ValueError(f"Unknown output nodes: {list(unknown_outputs)}")
+            ## Scream on unknown `outputs`.
+            #
+            if outputs:
+                unknown_outputs = iset(outputs) - dag.nodes
+                if unknown_outputs:
+                    raise ValueError(f"Unknown output nodes: {list(unknown_outputs)}")
+
+        assert inputs is not None and not isinstance(inputs, str)
+        # but outputs may still be null.
 
         broken_dag = dag.copy()  # preserve net's graph
+        broken_edges = set()  # unordered, not iterated
 
         # Break the incoming edges to all given inputs.
         #
@@ -653,13 +651,13 @@ class Network(Plotter):
         # (unless they are also used elsewhere).
         # To discover which ones to prune, we break their incoming edges
         # and they will drop out while collecting ancestors from the outputs.
-        broken_edges = set()  # unordered, not iterated
-        for given in inputs_in_graph:
+        #
+        for given in inputs:
             broken_edges.update(broken_dag.in_edges(given))
         broken_dag.remove_edges_from(broken_edges)
 
         # Drop stray input values and operations (if any).
-        if outputs:
+        if outputs is not None:
             # If caller requested specific outputs, we can prune any
             # unrelated nodes further up the dag.
             ending_in_outputs = set()
@@ -669,20 +667,33 @@ class Network(Plotter):
             broken_dag = broken_dag.subgraph(ending_in_outputs)
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
-        unsatisfied = self._collect_unsatisfied_operations(broken_dag, inputs_in_graph)
-        # Clone it so that it is picklable.
+        unsatisfied = self._collect_unsatisfied_operations(broken_dag, inputs)
+        # Clone it, to modify it.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
 
         pruned_dag.remove_nodes_from(list(nx.isolates(pruned_dag)))
 
-        assert all(
-            isinstance(n, (Operation, _DataNode)) for n in pruned_dag
-        ), pruned_dag
+        inputs = iset(_optionalized(pruned_dag, n) for n in inputs if n in pruned_dag)
+        if outputs is None:
+            outputs = iset(
+                n for n in self.provides if n not in inputs and n in pruned_dag
+            )
+        else:
+            unknown = iset(outputs) - pruned_dag
+            if unknown:
+                raise ValueError(
+                    f"Impossible outputs: {list(unknown)}\n for graph: {pruned_dag.nodes}"
+                    f"\n  {self}"
+                )
 
-        return pruned_dag, broken_edges
+        assert all(_yield_datanodes(pruned_dag)), pruned_dag
+        assert inputs is not None and not isinstance(inputs, str)
+        assert outputs is not None and not isinstance(outputs, str)
+
+        return pruned_dag, broken_edges, tuple(inputs), tuple(outputs)
 
     def _build_execution_steps(
-        self, pruned_dag, inputs: Collection, outputs: Optional[Collection]
+        self, pruned_dag, inputs: Optional[Collection], outputs: Optional[Collection]
     ) -> List:
         """
         Create the list of operation-nodes & *instructions* evaluating all
@@ -786,20 +797,20 @@ class Network(Plotter):
         return steps
 
     def compile(
-        self, inputs: Collection = (), outputs: Optional[Collection] = ()
+        self, inputs: Optional[Collection] = None, outputs: Optional[Collection] = None
     ) -> ExecutionPlan:
         """
         Create or get from cache an execution-plan for the given inputs/outputs.
 
-        See :meth:`_prune_graph()` and :meth:`_build_execution_steps()`
+        See :meth:`prune()` and :meth:`_build_execution_steps()`
         for detailed description.
 
         :param inputs:
-            An iterable with the names of all the given inputs.
+            A collection with the names of all the given inputs.
+            If `None``, all inputs that lead to given `outputs` are assumed.
         :param outputs:
-            An iterable or the name of the output name(s).
-            If missing, requested outputs assumed all graph reachable nodes
-            from one of the given inputs.
+            A collection or the name of the output name(s).
+            If `None``, all reachable nodes from the given `inputs` are assumed.
 
         :return:
             the cached or fresh new execution-plan
@@ -817,19 +828,17 @@ class Network(Plotter):
 
                 *Unsolvable graph: ...*
         """
-
-        # TODO: smarter null inputs, what if outputs are not None?
-        if inputs is None:
-            inputs = self.needs
-
         ## Make a stable cache-key.
         #
-        inputs_list = astuple(inputs, "inputs", allowed_types=abc.Collection)
-        outputs_list = astuple(outputs, "outputs", allowed_types=abc.Collection)
-        cache_key = (
-            None if inputs is None else tuple(sorted(inputs_list)),
-            None if outputs is None else tuple(sorted(outputs_list)),
-        )
+        if inputs is not None:
+            inputs = tuple(
+                sorted(astuple(inputs, "inputs", allowed_types=abc.Collection))
+            )
+        if outputs is not None:
+            outputs = tuple(
+                sorted(astuple(outputs, "outputs", allowed_types=abc.Collection))
+            )
+        cache_key = (inputs, outputs)
 
         ## Build (or retrieve from cache) execution plan
         #  for the given inputs & outputs.
@@ -837,14 +846,13 @@ class Network(Plotter):
         if cache_key in self._cached_plans:
             plan = self._cached_plans[cache_key]
         else:
-            pruned_dag, broken_edges = self._prune_graph(inputs_list, outputs_list)
+            pruned_dag, broken_edges, needs, provides = self.prune(inputs, outputs)
             if not pruned_dag:
                 raise ValueError(
-                    f"Unsolvable graph:\n  needs{list(inputs_list)}\n  provides{outputs_list}\n  {self}"
+                    f"Unsolvable graph:\n  needs: {inputs}\n  provides: {outputs}\n  {self}"
                 )
 
-            steps = self._build_execution_steps(pruned_dag, inputs_list, outputs_list)
-            needs, provides = collect_requirements(pruned_dag, inputs, outputs)
+            steps = self._build_execution_steps(pruned_dag, needs, outputs or ())
             plan = ExecutionPlan(
                 self,
                 needs,
