@@ -39,6 +39,7 @@ def reparse_operation_data(name, needs, provides):
     return name, needs, provides
 
 
+# TODO: immutable `Operation` by inheriting from `namedtuple`.
 class Operation(abc.ABC):
     """An abstract class representing a data transformation by :meth:`.compute()`."""
 

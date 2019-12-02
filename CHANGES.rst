@@ -7,6 +7,66 @@ TODO
 See :gg:`1`.
 
 
+v3.0.0 (27 Nov 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
+===============================================================================
++ NetworkOperations:
+
+  + BREAK(NET): RAISE if the graph is UNSOLVABLE for the given `needs` & `provides`!
+    (see "raises" list of :meth:`~.NetworkOperation.compute()`).
+
+  + BREAK: :meth:`.NetworkOperation.__call__()` accepts solution as keyword-args,
+    to mimic API of :meth:`Operation.__call__()`.  ``outputs`` keyword has been dropped.
+
+    .. Tip::
+        Use :meth:`.NetworkOperation.compute()` when you ask different `outputs`,
+        or set the ``recompile`` flag if just different `inputs` are given.
+
+        Read the next change-items for the new behavior of the ``compute()`` method.
+
+  + UNVARYING NetOperations:
+
+    + BREAK: calling method :meth:`.NetworkOperation.compute()` with a single argument
+      is now *UNVARYING*, meaning that all `needs` are demaned, and hence,
+      all `provides` are produced, unless the ``recompile`` flag is true or ``outputs`` asked.
+
+    + BREAK: net-operations behave like regular operations when nested inside another netop,
+      and always produce all their `provides`, or scream if less `inputs` than `needs`
+      are given.
+
+    + ENH: a newly created or cloned netop can be :meth:`~.NetworkOperation.narrow()`\ed
+      to specific `needs` & `provides`, so as not needing to pass `outputs` on every call
+      to :meth:`~.NetworkOperation.compute()`.
+
+    + feat: implemented based on the new "narrowed" :attr:`.NetworkOperation.plan` attribute.
+
+  + FIX: netop `needs` are not all *optional* by default; optionality applied
+    only if all underlying operations have a certain need as optional.
+
+  + FEAT: support function ``**args`` with 2 new modifiers :class:`.vararg` & :class:`.varargs`,
+    acting like :class:`.optional` (but without feeding into underlying functions
+    like keywords).
+
+  + BREAK(:gh:`12`): simplify ``compose`` API by turning it from class --> function;
+    all args and operations are now given in a single ``compose()`` call.
+
+  + REFACT(net, netop): make Network IMMUTABLE by appending all operations together,
+    in :class:`NetworkOperation` constructor.
+
+  + ENH(net): public-size ``_prune_graph()`` --> :meth:`.Network.prune()``
+    which can be used to interogate `needs` & `provides` for a given graph.
+    It accepts `None` `inputs` & `outputs` to auto-derrive them.
+
++ FIX(SITE): autodocs `API` chapter were not generated in at all,
+  due to import errors, fixed by using `autodoc_mock_imports
+  <http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_mock_imports>`_
+  on `networkx`, `pydot` & `boltons` libs.
+
++ enh(op): polite error-,msg when calling an operation with missing needs
+  (instead of an abrupt ``KeyError``).
+
++ FEAT(CI): test also on Python-3.8
+
+
 v2.3.0 (24 Nov 2019, @ankostis): Zoomable SVGs & more op jobs
 =============================================================
 + FEAT(plot): render Zoomable SVGs in jupyter(lab) notebooks.
