@@ -32,7 +32,12 @@ Module: `network`
 =================
 
 .. automodule:: graphtik.network
-     :members:
+     :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_evictions_skipped, _execution_configs
+.. autoclass:: graphtik.network.Network
+     :private-members:
+     :undoc-members:
+.. autoclass:: graphtik.network.ExecutionPlan
+     :private-members:
      :undoc-members:
 
 Module: `plot`

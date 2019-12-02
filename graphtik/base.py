@@ -64,7 +64,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         by calling ``value(locs)``.
         They take precendance over`salvae_vars`.
 
-    :raise:
+    :raises:
         any exception raised by the wrapped function, annotated with values
         assigned as atrributes on this context-manager
 

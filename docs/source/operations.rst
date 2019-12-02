@@ -1,25 +1,36 @@
 Operations
 ==========
 
-At a high level, an operation is a node in a computation graph.  Graphtik uses an ``operation`` class to represent these computations.
+At a high level, an operation is a node in a computation graph.
+Graphtik uses an :class:`.Operation` class to abstractly represent these computations.
+The class specifies the *requirments* for a function to participate
+in a computation graph; those are its input-data **needs**, and the output-data
+it **provides**.
 
-The ``operation`` class
------------------------
+The :class:`FunctionalOperation` provides a lightweight wrapper
+around an arbitrary function to define those specifications.
 
-The ``operation`` class specifies an operation in a computation graph, including its input data dependencies as well as the output data it provides.  It provides a lightweight wrapper around an arbitrary function to make these specifications.
+.. autoclass:: graphtik.op.Operation
+   :members: compute
+   :noindex:
 
-There are many ways to instantiate an ``operation``, and we'll get into more detail on these later.  First off, though, here's the specification for the ``operation`` class:
+There is a better way to instantiate an ``FunctionalOperation`` than simply constructing it,
+and we'll get to it later.
+First off, though, here's the specifications for the `operation` classes:
 
-.. autoclass:: graphtik.operation
-   :members: __init__, __call__
+.. autoclass:: graphtik.op.FunctionalOperation
+   :members: __init__, __call__, compute
    :member-order: bysource
    :special-members:
+   :noindex:
 
 
 Operations are just functions
 ------------------------------
 
-At the heart of each ``operation`` is just a function, any arbitrary function.  Indeed, you can instantiate an ``operation`` with a function and then call it just like the original function, e.g.::
+At the heart of each ``operation`` is just a function, any arbitrary function.
+Indeed, you can instantiate an ``operation`` with a function and then call it
+just like the original function, e.g.::
 
    >>> from operator import add
    >>> from graphtik import operation
@@ -33,13 +44,24 @@ At the heart of each ``operation`` is just a function, any arbitrary function.  
 Specifying graph structure: ``provides`` and ``needs``
 ------------------------------------------------------
 
-Of course, each ``operation`` is more than just a function.  It is a node in a computation graph, depending on other nodes in the graph for input data and supplying output data that may be used by other nodes in the graph (or as a graph output).  This graph structure is specified via the ``provides`` and ``needs`` arguments to the ``operation`` constructor.  Specifically:
+Of course, each ``operation`` is more than just a function.
+It is a node in a computation graph, depending on other nodes in the graph for input data and
+supplying output data that may be used by other nodes in the graph (or as a graph output).
+This graph structure is specified via the ``provides`` and ``needs`` arguments
+to the ``operation`` constructor.  Specifically:
 
-* ``provides``: this argument names the outputs (i.e. the returned values) of a given ``operation``.  If multiple outputs are specified by ``provides``, then the return value of the function comprising the ``operation`` must return an iterable.
+* ``provides``: this argument names the outputs (i.e. the returned values) of a given ``operation``.
+  If multiple outputs are specified by ``provides``, then the return value of the function
+  comprising the ``operation`` must return an iterable.
 
-* ``needs``: this argument names data that is needed as input by a given ``operation``.  Each piece of data named in needs may either be provided by another ``operation`` in the same graph (i.e. specified in the ``provides`` argument of that ``operation``), or it may be specified as a named input to a graph computation (more on graph computations :ref:`here <graph-computations>`).
+* ``needs``: this argument names data that is needed as input by a given ``operation``.
+  Each piece of data named in needs may either be provided by another ``operation``
+  in the same graph (i.e. specified in the ``provides`` argument of that ``operation``),
+  or it may be specified as a named input to a graph computation
+  (more on graph computations :ref:`here <graph-computations>`).
 
-When many operations are composed into a computation graph (see :ref:`graph-composition` for more on that), Graphtik matches up the values in their ``needs`` and ``provides`` to form the edges of that graph.
+When many operations are composed into a computation graph (see :ref:`graph-composition` for more on that),
+Graphtik matches up the values in their ``needs`` and ``provides`` to form the edges of that graph.
 
 Let's look again at the operations from the script in :ref:`quick-start`, for example::
 
@@ -142,8 +164,9 @@ by creating an operation "builder pattern"::
 Modifiers on ``operation`` inputs and outputs
 ---------------------------------------------
 
-Certain modifiers are available to apply to input or output values in ``needs`` and ``provides``, for example to designate an optional input.  These modifiers are available in the ``graphtik.modifiers`` module:
-
+Certain modifiers are available to apply to input or output values in ``needs`` and ``provides``,
+for example, to designate optional inputs, or "ghost" sideffects inputs & outputs.
+These modifiers are available in the ``graphtik.modifiers`` module:
 
 Optionals
 ^^^^^^^^^
