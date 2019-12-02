@@ -5,6 +5,7 @@
 import abc
 import logging
 from collections import abc as cabc
+from typing import Callable
 
 from boltons.setutils import IndexedSet as iset
 
@@ -110,10 +111,12 @@ class FunctionalOperation(Operation):
     """
     An Operation performing a callable (ie function, method, lambda).
 
-    Use :class:`operation()` to build instances of this class instead.
+    Use :class:`operation()` factory to build instances of this class instead.
     """
 
-    def __init__(self, fn, name, needs=None, provides=None, *, returns_dict=None):
+    def __init__(
+        self, fn: Callable, name, needs=None, provides=None, *, returns_dict=None
+    ):
         self.fn = fn
         self.returns_dict = returns_dict
         ## Set op-data early, for repr() to work on errors.
@@ -178,13 +181,25 @@ class FunctionalOperation(Operation):
 
     def compute(self, named_inputs, outputs=None) -> dict:
         try:
-            args = [
-                ## Network expected to ensure all compulsory inputs exist,
-                #  so no special handling for key errors here.
-                named_inputs[n]
-                for n in self.needs
-                if not isinstance(n, optional) and not isinstance(n, sideffect)
-            ]
+            try:
+                args = [
+                    ## Network expected to ensure all compulsory inputs exist,
+                    #  so no special handling for key errors here.
+                    #
+                    named_inputs[
+                        n
+                    ]  # Key-error here means `inputs` < compulsory `needs`.
+                    for n in self.needs
+                    if not isinstance(n, (optional, sideffect))
+                ]
+            except KeyError:
+                # FIXME:
+                compulsory = iset(
+                    n for n in self.needs if not isinstance(n, (optional, sideffect))
+                )
+                raise ValueError(
+                    f"Missing compulsory needs{list(compulsory)}!\n  inputs: {list(named_inputs)}\n  {self}"
+                )
 
             args.extend(
                 named_inputs[n]
@@ -286,7 +301,13 @@ class operation:
     """
 
     def __init__(
-        self, fn=None, *, name=None, needs=None, provides=None, returns_dict=None
+        self,
+        fn: Callable = None,
+        *,
+        name=None,
+        needs=None,
+        provides=None,
+        returns_dict=None,
     ):
         self.fn = fn
         self.name = name

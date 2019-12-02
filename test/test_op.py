@@ -139,5 +139,5 @@ def test_varargs():
     assert op.compute(dict(a=1, arg1=2, arg2=3, args=[4, 5], b=6))["sum"] == exp - 7
     assert op.compute(dict(a=1, arg2=3, args=[4, 5], b=6, c=7))["sum"] == exp - 2
     assert op.compute(dict(a=1, arg1=2, arg2=3, b=6, c=7))["sum"] == exp - 4 - 5
-    with pytest.raises(KeyError, match="'a'"):
+    with pytest.raises(ValueError, match="Missing compulsory needs.+'a'"):
         assert op.compute(dict(arg1=2, arg2=3, b=6, c=7))
