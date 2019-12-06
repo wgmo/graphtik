@@ -207,7 +207,10 @@ class NetworkOperation(Operation, Plotter):
             )
 
             solution = plan.execute(
-                named_inputs, self.overwrites_collector, self.execution_method
+                named_inputs,
+                outputs,
+                overwrites=self.overwrites_collector,
+                method=self.execution_method,
             )
 
             return solution

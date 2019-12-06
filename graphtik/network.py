@@ -397,25 +397,37 @@ class ExecutionPlan(
             else:
                 raise AssertionError("Unrecognized instruction.%r" % step)
 
-    def execute(self, named_inputs, overwrites=None, method=None):
+    def execute(self, named_inputs, outputs=None, *, overwrites=None, method=None):
         """
         :param named_inputs:
             A maping of names --> values that must contain at least
             the compulsory inputs that were specified when the plan was built
             (but cannot enforce that!).
             Cloned, not modified.
-
+        :param outputs:
+            If not None, they are just checked if possible, based on :attr:`provides`,
+            and scream if not.
         :param overwrites:
             (optional) a mutable dict to collect calculated-but-discarded values
             because they were "pinned" by input vaules.
             If missing, the overwrites values are simply discarded.
 
         :raises ValueError:
-            If given `inputs` mismatched `plan.needs`, with msg:
+            - If given `inputs` mismatched `plan.needs`, with msg:
 
                 *Plan needs more inputs...*
+            - If `outputs` asked cannot be produced by the `graph`, with msg:
+
+                *Impossible outputs...*
+
+            - If cannot produce any `outputs` from the given `inputs`, with msg:
+
+                *Unsolvable graph: ...*
         """
         try:
+            if not self.dag:
+                raise ValueError(f"Unsolvable graph:\n  {self}")
+
             # Check plan<-->inputs mismatch.
             #
             missing = iset(self.needs) - iset(named_inputs)
@@ -424,6 +436,17 @@ class ExecutionPlan(
                     f"Plan needs more inputs: {list(missing)}"
                     f"\n  given inputs: {list(named_inputs)}\n  {self}"
                 )
+
+            if outputs is not None:
+                unknown = (
+                    iset(astuple(outputs, "outputs", allowed_types=abc.Sequence))
+                    - self.provides
+                )
+                if unknown:
+                    raise ValueError(
+                        f"Impossible outputs: {list(unknown)}\n for graph: {self}"
+                        f"\n  {self}"
+                    )
 
             # choose a method of execution
             executor = (
@@ -614,10 +637,6 @@ class Network(Plotter):
             - if `outputs` asked do not exist in network, with msg:
 
                 *Unknown output nodes: ...*
-
-            - if `outputs` asked cannot be produced by the `graph`, with msg:
-
-                *Impossible outputs...*
         """
         # TODO: break cycles here.
         dag = self.graph
@@ -678,13 +697,6 @@ class Network(Plotter):
             outputs = iset(
                 n for n in self.provides if n not in inputs and n in pruned_dag
             )
-        else:
-            unknown = iset(outputs) - pruned_dag
-            if unknown:
-                raise ValueError(
-                    f"Impossible outputs: {list(unknown)}\n for graph: {pruned_dag.nodes}"
-                    f"\n  {self}"
-                )
 
         assert all(_yield_datanodes(pruned_dag)), pruned_dag
         assert inputs is not None and not isinstance(inputs, str)
@@ -847,11 +859,6 @@ class Network(Plotter):
             plan = self._cached_plans[cache_key]
         else:
             pruned_dag, broken_edges, needs, provides = self.prune(inputs, outputs)
-            if not pruned_dag:
-                raise ValueError(
-                    f"Unsolvable graph:\n  needs: {inputs}\n  provides: {outputs}\n  {self}"
-                )
-
             steps = self._build_execution_steps(pruned_dag, needs, outputs or ())
             plan = ExecutionPlan(
                 self,

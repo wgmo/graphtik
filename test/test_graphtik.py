@@ -181,23 +181,32 @@ def test_network_plan_execute():
     }
 
     inputs = {"a": 1, "b": 2, "exponent": 3}
-    plan = net.compile(outputs=None, inputs=inputs.keys())
-    sol = plan.execute(named_inputs=inputs)
+    outputs = None
+    plan = net.compile(outputs=outputs, inputs=inputs.keys())
+    sol = plan.execute(inputs)
+    assert sol == exp
+    sol = plan.execute(inputs, outputs)
     assert sol == exp
 
     # get specific outputs
     exp = {"sum_ab_times_b": 6}
-    plan = net.compile(outputs=["sum_ab_times_b"], inputs=list(inputs))
-    sol = plan.execute(named_inputs=inputs)
+    outputs=["sum_ab_times_b"]
+    plan = net.compile(outputs=outputs, inputs=list(inputs))
+    sol = plan.execute(inputs)
+    assert sol == exp
+    sol = plan.execute(inputs, outputs)
     assert sol == exp
 
     # start with inputs already computed
     inputs = {"sum_ab": 1, "b": 2, "exponent": 3}
     exp = {"sum_ab_times_b": 2}
-    plan = net.compile(outputs=["sum_ab_times_b"], inputs=inputs)
+    outputs=["sum_ab_times_b"]
+    plan = net.compile(outputs=outputs, inputs=inputs)
     with pytest.raises(ValueError, match=r"Plan needs more inputs:"):
         sol = plan.execute(named_inputs={"sum_ab": 1})
-    sol = plan.execute(named_inputs=inputs)
+    sol = plan.execute(inputs)
+    assert sol == exp
+    sol = plan.execute(inputs, outputs)
     assert sol == exp
 
 
@@ -790,8 +799,9 @@ def test_narrow_and_optionality(reverse):
         == "NetworkOperation('t', needs=[optional('a')], provides=['sum1'])"
     )
 
-    with pytest.raises(ValueError, match="Impossible outputs:"):
-        compose("t", *ops, needs="bb", provides=["sum2"])
+    netop = compose("t", *ops, needs="bb", provides=["sum2"])
+    with pytest.raises(ValueError, match="Unsolvable graph:"):
+        netop.compute({'bb': 11})
 
     ## Narrow by unknown needs
     #
@@ -845,7 +855,7 @@ def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
     with pytest.raises(ValueError, match="Unsolvable graph"):
         assert graph.compute(inp, recompile=True)
 
-    with pytest.raises(ValueError, match="Impossible output"):
+    with pytest.raises(ValueError, match="Unsolvable graph"):
         graph.compute(inp, ["box", sideffect("b")])
 
     with pytest.raises(ValueError, match="Plan needs more inputs"):
@@ -859,7 +869,7 @@ def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
     assert sol == {"box": [1, 2, 3], sideffect("a"): True}
     #
     # bad, not asked the out-sideffect
-    with pytest.raises(ValueError, match="Impossible output"):
+    with pytest.raises(ValueError, match="Unsolvable graph"):
         sol = graph.compute({"box": [0], sideffect("a"): True}, "box")
     #
     # ok, asked the 1st out-sideffect
