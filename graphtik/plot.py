@@ -234,9 +234,7 @@ def build_pydot(
             try:
                 kw["URL"] = f"file://{inspect.getfile(nx_node.fn)}"
             except Exception as ex:
-                log.debug(
-                    "Ignoring error while inspecting file of %s: %s", nx_node.fn, ex
-                )
+                log.debug("Ignoring error while inspecting file of %s: %s", nx_node, ex)
             node = pydot.Node(
                 name=quote_dot_kws(nx_node.name),
                 shape=shape,
