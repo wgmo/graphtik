@@ -679,8 +679,8 @@ class Network(Plotter):
                         f"Unknown output nodes: {list(unknown_outputs)}\n  {self}"
                     )
 
-        assert inputs is not None and not isinstance(inputs, str)
-        # but outputs may still be null.
+        assert isinstance(inputs, abc.Collection)
+        assert outputs is None or isinstance(outputs, abc.Collection)
 
         broken_dag = dag.copy()  # preserve net's graph
         broken_edges = set()  # unordered, not iterated
@@ -720,8 +720,8 @@ class Network(Plotter):
             )
 
         assert all(_yield_datanodes(pruned_dag)), pruned_dag
-        assert inputs is not None and not isinstance(inputs, str)
-        assert outputs is not None and not isinstance(outputs, str)
+        assert inputs is not None or isinstance(inputs, abc.Collection)
+        assert outputs is not None or isinstance(outputs, abc.Collection)
 
         return pruned_dag, broken_edges, tuple(inputs), tuple(outputs)
 
