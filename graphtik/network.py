@@ -415,16 +415,16 @@ class ExecutionPlan(
 
                 *Plan needs more inputs...*
         """
-        # Check plan<-->inputs mismatch.
-        #
-        missing = iset(self.needs) - iset(named_inputs)
-        if missing:
-            raise ValueError(
-                f"Plan needs more inputs: {list(missing)}"
-                f"\n  given inputs: {list(named_inputs)}\n  {self}"
-            )
-
         try:
+            # Check plan<-->inputs mismatch.
+            #
+            missing = iset(self.needs) - iset(named_inputs)
+            if missing:
+                raise ValueError(
+                    f"Plan needs more inputs: {list(missing)}"
+                    f"\n  given inputs: {list(named_inputs)}\n  {self}"
+                )
+
             # choose a method of execution
             executor = (
                 self._execute_thread_pool_barrier_method
