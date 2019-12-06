@@ -6,8 +6,15 @@ TODO
 ====
 See :gg:`1`.
 
+v3.1.0 (6 Dec 2019, @ankostis): cooler ``prune()``
+==================================================
+- break/refact(NET): scream on ``plan.execute()`` (not ``net.prune()``)
+  so as calmly solve `needs` vs `provides`, based on the given `inputs`/`outputs`.
+- FIX(ot): was failing when plotting graphs with ops without `fn` set.
+- enh(net): minor fixes on assertions.
 
-v3.0.0 (27 Nov 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
+
+v3.0.0 (2 Dec 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
 ===============================================================================
 + NetworkOperations:
 
