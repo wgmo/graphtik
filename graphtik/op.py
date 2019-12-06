@@ -105,7 +105,7 @@ class Operation(abc.ABC):
         clsname = type(self).__name__
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
-        return f"{clsname}(name={self.name!r}, needs={needs!r}, provides={provides!r})"
+        return f"{clsname}({self.name!r}, needs={needs!r}, provides={provides!r})"
 
 
 class FunctionalOperation(Operation):

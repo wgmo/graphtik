@@ -33,7 +33,7 @@ class optional(str):
         ...     operation(name='myadd', needs=['a', 'b', optional('c')], provides='sum')(myadd)
         ... )
         >>> graph
-        NetworkOperation(name='mygraph',
+        NetworkOperation('mygraph',
                          needs=['a', 'b', optional('c')],
                          provides=['sum'])
 
@@ -70,7 +70,7 @@ class vararg(optional):
         ...     provides='sum')(addall)
         ... )
         >>> graph
-        NetworkOperation(name='mygraph',
+        NetworkOperation('mygraph',
                          needs=['a', optional('b'), optional('c')],
                          provides=['sum'])
 
@@ -138,7 +138,7 @@ class sideffect(str):
         ...         provides=[sideffect('df.sum')])(addcolumns)
         ... )
         >>> graph
-        NetworkOperation(name='mygraph', needs=['df', 'sideffect(df.b)'],
+        NetworkOperation('mygraph', needs=['df', 'sideffect(df.b)'],
                          provides=['sideffect(df.sum)'])
 
         >>> df = pd.DataFrame({'a': [5, 0], 'b': [2, 1]})   # doctest: +SKIP
