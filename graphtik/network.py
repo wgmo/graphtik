@@ -668,14 +668,16 @@ class Network(Plotter):
                 inputs = iset(_yield_datanodes(dag)) - outputs
             else:
                 # Ignore `inputs` not in the graph.
-                inputs = dag.nodes & inputs
+                inputs = iset(inputs) & dag.nodes
 
             ## Scream on unknown `outputs`.
             #
             if outputs:
                 unknown_outputs = iset(outputs) - dag.nodes
                 if unknown_outputs:
-                    raise ValueError(f"Unknown output nodes: {list(unknown_outputs)}")
+                    raise ValueError(
+                        f"Unknown output nodes: {list(unknown_outputs)}\n  {self}"
+                    )
 
         assert inputs is not None and not isinstance(inputs, str)
         # but outputs may still be null.
