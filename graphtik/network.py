@@ -692,9 +692,10 @@ class Network(Plotter):
         # To discover which ones to prune, we break their incoming edges
         # and they will drop out while collecting ancestors from the outputs.
         #
-        for given in inputs:
-            broken_edges.update(broken_dag.in_edges(given))
-        broken_dag.remove_edges_from(broken_edges)
+        if inputs:
+            for given in inputs:
+                broken_edges.update(broken_dag.in_edges(given))
+            broken_dag.remove_edges_from(broken_edges)
 
         # Drop stray input values and operations (if any).
         if outputs is not None:
