@@ -254,6 +254,47 @@ class ExecutionPlan(
             "".join(steps),
         )
 
+    def validate(
+        self, inputs: Optional[abc.Collection], outputs: Optional[abc.Collection]
+    ):
+        """
+        Scream on invalid inputs, outputs or no operations in graph.
+
+        :raises ValueError:
+            - If given `inputs` mismatched :attr:`needs`, with msg:
+
+                *Plan needs more inputs...*
+            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+
+                *Impossible outputs...*
+
+            - If cannot produce any `outputs` from the given `inputs`, with msg:
+
+                *Unsolvable graph: ...*
+        """
+        if not self.dag:
+            raise ValueError(f"Unsolvable graph:\n  {self}")
+
+        # Check plan<-->inputs mismatch.
+        #
+        missing = iset(self.needs) - set(inputs)
+        if missing:
+            raise ValueError(
+                f"Plan needs more inputs: {list(missing)}"
+                f"\n  given inputs: {list(inputs)}\n  {self}"
+            )
+
+        if outputs:
+            unknown = (
+                iset(astuple(outputs, "outputs", allowed_types=abc.Sequence))
+                - self.provides
+            )
+            if unknown:
+                raise ValueError(
+                    f"Impossible outputs: {list(unknown)}\n for graph: {self}"
+                    f"\n  {self}"
+                )
+
     def _pin_data_in_solution(self, value_name, solution, inputs, overwrites):
         value_name = str(value_name)
         if overwrites is not None:
@@ -425,28 +466,7 @@ class ExecutionPlan(
                 *Unsolvable graph: ...*
         """
         try:
-            if not self.dag:
-                raise ValueError(f"Unsolvable graph:\n  {self}")
-
-            # Check plan<-->inputs mismatch.
-            #
-            missing = iset(self.needs) - iset(named_inputs)
-            if missing:
-                raise ValueError(
-                    f"Plan needs more inputs: {list(missing)}"
-                    f"\n  given inputs: {list(named_inputs)}\n  {self}"
-                )
-
-            if outputs is not None:
-                unknown = (
-                    iset(astuple(outputs, "outputs", allowed_types=abc.Sequence))
-                    - self.provides
-                )
-                if unknown:
-                    raise ValueError(
-                        f"Impossible outputs: {list(unknown)}\n for graph: {self}"
-                        f"\n  {self}"
-                    )
+            self.validate(named_inputs, outputs)
 
             # choose a method of execution
             executor = (
@@ -457,14 +477,13 @@ class ExecutionPlan(
 
             # If certain outputs asked, put relevant-only inputs in solution,
             # otherwise, keep'em all.
+            # Note: clone and keep orignal inputs in solution intact
             solution = (
                 {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
                 if self.evict
                 else named_inputs.copy()
             )
             executed = set()
-
-            # clone and keep orignal inputs in solution intact
             executor(solution, overwrites, executed)
 
             # Validate eviction was perfect
@@ -473,7 +492,7 @@ class ExecutionPlan(
                 or is_skip_evictions()
                 # It is a proper subset when not all outputs calculated.
                 or set(solution).issubset(self.provides)
-            ), f"Evictions left more data{list(iset(solution) - iset(self.provides))} than {self}!"
+            ), f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
 
             return solution
         except Exception as ex:
