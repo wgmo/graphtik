@@ -76,7 +76,6 @@ from typing import Collection, Iterable, List, Optional, Tuple, Union
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
-from networkx import DiGraph
 
 from .base import Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
@@ -212,9 +211,9 @@ class ExecutionPlan(
     :ivar net:
         The parent :class:`Network`
     :ivar needs:
-        A tuple with the input names needed to exist in order to produce all `provides`.
+        An :class:`iset` with the input names needed to exist in order to produce all `provides`.
     :ivar provides:
-        A tuple with the outputs names produces when all `inputs` are given.
+        An :class:`iset` with the outputs names produces when all `inputs` are given.
     :ivar dag:
         The regular (not broken) *pruned* subgraph of net-graph.
     :ivar broken_edges:
@@ -517,7 +516,14 @@ class Network(Plotter):
         the "base", all data-nodes produced by some operation
     """
 
-    def __init__(self, *operations):
+    def __init__(self, *operations, graph=None):
+        """
+
+        :param operations:
+            to be added in the graph
+        :param graph:
+            if None, create a new.
+        """
         ## Check for duplicate, operations can only append  once.
         #
         uniques = set(operations)
@@ -527,8 +533,14 @@ class Network(Plotter):
                 dupes.remove(i)
             raise ValueError(f"Operations may only be added once, dupes: {list(dupes)}")
 
-        # directed graph of layer instances and data-names defining the net.
-        graph = self.graph = DiGraph()
+        if graph is None:
+            # directed graph of operation and data nodes defining the net.
+            graph = nx.DiGraph()
+        else:
+            if not isinstance(graph, nx.Graph):
+                raise ValueError(f"Must be a NetworkX graph, was: {graph}")
+        self.graph = graph
+
         for op in operations:
             self._append_operation(graph, op)
         self.needs, self.provides = collect_requirements(self.graph)
@@ -661,6 +673,8 @@ class Network(Plotter):
             and needs/provides resolved based on given inputs/outputs
             (which might be a subset of all needs/outputs of the returned graph).
 
+            Use the returned `needs/provides` to build a new plan.
+
         :raises ValueError:
             - if `outputs` asked do not exist in network, with msg:
 
@@ -746,6 +760,31 @@ class Network(Plotter):
         assert outputs is not None or isinstance(outputs, abc.Collection)
 
         return pruned_dag, broken_edges, tuple(inputs), tuple(outputs)
+
+    def pruned(
+        self, inputs: Collection = None, outputs: Collection = None
+    ) -> "Network":
+        """
+        Return a pruned network supporting just the given `inputs` & `outputs`.
+
+        :param inputs:
+            all possible inputs names
+        :param outputs:
+            all possible output names
+
+        :return:
+            the pruned clone, or this, if both `inputs` & `outputs` were `None`
+        """
+        if inputs is None and outputs is None:
+            return self
+
+        if inputs is not None:
+            inputs = astuple(inputs, "outputs", allowed_types=(list, tuple))
+        if outputs is not None:
+            outputs = astuple(outputs, "outputs", allowed_types=(list, tuple))
+
+        pruned_dag, _br_edges, _needs, _provides = self._prune_graph(inputs, outputs)
+        return Network(graph=pruned_dag)
 
     def _build_execution_steps(
         self, pruned_dag, inputs: Optional[Collection], outputs: Optional[Collection]

@@ -770,12 +770,12 @@ def test_narrow_and_optionality(reverse):
     ## Narrow by `needs`
     #
     netop = compose("t", *ops, needs=["a"])
-    assert repr(netop) == f"NetworkOperation('t', needs=['a'], provides=[{provs}], x2ops)"
+    assert repr(netop) == f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provs}], x2ops)"
 
     netop = compose("t", *ops, needs=["bb"])
     assert (
         repr(netop)
-        == "NetworkOperation('t', needs=[optional('bb')], provides=['sum1'], x2ops)"
+        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
     )
 
     ## Narrow by `provides`
@@ -783,13 +783,13 @@ def test_narrow_and_optionality(reverse):
     netop = compose("t", *ops, provides="sum1")
     assert (
         repr(netop)
-        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x2ops)"
+        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
     )
 
     netop = compose("t", *ops, provides=["sum2"])
     assert (
         repr(netop)
-        == "NetworkOperation('t', needs=['a', optional('bb')], provides=['sum2'], x2ops)"
+        == "NetworkOperation('t', needs=['a', optional('bb')], provides=['sum2'], x1ops)"
     )
 
     ## Narrow by BOTH
@@ -797,7 +797,7 @@ def test_narrow_and_optionality(reverse):
     netop = compose("t", *ops, needs="a", provides=["sum1"])
     assert (
         repr(netop)
-        == "NetworkOperation('t', needs=[optional('a')], provides=['sum1'], x2ops)"
+        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
     )
 
     netop = compose("t", *ops, needs="bb", provides=["sum2"])
@@ -807,7 +807,7 @@ def test_narrow_and_optionality(reverse):
     ## Narrow by unknown needs
     #
     netop = compose("t", *ops, needs="BAD")
-    assert repr(netop) == "NetworkOperation('t', needs=[], provides=['sum1'], x2ops)"
+    assert repr(netop) == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
 
 
 # Function without return value.
@@ -854,12 +854,12 @@ def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
     with pytest.raises(ValueError, match="Unsolvable graph"):
         assert graph(**inp) == inp
     with pytest.raises(ValueError, match="Unsolvable graph"):
-        assert graph.compute(inp, recompile=True)
+        assert graph.compute(inp)
 
     with pytest.raises(ValueError, match="Unsolvable graph"):
         graph.compute(inp, ["box", sideffect("b")])
 
-    with pytest.raises(ValueError, match="Plan needs more inputs"):
+    with pytest.raises(ValueError, match="Unsolvable graph"):
         # Cannot run, since no sideffect inputs given.
         graph.compute(inp)
 
@@ -946,7 +946,7 @@ def test_optional_per_function_with_same_output():
     assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
     #
     named_inputs = {"a": 1}
-    assert pipeline.compute(named_inputs, recompile=True) == {"a": 1, "a+-b": -9}
+    assert pipeline.compute(named_inputs) == {"a": 1, "a+-b": -9}
     assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -9}
 
     # Inverse op order

@@ -107,7 +107,7 @@ def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     assert base_dot
     assert pipeline.name in str(base_dot)
 
-    solution = pipeline.compute(inputs, outputs, recompile=True)
+    solution = pipeline.compute(inputs, outputs)
 
     # Plotting delegates to netwrok plan.
     plan_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))

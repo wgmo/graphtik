@@ -30,10 +30,6 @@ class NetworkOperation(Operation, Plotter):
     #: set execution mode to single-threaded sequential by default
     method = None
     overwrites_collector = None
-    #: The *narrowed plan* enforcing unvarying `needs` & `provides`
-    #: when :meth:`compute()` called with ``recompile=False``
-    #: (default is ``recompile=None``, which means, recompile only if `outputs` given).
-    plan = None
     #: The execution_plan of the last call to compute(), stored as debugging aid.
     last_plan = None
     #: The inputs names (possibly `None`) used to compile the :attr:`plan`.
@@ -68,7 +64,7 @@ class NetworkOperation(Operation, Plotter):
         :raises ValueError:
             see :meth:`narrow()`
         """
-        self.net = net
+        self.net = net.pruned(inputs, outputs)
         ## Set data asap, for debugging, although `prune()` will reset them.
         super().__init__(name, inputs, outputs)
         self.set_execution_method(method)
@@ -78,10 +74,8 @@ class NetworkOperation(Operation, Plotter):
         self.inputs = inputs
         self.outputs = outputs
 
-        # Fix a narrowed plan for unvarying calls to `compute()``.
-        self.plan = self.net.compile(inputs, outputs)
         self.name, self.needs, self.provides = reparse_operation_data(
-            self.name, self.plan.needs, self.plan.provides
+            self.name, self.net.needs, self.net.provides
         )
 
     def __repr__(self):
@@ -103,13 +97,13 @@ class NetworkOperation(Operation, Plotter):
         Return a copy with a network pruned for the given `needs` & `provides`.
 
         :param inputs:
-            a collection of inputs that must be given to :meth:`compute()`;
-            a WARNing is issued for any irrelevant arguments.
+            prune `net` against these possbile inputs for :meth:`compute()`;
+            method will WARN for any irrelevant inputs given.
             If `None`, they are collected from the :attr:`net`.
             They become the `needs` of the returned `netop`.
         :param outputs:
-            a collection of outputs that will be asked from :meth:`compute()`;
-            RAISES if those cannnot be satisfied.
+            prune `net` against these possible outputs for :meth:`compute()`;
+            method will RAISE if any irrelevant outputs asked.
             If `None`, they are collected from the :attr:`net`.
             They become the `provides` of the returned `netop`.
         :param name:
@@ -159,7 +153,7 @@ class NetworkOperation(Operation, Plotter):
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
-    def compute(self, named_inputs, outputs=None, recompile=None) -> dict:
+    def compute(self, named_inputs, outputs=None) -> dict:
         """
         Solve & execute the graph, sequentially or parallel.
 
@@ -174,12 +168,6 @@ class NetworkOperation(Operation, Plotter):
             a string or a list of strings with all data asked to compute.
             If you set this variable to ``None``, all data nodes will be kept
             and returned at runtime.
-        :param recompile:
-            - if `False`, uses fixed :attr:`plan`;
-            - if true, recompiles a temporary plan from network;
-            - if `None`, assumed true if `outputs` given (is not `None`).
-
-            In all cases, the `:attr:`last_plan` is updated.
 
         :returns:
             a dictionary of output data objects, keyed by name.
@@ -203,13 +191,9 @@ class NetworkOperation(Operation, Plotter):
         """
         try:
             net = self.net
-            if outputs is not None and recompile is None:
-                recompile = True
 
             # Build the execution plan.
-            self.last_plan = plan = (
-                net.compile(named_inputs.keys(), outputs) if recompile else self.plan
-            )
+            self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
 
             solution = plan.execute(
                 named_inputs,
@@ -224,10 +208,10 @@ class NetworkOperation(Operation, Plotter):
 
     def __call__(self, **input_kwargs) -> dict:
         """
-        Delegates to :meth:`compute(recompile=True)`, respecting any narrowed `outputs`.
+        Delegates to :meth:`compute()`, respecting any narrowed `outputs`.
         """
         # To respect narrowed `outputs` must send them due to recompilation.
-        return self.compute(input_kwargs, outputs=self.outputs, recompile=True)
+        return self.compute(input_kwargs, outputs=self.outputs)
 
     def set_execution_method(self, method):
         """
