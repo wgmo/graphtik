@@ -84,6 +84,18 @@ class NetworkOperation(Operation, Plotter):
             self.name, self.plan.needs, self.plan.provides
         )
 
+    def __repr__(self):
+        """
+        Display more informative names for the Operation class
+        """
+        clsname = type(self).__name__
+        needs = aslist(self.needs, "needs")
+        provides = aslist(self.provides, "provides")
+        nops = sum(1 for i in yield_operations(self.net.graph))
+        return (
+            f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{nops}ops)"
+        )
+
     def narrow(
         self, inputs: Collection = None, outputs: Collection = None, name=None
     ) -> "NetworkOperation":

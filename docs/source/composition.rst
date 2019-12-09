@@ -137,7 +137,8 @@ We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``m
    >>> print(merged_graph)
    NetworkOperation('merged_graph',
                     needs=['a', 'b', 'c'],
-                    provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'])
+                    provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'],
+                    x4ops)
 
 This ``merged_graph`` will look like this:
 
