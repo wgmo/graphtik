@@ -123,20 +123,13 @@ class NetworkOperation(Operation, Plotter):
             - otherwise, the given `name` is applied.
 
         :return:
-            a cloned netop with a narrowed plan
+            A narrowed netop clone, which **MIGHT be empty!***
 
         :raises ValueError:
             - If `outputs` asked do not exist in network, with msg:
 
                 *Unknown output nodes: ...*
 
-            - If `outputs` asked cannot be produced by the `graph`, with msg:
-
-                *Impossible outputs...*
-
-            - If cannot produce any `outputs` from the given `inputs`, with msg:
-
-                *Unsolvable graph: ...*
         """
         if name is None:
             name = self.name
@@ -192,21 +185,21 @@ class NetworkOperation(Operation, Plotter):
             a dictionary of output data objects, keyed by name.
 
         :raises ValueError:
-            - If given `inputs` mismatched `plan.needs`, with msg:
-
-                *Plan needs more inputs...*
-
             - If `outputs` asked do not exist in network, with msg:
 
                 *Unknown output nodes: ...*
 
-            - If `outputs` asked cannot be produced by the `graph`, with msg:
-
-                *Impossible outputs...*
-
-            - If cannot produce any `outputs` from the given `inputs`, with msg:
+            - If plan does not contain any operations, with msg:
 
                 *Unsolvable graph: ...*
+
+            - If given `inputs` mismatched plan's :attr:`needs`, with msg:
+
+                *Plan needs more inputs...*
+
+            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+
+                *Impossible outputs...*
         """
         try:
             net = self.net

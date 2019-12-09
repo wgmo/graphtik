@@ -71,7 +71,7 @@ import time
 from collections import abc, defaultdict, namedtuple
 from contextvars import ContextVar
 from multiprocessing.dummy import Pool
-from typing import Collection, Iterable, List, Optional, Tuple
+from typing import Collection, Iterable, List, Optional, Tuple, Union
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -265,16 +265,18 @@ class ExecutionPlan(
         Scream on invalid inputs, outputs or no operations in graph.
 
         :raises ValueError:
-            - If given `inputs` mismatched :attr:`needs`, with msg:
+            - If cannot produce any `outputs` from the given `inputs`, with msg:
+
+                *Unsolvable graph: ...*
+
+            - If given `inputs` mismatched plan's :attr:`needs`, with msg:
 
                 *Plan needs more inputs...*
+
             - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
 
                 *Impossible outputs...*
 
-            - If cannot produce any `outputs` from the given `inputs`, with msg:
-
-                *Unsolvable graph: ...*
         """
         if not self.dag:
             raise ValueError(f"Unsolvable graph:\n  {self}")
@@ -458,16 +460,17 @@ class ExecutionPlan(
             If missing, the overwrites values are simply discarded.
 
         :raises ValueError:
-            - If given `inputs` mismatched `plan.needs`, with msg:
-
-                *Plan needs more inputs...*
-            - If `outputs` asked cannot be produced by the `graph`, with msg:
-
-                *Impossible outputs...*
-
-            - If cannot produce any `outputs` from the given `inputs`, with msg:
+            - If plan does not contain any operations, with msg:
 
                 *Unsolvable graph: ...*
+
+            - If given `inputs` mismatched plan's :attr:`needs`, with msg:
+
+                *Plan needs more inputs...*
+
+            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+
+                *Impossible outputs...*
         """
         try:
             self.validate(named_inputs, outputs)
@@ -848,7 +851,9 @@ class Network(Plotter):
         return steps
 
     def compile(
-        self, inputs: Optional[Collection] = None, outputs: Optional[Collection] = None
+        self,
+        inputs: Union[Collection, str] = None,
+        outputs: Union[Collection, str] = None,
     ) -> ExecutionPlan:
         """
         Create or get from cache an execution-plan for the given inputs/outputs.
@@ -859,9 +864,11 @@ class Network(Plotter):
         :param inputs:
             A collection with the names of all the given inputs.
             If `None``, all inputs that lead to given `outputs` are assumed.
+            If string, it is converted to a single-element collection.
         :param outputs:
             A collection or the name of the output name(s).
             If `None``, all reachable nodes from the given `inputs` are assumed.
+            If string, it is converted to a single-element collection.
 
         :return:
             the cached or fresh new execution-plan
@@ -871,13 +878,17 @@ class Network(Plotter):
 
                 *Unknown output nodes: ...*
 
-            - If `outputs` asked cannot be produced by the `graph`, with msg:
-
-                *Impossible outputs...*
-
-            - If cannot produce any `outputs` from the given `inputs`, with msg:
+            - If solution does not contain any operations, with msg:
 
                 *Unsolvable graph: ...*
+
+            - If given `inputs` mismatched plan's :attr:`needs`, with msg:
+
+                *Plan needs more inputs...*
+
+            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+
+                *Impossible outputs...*
         """
         ## Make a stable cache-key.
         #
