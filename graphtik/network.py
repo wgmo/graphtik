@@ -165,8 +165,12 @@ class _PinInstruction(str):
 #     overwrites = None
 
 
-def _yield_datanodes(graph):
-    return (n for n in graph if isinstance(n, _DataNode))
+def _yield_datanodes(nodes):
+    return (n for n in nodes if isinstance(n, _DataNode))
+
+
+def yield_operations(nodes):
+    return (n for n in nodes if isinstance(n, Operation))
 
 
 def _optionalized(graph, data):
@@ -186,7 +190,7 @@ def _optionalized(graph, data):
 
 def collect_requirements(graph) -> Tuple[iset, iset]:
     """Collect and split datanodes all `graph` ops in needs/provides."""
-    operations = [op for op in graph if isinstance(op, Operation)]
+    operations = list(yield_operations(graph))
     provides = iset(p for op in operations for p in op.provides)
     needs = (
         iset(_optionalized(graph, n) for op in operations for n in op.needs) - provides

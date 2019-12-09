@@ -12,7 +12,7 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
-from .network import Network
+from .network import Network, yield_operations
 from .op import Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
@@ -320,7 +320,7 @@ def compose(
         for op in operations:
             if isinstance(op, NetworkOperation):
                 netop_nodes = nx.topological_sort(op.net.graph)
-                merge_set.update(s for s in netop_nodes if isinstance(s, Operation))
+                merge_set.update(yield_operations(netop_nodes))
             else:
                 merge_set.add(op)
         operations = merge_set
