@@ -42,7 +42,7 @@ def test_repr_smoke(opname, opneeds, opprovides):
 def test_repr_returns_dict():
     assert (
         str(operation(lambda: None, returns_dict=True)())
-        == "FunctionalOperation(name=None, needs=[], provides=[], fn{}='<lambda>')"
+        == "FunctionalOperation(name='None', needs=[], provides=[], fn{}='<lambda>')"
     )
 
 

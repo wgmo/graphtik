@@ -303,16 +303,22 @@ def compose(
     if not all(isinstance(op, Operation) for op in operations):
         raise ValueError(f"Non-Operation instances given: {operations}")
 
-    # If merge is desired, deduplicate operations before building network
-    if merge:
-        merge_set = iset()  # Preseve given node order.
-        for op in operations:
-            if isinstance(op, NetworkOperation):
-                netop_nodes = nx.topological_sort(op.net.graph)
-                merge_set.update(yield_operations(netop_nodes))
-            else:
-                merge_set.add(op)
-        operations = merge_set
+    merge_set = iset()  # Preseve given node order.
+    for op in operations:
+        if isinstance(op, NetworkOperation):
+            # TODO: do we really need sorting ops when merging?
+            netop_nodes = nx.topological_sort(op.net.graph)
+            merge_set.update(
+                # If merge is desired, set will deduplicate operations
+                s if merge else
+                # else rename added ops by prefixing them with their parent netop.
+                s._adopted_by(op.name)
+                for s in netop_nodes
+                if isinstance(s, Operation)
+            )
+        else:
+            merge_set.add(op)
+    operations = merge_set
 
     net = Network(*operations)
 

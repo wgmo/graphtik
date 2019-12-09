@@ -190,7 +190,7 @@ def test_network_plan_execute():
 
     # get specific outputs
     exp = {"sum_ab_times_b": 6}
-    outputs=["sum_ab_times_b"]
+    outputs = ["sum_ab_times_b"]
     plan = net.compile(outputs=outputs, inputs=list(inputs))
     sol = plan.execute(inputs)
     assert sol == exp
@@ -200,7 +200,7 @@ def test_network_plan_execute():
     # start with inputs already computed
     inputs = {"sum_ab": 1, "b": 2, "exponent": 3}
     exp = {"sum_ab_times_b": 2}
-    outputs=["sum_ab_times_b"]
+    outputs = ["sum_ab_times_b"]
     plan = net.compile(outputs=outputs, inputs=inputs)
     with pytest.raises(ValueError, match=r"Plan needs more inputs:"):
         sol = plan.execute(named_inputs={"sum_ab": 1})
@@ -241,12 +241,12 @@ def test_network_simple_merge():
         "sum2": 10,
         "sum3": 15,
     }
-    sol = net3(**{"c": 5, "d": 1, "e": 2, "f": 4})
+    sol = net3(c=5, d=1, e=2, f=4)
     assert sol == exp
 
     assert (
         repr(net3)
-        == "NetworkOperation('merged', needs=['c', 'd', 'e', 'f'], provides=['sum1', 'sum2', 'sum3', 'a', 'b'], x2ops)"
+        == "NetworkOperation('merged', needs=['c', 'd', 'e', 'f'], provides=['sum2', 'sum1', 'sum3', 'a', 'b'], x5ops)"
     )
 
 
@@ -319,8 +319,7 @@ def test_network_merge_in_doctests():
     assert merged_graph.provides
 
     assert (
-        repr(merged_graph)
-        == "NetworkOperation('merged_graph', needs=['a', 'b', 'c'], "
+        repr(merged_graph) == "NetworkOperation('merged_graph', needs=['a', 'b', 'c'], "
         "provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'], x4ops)"
     )
 
@@ -770,7 +769,10 @@ def test_narrow_and_optionality(reverse):
     ## Narrow by `needs`
     #
     netop = compose("t", *ops, needs=["a"])
-    assert repr(netop) == f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provs}], x2ops)"
+    assert (
+        repr(netop)
+        == f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provs}], x2ops)"
+    )
 
     netop = compose("t", *ops, needs=["bb"])
     assert (
@@ -802,12 +804,15 @@ def test_narrow_and_optionality(reverse):
 
     netop = compose("t", *ops, needs="bb", provides=["sum2"])
     with pytest.raises(ValueError, match="Unsolvable graph:"):
-        netop.compute({'bb': 11})
+        netop.compute({"bb": 11})
 
     ## Narrow by unknown needs
     #
     netop = compose("t", *ops, needs="BAD")
-    assert repr(netop) == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
+    assert (
+        repr(netop)
+        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
+    )
 
 
 # Function without return value.

@@ -116,18 +116,49 @@ class FunctionalOperation(Operation):
     """
 
     def __init__(
-        self, fn: Callable, name, needs=None, provides=None, *, returns_dict=None
+        self,
+        fn: Callable,
+        name,
+        needs=None,
+        provides=None,
+        *,
+        parents=None,
+        returns_dict=None,
     ):
         self.fn = fn
+        self.parents = parents
         self.returns_dict = returns_dict
         ## Set op-data early, for repr() to work on errors.
         super().__init__(name, needs, provides)
         if not fn or not callable(fn):
             raise ValueError(f"Operation was not provided with a callable: {self.fn}")
+        if parents and not isinstance(parents, tuple):
+            raise ValueError(
+                f"Operation `parents` must be tuple, was {parents}\n {self}"
+            )
         ## Overwrite reparsed op-data.
+        name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
         self.name, self.needs, self.provides = reparse_operation_data(
             name, needs, provides
         )
+
+    def __eq__(self, other):
+        """
+        Operation equality is based on name of layer.
+        (__eq__ and __hash__ must be overridden together)
+        """
+        return bool(
+            self.name is not None
+            and self.name == getattr(other, "name", None)
+            and self.parents == getattr(other, "parents", None)
+        )
+
+    def __hash__(self):
+        """
+        Operation equality is based on name of layer.
+        (__eq__ and __hash__ must be overridden together)
+        """
+        return hash(self.name) ^ hash(self.parents)
 
     def __repr__(self):
         """
@@ -140,6 +171,17 @@ class FunctionalOperation(Operation):
         return (
             f"FunctionalOperation(name={self.name!r}, needs={needs!r}, "
             f"provides={provides!r}, fn{returns_dict_marker}={fn_name!r})"
+        )
+
+    def _adopted_by(self, parent):
+        """Make a clone with the given parrent set."""
+        return FunctionalOperation(
+            self.fn,
+            self.name,
+            self.needs,
+            self.provides,
+            parents=(parent,) + (self.parents or ()),
+            returns_dict=self.returns_dict,
         )
 
     def _zip_results_with_provides(self, results, real_provides: iset) -> dict:
