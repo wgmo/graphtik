@@ -64,9 +64,11 @@ class NetworkOperation(Operation, Plotter):
         :raises ValueError:
             see :meth:`narrow()`
         """
+        self.name = name
+        self.inputs = inputs
+        self.provides = outputs
         self.net = net.pruned(inputs, outputs)
         ## Set data asap, for debugging, although `prune()` will reset them.
-        super().__init__(name, inputs, outputs)
         self.set_execution_method(method)
         self.set_overwrites_collector(overwrites_collector)
 

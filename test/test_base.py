@@ -163,7 +163,9 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
 
 class DummyOperation(op.Operation):
     def __init__(self):
-        super().__init__("", (), ("a"))
+        self.name = ("",)
+        self.needs = ()
+        self.provides = ("a",)
 
     def compute(self, named_inputs, outputs=None):
         pass

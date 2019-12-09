@@ -22,20 +22,12 @@ def opprovides(request):
     return request.param
 
 
-class MyOp(Operation):
-    def compute(self):
-        pass
-
-
 def test_repr_smoke(opname, opneeds, opprovides):
     # Simply check __repr__() does not crash on partial attributes.
     kw = locals().copy()
     kw = {name[2:]: arg for name, arg in kw.items()}
 
     op = operation(**kw)
-    str(op)
-
-    op = MyOp(**kw)
     str(op)
 
 

@@ -5,7 +5,7 @@
 import abc
 import logging
 from collections import abc as cabc
-from typing import Callable
+from typing import Callable, Collection, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
@@ -43,43 +43,6 @@ def reparse_operation_data(name, needs, provides):
 class Operation(abc.ABC):
     """An abstract class representing a data transformation by :meth:`.compute()`."""
 
-    def __init__(self, name, needs=None, provides=None):
-        """
-        Create a new layer instance.
-        Names may be given to this layer and its inputs and outputs. This is
-        important when connecting layers and data in a Network object, as the
-        names are used to construct the graph.
-
-        :param str name:
-            The name the operation (e.g. conv1, conv2, etc..)
-
-        :param list needs:
-            Names of input data objects this layer requires.
-
-        :param list provides:
-            Names of output data objects this provides.
-
-        """
-
-        # (Optional) names for this layer, and the data it needs and provides
-        self.name = name
-        self.needs = needs
-        self.provides = provides
-
-    def __eq__(self, other):
-        """
-        Operation equality is based on name of layer.
-        (__eq__ and __hash__ must be overridden together)
-        """
-        return bool(self.name is not None and self.name == getattr(other, "name", None))
-
-    def __hash__(self):
-        """
-        Operation equality is based on name of layer.
-        (__eq__ and __hash__ must be overridden together)
-        """
-        return hash(self.name)
-
     @abc.abstractmethod
     def compute(self, named_inputs, outputs=None):
         """
@@ -89,23 +52,12 @@ class Operation(abc.ABC):
         End-users should simply call the operation with `named_inputs` as kwargs.
 
         :param list named_inputs:
-            A list of :class:`Data` objects on which to run the layer's
-            feed-forward computation.
+            the input values with which to feed the computation.
         :returns list:
             Should return a list values representing
             the results of running the feed-forward computation on
             ``inputs``.
         """
-        pass
-
-    def __repr__(self):
-        """
-        Display more informative names for the Operation class
-        """
-        clsname = type(self).__name__
-        needs = aslist(self.needs, "needs")
-        provides = aslist(self.provides, "provides")
-        return f"{clsname}({self.name!r}, needs={needs!r}, provides={provides!r})"
 
 
 class FunctionalOperation(Operation):
@@ -119,19 +71,38 @@ class FunctionalOperation(Operation):
         self,
         fn: Callable,
         name,
-        needs=None,
-        provides=None,
+        needs: Union[Collection, str] = None,
+        provides: Union[Collection, str] = None,
         *,
-        parents=None,
+        parents: Tuple = None,
         returns_dict=None,
     ):
+        """
+        Build a new operation out of some function and its requirements.
+
+        :param name:
+            a name for the operation (e.g. `'conv1'`, `'sum'`, etc..);
+            it will be prefixed by `parents`.
+        :param needs:
+            Names of input data objects this operation requires.
+        :param provides:
+            Names of output data objects this provides.
+        :param parent:
+            a tuple wth the names of the parents, prefixing `name`,
+            but also kept for equality/hash check.
+
+        """
+        ## Set op-data early, for repr() to work on errors.
         self.fn = fn
+        self.name = name
+        self.needs = needs
+        self.provides = provides
         self.parents = parents
         self.returns_dict = returns_dict
-        ## Set op-data early, for repr() to work on errors.
-        super().__init__(name, needs, provides)
         if not fn or not callable(fn):
-            raise ValueError(f"Operation was not provided with a callable: {self.fn}")
+            raise ValueError(
+                f"Operation was not provided with a callable: {fn}\n  {self}"
+            )
         if parents and not isinstance(parents, tuple):
             raise ValueError(
                 f"Operation `parents` must be tuple, was {parents}\n {self}"
@@ -143,10 +114,7 @@ class FunctionalOperation(Operation):
         )
 
     def __eq__(self, other):
-        """
-        Operation equality is based on name of layer.
-        (__eq__ and __hash__ must be overridden together)
-        """
+        """Operation identity is based on `name` and `parents`."""
         return bool(
             self.name is not None
             and self.name == getattr(other, "name", None)
@@ -154,10 +122,7 @@ class FunctionalOperation(Operation):
         )
 
     def __hash__(self):
-        """
-        Operation equality is based on name of layer.
-        (__eq__ and __hash__ must be overridden together)
-        """
+        """Operation identity is based on `name` and `parents`."""
         return hash(self.name) ^ hash(self.parents)
 
     def __repr__(self):
