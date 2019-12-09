@@ -22,13 +22,13 @@ Computations are based on 5 data-structures:
     They are layed out and connected by repeated calls of
     :meth:`~Network.add_OP`.
 
-    The computation starts with :meth:`~Network.prune()` extracting
+    The computation starts with :meth:`~Network._prune_graph()` extracting
     a *DAG subgraph* by *pruning* its nodes based on given inputs and
     requested outputs in :meth:`~Network.compute()`.
 
 :attr:`ExecutionPlan.dag`
     An directed-acyclic-graph containing the *pruned* nodes as build by
-    :meth:`~Network.prune()`. This pruned subgraph is used to decide
+    :meth:`~Network._prune_graph()`. This pruned subgraph is used to decide
     the :attr:`ExecutionPlan.steps` (below).
     The containing :class:`ExecutionPlan.steps` instance is cached
     in :attr:`_cached_plans` across runs with inputs/outputs as key.
@@ -64,6 +64,7 @@ Computations are based on 5 data-structures:
     intermediate *calculated* values that are overwritten by intermediate
     (aka "pinned") input-values.
 """
+import copy
 import logging
 import re
 import sys
@@ -581,7 +582,7 @@ class Network(Plotter):
                 graph.add_node(_DataNode(n), sideffect=True)
             graph.add_edge(operation, _DataNode(n), **kw)
 
-    def _collect_unsatisfied_operations(self, dag, inputs: Collection):
+    def _unsatisfied_operations(self, dag, inputs: Collection):
         """
         Traverse topologically sorted dag to collect un-satisfied operations.
 
@@ -592,7 +593,7 @@ class Network(Plotter):
           all its needs have been accounted, so we can get its satisfaction.
 
         - Their provided outputs are not linked to any data in the dag.
-          An operation might not have any output link when :meth:`prune()`
+          An operation might not have any output link when :meth:`_prune_graph()`
           has broken them, due to given intermediate inputs.
 
         :param dag:
@@ -637,7 +638,7 @@ class Network(Plotter):
 
         return unsatisfied
 
-    def prune(
+    def _prune_graph(
         self, inputs: Optional[Collection], outputs: Optional[Collection]
     ) -> Tuple[nx.DiGraph, Collection, Collection, Collection]:
         """
@@ -726,7 +727,7 @@ class Network(Plotter):
             broken_dag = broken_dag.subgraph(ending_in_outputs)
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
-        unsatisfied = self._collect_unsatisfied_operations(broken_dag, satisfied_inputs)
+        unsatisfied = self._unsatisfied_operations(broken_dag, satisfied_inputs)
         # Clone it, to modify it.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
         # Clean unlinked data-nodes.
@@ -858,7 +859,7 @@ class Network(Plotter):
         """
         Create or get from cache an execution-plan for the given inputs/outputs.
 
-        See :meth:`prune()` and :meth:`_build_execution_steps()`
+        See :meth:`_prune_graph()` and :meth:`_build_execution_steps()`
         for detailed description.
 
         :param inputs:
@@ -908,7 +909,9 @@ class Network(Plotter):
         if cache_key in self._cached_plans:
             plan = self._cached_plans[cache_key]
         else:
-            pruned_dag, broken_edges, needs, provides = self.prune(inputs, outputs)
+            pruned_dag, broken_edges, needs, provides = self._prune_graph(
+                inputs, outputs
+            )
             steps = self._build_execution_steps(pruned_dag, needs, outputs or ())
             plan = ExecutionPlan(
                 self,
