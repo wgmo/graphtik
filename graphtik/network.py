@@ -664,15 +664,25 @@ class Network(Plotter):
         # TODO: break cycles here.
         dag = self.graph
 
+        ##  When `inputs` is None, we have to keep all possible input nodes
+        #   and this is achieved with 2 tricky locals:
+        #
+        #   inputs
+        #       it is kept falsy, to disable the edge-breaking, so that
+        #       the asceding_from_outputs that follows can reach all input nodes;
+        #       including intermediate ones;
+        #   satisfied_inputs
+        #       it is filled with all possible input nodes, to trick `_unsatisfied_operations()`
+        #       to assume their operations are satisfied, and keep them.
+        #
         if inputs is None and outputs is None:
-            inputs, outputs = self.needs, self.provides
+            satisfied_inputs, outputs = self.needs, self.provides
         else:
-            if inputs is None:  # means outputs are non-null ...
-                # Consider "preliminary" `inputs` any non-output node.
-                inputs = iset(_yield_datanodes(dag)) - outputs
-            else:
-                # Ignore `inputs` not in the graph.
-                inputs = iset(inputs) & dag.nodes
+            if inputs is None:  # outputs: NOT None
+                satisfied_inputs = self.needs - outputs
+            else:  # inputs: NOT None, outputs: None
+                # Just ignore `inputs` not in the graph.
+                satisfied_inputs = inputs = iset(inputs) & dag.nodes
 
             ## Scream on unknown `outputs`.
             #
@@ -683,7 +693,8 @@ class Network(Plotter):
                         f"Unknown output nodes: {list(unknown_outputs)}\n  {self}"
                     )
 
-        assert isinstance(inputs, abc.Collection)
+        assert isinstance(satisfied_inputs, abc.Collection)
+        assert inputs is None or isinstance(inputs, abc.Collection)
         assert outputs is None or isinstance(outputs, abc.Collection)
 
         broken_dag = dag.copy()  # preserve net's graph
@@ -712,13 +723,15 @@ class Network(Plotter):
             broken_dag = broken_dag.subgraph(ending_in_outputs)
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
-        unsatisfied = self._collect_unsatisfied_operations(broken_dag, inputs)
+        unsatisfied = self._collect_unsatisfied_operations(broken_dag, satisfied_inputs)
         # Clone it, to modify it.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
-
+        # Clean unlinked data-nodes.
         pruned_dag.remove_nodes_from(list(nx.isolates(pruned_dag)))
 
-        inputs = iset(_optionalized(pruned_dag, n) for n in inputs if n in pruned_dag)
+        inputs = iset(
+            _optionalized(pruned_dag, n) for n in satisfied_inputs if n in pruned_dag
+        )
         if outputs is None:
             outputs = iset(
                 n for n in self.provides if n not in inputs and n in pruned_dag
