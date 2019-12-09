@@ -189,12 +189,10 @@ def _optionalized(graph, data):
 
 
 def collect_requirements(graph) -> Tuple[iset, iset]:
-    """Collect and split datanodes all `graph` ops in needs/provides."""
+    """Collect & split datanodes in (possibly overlapping) `needs`/`provides`."""
     operations = list(yield_operations(graph))
     provides = iset(p for op in operations for p in op.provides)
-    needs = (
-        iset(_optionalized(graph, n) for op in operations for n in op.needs) - provides
-    )
+    needs = iset(_optionalized(graph, n) for op in operations for n in op.needs)
     # TODO: Unify _DataNode + modifiers to avoid ugly hack `net.collect_requirements()`.
     provides = iset(str(n) if not isinstance(n, sideffect) else n for n in provides)
     return needs, provides

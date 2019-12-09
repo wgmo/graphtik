@@ -136,7 +136,7 @@ We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``m
    >>> merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
    >>> print(merged_graph)
    NetworkOperation('merged_graph',
-                    needs=['a', 'b', 'c'],
+                    needs=['a', 'b', 'ab', 'a_minus_ab', 'c'],
                     provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'],
                     x4ops)
 

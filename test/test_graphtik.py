@@ -246,7 +246,8 @@ def test_network_simple_merge():
 
     assert (
         repr(net3)
-        == "NetworkOperation('merged', needs=['c', 'd', 'e', 'f'], provides=['sum2', 'sum1', 'sum3', 'a', 'b'], x5ops)"
+        == "NetworkOperation('merged', needs=['a', 'b', 'sum1', 'c', 'd', 'e', 'f'], "
+        "provides=['sum2', 'sum1', 'sum3', 'a', 'b'], x5ops)"
     )
 
 
@@ -263,7 +264,8 @@ def test_network_deep_merge():
     assert net1(a=1, b=2, c=4) == exp
     assert (
         repr(net1)
-        == "NetworkOperation('my network 1', needs=[optional('a'), 'b', 'c'], provides=['sum1', 'sum2', 'sum3'], x3ops)"
+        == "NetworkOperation('my network 1', needs=[optional('a'), 'b', 'sum1', 'c'], "
+        "provides=['sum1', 'sum2', 'sum3'], x3ops)"
     )
 
     sum_op4 = operation(name="sum_op1", needs=[vararg("a"), "b"], provides="sum1")(
@@ -275,7 +277,7 @@ def test_network_deep_merge():
     assert net2(**{"a": 1, "b": 2}) == exp
     assert (
         repr(net2)
-        == "NetworkOperation('my network 2', needs=[optional('a'), 'b'], provides=['sum1', 'sum2'], x2ops)"
+        == "NetworkOperation('my network 2', needs=[optional('a'), 'b', 'sum1'], provides=['sum1', 'sum2'], x2ops)"
     )
 
     net3 = compose("merged", net1, net2, merge=True)
@@ -284,7 +286,7 @@ def test_network_deep_merge():
 
     assert (
         repr(net3)
-        == "NetworkOperation('merged', needs=[optional('a'), 'b', 'c'], provides=['sum2', 'sum1', 'sum3'], x4ops)"
+        == "NetworkOperation('merged', needs=[optional('a'), 'b', 'sum1', 'c'], provides=['sum2', 'sum1', 'sum3'], x4ops)"
     )
 
     ## Reverse ops, change results and `needs` optionality.
@@ -295,7 +297,7 @@ def test_network_deep_merge():
 
     assert (
         repr(net3)
-        == "NetworkOperation('merged', needs=[optional('a'), 'b', 'c'], provides=['sum1', 'sum2', 'sum3'], x4ops)"
+        == "NetworkOperation('merged', needs=[optional('a'), 'b', 'sum1', 'c'], provides=['sum1', 'sum2', 'sum3'], x4ops)"
     )
 
 
@@ -319,7 +321,9 @@ def test_network_merge_in_doctests():
     assert merged_graph.provides
 
     assert (
-        repr(merged_graph) == "NetworkOperation('merged_graph', needs=['a', 'b', 'c'], "
+        repr(merged_graph) ==
+        "NetworkOperation('merged_graph', "
+        "needs=['a', 'b', 'ab', 'a_minus_ab', 'c'], "
         "provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'], x4ops)"
     )
 
