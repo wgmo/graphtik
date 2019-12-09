@@ -658,7 +658,8 @@ class Network(Plotter):
 
         :return:
             a 4-tuple with the *pruned_dag*, the out-edges of the inputs,
-            and needs/provides resolved.
+            and needs/provides resolved based on given inputs/outputs
+            (which might be a subset of all needs/outputs of the returned graph).
 
         :raises ValueError:
             - if `outputs` asked do not exist in network, with msg:
@@ -741,7 +742,6 @@ class Network(Plotter):
                 n for n in self.provides if n not in inputs and n in pruned_dag
             )
 
-        assert all(_yield_datanodes(pruned_dag)), pruned_dag
         assert inputs is not None or isinstance(inputs, abc.Collection)
         assert outputs is not None or isinstance(outputs, abc.Collection)
 
