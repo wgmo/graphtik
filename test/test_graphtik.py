@@ -357,10 +357,10 @@ def test_node_props_based_prune():
     # assert netop(**inp)["sum"] == 6
 
     pred = lambda n, d: d.get("color", None) != "red"
-    assert netop.narrow(predicate=pred)(**inp)["sum"] == 5
+    assert netop.narrowed(predicate=pred)(**inp)["sum"] == 5
 
     pred = lambda n, d: "color" not in d
-    assert netop.narrow(predicate=pred)(**inp)["sum"] == 3
+    assert netop.narrowed(predicate=pred)(**inp)["sum"] == 3
 
 
 def test_input_based_pruning():
@@ -412,8 +412,8 @@ def test_deps_pruning_vs_narrowing(samplenet):
     assert "sum3" in results
     assert results["sum3"] == add(c, sum2)
 
-    # Compare with both `narrow()`.
-    net = samplenet.narrow(inputs=["c", "sum2"], outputs=["sum3"])
+    # Compare with both `narrowed()`.
+    net = samplenet.narrowed(inputs=["c", "sum2"], outputs=["sum3"])
     results = net(c=c, sum2=sum2)
 
     # Make sure we got expected result without having to pass a, b, or d.
@@ -645,7 +645,7 @@ def test_same_outputs_operations_order():
 
     inp = {"a": 3, "b": 1}
     assert addsub(**inp) == {"a": 3, "b": 1, "ab": 4, "AB": 4}
-    assert addsub.narrow(outputs="AB")(**inp) == {"AB": 4}
+    assert addsub.narrowed(outputs="AB")(**inp) == {"AB": 4}
     assert subadd(**inp) == {"a": 3, "b": 1, "ab": 2, "AB": 2}
     assert subadd.compute(inp, "AB") == {"AB": 2}
 
@@ -678,7 +678,7 @@ def test_unsatisfied_operations():
     exp = {"a": 10, "b1": 2, "a+b1": 12}
     assert pipeline(**{"a": 10, "b1": 2}) == exp
     assert pipeline.compute({"a": 10, "b1": 2}, ["a+b1"]) == filtdict(exp, "a+b1")
-    assert pipeline.narrow(outputs=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(
+    assert pipeline.narrowed(outputs=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(
         exp, "a+b1"
     )
 

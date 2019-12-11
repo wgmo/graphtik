@@ -50,9 +50,9 @@ class NetworkOperation(Operation, Plotter):
     ):
         """
         :param inputs:
-            see :meth:`narrow()`
+            see :meth:`narrowed()`
         :param outputs:
-            see :meth:`narrow()`
+            see :meth:`narrowed()`
         :param predicate:
             a 2-argument callable(op, node-data) that should return true for nodes to include
         :param method:
@@ -65,7 +65,7 @@ class NetworkOperation(Operation, Plotter):
             If missing, values are simply discarded.
 
         :raises ValueError:
-            see :meth:`narrow()`
+            see :meth:`narrowed()`
         """
         ## Set data asap, for debugging, although `pruned()` will reset them.
         self.name = name
@@ -96,7 +96,7 @@ class NetworkOperation(Operation, Plotter):
             f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{nops}ops)"
         )
 
-    def narrow(
+    def narrowed(
         self,
         inputs: Items = None,
         outputs: Items = None,
@@ -295,7 +295,7 @@ def compose(
         of multiple times (one for each time the operation appears).
     :param node_props:
         added as-is into NetworkX graph, to provide for filtering
-        by :meth:`.NetworkOperation.narrow()`.
+        by :meth:`.NetworkOperation.narrowed()`.
     :param method:
         either `parallel` or None (default);
         if ``"parallel"``, launches multi-threading.
