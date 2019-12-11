@@ -5,11 +5,11 @@
 import abc
 import logging
 from collections import abc as cabc
-from typing import Callable, Collection, Mapping, Tuple, Union
+from typing import Callable, Mapping, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
-from .base import Plotter, aslist, astuple, jetsam
+from .base import Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
@@ -71,8 +71,8 @@ class FunctionalOperation(Operation):
         self,
         fn: Callable,
         name,
-        needs: Union[Collection, str] = None,
-        provides: Union[Collection, str] = None,
+        needs: Items = None,
+        provides: Items = None,
         *,
         parents: Tuple = None,
         node_props: Mapping = None,
@@ -93,6 +93,10 @@ class FunctionalOperation(Operation):
             but also kept for equality/hash check.
         :param node_props:
             added as-is into NetworkX graph
+        :param returns_dict:
+            if true, it means the `fn` returns a dictionary with all `provides`,
+            and no further processing is done on them
+            (i.e. the returned output-values are not zipped with `provides`)
         """
         ## Set op-data early, for repr() to work on errors.
         self.fn = fn
@@ -288,6 +292,8 @@ class operation:
         elements must be returned
     :param bool returns_dict:
         if true, it means the `fn` returns a dictionary with all `provides`,
+        and no further processing is done on them
+        (i.e. the returned output-values are not zipped with `provides`)
     :param node_props:
         added as-is into NetworkX graph
 
@@ -319,8 +325,8 @@ class operation:
         fn: Callable = None,
         *,
         name=None,
-        needs=None,
-        provides=None,
+        needs: Items = None,
+        provides: Items = None,
         returns_dict=None,
         node_props: Mapping = None,
     ):
@@ -334,10 +340,10 @@ class operation:
     def withset(
         self,
         *,
-        fn=None,
+        fn: Callable = None,
         name=None,
-        needs=None,
-        provides=None,
+        needs: Items = None,
+        provides: Items = None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> "operation":
@@ -358,11 +364,11 @@ class operation:
 
     def __call__(
         self,
-        fn=None,
+        fn: Callable = None,
         *,
         name=None,
-        needs=None,
-        provides=None,
+        needs: Items = None,
+        provides: Items = None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> FunctionalOperation:

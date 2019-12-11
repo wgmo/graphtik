@@ -87,7 +87,7 @@ from typing import (
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Plotter, aslist, astuple, jetsam
+from .base import Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
 from .op import Operation
 
@@ -138,7 +138,7 @@ class _DataNode(str):
 
 class _EvictInstruction(str):
     """
-    Execution step to evict a computed value from the `solution`.
+    A step in the ExecutionPlan to evict a computed value from the `solution`.
 
     It's a step in :attr:`ExecutionPlan.steps` for the data-node `str` that
     frees its data-value from `solution` after it is no longer needed,
@@ -153,7 +153,7 @@ class _EvictInstruction(str):
 
 class _PinInstruction(str):
     """
-    Execution step to overwrite a computed value in the `solution` from the inputs,
+    A step in the ExecutionPlan to overwrite a computed value in the `solution` from the inputs,
 
     and to store the computed one in the ``overwrites`` instead
     (both `solution` & ``overwrites`` are local-vars in :meth:`~Network.compute()`).
@@ -266,9 +266,7 @@ class ExecutionPlan(
             "".join(steps),
         )
 
-    def validate(
-        self, inputs: Optional[abc.Collection], outputs: Optional[abc.Collection]
-    ):
+    def validate(self, inputs: Items, outputs: Items):
         """
         Scream on invalid inputs, outputs or no operations in graph.
 
@@ -674,8 +672,8 @@ class Network(Plotter):
 
     def _prune_graph(
         self,
-        inputs: Optional[Collection],
-        outputs: Optional[Collection],
+        inputs: Items,
+        outputs: Items,
         predicate: Callable[[Any, Mapping], bool] = None,
     ) -> Tuple[nx.DiGraph, Collection, Collection, Collection]:
         """
@@ -687,7 +685,6 @@ class Network(Plotter):
 
         :param inputs:
             The names of all given inputs.
-
         :param outputs:
             The desired output names.  This can also be ``None``, in which
             case the necessary steps are all graph nodes that are reachable
@@ -793,8 +790,8 @@ class Network(Plotter):
 
     def pruned(
         self,
-        inputs: Collection = None,
-        outputs: Collection = None,
+        inputs: Items = None,
+        outputs: Items = None,
         predicate: Callable[[Any, Mapping], bool] = None,
     ) -> "Network":
         """
@@ -824,7 +821,7 @@ class Network(Plotter):
         return Network(graph=pruned_dag)
 
     def _build_execution_steps(
-        self, pruned_dag, inputs: Optional[Collection], outputs: Optional[Collection]
+        self, pruned_dag, inputs: Collection, outputs: Optional[Collection]
     ) -> List:
         """
         Create the list of operation-nodes & *instructions* evaluating all
@@ -927,11 +924,7 @@ class Network(Plotter):
 
         return steps
 
-    def compile(
-        self,
-        inputs: Union[Collection, str] = None,
-        outputs: Union[Collection, str] = None,
-    ) -> ExecutionPlan:
+    def compile(self, inputs: Items = None, outputs: Items = None) -> ExecutionPlan:
         """
         Create or get from cache an execution-plan for the given inputs/outputs.
 

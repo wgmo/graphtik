@@ -4,7 +4,9 @@
 
 import abc
 import logging
-from typing import Mapping, Union
+from typing import Collection, Mapping, Union
+
+Items = Union[Collection, str, None]
 
 log = logging.getLogger(__name__)
 

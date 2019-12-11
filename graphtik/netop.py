@@ -5,12 +5,12 @@
 import logging
 import re
 from collections import abc
-from typing import Any, Callable, Collection, Mapping
+from typing import Any, Callable, Mapping
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Plotter, aslist, astuple, jetsam
+from .base import Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
 from .network import Network, yield_operations
 from .op import FunctionalOperation, Operation, reparse_operation_data
@@ -98,8 +98,8 @@ class NetworkOperation(Operation, Plotter):
 
     def narrow(
         self,
-        inputs: Collection = None,
-        outputs: Collection = None,
+        inputs: Items = None,
+        outputs: Items = None,
         name=None,
         predicate: Callable[[Any, Mapping], bool] = None,
     ) -> "NetworkOperation":
@@ -264,8 +264,8 @@ def compose(
     name,
     op1,
     *operations,
-    needs=None,
-    provides=None,
+    needs: Items = None,
+    provides: Items = None,
     merge=False,
     node_props=None,
     method=None,
@@ -277,13 +277,11 @@ def compose(
 
     :param str name:
         A optional name for the graph being composed by this object.
-
     :param op1:
         syntactically force at least 1 operation
     :param operations:
         Each argument should be an operation instance created using
         ``operation``.
-
     :param bool merge:
         If ``True``, this compose object will attempt to merge together
         ``operation`` instances that represent entire computation graphs.
@@ -303,7 +301,6 @@ def compose(
         if ``"parallel"``, launches multi-threading.
         Set when invoking a composed graph or by
         :meth:`~NetworkOperation.set_execution_method()`.
-
     :param overwrites_collector:
         (optional) a mutable dict to be fillwed with named values.
         If missing, values are simply discarded.

@@ -6,7 +6,7 @@ import io
 import json
 import logging
 import os
-from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
+from typing import Any, Callable, List, Mapping, Tuple, Union
 
 import pydot
 
@@ -79,6 +79,7 @@ def _dot2svg(dot):
     .. TODO:
         Render in jupyter cells fullly on client-side without SVG, using lib:
         https://visjs.github.io/vis-network/docs/network/#importDot
+        Or with plotly https://plot.ly/~empet/14007.embed
 
     """
     pan_zoom_json, element_styles, container_styles = _parse_jupyter_render(dot)
@@ -324,7 +325,6 @@ def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str 
 
     See :meth:`.Plotter.plot()` for sample code.
     """
-    # TODO: research https://plot.ly/~empet/14007.embed
     # Save plot
     #
     if filename:
@@ -359,7 +359,7 @@ def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str 
     return dot
 
 
-def legend(filename=None, show=None, jupyter_render: Optional[Mapping] = None):
+def legend(filename=None, show=None, jupyter_render: Mapping = None):
     """Generate a legend for all plots (see :meth:`.Plotter.plot()` for args)"""
 
     _monkey_patch_for_jupyter(pydot)
