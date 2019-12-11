@@ -106,7 +106,7 @@ Run the graph and request all of the outputs::
     :target: https://pypi.python.org/pypi/graphtik/
     :alt: Supported Python versions of latest release in PyPi
 
-.. |dev-status| image:: https://pypip.in/status/graphtik/badge
+.. |dev-status| image:: https://img.shields.io/pypi/status/graphtik
     :target: https://pypi.python.org/pypi/graphtik/
     :alt: Development Status
 
