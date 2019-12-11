@@ -209,7 +209,7 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
 
 
 class ExecutionPlan(
-    namedtuple("_ExePlan", "net needs provides dag broken_edges steps evict"), Plotter
+    namedtuple("ExecPlan", "net needs provides dag broken_edges steps evict times"), Plotter
 ):
     """
     The result of the network's compilation phase.
@@ -261,7 +261,7 @@ class ExecutionPlan(
     def __repr__(self):
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
-        steps = "".join(f"\n  +--{s}" for s in self.steps) if self.steps else ''
+        steps = "".join(f"\n  +--{s}" for s in self.steps)
         return f"ExecutionPlan(needs={needs}, provides={provides}, steps:{steps})"
 
     def validate(self, inputs: Items, outputs: Items):
@@ -320,10 +320,16 @@ class ExecutionPlan(
     def _call_operation(self, op, solution):
         # Although `plan` have added to jetsam in `compute()``,
         # add it again, in case compile()/execute is called separately.
+        t0 = time.time()
         try:
             return op.compute(solution)
         except Exception as ex:
             jetsam(ex, locals(), plan="self")
+        finally:
+            # record execution time
+            t_complete = round(time.time() - t0, 5)
+            self.times[op.name] = t_complete
+            log.debug("...step completion time: %s", t_complete)
 
     def _execute_thread_pool_barrier_method(self, solution, overwrites, executed):
         """
@@ -414,29 +420,17 @@ class ExecutionPlan(
             n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
         }
 
-        self.times = {}
         for step in self.steps:
             self._check_if_aborted(executed)
 
             if isinstance(step, Operation):
-
                 log.debug("%sexecuting step: %s", "-" * 32, step.name)
 
-                # time execution...
-                t0 = time.time()
-
-                # compute layer outputs
                 layer_outputs = self._call_operation(step, solution)
 
                 # add outputs to solution
                 solution.update(layer_outputs)
                 executed.add(step)
-
-                # record execution time
-                t_complete = round(time.time() - t0, 5)
-                self.times[step.name] = t_complete
-                log.debug("step completion time: %s", t_complete)
-
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.
                 if step in solution:
@@ -477,6 +471,7 @@ class ExecutionPlan(
                 *Impossible outputs...*
         """
         try:
+            self.times.clear()
             self.validate(named_inputs, outputs)
 
             # choose a method of execution
@@ -548,9 +543,6 @@ class Network(Plotter):
         for op in operations:
             self._append_operation(graph, op)
         self.needs, self.provides = collect_requirements(self.graph)
-
-        # this holds the timing information for each layer
-        self.times = {}
 
         #: Speed up :meth:`compile()` call and avoid a multithreading issue(?)
         #: that is occuring when accessing the dag in networkx.
@@ -988,6 +980,7 @@ class Network(Plotter):
                 tuple(broken_edges),
                 tuple(steps),
                 evict=outputs is not None,
+                times={},
             )
 
             self._cached_plans[cache_key] = plan

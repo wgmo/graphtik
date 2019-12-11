@@ -121,12 +121,15 @@ def test_jetsam_nested():
     assert excinfo.value.jetsam == {"fn": "inner", "a": 1, "b": 2}
 
 
-def screaming_dumy_op():
-    # No jetsam, in particular, to check sites.
-    class Op:
-        compute = _scream
+class _ScreamingOperation(op.Operation):
+    def __init__(self):
+        self.name = ("",)
+        self.needs = ()
+        self.provides = ("a",)
+        self.node_props = {}
 
-    return Op()
+    def compute(self, named_inputs, outputs=None):
+        _scream()
 
 
 @pytest.mark.parametrize(
@@ -142,8 +145,8 @@ def screaming_dumy_op():
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 7))._call_operation,
-                op=screaming_dumy_op(),
+                network.ExecutionPlan(*([None] * 7), {})._call_operation,
+                op=_ScreamingOperation(),
                 solution={},
             ),
             ["plan"],
@@ -161,7 +164,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
     assert set(ex.jetsam.keys()) == set(expected_jetsam)
 
 
-class DummyOperation(op.Operation):
+class _DummyOperation(op.Operation):
     def __init__(self):
         self.name = ("",)
         self.needs = ()
@@ -177,29 +180,26 @@ class DummyOperation(op.Operation):
     [
         # NO old-stuff Operation(fn=_jetsamed_fn, name="test", needs="['a']", provides=[]),
         (
-            fnt.partial(
-                operation(name="test", needs=["a"], provides=["b"])(_scream).compute,
-                named_inputs=None,
-            ),
+            fnt.partial(operation(_scream, name="test")().compute, named_inputs=None),
             "outputs provides results_fn results_op operation args".split(),
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 7))._call_operation,
-                op=None,
+                network.ExecutionPlan(*([None] * 7), {})._call_operation,
+                op=operation(_scream, name="auch")(),
                 solution={},
             ),
-            ["plan"],
+            "outputs provides results_fn results_op operation args plan".split(),
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 7)).execute, named_inputs=None
+                network.ExecutionPlan(*([None] * 7), {}).execute, named_inputs=None
             ),
             ["solution", "executed"],
         ),
         (
             fnt.partial(
-                NetworkOperation(network.Network(DummyOperation()), None).compute,
+                NetworkOperation(network.Network(_DummyOperation()), None).compute,
                 named_inputs=None,
                 outputs="bad",
             ),
