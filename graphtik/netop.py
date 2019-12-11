@@ -309,7 +309,7 @@ def compose(
     for op in operations:
         if isinstance(op, NetworkOperation):
             # TODO: do we really need sorting ops when merging?
-            netop_nodes = nx.topological_sort(op.net.graph)
+            netop_nodes = op.net.graph
             merge_set.update(
                 # If merge is desired, set will deduplicate operations
                 s if merge else

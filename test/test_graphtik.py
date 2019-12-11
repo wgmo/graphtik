@@ -247,7 +247,7 @@ def test_network_simple_merge():
     assert (
         repr(net3)
         == "NetworkOperation('merged', needs=['a', 'b', 'sum1', 'c', 'd', 'e', 'f'], "
-        "provides=['sum2', 'sum1', 'sum3', 'a', 'b'], x5ops)"
+        "provides=['sum1', 'sum2', 'sum3', 'a', 'b'], x5ops)"
     )
 
 
@@ -281,12 +281,12 @@ def test_network_deep_merge():
     )
 
     net3 = compose("merged", net1, net2, merge=True)
-    exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
+    exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 5, "sum3": 7}
     assert net3(a=1, b=2, c=4) == exp
 
     assert (
         repr(net3)
-        == "NetworkOperation('merged', needs=[optional('a'), 'b', 'sum1', 'c'], provides=['sum2', 'sum1', 'sum3'], x4ops)"
+        == "NetworkOperation('merged', needs=[optional('a'), 'b', 'sum1', 'c'], provides=['sum1', 'sum2', 'sum3'], x4ops)"
     )
 
     ## Reverse ops, change results and `needs` optionality.
