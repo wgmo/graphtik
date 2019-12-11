@@ -5,6 +5,7 @@
 import abc
 import logging
 from collections import abc as cabc
+from collections import namedtuple
 from typing import Callable, Mapping, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
@@ -60,15 +61,18 @@ class Operation(abc.ABC):
         """
 
 
-class FunctionalOperation(Operation):
+class FunctionalOperation(
+    namedtuple("FnOp", "fn name needs provides parents node_props returns_dict"),
+    Operation,
+):
     """
     An Operation performing a callable (ie function, method, lambda).
 
     Use :class:`operation()` factory to build instances of this class instead.
     """
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         fn: Callable,
         name,
         needs: Items = None,
@@ -98,30 +102,20 @@ class FunctionalOperation(Operation):
             and no further processing is done on them
             (i.e. the returned output-values are not zipped with `provides`)
         """
-        ## Set op-data early, for repr() to work on errors.
-        self.fn = fn
-        self.name = name
-        self.needs = needs
-        self.provides = provides
-        self.parents = parents
-        self.node_props = node_props = node_props if node_props else {}
-        self.returns_dict = returns_dict
+        node_props = node_props = node_props if node_props else {}
 
         if not fn or not callable(fn):
-            raise ValueError(
-                f"Operation was not provided with a callable: {fn}\n  {self}"
-            )
+            raise ValueError(f"Operation was not provided with a callable: {fn}")
         if parents and not isinstance(parents, tuple):
-            raise ValueError(
-                f"Operation `parents` must be tuple, was {parents}\n {self}"
-            )
+            raise ValueError(f"Operation `parents` must be tuple, was {parents}")
         if node_props is not None and not isinstance(node_props, cabc.Mapping):
-            raise ValueError(f"`node_props` must be a mapping, got: {node_props!r}")
+            raise ValueError(f"Operation `node_props` must be a dict, was {node_props}")
 
         ## Overwrite reparsed op-data.
         name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
-        self.name, self.needs, self.provides = reparse_operation_data(
-            name, needs, provides
+        name, needs, provides = reparse_operation_data(name, needs, provides)
+        return super().__new__(
+            cls, fn, name, needs, provides, parents, node_props, returns_dict
         )
 
     def __eq__(self, other):
@@ -151,7 +145,13 @@ class FunctionalOperation(Operation):
         )
 
     def withset(self, **kw) -> "FunctionalOperation":
-        """Make a clone with the some values replaced."""
+        """
+        Make a clone with the some values replaced.
+
+        .. ATTENTION::
+            Using :meth:`namedtuple._replace()` would not pass through cstor,
+            so would not get a nested `name` with `parents`, not arguments validation.
+        """
         fn = kw["fn"] if "fn" in kw else self.fn
         name = kw["name"] if "name" in kw else self.name
         needs = kw["needs"] if "needs" in kw else self.needs
