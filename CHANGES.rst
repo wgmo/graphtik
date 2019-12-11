@@ -6,6 +6,12 @@ TODO
 ====
 See :gg:`1`.
 
+v4.0.1 (12 Dec 2019, @ankostis): bugfix
+=======================================
++ FIX(plan): ``plan.repr()`` was failing on empty plans.
++ fix(site): minor badge fix & landing diagram.
+
+
 v4.0.0 (11 Dec 2019, @ankostis): NESTED merge, revert v3.x Unvarying, immutable OPs, "color" nodes
 ==================================================================================================
 + BREAK/ENH(NETOP): MERGE NESTED NetOps by collecting all their operations
