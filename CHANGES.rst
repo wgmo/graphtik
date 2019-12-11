@@ -6,12 +6,51 @@ TODO
 ====
 See :gg:`1`.
 
+v4.0.0 (11 Dec 2019, @ankostis): NESTED merge, revert v3.x Unvarying, immutable OPs, "color" nodes
+==================================================================================================
++ BREAK/ENH(NETOP): MERGE NESTED NetOps by collecting all their operations
+  in a single Network;  now children netops are not pruned in case
+  some of their `needs` are unsatisfied.
+
+  + feat(op): support multiple nesting under other netops.
+
++ BREAK(NETOP): REVERT Unvarying NetOps+base-plan, and narrow Networks instead;
+  netops were too rigid, code was cumbersome, and could not really pinpoint
+  the narrowed `needs` always correctly (e.g. when they were also `provides`).
+
+  + A `netop` always narrows its `net` based on given `inputs/outputs`.
+    This means that the `net` might be a subset of the one constructed out of
+    the given operations.  If you want all nodes, don't specify `needs/provides`.
+  + drop 3 :class:`.ExecutionPlan` attributes: ``plan, needs, plan``
+  + drop `recompile` flag in ``Network.compute()``.
+  + feat(net): new method :meth:`.Network.narrowed()` clones and narrows.
+  + ``Network()`` cstor accepts a (cloned) graph to support ``narrowed()`` methods.
+
++ BREAK/REFACT(OP): simplify hierarchy, make :class:`.Operation` fully abstract,
+  without name or requirements.
+
+  + enh: make :class:`.FunctionalOperation` IMMUTABLE, by inheriting
+    from class:`.namedtuple`.
+
++ refact(net): consider as netop `needs` also intermediate data nodes.
+
++ FEAT(:gg:`1`, net, netop): support prunning based on arbitrary operation attributes
+  (e.g. assign "colors" to nodes and solve a subset each time).
+
++ enh(netop): ``repr()`` now counts number of contained operations.
+
++ refact(netop): rename ``netop.narrow() --> narrowed()``
+
++ drop(netop): don't topologically-sort sub-networks before merging them;
+  might change some results, but gives controll back to the user to define nets.
+
+
 v3.1.0 (6 Dec 2019, @ankostis): cooler ``prune()``
 ==================================================
-- break/refact(NET): scream on ``plan.execute()`` (not ``net.prune()``)
++ break/refact(NET): scream on ``plan.execute()`` (not ``net.prune()``)
   so as calmly solve `needs` vs `provides`, based on the given `inputs`/`outputs`.
-- FIX(ot): was failing when plotting graphs with ops without `fn` set.
-- enh(net): minor fixes on assertions.
++ FIX(ot): was failing when plotting graphs with ops without `fn` set.
++ enh(net): minor fixes on assertions.
 
 
 v3.0.0 (2 Dec 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
@@ -40,7 +79,7 @@ v3.0.0 (2 Dec 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
       and always produce all their `provides`, or scream if less `inputs` than `needs`
       are given.
 
-    + ENH: a newly created or cloned netop can be :meth:`~.NetworkOperation.narrow()`\ed
+    + ENH: a newly created or cloned netop can be :meth:`~.NetworkOperation.narrowed()`
       to specific `needs` & `provides`, so as not needing to pass `outputs` on every call
       to :meth:`~.NetworkOperation.compute()`.
 
