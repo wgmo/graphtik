@@ -73,7 +73,7 @@ Run the graph and request all of the outputs::
    >>> graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
    {'a_minus_ab': -8}
 
-.. |sample-plot| image:: docs/source/images/barebone_2ops
+.. |sample-plot| image:: docs/source/images/barebone_2ops.svg
     :alt: sample graphtik plot
     :width: 120px
     :align: middle
