@@ -133,7 +133,7 @@ class _DataNode(str):
     __slots__ = ()  # avoid __dict__ on instances
 
     def __repr__(self):
-        return 'DataNode("%s")' % self
+        return f"DataNode('{self}')"
 
 
 class _EvictInstruction(str):
@@ -148,7 +148,7 @@ class _EvictInstruction(str):
     __slots__ = ()  # avoid __dict__ on instances
 
     def __repr__(self):
-        return 'EvictInstruction("%s")' % self
+        return f"EvictInstruction('{self}')"
 
 
 class _PinInstruction(str):
@@ -167,7 +167,7 @@ class _PinInstruction(str):
     __slots__ = ()  # avoid __dict__ on instances
 
     def __repr__(self):
-        return 'PinInstruction("%s")' % self
+        return f"PinInstruction('{self})"
 
 
 # TODO: maybe class Solution(object):
@@ -259,12 +259,10 @@ class ExecutionPlan(
         return build_pydot(**mykws)
 
     def __repr__(self):
-        steps = ["\n  +--%s" % s for s in self.steps]
-        return "ExecutionPlan(needs=%s, provides=%s, steps:%s)" % (
-            aslist(self.needs, "needs"),
-            aslist(self.provides, "provides"),
-            "".join(steps),
-        )
+        needs = aslist(self.needs, "needs")
+        provides = aslist(self.provides, "provides")
+        steps = "".join(f"\n  +--{s}" for s in self.steps)
+        return f"ExecutionPlan(needs={needs}, provides={provides}, steps:{steps})"
 
     def validate(self, inputs: Items, outputs: Items):
         """
@@ -448,7 +446,7 @@ class ExecutionPlan(
             elif isinstance(step, _PinInstruction):
                 self._pin_data_in_solution(step, solution, pinned_values, overwrites)
             else:
-                raise AssertionError("Unrecognized instruction.%r" % step)
+                raise AssertionError(f"Unrecognized instruction.{step}")
 
     def execute(self, named_inputs, outputs=None, *, overwrites=None, method=None):
         """
@@ -559,8 +557,8 @@ class Network(Plotter):
         self._cached_plans = {}
 
     def __repr__(self):
-        steps = ["\n  +--%s" % s for s in self.graph.nodes]
-        return "Network(%s)" % "".join(steps)
+        steps = [f"\n  +--{s}" for s in self.graph.nodes]
+        return f"Network({''.join(steps)})"
 
     def _build_pydot(self, **kws):
         from .plot import build_pydot
@@ -654,7 +652,7 @@ class Network(Plotter):
                     for future_op in dag.adj[node]:
                         op_satisfaction[future_op].add(node)
             else:
-                raise AssertionError("Unrecognized network graph node %r" % node)
+                raise AssertionError(f"Unrecognized network graph node {node}")
 
         return unsatisfied
 
@@ -920,7 +918,7 @@ class Network(Plotter):
                         add_step_once(_EvictInstruction(provide))
 
             else:
-                raise AssertionError("Unrecognized network graph node %r" % node)
+                raise AssertionError(f"Unrecognized network graph node {node}")
 
         return steps
 
