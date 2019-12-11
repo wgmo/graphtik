@@ -72,7 +72,17 @@ import time
 from collections import abc, defaultdict, namedtuple
 from contextvars import ContextVar
 from multiprocessing.dummy import Pool
-from typing import Collection, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -650,8 +660,23 @@ class Network(Plotter):
 
         return unsatisfied
 
+    def _apply_graph_predicate(self, graph, predicate):
+        to_del = []
+        for node, data in graph.nodes.items():
+            try:
+                if isinstance(node, Operation) and not predicate(node, data):
+                    to_del.append(node)
+            except Exception as ex:
+                raise ValueError(
+                    f"Node-predicate({predicate}) failed due to: {ex}\n  node: {node}, {self}"
+                ) from ex
+        graph.remove_nodes_from(to_del)
+
     def _prune_graph(
-        self, inputs: Optional[Collection], outputs: Optional[Collection]
+        self,
+        inputs: Optional[Collection],
+        outputs: Optional[Collection],
+        predicate: Callable[[Any, Mapping], bool] = None,
     ) -> Tuple[nx.DiGraph, Collection, Collection, Collection]:
         """
         Determines what graph steps need to run to get to the requested
@@ -667,6 +692,8 @@ class Network(Plotter):
             The desired output names.  This can also be ``None``, in which
             case the necessary steps are all graph nodes that are reachable
             from the provided inputs.
+        :param predicate:
+            a 2-argument callable(op, node-data) that should return true for nodes to include
 
         :return:
             a 4-tuple with the *pruned_dag*, the out-edges of the inputs,
@@ -719,6 +746,9 @@ class Network(Plotter):
         broken_dag = dag.copy()  # preserve net's graph
         broken_edges = set()  # unordered, not iterated
 
+        if predicate:
+            self._apply_graph_predicate(broken_dag, predicate)
+
         # Break the incoming edges to all given inputs.
         #
         # Nodes producing any given intermediate inputs are unecessary
@@ -762,7 +792,10 @@ class Network(Plotter):
         return pruned_dag, broken_edges, tuple(inputs), tuple(outputs)
 
     def pruned(
-        self, inputs: Collection = None, outputs: Collection = None
+        self,
+        inputs: Collection = None,
+        outputs: Collection = None,
+        predicate: Callable[[Any, Mapping], bool] = None,
     ) -> "Network":
         """
         Return a pruned network supporting just the given `inputs` & `outputs`.
@@ -771,11 +804,13 @@ class Network(Plotter):
             all possible inputs names
         :param outputs:
             all possible output names
+        :param predicate:
+            a 2-argument callable(op, node-data) that should return true for nodes to include
 
         :return:
             the pruned clone, or this, if both `inputs` & `outputs` were `None`
         """
-        if inputs is None and outputs is None:
+        if (inputs, outputs, predicate) == (None, None, None):
             return self
 
         if inputs is not None:
@@ -783,7 +818,9 @@ class Network(Plotter):
         if outputs is not None:
             outputs = astuple(outputs, "outputs", allowed_types=(list, tuple))
 
-        pruned_dag, _br_edges, _needs, _provides = self._prune_graph(inputs, outputs)
+        pruned_dag, _br_edges, _needs, _provides = self._prune_graph(
+            inputs, outputs, predicate
+        )
         return Network(graph=pruned_dag)
 
     def _build_execution_steps(

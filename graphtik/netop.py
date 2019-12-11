@@ -5,7 +5,7 @@
 import logging
 import re
 from collections import abc
-from typing import Collection
+from typing import Any, Callable, Collection, Mapping
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -44,6 +44,7 @@ class NetworkOperation(Operation, Plotter):
         *,
         inputs=None,
         outputs=None,
+        predicate: Callable[[Any, Mapping], bool] = None,
         method=None,
         overwrites_collector=None,
     ):
@@ -52,6 +53,8 @@ class NetworkOperation(Operation, Plotter):
             see :meth:`narrow()`
         :param outputs:
             see :meth:`narrow()`
+        :param predicate:
+            a 2-argument callable(op, node-data) that should return true for nodes to include
         :param method:
             either `parallel` or None (default);
             if ``"parallel"``, launches multi-threading.
@@ -64,12 +67,10 @@ class NetworkOperation(Operation, Plotter):
         :raises ValueError:
             see :meth:`narrow()`
         """
+        ## Set data asap, for debugging, although `pruned()` will reset them.
         self.name = name
         self.inputs = inputs
         self.provides = outputs
-        # Prune network
-        self.net = net.pruned(inputs, outputs)
-        ## Set data asap, for debugging, although `prune()` will reset them.
         self.set_execution_method(method)
         self.set_overwrites_collector(overwrites_collector)
 
@@ -77,6 +78,8 @@ class NetworkOperation(Operation, Plotter):
         self.inputs = inputs
         self.outputs = outputs
 
+        # Prune network
+        self.net = net.pruned(inputs, outputs, predicate)
         self.name, self.needs, self.provides = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
         )
@@ -94,7 +97,11 @@ class NetworkOperation(Operation, Plotter):
         )
 
     def narrow(
-        self, inputs: Collection = None, outputs: Collection = None, name=None
+        self,
+        inputs: Collection = None,
+        outputs: Collection = None,
+        name=None,
+        predicate: Callable[[Any, Mapping], bool] = None,
     ) -> "NetworkOperation":
         """
         Return a copy with a network pruned for the given `needs` & `provides`.
@@ -118,6 +125,8 @@ class NetworkOperation(Operation, Plotter):
                 <old-name>-<uid>
 
             - otherwise, the given `name` is applied.
+        :param predicate:
+            a 2-argument callable(op, node-data) that should return true for nodes to include
 
         :return:
             A narrowed netop clone, which **MIGHT be empty!***
@@ -146,6 +155,7 @@ class NetworkOperation(Operation, Plotter):
             name,
             inputs=inputs,
             outputs=outputs,
+            predicate=predicate,
             method=self.method,
             overwrites_collector=self.overwrites_collector,
         )
@@ -316,7 +326,7 @@ def compose(
         ## Convey any node-props specified in the netop here
         #  to all sub-operations.
         #
-        if node_props or parent:
+        if node_props or (not merge and parent):
             kw = {}
             if node_props:
                 op_node_props = op.node_props.copy()

@@ -50,9 +50,9 @@ def filtdict(d, *keys):
     return type(d)(i for i in d.items() if i[0] in keys)
 
 
-def addall(*a):
+def addall(*a, **kw):
     "Same as a + b + ...."
-    return sum(a)
+    return sum(a) + sum(kw.values())
 
 
 def abspow(a, p):
@@ -321,11 +321,46 @@ def test_network_merge_in_doctests():
     assert merged_graph.provides
 
     assert (
-        repr(merged_graph) ==
-        "NetworkOperation('merged_graph', "
+        repr(merged_graph) == "NetworkOperation('merged_graph', "
         "needs=['a', 'b', 'ab', 'a_minus_ab', 'c'], "
         "provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'], x4ops)"
     )
+
+
+@pytest.fixture
+def samplenet():
+    # Set up a network such that we don't need to provide a or b d if we only
+    # request sum3 as output and if we provide sum2.
+    sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
+    sum_op2 = operation(name="sum_op2", needs=["c", "d"], provides="sum2")(add)
+    sum_op3 = operation(name="sum_op3", needs=["c", "sum2"], provides="sum3")(add)
+    return compose("test_net", sum_op1, sum_op2, sum_op3)
+
+
+def test_node_props_based_prune():
+    netop = compose(
+        "N",
+        operation(name="A", needs=["a"], provides=["aa"], node_props={"color": "red"})(
+            identity
+        ),
+        operation(
+            name="B", needs=["b"], provides=["bb"], node_props={"color": "green"}
+        )(identity),
+        operation(name="C", needs=["c"], provides=["cc"])(identity),
+        operation(
+            name="SUM",
+            needs=[optional(i) for i in ("aa", "bb", "cc")],
+            provides=["sum"],
+        )(addall),
+    )
+    inp = {"a": 1, "b": 2, "c": 3}
+    # assert netop(**inp)["sum"] == 6
+
+    pred = lambda n, d: d.get("color", None) != "red"
+    assert netop.narrow(predicate=pred)(**inp)["sum"] == 5
+
+    pred = lambda n, d: "color" not in d
+    assert netop.narrow(predicate=pred)(**inp)["sum"] == 3
 
 
 def test_input_based_pruning():
@@ -349,28 +384,21 @@ def test_input_based_pruning():
     assert results["sum3"] == add(sum1, sum2)
 
 
-def test_output_based_pruning():
+def test_output_based_pruning(samplenet):
     # Tests to make sure we don't need to pass graph inputs if they're not
     # needed to compute the requested outputs.
 
     c = 2
     d = 3
 
-    # Set up a network such that we don't need to provide a or b if we only
-    # request sum3 as output.
-    sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
-    sum_op2 = operation(name="sum_op2", needs=["c", "d"], provides="sum2")(add)
-    sum_op3 = operation(name="sum_op3", needs=["c", "sum2"], provides="sum3")(add)
-    net = compose("test_net", sum_op1, sum_op2, sum_op3)
-
-    results = net.compute({"a": 0, "b": 0, "c": c, "d": d}, ["sum3"])
+    results = samplenet.compute({"a": 0, "b": 0, "c": c, "d": d}, ["sum3"])
 
     # Make sure we got expected result without having to pass a or b.
     assert "sum3" in results
     assert results["sum3"] == add(c, add(c, d))
 
 
-def test_deps_pruning_vs_narrowing():
+def test_deps_pruning_vs_narrowing(samplenet):
     # Tests to make sure we don't need to pass graph inputs if they're not
     # needed to compute the requested outputs or of we're provided with
     # inputs that are further downstream in the graph.
@@ -378,21 +406,14 @@ def test_deps_pruning_vs_narrowing():
     c = 2
     sum2 = 5
 
-    # Set up a network such that we don't need to provide a or b d if we only
-    # request sum3 as output and if we provide sum2.
-    sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
-    sum_op2 = operation(name="sum_op2", needs=["c", "d"], provides="sum2")(add)
-    sum_op3 = operation(name="sum_op3", needs=["c", "sum2"], provides="sum3")(add)
-    net = compose("test_net", sum_op1, sum_op2, sum_op3)
-
-    results = net.compute({"c": c, "sum2": sum2}, ["sum3"])
+    results = samplenet.compute({"c": c, "sum2": sum2}, ["sum3"])
 
     # Make sure we got expected result without having to pass a, b, or d.
     assert "sum3" in results
     assert results["sum3"] == add(c, sum2)
 
     # Compare with both `narrow()`.
-    net = net.narrow(inputs=["c", "sum2"], outputs=["sum3"])
+    net = samplenet.narrow(inputs=["c", "sum2"], outputs=["sum3"])
     results = net(c=c, sum2=sum2)
 
     # Make sure we got expected result without having to pass a, b, or d.
@@ -400,21 +421,14 @@ def test_deps_pruning_vs_narrowing():
     assert results["sum3"] == add(c, sum2)
 
 
-def test_pruning_raises_for_bad_output():
+def test_pruning_raises_for_bad_output(samplenet):
     # Make sure we get a ValueError during the pruning step if we request an
     # output that doesn't exist.
-
-    # Set up a network that doesn't have the output sum4, which we'll request
-    # later.
-    sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
-    sum_op2 = operation(name="sum_op2", needs=["c", "d"], provides="sum2")(add)
-    sum_op3 = operation(name="sum_op3", needs=["c", "sum2"], provides="sum3")(add)
-    net = compose("test_net", sum_op1, sum_op2, sum_op3)
 
     # Request two outputs we can compute and one we can't compute.  Assert
     # that this raises a ValueError.
     with pytest.raises(ValueError) as exinfo:
-        net.compute({"a": 1, "b": 2, "c": 3, "d": 4}, ["sum1", "sum3", "sum4"])
+        samplenet.compute({"a": 1, "b": 2, "c": 3, "d": 4}, ["sum1", "sum3", "sum4"])
     assert exinfo.match("sum4")
 
 
