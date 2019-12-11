@@ -34,9 +34,11 @@ Module: `network`
 .. automodule:: graphtik.network
      :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_evictions_skipped, _execution_configs
 .. autoclass:: graphtik.network.Network
+     :members:
      :private-members:
      :undoc-members:
 .. autoclass:: graphtik.network.ExecutionPlan
+     :members:
      :private-members:
      :undoc-members:
 
