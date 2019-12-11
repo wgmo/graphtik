@@ -261,7 +261,7 @@ class ExecutionPlan(
     def __repr__(self):
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
-        steps = "".join(f"\n  +--{s}" for s in self.steps)
+        steps = "".join(f"\n  +--{s}" for s in self.steps) if self.steps else ''
         return f"ExecutionPlan(needs={needs}, provides={provides}, steps:{steps})"
 
     def validate(self, inputs: Items, outputs: Items):
