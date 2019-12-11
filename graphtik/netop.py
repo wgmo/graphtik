@@ -67,7 +67,7 @@ class NetworkOperation(Operation, Plotter):
         :raises ValueError:
             see :meth:`narrowed()`
         """
-        ## Set data asap, for debugging, although `pruned()` will reset them.
+        ## Set data asap, for debugging, although `net.narrowed()` will reset them.
         self.name = name
         self.inputs = inputs
         self.provides = outputs
@@ -79,7 +79,7 @@ class NetworkOperation(Operation, Plotter):
         self.outputs = outputs
 
         # Prune network
-        self.net = net.pruned(inputs, outputs, predicate)
+        self.net = net.narrowed(inputs, outputs, predicate)
         self.name, self.needs, self.provides = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
         )

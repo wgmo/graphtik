@@ -788,7 +788,7 @@ class Network(Plotter):
 
         return pruned_dag, broken_edges, tuple(inputs), tuple(outputs)
 
-    def pruned(
+    def narrowed(
         self,
         inputs: Items = None,
         outputs: Items = None,
