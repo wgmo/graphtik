@@ -5,7 +5,7 @@
 import abc
 import logging
 from collections import abc as cabc
-from typing import Callable, Collection, Tuple, Union
+from typing import Callable, Collection, Mapping, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
@@ -41,7 +41,7 @@ def reparse_operation_data(name, needs, provides):
 
 # TODO: immutable `Operation` by inheriting from `namedtuple`.
 class Operation(abc.ABC):
-    """An abstract class representing a data transformation by :meth:`.compute()`."""
+    """An abstract class representing an action with :meth:`.compute()`."""
 
     @abc.abstractmethod
     def compute(self, named_inputs, outputs=None):
@@ -75,6 +75,7 @@ class FunctionalOperation(Operation):
         provides: Union[Collection, str] = None,
         *,
         parents: Tuple = None,
+        node_props: Mapping = None,
         returns_dict=None,
     ):
         """
@@ -87,10 +88,11 @@ class FunctionalOperation(Operation):
             Names of input data objects this operation requires.
         :param provides:
             Names of output data objects this provides.
-        :param parent:
+        :param parents:
             a tuple wth the names of the parents, prefixing `name`,
             but also kept for equality/hash check.
-
+        :param node_props:
+            added as-is into NetworkX graph
         """
         ## Set op-data early, for repr() to work on errors.
         self.fn = fn
@@ -98,7 +100,9 @@ class FunctionalOperation(Operation):
         self.needs = needs
         self.provides = provides
         self.parents = parents
+        self.node_props = node_props = node_props if node_props else {}
         self.returns_dict = returns_dict
+
         if not fn or not callable(fn):
             raise ValueError(
                 f"Operation was not provided with a callable: {fn}\n  {self}"
@@ -107,6 +111,9 @@ class FunctionalOperation(Operation):
             raise ValueError(
                 f"Operation `parents` must be tuple, was {parents}\n {self}"
             )
+        if node_props is not None and not isinstance(node_props, cabc.Mapping):
+            raise ValueError(f"`node_props` must be a mapping, got: {node_props!r}")
+
         ## Overwrite reparsed op-data.
         name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
         self.name, self.needs, self.provides = reparse_operation_data(
@@ -133,21 +140,20 @@ class FunctionalOperation(Operation):
         provides = aslist(self.provides, "provides")
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         returns_dict_marker = self.returns_dict and "{}" or ""
+        nprops = f", x{len(self.node_props)}props" if self.node_props else ""
         return (
             f"FunctionalOperation(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}, fn{returns_dict_marker}={fn_name!r})"
+            f"provides={provides!r}, fn{returns_dict_marker}={fn_name!r}{nprops})"
         )
 
-    def _adopted_by(self, parent):
-        """Make a clone with the given parrent set."""
-        return FunctionalOperation(
-            self.fn,
-            self.name,
-            self.needs,
-            self.provides,
-            parents=(parent,) + (self.parents or ()),
-            returns_dict=self.returns_dict,
-        )
+    def withset(self, **kw) -> "FunctionalOperation":
+        """Make a clone with the some values replaced."""
+        fn = kw["fn"] if "fn" in kw else self.fn
+        name = kw["name"] if "name" in kw else self.name
+        needs = kw["needs"] if "needs" in kw else self.needs
+        provides = kw["provides"] if "provides" in kw else self.provides
+
+        return FunctionalOperation(fn, name, needs, provides, **kw)
 
     def _zip_results_with_provides(self, results, real_provides: iset) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
@@ -201,7 +207,6 @@ class FunctionalOperation(Operation):
                     if not isinstance(n, (optional, sideffect))
                 ]
             except KeyError:
-                # FIXME:
                 compulsory = iset(
                     n for n in self.needs if not isinstance(n, (optional, sideffect))
                 )
@@ -283,7 +288,8 @@ class operation:
         elements must be returned
     :param bool returns_dict:
         if true, it means the `fn` returns a dictionary with all `provides`,
-        and no further processing is done on them.
+    :param node_props:
+        added as-is into NetworkX graph
 
     :return:
         when called, it returns a :class:`FunctionalOperation`
@@ -316,15 +322,24 @@ class operation:
         needs=None,
         provides=None,
         returns_dict=None,
+        node_props: Mapping = None,
     ):
         self.fn = fn
         self.name = name
         self.needs = needs
         self.provides = provides
         self.returns_dict = returns_dict
+        self.node_props = node_props
 
     def withset(
-        self, *, fn=None, name=None, needs=None, provides=None, returns_dict=None
+        self,
+        *,
+        fn=None,
+        name=None,
+        needs=None,
+        provides=None,
+        returns_dict=None,
+        node_props: Mapping = None,
     ) -> "operation":
         if fn is not None:
             self.fn = fn
@@ -336,11 +351,20 @@ class operation:
             self.provides = provides
         if returns_dict is not None:
             self.returns_dict = returns_dict
+        if node_props is not None:
+            self.node_props = node_props
 
         return self
 
     def __call__(
-        self, fn=None, *, name=None, needs=None, provides=None, returns_dict=None
+        self,
+        fn=None,
+        *,
+        name=None,
+        needs=None,
+        provides=None,
+        returns_dict=None,
+        node_props: Mapping = None,
     ) -> FunctionalOperation:
         """
         This enables ``operation`` to act as a decorator or as a functional
@@ -365,7 +389,12 @@ class operation:
         """
 
         self.withset(
-            fn=fn, name=name, needs=needs, provides=provides, returns_dict=returns_dict
+            fn=fn,
+            name=name,
+            needs=needs,
+            provides=provides,
+            returns_dict=returns_dict,
+            node_props=node_props,
         )
 
         return FunctionalOperation(**vars(self))
@@ -377,4 +406,8 @@ class operation:
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
-        return f"operation(name={self.name!r}, needs={needs!r}, provides={provides!r}, fn={fn_name!r})"
+        nprops = f", x{len(self.node_props)}props" if self.node_props else ""
+        return (
+            f"operation(name={self.name!r}, needs={needs!r}, "
+            f"provides={provides!r}, fn={fn_name!r}{nprops})"
+        )

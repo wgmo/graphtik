@@ -565,7 +565,7 @@ class Network(Plotter):
         """
         Adds the given operation and its data requirements to the network graph.
 
-        - Invoked dyuring constructor only (immutability).
+        - Invoked during constructor only (immutability).
         - Identities are based on the name of the operation, the names of the operation's needs,
           and the names of the data it provides.
 
@@ -583,6 +583,8 @@ class Network(Plotter):
                 kw["sideffect"] = True
                 graph.add_node(_DataNode(n), sideffect=True)
             graph.add_edge(_DataNode(n), operation, **kw)
+
+        graph.add_node(operation, **operation.node_props)
 
         # add nodes and edges to graph describing what this layer provides
         for n in operation.provides:

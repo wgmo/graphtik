@@ -3,7 +3,8 @@
 
 import pytest
 
-from graphtik import operation, optional, vararg, varargs
+from graphtik import compose, operation, optional, vararg, varargs
+from graphtik.network import yield_operations
 from graphtik.op import Operation, reparse_operation_data
 
 
@@ -133,3 +134,64 @@ def test_varargs():
     assert op.compute(dict(a=1, arg1=2, arg2=3, b=6, c=7))["sum"] == exp - 4 - 5
     with pytest.raises(ValueError, match="Missing compulsory needs.+'a'"):
         assert op.compute(dict(arg1=2, arg2=3, b=6, c=7))
+
+
+def test_op_node_props_bad():
+    op_factory = operation(lambda: None, name="a", node_props="SHOULD BE DICT")
+    with pytest.raises(ValueError, match="`node_props` must be"):
+        op_factory()
+
+
+def test_op_node_props():
+    op_factory = operation(lambda: None, name="a", node_props=())
+    assert op_factory.node_props == ()
+    assert op_factory().node_props == {}
+
+    np = {"a": 1}
+    op = operation(lambda: None, name="a", node_props=np)()
+    assert op.node_props == np
+
+
+def _collect_op_props(netop):
+    return {
+        k.name: v
+        for k, v in netop.net.graph.nodes(data=True)
+        if isinstance(k, Operation)
+    }
+
+
+def test_netop_node_props():
+    op1 = operation(lambda: None, name="a", node_props={"a": 11, "b": 0, "bb": 2})()
+    op2 = operation(lambda: None, name="b", node_props={"a": 3, "c": 4})()
+    netop = compose("n", op1, op2, node_props={"bb": 22, "c": 44})
+
+    exp = {"a": {"a": 11, "b": 0, "bb": 22, "c": 44}, "b": {"a": 3, "bb": 22, "c": 44}}
+    node_props = _collect_op_props(netop)
+    assert node_props == exp
+
+    # Check node-prop sideffects are not modified
+    #
+    assert op1.node_props == {"a": 11, "b": 0, "bb": 2}
+    assert op2.node_props == {"a": 3, "c": 4}
+
+
+def test_netop_merge_node_props():
+    op1 = operation(lambda: None, name="a", node_props={"a": 1})()
+    netop1 = compose("n1", op1)
+    op2 = operation(lambda: None, name="a", node_props={"a": 11, "b": 0, "bb": 2})()
+    op3 = operation(lambda: None, name="b", node_props={"a": 3, "c": 4})()
+    netop2 = compose("n2", op2, op3)
+
+    netop = compose("n", netop1, netop2, node_props={"bb": 22, "c": 44}, merge=False)
+    exp = {
+        "n1.a": {"a": 1, "bb": 22, "c": 44},
+        "n2.a": {"a": 11, "b": 0, "bb": 22, "c": 44},
+        "n2.b": {"a": 3, "bb": 22, "c": 44},
+    }
+    node_props = _collect_op_props(netop)
+    assert node_props == exp
+
+    netop = compose("n", netop1, netop2, node_props={"bb": 22, "c": 44}, merge=True)
+    exp = {"a": {"a": 1, "bb": 22, "c": 44}, "b": {"a": 3, "bb": 22, "c": 44}}
+    node_props = _collect_op_props(netop)
+    assert node_props == exp

@@ -166,6 +166,7 @@ class DummyOperation(op.Operation):
         self.name = ("",)
         self.needs = ()
         self.provides = ("a",)
+        self.node_props = {}
 
     def compute(self, named_inputs, outputs=None):
         pass

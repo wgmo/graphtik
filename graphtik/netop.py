@@ -13,7 +13,7 @@ from boltons.setutils import IndexedSet as iset
 from .base import Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
 from .network import Network, yield_operations
-from .op import Operation, reparse_operation_data
+from .op import FunctionalOperation, Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
 
@@ -67,6 +67,7 @@ class NetworkOperation(Operation, Plotter):
         self.name = name
         self.inputs = inputs
         self.provides = outputs
+        # Prune network
         self.net = net.pruned(inputs, outputs)
         ## Set data asap, for debugging, although `prune()` will reset them.
         self.set_execution_method(method)
@@ -256,6 +257,7 @@ def compose(
     needs=None,
     provides=None,
     merge=False,
+    node_props=None,
     method=None,
     overwrites_collector=None,
 ) -> NetworkOperation:
@@ -283,7 +285,9 @@ def compose(
         this ``compose`` instance).  If any two operations are the same
         (based on name), then that operation is computed only once, instead
         of multiple times (one for each time the operation appears).
-
+    :param node_props:
+        added as-is into NetworkX graph, to provide for filtering
+        by :meth:`.NetworkOperation.narrow()`.
     :param method:
         either `parallel` or None (default);
         if ``"parallel"``, launches multi-threading.
@@ -305,21 +309,36 @@ def compose(
     if not all(isinstance(op, Operation) for op in operations):
         raise ValueError(f"Non-Operation instances given: {operations}")
 
+    def proc_op(op, parent=None):
+        """clone FuncOperation with certain props changed"""
+        assert isinstance(op, FunctionalOperation), op
+
+        ## Convey any node-props specified in the netop here
+        #  to all sub-operations.
+        #
+        if node_props or parent:
+            kw = {}
+            if node_props:
+                op_node_props = op.node_props.copy()
+                op_node_props.update(node_props)
+                kw["node_props"] = op_node_props
+            ## If `merge` asked, leave original `name` to deduplicate operations,
+            #  otherwise rename the op by prefixing them with their parent netop.
+            #
+            if not merge and parent:
+                kw["parents"] = (parent,) + (op.parents or ())
+            op = op.withset(**kw)
+
+        return op
+
     merge_set = iset()  # Preseve given node order.
     for op in operations:
         if isinstance(op, NetworkOperation):
-            # TODO: do we really need sorting ops when merging?
-            netop_nodes = op.net.graph
             merge_set.update(
-                # If merge is desired, set will deduplicate operations
-                s if merge else
-                # else rename added ops by prefixing them with their parent netop.
-                s._adopted_by(op.name)
-                for s in netop_nodes
-                if isinstance(s, Operation)
+                proc_op(s, op.name) for s in op.net.graph if isinstance(s, Operation)
             )
         else:
-            merge_set.add(op)
+            merge_set.add(proc_op(op))
     operations = merge_set
 
     net = Network(*operations)
