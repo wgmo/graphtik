@@ -32,6 +32,7 @@ a workflow-processor for interdependent files and processes.
    operations
    composition
    plotting
+   arch
    reference
    Changes <changes>
 

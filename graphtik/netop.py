@@ -1,6 +1,6 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""About network-operations (those based on graphs)"""
+"""About :term:`network operation`\\s (those based on graphs)"""
 
 import logging
 import re
@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 class NetworkOperation(Operation, Plotter):
     """
-    An Operation performing a network-graph of other operations.
+    An operation that can :term:`compute` a network-graph of operations.
 
     .. Tip::
         Use :func:`compose()` factory to prepare the `net` and build
@@ -52,7 +52,8 @@ class NetworkOperation(Operation, Plotter):
         :param outputs:
             see :meth:`narrowed()`
         :param predicate:
-            a 2-argument callable(op, node-data) that should return true for nodes to include
+            the :term:`node predicate` is a 2-argument callable(op, node-data)
+            that should return true for nodes to include; if None, all nodes included.
         :param method:
             either `parallel` or None (default);
             if ``"parallel"``, launches multi-threading.
@@ -120,7 +121,8 @@ class NetworkOperation(Operation, Plotter):
 
             - otherwise, the given `name` is applied.
         :param predicate:
-            a 2-argument callable(op, node-data) that should return true for nodes to include
+            the :term:`node predicate` is a 2-argument callable(op, node-data)
+            that should return true for nodes to include; if None, all nodes included.
 
         :return:
             A narrowed netop clone, which **MIGHT be empty!***
@@ -179,6 +181,8 @@ class NetworkOperation(Operation, Plotter):
             collect all results in a separate dictionary for each operation execution.
             The 1st dictionary in its maplist will collect the inputs, but will endup
             to the be last one when execution finishes.
+
+            See :term:`solution`
 
         :return:
             the chained-map `solution` "compressed" as a plain dictionary;

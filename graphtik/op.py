@@ -1,6 +1,6 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""About operation nodes (but not net-ops to break cycle)."""
+"""About :term:`operation` nodes (but not net-ops to break cycle)."""
 
 import abc
 import logging
@@ -66,9 +66,11 @@ class FunctionalOperation(
     Operation,
 ):
     """
-    An Operation performing a callable (ie function, method, lambda).
+    An :term:`operation` performing a callable (ie a function, a method, a
+    lambda).
 
-    Use :class:`operation()` factory to build instances of this class instead.
+    .. Tip::
+        Use :class:`operation()` builder class to build instances of this class instead.
     """
 
     def __new__(
@@ -318,6 +320,11 @@ class operation:
         >>> # Create `Operation` and overwrite function at the last moment.
         >>> opb(sum)
         FunctionalOperation(name='add_op', needs=['a', 'b'], provides=['SUM'], fn='sum')
+
+    .. Tip::
+        Remember to call once more the builder class at the end, to get the actual
+        operation instance.
+
     """
 
     def __init__(

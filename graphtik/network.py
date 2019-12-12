@@ -1,69 +1,6 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""
-Network-based computation of operations & data.
-
-The execution of network *operations* is splitted in 2 phases:
-
-COMPILE:
-    prune unsatisfied nodes, sort dag topologically & solve it, and
-    derive the *execution steps* (see below) based on the given *inputs*
-    and asked *outputs*.
-
-EXECUTE:
-    sequential or parallel invocation of the underlying functions
-    of the operations with arguments from the ``solution``.
-
-Computations are based on 5 data-structures:
-
-:attr:`Network.graph`
-    A ``networkx`` graph (yet a DAG) containing interchanging layers of
-    :class:`Operation` and :class:`_DataNode` nodes.
-    They are layed out and connected by repeated calls of
-    :meth:`~Network.add_OP`.
-
-    The computation starts with :meth:`~Network._prune_graph()` extracting
-    a *DAG subgraph* by *pruning* its nodes based on given inputs and
-    requested outputs in :meth:`~Network.compute()`.
-
-:attr:`ExecutionPlan.dag`
-    An directed-acyclic-graph containing the *pruned* nodes as build by
-    :meth:`~Network._prune_graph()`. This pruned subgraph is used to decide
-    the :attr:`ExecutionPlan.steps` (below).
-    The containing :class:`ExecutionPlan.steps` instance is cached
-    in :attr:`_cached_plans` across runs with inputs/outputs as key.
-
-:attr:`ExecutionPlan.steps`
-    It is the list of the operation-nodes only
-    from the dag (above), topologically sorted, and interspersed with
-    *instruction steps* needed to complete the run.
-    It is built by :meth:`~Network._build_execution_steps()` based on
-    the subgraph dag extracted above.
-    The containing :class:`ExecutionPlan.steps` instance is cached
-    in :attr:`_cached_plans` across runs with inputs/outputs as key.
-
-    The *instructions* items achieve the following:
-
-    - :class:`_EvictInstruction`: evicts items from `solution` as soon as
-        they are not needed further down the dag, to reduce memory footprint
-        while computing.
-
-    - :class:`_PinInstruction`: avoid overwritting any given intermediate
-        inputs, and still allow their providing operations to run
-        (because they are needed for their other outputs).
-
-:var solution:
-    a local-var in :meth:`~Network.compute()`, initialized on each run
-    to hold the values of the given inputs, generated (intermediate) data,
-    and output values.
-    It is returned as is if no specific outputs requested;  no data-eviction
-    happens then.
-
-:arg overwrites:
-    The optional argument given to :meth:`~Network.compute()` to colect the
-    intermediate *calculated* values that are overwritten by intermediate
-    (aka "pinned") input-values.
-"""
+""":term:`Compile` & :term:`execute` network graphs of operations."""
 import copy
 import logging
 import re
@@ -196,7 +133,9 @@ class ExecutionPlan(
     Plotter,
 ):
     """
-    The result of the network's compilation phase.
+    A pre-compiled list of operation steps that can :term:`execute` for the given inputs/outputs.
+
+    It is the result of the network's :term:`compilation` phase.
 
     Note the execution plan's attributes are on purpose immutable tuples.
 
@@ -414,6 +353,8 @@ class ExecutionPlan(
             The 1st dictionary in its maplist will collect the inputs, but will endup
             to the be last one when execution finishes.
 
+            See :term:`solution`
+
         :return:
             the populates `solution`
 
@@ -488,7 +429,7 @@ class ExecutionPlan(
 
 class Network(Plotter):
     """
-    Assemble operations & data into a directed-acyclic-graph (DAG) to run them.
+    A graph of operations that can :term:`compile` an execution plan.
 
     :ivar needs:
         the "base", all data-nodes that are not produced by some operation
@@ -668,7 +609,8 @@ class Network(Plotter):
             case the necessary steps are all graph nodes that are reachable
             from the provided inputs.
         :param predicate:
-            a 2-argument callable(op, node-data) that should return true for nodes to include
+            the :term:`node predicate` is a 2-argument callable(op, node-data)
+            that should return true for nodes to include; if None, all nodes included.
 
         :return:
             a 4-tuple with the *pruned_dag*, the out-edges of the inputs,
@@ -780,7 +722,8 @@ class Network(Plotter):
         :param outputs:
             all possible output names
         :param predicate:
-            a 2-argument callable(op, node-data) that should return true for nodes to include
+            the :term:`node predicate` is a 2-argument callable(op, node-data)
+            that should return true for nodes to include; if None, all nodes included.
 
         :return:
             the pruned clone, or this, if both `inputs` & `outputs` were `None`

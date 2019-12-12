@@ -10,19 +10,19 @@ it **provides**.
 The :class:`FunctionalOperation` provides a lightweight wrapper
 around an arbitrary function to define those specifications.
 
-.. autoclass:: graphtik.op.Operation
-   :members: compute
-   :noindex:
-
-There is a better way to instantiate an ``FunctionalOperation`` than simply constructing it,
-and we'll get to it later.
-First off, though, here's the specifications for the `operation` classes:
-
 .. autoclass:: graphtik.op.FunctionalOperation
    :members: __init__, __call__, compute
-   :member-order: bysource
-   :special-members:
    :noindex:
+
+The ``operation`` builder factory
+---------------------------------
+
+There is a better way to instantiate an ``FunctionalOperation`` than simply constructing it:
+use the ``operation`` builder class:
+
+.. autoclass:: graphtik.operation
+   :members:  withset, __call__
+   :special-members:
 
 
 Operations are just functions
