@@ -830,7 +830,9 @@ class Network(Plotter):
 
         return steps
 
-    def compile(self, inputs: Items = None, outputs: Items = None) -> ExecutionPlan:
+    def compile(
+        self, inputs: Items = None, outputs: Items = None, predicate=None
+    ) -> ExecutionPlan:
         """
         Create or get from cache an execution-plan for the given inputs/outputs.
 
@@ -845,6 +847,9 @@ class Network(Plotter):
             A collection or the name of the output name(s).
             If `None``, all reachable nodes from the given `inputs` are assumed.
             If string, it is converted to a single-element collection.
+        :param predicate:
+            the :term:`node predicate` is a 2-argument callable(op, node-data)
+            that should return true for nodes to include; if None, all nodes included.
 
         :return:
             the cached or fresh new execution-plan
@@ -876,7 +881,10 @@ class Network(Plotter):
             outputs = tuple(
                 sorted(astuple(outputs, "outputs", allowed_types=abc.Collection))
             )
-        cache_key = (inputs, outputs)
+        if not predicate:
+            predicate = None
+
+        cache_key = (inputs, outputs, predicate)
 
         ## Build (or retrieve from cache) execution plan
         #  for the given inputs & outputs.
@@ -885,7 +893,7 @@ class Network(Plotter):
             plan = self._cached_plans[cache_key]
         else:
             pruned_dag, broken_edges, needs, provides = self._prune_graph(
-                inputs, outputs
+                inputs, outputs, predicate
             )
             steps = self._build_execution_steps(pruned_dag, needs, outputs or ())
             plan = ExecutionPlan(

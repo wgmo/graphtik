@@ -339,7 +339,7 @@ def samplenet():
     return compose("test_net", sum_op1, sum_op2, sum_op3)
 
 
-def test_node_props_based_prune():
+def test_node_predicate_based_prune():
     netop = compose(
         "N",
         operation(name="A", needs=["a"], provides=["aa"], node_props={"color": "red"})(
@@ -356,13 +356,16 @@ def test_node_props_based_prune():
         )(addall),
     )
     inp = {"a": 1, "b": 2, "c": 3}
-    # assert netop(**inp)["sum"] == 6
+    assert netop(**inp)["sum"] == 6
+    assert len(netop.net.graph.nodes) == 11
 
     pred = lambda n, d: d.get("color", None) != "red"
     assert netop.narrowed(predicate=pred)(**inp)["sum"] == 5
+    assert len(netop.net.compile(predicate=pred).dag.nodes) == 9
 
     pred = lambda n, d: "color" not in d
     assert netop.narrowed(predicate=pred)(**inp)["sum"] == 3
+    assert len(netop.net.compile(predicate=pred).dag.nodes) == 7
 
 
 def test_input_based_pruning():
