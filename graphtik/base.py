@@ -229,7 +229,7 @@ class Plotter(abc.ABC):
                 You may increase the height of the SVG cell output with
                 something like this::
 
-                    netop.plot(svg_element_styles="height: 600px; width: 100%")
+                    netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
 
                 Check :data:`.default_jupyter_render` for defaults.
 

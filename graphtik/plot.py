@@ -48,6 +48,9 @@ def _parse_jupyter_render(dot) -> Tuple[str, str, str]:
         jupy_cfg = default_jupyter_render
 
     def parse_value(key: str, parser: Callable) -> str:
+        if key not in jupy_cfg:
+            return parser(default_jupyter_render.get(key, ""))
+
         val: Union[Mapping, str] = jupy_cfg.get(key)
         if not val:
             val = ""
@@ -313,6 +316,11 @@ def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str 
         a nested dictionary controlling the rendering of graph-plots in Jupyter cells.
         If `None`, defaults to :data:`default_jupyter_render`
         (you may modify those in place and they will apply for all future calls).
+
+        You may increase the height of the SVG cell output with
+        something like this::
+
+            netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
 
     :return:
         the matplotlib image if ``show=-1``, or the `dot`.
