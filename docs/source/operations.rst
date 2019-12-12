@@ -149,11 +149,11 @@ by creating an operation "builder pattern"::
 
    >>> pow_op1 = pow_op_factory(name='pow_op1')
    >>> pow_op2 = pow_op_factory.withset(name='pow_op2', provides='a_cubed')(partial(mypow, p=3))
-   >>> pow_op3 = pow_op_factory(lambda a: 1, name='pow_op0')
+   >>> pow_op3 = pow_op_factory(lambda a: 1, name='pow_op3')
 
    >>> graphop = compose('two_pows_graph', pow_op1, pow_op2, pow_op3)
    >>> graphop(a=2)
-   {'a': 2, 'a_cubed': 8, 'a_squared': 4}
+   {'a': 2, 'a_squared': 4, 'a_cubed': 1}
 
 .. Note::
    You cannot call again the factory to overwrite the *function*,

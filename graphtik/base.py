@@ -4,7 +4,8 @@
 
 import abc
 import logging
-from typing import Collection, Mapping, Union
+from collections import defaultdict
+from typing import Any, Collection, List, Mapping, Union
 
 Items = Union[Collection, str, None]
 
@@ -42,6 +43,22 @@ def astuple(i, argname, allowed_types=tuple):
             ) from None
 
     return i
+
+
+def collect_overwrites(maps) -> Mapping[Any, List]:
+    """
+    Collect items in the maps that exist more than once.
+
+    :return:
+        a dictionary with keys only those items that existed in more than one map,
+        an values, all those values, in the order of given `maps`
+    """
+    dd = defaultdict(list)
+    for d in maps:
+        for k, v in d.items():
+            dd[k].append(v)
+
+    return {k: v for k, v in dd.items() if len(v) > 1}
 
 
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
@@ -239,8 +256,6 @@ class Plotter(abc.ABC):
             intermediate data, neither given nor asked.
         red frame
             evict-instruction, to free up memory.
-        blue frame
-            pinned-instruction, not to overwrite intermediate inputs.
         filled
             data node has a value in `solution` OR function has been executed.
         thick frame

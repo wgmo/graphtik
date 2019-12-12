@@ -99,7 +99,7 @@ with the folllowing properties, as a debug aid:
  'provides': None,
  'results_fn': None,
  'results_op': None,
- 'solution': {'a': None}}
+ 'solution':  ChainMap({'a': None})}
 
 
 In interactive *REPL* console you may use this to get the last raised exception::

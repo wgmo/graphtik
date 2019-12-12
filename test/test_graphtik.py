@@ -4,6 +4,7 @@
 import math
 import re
 import sys
+from collections import ChainMap
 from functools import partial
 from operator import add, floordiv, mul, sub
 from pprint import pprint
@@ -14,6 +15,7 @@ import graphtik.network as network
 from graphtik import (
     AbortedException,
     abort_run,
+    collect_overwrites,
     compose,
     operation,
     optional,
@@ -21,8 +23,8 @@ from graphtik import (
     sideffect,
     vararg,
 )
-from graphtik.op import Operation
 from graphtik.netop import NetworkOperation
+from graphtik.op import Operation
 
 
 @pytest.fixture(params=[None, "parallel"])
@@ -292,7 +294,7 @@ def test_network_deep_merge():
     ## Reverse ops, change results and `needs` optionality.
     #
     net3 = compose("merged", net2, net1, merge=True)
-    exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 5, "sum3": 7}
+    exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
     assert net3(**{"a": 1, "b": 2, "c": 4}) == exp
 
     assert (
@@ -452,28 +454,24 @@ def test_pruning_not_overrides_given_intermediate():
 
     ## Test OVERWITES
     #
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
-    assert pipeline.compute(inputs, ["asked"]) == filtdict(exp, "asked")
-    assert overwrites == {}  # unjust must have been pruned
+    solution = ChainMap()
+    assert pipeline.compute(inputs, ["asked"], solution) == filtdict(exp, "asked")
+    assert collect_overwrites(solution.maps) == {}  # unjust must have been pruned
 
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(**inputs) == exp
-    assert overwrites == {}  # unjust must have been pruned
+    solution = ChainMap()
+    assert pipeline.compute(inputs, solution=solution) == exp
+    assert collect_overwrites(solution.maps) == {}  # unjust must have been pruned
 
     ## Test Parallel
     #
     pipeline.set_execution_method("parallel")
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
+    solution = ChainMap()
     assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
-    assert overwrites == {}  # unjust must have been pruned
+    assert collect_overwrites(solution.maps) == {}  # unjust must have been pruned
 
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
+    solution = ChainMap()
     assert pipeline(**inputs) == exp
-    assert overwrites == {}  # unjust must have been pruned
+    assert collect_overwrites(solution.maps) == {}  # unjust must have been pruned
 
 
 def test_pruning_multiouts_not_override_intermediates1():
@@ -487,42 +485,49 @@ def test_pruning_multiouts_not_override_intermediates1():
         operation(name="add", needs=["overidden", "calced"], provides=["asked"])(add),
     )
 
-    inputs = {"a": 5, "overidden": 1, "c": 2}
-    exp = {"a": 5, "overidden": 1, "calced": 10, "asked": 11}
+    inp1 = {"a": 5, "overidden": 1}
+    inp2 = {"a": 5, "overidden": 1, "c": 2}
+    exp = {"a": 5, "overidden": 5, "calced": 10, "asked": 11}
+    exp2 = filtdict(exp, "asked")
+
     # FAILs
     # - on v1.2.4 with (overidden, asked) = (5, 15) instead of (1, 11)
     # - on #18(unsatisfied) + #23(ordered-sets) like v1.2.4.
     # FIXED on #26
-    assert pipeline(**{"a": 5, "overidden": 1}) == exp
+    # - on v4.0.0 (overidden, asked) := (5, 11)
+    solution = ChainMap()
+    got = pipeline.compute(inp1, solution=solution)
+    assert collect_overwrites(solution.maps) == {"overidden": [5, 1]}
+    assert got == exp
+
     # FAILs
     # - on v1.2.4 with KeyError: 'e',
     # - on #18(unsatisfied) + #23(ordered-sets) with empty result.
     # FIXED on #26
-    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
-    # Plan must contain "overidden" step twice, for pin & evict.
-    # Plot it to see, or check https://github.com/huyng/graphtik/pull/1#discussion_r334226396.
-    datasteps = [s for s in pipeline.last_plan.steps if s == "overidden"]
-    assert len(datasteps) == 2
-    assert isinstance(datasteps[0], network._PinInstruction)
-    assert isinstance(datasteps[1], network._EvictInstruction)
+    solution = ChainMap()
+    assert pipeline.compute(inp2, "asked", solution=solution) == exp2
+    assert solution == exp2
 
     ## Test OVERWITES
     #
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(**{"a": 5, "overidden": 1}) == exp
-    assert overwrites == {"overidden": 5}
+    solution = ChainMap()
+    assert pipeline.compute(inp1, solution=solution) == exp
+    assert collect_overwrites(solution.maps) == {"overidden": [5, 1]}
 
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
-    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
-    assert overwrites == {"overidden": 5}
+    solution = ChainMap()
+    assert pipeline.compute(inp1, "asked", solution) == exp2
+    assert solution == exp2
 
     ## Test parallel
     #
     pipeline.set_execution_method("parallel")
-    assert pipeline(**{"a": 5, "overidden": 1}) == exp
-    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
+    solution = ChainMap()
+    assert pipeline.compute({"a": 5, "overidden": 1}, solution=solution) == exp
+    assert collect_overwrites(solution.maps) == {"overidden": [5, 1]}
+    #
+    solution = ChainMap()
+    assert pipeline.compute(inp2, "asked", solution) == filtdict(exp, "asked")
+    assert solution == exp2
 
 
 @pytest.mark.xfail(
@@ -530,7 +535,7 @@ def test_pruning_multiouts_not_override_intermediates1():
     reason="PY3.5- have unstable dicts."
     "E.g. https://travis-ci.org/ankostis/graphtik/jobs/595841023",
 )
-def test_pruning_multiouts_not_override_intermediates2():
+def test_pruning_multiouts_not_override_intermediates2(exemethod):
     # Test #25: v.1.2.4 overrides intermediate data when a previous operation
     # must run for its other outputs (outputs asked or not)
     # SPURIOUS FAILS in < PY3.6 due to unordered dicts,
@@ -542,14 +547,16 @@ def test_pruning_multiouts_not_override_intermediates2():
         ),
         operation(name="op1", needs=["overidden", "c"], provides=["d"])(add),
         operation(name="op2", needs=["d", "e"], provides=["asked"])(mul),
+        method=exemethod,
     )
 
     inputs = {"a": 5, "overidden": 1, "c": 2}
-    exp = {"a": 5, "overidden": 1, "c": 2, "d": 3, "e": 10, "asked": 30}
+    exp = {"a": 5, "overidden": 5, "c": 2, "d": 3, "e": 10, "asked": 30}
     # FAILs
-    # - on v1.2.4 with (overidden, asked) = (5, 70) instead of (1, 13)
+    # - on v1.2.4 with (overidden, asked) = (5, 70) instead of (1, 30)
     # - on #18(unsatisfied) + #23(ordered-sets) like v1.2.4.
     # FIXED on #26
+    # - on v4.0.0 (overidden, asked) := (5, 30)
     assert pipeline(**inputs) == exp
     # FAILs
     # - on v1.2.4 with KeyError: 'e',
@@ -559,24 +566,24 @@ def test_pruning_multiouts_not_override_intermediates2():
 
     ## Test OVERWITES
     #
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(**inputs) == exp
-    assert overwrites == {"overidden": 5}
-
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
-    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
-    assert overwrites == {"overidden": 5}
-
-    ## Test parallel
+    solution = ChainMap()
+    assert pipeline.compute(inputs, solution=solution) == exp
+    assert collect_overwrites(solution.maps) == {"overidden": [5, 1]}
+    # No overwrites when evicted.
     #
-    pipeline.set_execution_method("parallel")
-    assert pipeline(**inputs) == exp
-    assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
+    solution = ChainMap()
+    assert pipeline.compute(inputs, "asked", solution) == filtdict(exp, "asked")
+    assert collect_overwrites(solution.maps) == {}
+    # ... but overrites collected if asked.
+    #
+    solution = ChainMap()
+    assert pipeline.compute(inputs, ["asked", "overidden"], solution) == filtdict(
+        exp, "asked", "overidden"
+    )
+    assert collect_overwrites(solution.maps) == {"overidden": [5, 1]}
 
 
-def test_pruning_with_given_intermediate_and_asked_out():
+def test_pruning_with_given_intermediate_and_asked_out(exemethod):
     # Test #24: v1.2.4 does not prune before given intermediate data when
     # outputs not asked, but does so when output asked.
     pipeline = compose(
@@ -584,42 +591,29 @@ def test_pruning_with_given_intermediate_and_asked_out():
         operation(name="unjustly pruned", needs=["given-1"], provides=["a"])(identity),
         operation(name="shortcuted", needs=["a", "b"], provides=["given-2"])(add),
         operation(name="good_op", needs=["a", "given-2"], provides=["asked"])(add),
+        method=exemethod,
     )
 
+    inps = {"given-1": 5, "b": 2, "given-2": 2}
     exp = {"given-1": 5, "given-2": 2, "a": 5, "b": 2, "asked": 7}
+
     # v1.2.4 is ok
-    assert pipeline(**{"given-1": 5, "b": 2, "given-2": 2}) == exp
+    assert pipeline(**inps) == exp
     # FAILS
     # - on v1.2.4 with KeyError: 'a',
     # - on #18 (unsatisfied) with no result.
     # FIXED on #18+#26 (new dag solver).
-    assert pipeline.compute({"given-1": 5, "b": 2, "given-2": 2}, "asked") == filtdict(
-        exp, "asked"
-    )
+    assert pipeline.compute(inps, "asked") == filtdict(exp, "asked")
 
     ## Test OVERWITES
     #
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
-    assert pipeline(**{"given-1": 5, "b": 2, "given-2": 2}) == exp
-    assert overwrites == {}
+    solution = ChainMap()
+    assert pipeline.compute(inps) == exp
+    assert collect_overwrites(solution.maps) == {}
 
-    overwrites = {}
-    pipeline.set_overwrites_collector(overwrites)
-    assert pipeline.compute({"given-1": 5, "b": 2, "given-2": 2}, "asked") == filtdict(
-        exp, "asked"
-    )
-    assert overwrites == {}
-
-    ## Test parallel
-    #  FAIL! in #26!
-    #
-    pipeline.set_execution_method("parallel")
-    assert pipeline(**{"given-1": 5, "b": 2, "given-2": 2}) == exp
-    assert pipeline.compute({"given-1": 5, "b": 2, "given-2": 2}, "asked") == filtdict(
-        exp, "asked"
-    )
-
+    solution = ChainMap()
+    assert pipeline.compute(inps, "asked") == filtdict(exp, "asked")
+    assert collect_overwrites(solution.maps) == {}
 
 def test_same_outputs_operations_order():
     # Test operations providing the same output ordered as given.
@@ -629,13 +623,13 @@ def test_same_outputs_operations_order():
     subadd = compose("sub_add", op2, op1)
 
     inp = {"a": 3, "b": 1}
-    assert addsub(**inp) == {"a": 3, "b": 1, "ab": 4}
-    assert addsub.compute(inp, "ab") == {"ab": 4}
-    assert subadd(**inp) == {"a": 3, "b": 1, "ab": 2}
-    assert subadd.compute(inp, "ab") == {"ab": 2}
+    # assert addsub(**inp) == {"a": 3, "b": 1, "ab": 4}
+    # assert addsub.compute(inp, "ab") == {"ab": 4}
+    # assert subadd(**inp) == {"a": 3, "b": 1, "ab": 2}
+    # assert subadd.compute(inp, "ab") == {"ab": 2}
 
-    ## Check it does not duplicate evictions
-    assert len(subadd.last_plan.steps) == 4
+    # ## Check it does not duplicate evictions
+    # assert len(subadd.last_plan.steps) == 4
 
     ## Add another step to test evictions
     #
@@ -643,13 +637,25 @@ def test_same_outputs_operations_order():
     addsub = compose("add_sub", op1, op2, op3)
     subadd = compose("sub_add", op2, op1, op3)
 
-    inp = {"a": 3, "b": 1}
-    assert addsub(**inp) == {"a": 3, "b": 1, "ab": 4, "AB": 4}
-    assert addsub.narrowed(outputs="AB")(**inp) == {"AB": 4}
-    assert subadd(**inp) == {"a": 3, "b": 1, "ab": 2, "AB": 2}
-    assert subadd.compute(inp, "AB") == {"AB": 2}
 
+    # Notice that `ab` assumed as 2 for `AB` but results in `2`
+    sol = ChainMap()
+    assert addsub.compute(inp, solution=sol) == {"a": 3, "b": 1, "ab": 2, "AB": 4}
+    assert collect_overwrites(sol.maps) == {'ab': [2, 4]}
+    sol = ChainMap()
+    assert addsub.compute(inp, "AB", solution=sol) == {"AB": 4}
+    assert collect_overwrites(sol.maps) == {}
+
+    sol = ChainMap()
+    assert subadd.compute(inp, solution=sol) == {"a": 3, "b": 1, "ab": 4, "AB": 2}
+    assert collect_overwrites(sol.maps) == {'ab': [4, 2]}
+    sol = ChainMap()
+    assert subadd.compute(inp, "AB", solution=sol) == {"AB": 2}
+    assert collect_overwrites(sol.maps) == {}
+
+    assert subadd.compute(inp, "AB") == {"AB": 2}
     assert len(subadd.last_plan.steps) == 6
+
 
 
 def test_same_inputs_evictions():
@@ -965,8 +971,8 @@ def test_optional_per_function_with_same_output():
     pipeline = compose("partial_optionals", add_op, sub_op_optional)
     #
     named_inputs = {"a": 1, "b": 2}
-    assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
-    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -1}
     #
     named_inputs = {"a": 1}
     assert pipeline.compute(named_inputs) == {"a": 1, "a+-b": -9}
@@ -977,8 +983,8 @@ def test_optional_per_function_with_same_output():
     pipeline = compose("partial_optionals", sub_op_optional, add_op)
     #
     named_inputs = {"a": 1, "b": 2}
-    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
-    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -1}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
     #
     named_inputs = {"a": 1}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
@@ -990,8 +996,8 @@ def test_optional_per_function_with_same_output():
     pipeline.set_execution_method("parallel")
     #
     named_inputs = {"a": 1, "b": 2}
-    assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
-    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -1}
     #
     named_inputs = {"a": 1}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
@@ -1003,8 +1009,8 @@ def test_optional_per_function_with_same_output():
     pipeline.set_execution_method("parallel")
     #
     named_inputs = {"a": 1, "b": 2}
-    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
-    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -1}
+    assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
+    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
     #
     named_inputs = {"a": 1}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}

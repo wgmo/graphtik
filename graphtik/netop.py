@@ -4,7 +4,7 @@
 
 import logging
 import re
-from collections import abc
+from collections import ChainMap, abc
 from typing import Any, Callable, Mapping
 
 import networkx as nx
@@ -29,7 +29,6 @@ class NetworkOperation(Operation, Plotter):
 
     #: set execution mode to single-threaded sequential by default
     method = None
-    overwrites_collector = None
     #: The execution_plan of the last call to compute(), stored as debugging aid.
     last_plan = None
     #: The inputs names (possibly `None`) used to compile the :attr:`plan`.
@@ -46,7 +45,6 @@ class NetworkOperation(Operation, Plotter):
         outputs=None,
         predicate: Callable[[Any, Mapping], bool] = None,
         method=None,
-        overwrites_collector=None,
     ):
         """
         :param inputs:
@@ -59,10 +57,7 @@ class NetworkOperation(Operation, Plotter):
             either `parallel` or None (default);
             if ``"parallel"``, launches multi-threading.
             Set when invoking a composed graph or by
-            :meth:`~NetworkOperation.set_execution_method()`.
-        :param overwrites_collector:
-            (optional) a mutable dict to be fillwed with named values.
-            If missing, values are simply discarded.
+            :meth:`.NetworkOperation.set_execution_method()`.
 
         :raises ValueError:
             see :meth:`narrowed()`
@@ -72,7 +67,6 @@ class NetworkOperation(Operation, Plotter):
         self.inputs = inputs
         self.provides = outputs
         self.set_execution_method(method)
-        self.set_overwrites_collector(overwrites_collector)
 
         # TODO: Is it really necessary to sroe IO on netop?
         self.inputs = inputs
@@ -157,7 +151,6 @@ class NetworkOperation(Operation, Plotter):
             outputs=outputs,
             predicate=predicate,
             method=self.method,
-            overwrites_collector=self.overwrites_collector,
         )
 
     def _build_pydot(self, **kws):
@@ -166,7 +159,7 @@ class NetworkOperation(Operation, Plotter):
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
-    def compute(self, named_inputs, outputs=None) -> dict:
+    def compute(self, named_inputs, outputs=None, solution: ChainMap = None) -> dict:
         """
         Solve & execute the graph, sequentially or parallel.
 
@@ -181,9 +174,16 @@ class NetworkOperation(Operation, Plotter):
             a string or a list of strings with all data asked to compute.
             If you set this variable to ``None``, all data nodes will be kept
             and returned at runtime.
+        :param solution:
+            If not None, it must be a :class:`collections.ChainMap`, which will
+            collect all results in a separate dictionary for each operation execution.
+            The 1st dictionary in its maplist will collect the inputs, but will endup
+            to the be last one when execution finishes.
 
-        :returns:
-            a dictionary of output data objects, keyed by name.
+        :return:
+            the chained-map `solution` "compressed" as a plain dictionary;
+            if you you want to acccess all intermediate values provide your own
+            ``ChainMap`` instance in this method.
 
         :raises ValueError:
             - If `outputs` asked do not exist in network, with msg:
@@ -203,19 +203,21 @@ class NetworkOperation(Operation, Plotter):
                 *Impossible outputs...*
         """
         try:
-            net = self.net
+            net = self.net  # jetsam
+
+            if solution is not None and not isinstance(solution, ChainMap):
+                raise ValueError(
+                    f"Solution was not ChainMap, but {type(solution)}!\n  solution; {solution}"
+                )
 
             # Build the execution plan.
             self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
 
             solution = plan.execute(
-                named_inputs,
-                outputs,
-                overwrites=self.overwrites_collector,
-                method=self.execution_method,
+                named_inputs, outputs, solution=solution, method=self.execution_method
             )
 
-            return solution
+            return dict(solution)  # Convert ChainMap --> plain dict.
         except Exception as ex:
             jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
 
@@ -241,24 +243,6 @@ class NetworkOperation(Operation, Plotter):
             )
         self.execution_method = method
 
-    def set_overwrites_collector(self, collector):
-        """
-        Asks to put all *overwrites* into the `collector` after computing
-
-        An "overwrites" is intermediate value calculated but NOT stored
-        into the results, becaues it has been given also as an intemediate
-        input value, and the operation that would overwrite it MUST run for
-        its other results.
-
-        :param collector:
-            a mutable dict to be fillwed with named values
-        """
-        if collector is not None and not isinstance(collector, abc.MutableMapping):
-            raise ValueError(
-                "Overwrites collector was not a MutableMapping, but: %r" % collector
-            )
-        self.overwrites_collector = collector
-
 
 def compose(
     name,
@@ -269,7 +253,6 @@ def compose(
     merge=False,
     node_props=None,
     method=None,
-    overwrites_collector=None,
 ) -> NetworkOperation:
     """
     Composes a collection of operations into a single computation graph,
@@ -300,10 +283,7 @@ def compose(
         either `parallel` or None (default);
         if ``"parallel"``, launches multi-threading.
         Set when invoking a composed graph or by
-        :meth:`~NetworkOperation.set_execution_method()`.
-    :param overwrites_collector:
-        (optional) a mutable dict to be fillwed with named values.
-        If missing, values are simply discarded.
+        :meth:`.NetworkOperation.set_execution_method()`.
 
     :return:
         Returns a special type of operation class, which represents an
@@ -350,11 +330,4 @@ def compose(
 
     net = Network(*operations)
 
-    return NetworkOperation(
-        net,
-        name,
-        inputs=needs,
-        outputs=provides,
-        method=method,
-        overwrites_collector=overwrites_collector,
-    )
+    return NetworkOperation(net, name, inputs=needs, outputs=provides, method=method)

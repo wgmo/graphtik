@@ -156,7 +156,7 @@ def build_pydot(
     from .op import Operation
     from .netop import NetworkOperation
     from .modifiers import optional
-    from .network import _EvictInstruction, _PinInstruction
+    from .network import _EvictInstruction
 
     _monkey_patch_for_jupyter(pydot)
 
@@ -200,13 +200,7 @@ def build_pydot(
 
             # FrameColor change by step type
             if steps and nx_node in steps:
-                choice = _merge_conditions(
-                    _is_class_value_in_list(steps, _EvictInstruction, nx_node),
-                    _is_class_value_in_list(steps, _PinInstruction, nx_node),
-                )
-                # 0 is singled out because `nx_node` exists in `steps`.
-                color = "NOPE #990000 blue purple".split()[choice]
-                kw = {"color": color, "penwidth": steps_thickness}
+                kw = {"color": "#990000", "penwidth": steps_thickness}
 
             # SHAPE change if with inputs/outputs.
             # tip: https://graphviz.gitlab.io/_pages/doc/info/shapes.html
@@ -382,10 +376,8 @@ def legend(filename=None, show=None, jupyter_render: Mapping = None):
         output  [shape=house];
         inp_out [shape=hexagon label="inp+out"];
         evicted [shape=rect penwidth=3 color="#990000"];
-        pinned  [shape=rect penwidth=3 color="blue"];
-        evpin   [shape=rect penwidth=3 color=purple label="evict+pin"];
         sol     [shape=rect style=filled fillcolor=wheat label="in solution"];
-        data -> input -> output -> inp_out -> evicted -> pinned -> evpin -> sol [style=invis];
+        data -> input -> output -> inp_out -> evicted -> sol [style=invis];
 
         e1 [style=invis] e2 [color=invis label="dependency"];
         e1 -> e2;

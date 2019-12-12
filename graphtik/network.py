@@ -69,8 +69,9 @@ import logging
 import re
 import sys
 import time
-from collections import abc, defaultdict, namedtuple
+from collections import ChainMap, abc, defaultdict, namedtuple
 from contextvars import ContextVar
+from itertools import count
 from multiprocessing.dummy import Pool
 from typing import (
     Any,
@@ -125,6 +126,12 @@ def is_skip_evictions():
     return _execution_configs.get()["skip_evictions"]
 
 
+def _del_chain_key(amap: ChainMap, key):
+    log.debug("removing data '%s' from solution.", key)
+    for d in amap.maps:
+        d.pop(key, None)
+
+
 class _DataNode(str):
     """
     Dag node naming a data-value produced or required by an operation.
@@ -149,30 +156,6 @@ class _EvictInstruction(str):
 
     def __repr__(self):
         return f"EvictInstruction('{self}')"
-
-
-class _PinInstruction(str):
-    """
-    A step in the ExecutionPlan to overwrite a computed value in the `solution` from the inputs,
-
-    and to store the computed one in the ``overwrites`` instead
-    (both `solution` & ``overwrites`` are local-vars in :meth:`~Network.compute()`).
-
-    It's a step in :attr:`ExecutionPlan.steps` for the data-node `str` that
-    ensures the corresponding intermediate input-value is not overwritten when
-    its providing function(s) could not be pruned, because their other outputs
-    are needed elesewhere.
-    """
-
-    __slots__ = ()  # avoid __dict__ on instances
-
-    def __repr__(self):
-        return f"PinInstruction('{self})"
-
-
-# TODO: maybe class Solution(object):
-#     values = {}
-#     overwrites = None
 
 
 def _yield_datanodes(nodes):
@@ -209,7 +192,8 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
 
 
 class ExecutionPlan(
-    namedtuple("ExecPlan", "net needs provides dag broken_edges steps evict times"), Plotter
+    namedtuple("ExecPlan", "net needs provides dag broken_edges steps evict times"),
+    Plotter,
 ):
     """
     The result of the network's compilation phase.
@@ -305,12 +289,6 @@ class ExecutionPlan(
                     f"\n  {self}"
                 )
 
-    def _pin_data_in_solution(self, value_name, solution, inputs, overwrites):
-        value_name = str(value_name)
-        if overwrites is not None:
-            overwrites[value_name] = solution[value_name]
-        solution[value_name] = inputs[value_name]
-
     def _check_if_aborted(self, executed):
         if is_abort():
             # Restore `abort` flag for next run.
@@ -331,7 +309,7 @@ class ExecutionPlan(
             self.times[op.name] = t_complete
             log.debug("...step completion time: %s", t_complete)
 
-    def _execute_thread_pool_barrier_method(self, solution, overwrites, executed):
+    def _execute_thread_pool_barrier_method(self, solution: ChainMap, executed):
         """
         This method runs the graph using a parallel pool of thread executors.
         You may achieve lower total latency if your graph is sufficiently
@@ -340,11 +318,6 @@ class ExecutionPlan(
         :param solution:
             must contain the input values only, gets modified
         """
-        # Keep original inputs for pinning.
-        pinned_values = {
-            n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
-        }
-
         pool = _execution_configs.get()["execution_pool"]
 
         # with each loop iteration, we determine a set of operations that can be
@@ -385,16 +358,7 @@ class ExecutionPlan(
                             or set(self.broken_dag.successors(node)).issubset(executed)
                         )
                     ):
-                        log.debug("removing data '%s' from solution.", node)
-                        del solution[node]
-                elif isinstance(node, _PinInstruction):
-                    # Always and repeatedely pin the value, even if not all
-                    # providers of the data have executed.
-                    # An optional need may not have a value in the solution.
-                    if node in solution:
-                        self._pin_data_in_solution(
-                            node, solution, pinned_values, overwrites
-                        )
+                        _del_chain_key(solution, node)
 
             # stop if no nodes left to schedule, exit out of the loop
             if not upnext:
@@ -404,45 +368,37 @@ class ExecutionPlan(
                 (lambda op: (op, self._call_operation(op, solution))), upnext
             )
 
-            for op, result in done_iterator:
-                solution.update(result)
+            for op, outputs in done_iterator:
+                solution.maps.append(outputs)
                 executed.add(op)
 
-    def _execute_sequential_method(self, solution, overwrites, executed):
+    def _execute_sequential_method(self, solution: ChainMap, executed):
         """
         This method runs the graph one operation at a time in a single thread
 
         :param solution:
             must contain the input values only, gets modified
         """
-        # Keep original inputs for pinning.
-        pinned_values = {
-            n: solution[n] for n in self.steps if isinstance(n, _PinInstruction)
-        }
-
         for step in self.steps:
             self._check_if_aborted(executed)
 
             if isinstance(step, Operation):
                 log.debug("%sexecuting step: %s", "-" * 32, step.name)
 
-                layer_outputs = self._call_operation(step, solution)
-
-                # add outputs to solution
-                solution.update(layer_outputs)
+                outputs = self._call_operation(step, solution)
+                solution.maps.append(outputs)
                 executed.add(step)
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.
                 if step in solution:
-                    log.debug("removing data '%s' from solution.", step)
-                    del solution[step]
+                    _del_chain_key(solution, step)
 
-            elif isinstance(step, _PinInstruction):
-                self._pin_data_in_solution(step, solution, pinned_values, overwrites)
             else:
                 raise AssertionError(f"Unrecognized instruction.{step}")
 
-    def execute(self, named_inputs, outputs=None, *, overwrites=None, method=None):
+    def execute(
+        self, named_inputs, outputs=None, *, solution: ChainMap = None, method=None
+    ):
         """
         :param named_inputs:
             A maping of names --> values that must contain at least
@@ -452,10 +408,14 @@ class ExecutionPlan(
         :param outputs:
             If not None, they are just checked if possible, based on :attr:`provides`,
             and scream if not.
-        :param overwrites:
-            (optional) a mutable dict to collect calculated-but-discarded values
-            because they were "pinned" by input vaules.
-            If missing, the overwrites values are simply discarded.
+        :param solution:
+            If not None, it must be a :class:`collections.ChainMap`, which will
+            collect all results in a separate dictionary for each operation execution.
+            The 1st dictionary in its maplist will collect the inputs, but will endup
+            to the be last one when execution finishes.
+
+        :return:
+            the populates `solution`
 
         :raises ValueError:
             - If plan does not contain any operations, with msg:
@@ -481,18 +441,28 @@ class ExecutionPlan(
                 else self._execute_sequential_method
             )
 
+            if solution is None:
+                solution = ChainMap()
+            preload_layers = len(solution.maps)  # TODO: move to solution
+
             # If certain outputs asked, put relevant-only inputs in solution,
             # otherwise, keep'em all.
-            # Note: clone and keep orignal inputs in solution intact
-            solution = (
+            #
+            # Note: clone and keep original `inputs` in the 1st chained-map.
+            solution.update(
                 {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
                 if self.evict
-                else named_inputs.copy()
+                else named_inputs
             )
             executed = set()
-            executor(solution, overwrites, executed)
+            executor(solution, executed)
+
+            # Invert solution so that last value wins
+            # TODO: move to solution
+            solution.maps = solution.maps[::-1]
 
             # Validate eviction was perfect
+            #
             assert (
                 not self.evict
                 or is_skip_evictions()
@@ -500,8 +470,17 @@ class ExecutionPlan(
                 or set(solution).issubset(self.provides)
             ), f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
 
-            assert len(solution.maps) == 1 + sum(1 for i in yield_ops(self.steps)), (
+            # Validate solution layers match operations executed + 1(inputs)
+            # TODO: move to solution
+            #
+            assert len(solution.maps) - preload_layers == sum(
+                1 for i in yield_ops(self.steps)
+            ), (
+                f"Solution layers({len(solution.maps)}, preloaded: {preload_layers}) mismatched "
                 f"operations executed({sum(1 for i in yield_ops(self.dag))})!"
+                f"\n  {self}\n  solution: {solution}"
+            )
+
             return solution
         except Exception as ex:
             jetsam(ex, locals(), "solution", "executed")
@@ -594,6 +573,11 @@ class Network(Plotter):
                 graph.add_node(_DataNode(n), sideffect=True)
             graph.add_edge(operation, _DataNode(n), **kw)
 
+    def _topo_sort_nodes(self, dag) -> List:
+        """Topo-sort dag respecting operation-insertion order to break ties."""
+        node_keys = dict(zip(dag.nodes, count()))
+        return nx.lexicographical_topological_sort(dag, key=node_keys.get)
+
     def _unsatisfied_operations(self, dag, inputs: Collection):
         """
         Traverse topologically sorted dag to collect un-satisfied operations.
@@ -622,7 +606,9 @@ class Network(Plotter):
         op_satisfaction = defaultdict(set)
         # To collect the operations to drop.
         unsatisfied = []
-        for node in nx.topological_sort(dag):
+        # Topo-sort dag respecting operation-insertion order to break ties.
+        sorted_dag = nx.topological_sort(dag)
+        for node in sorted_dag:
             if isinstance(node, Operation):
                 if not dag.adj[node]:
                     # Prune operations that ended up providing no output.
@@ -842,33 +828,16 @@ class Network(Plotter):
             else:
                 steps.append(step)
 
-        # create an execution order such that each layer's needs are provided.
-        ordered_nodes = iset(nx.topological_sort(pruned_dag))
+        ## Create an execution order such that each layer's needs are provided,
+        #  respecting operation-insertion order to break ties;  which means that
+        #  the first inserted operations win the `needs`, but
+        #  the last ones win the `provides` (and the final solution).
+        ordered_nodes = iset(self._topo_sort_nodes(pruned_dag))
 
-        # Add Operations evaluation steps, and instructions to free and "pin"
-        # data.
+        # Add Operations evaluation steps, and instructions to evict data.
         for i, node in enumerate(ordered_nodes):
 
-            if isinstance(node, _DataNode):
-                ## Add PIN-instruction if data node matches an input.
-                #
-                #  + Links MUST NOT be broken, check if provided depends on them.
-                #  + Pin decision can happen when visiting this data-node
-                #    because all operations producing it have run,
-                #    and none needing it has begun running.
-                #  + Pin happens before any eviction-instruction - actually
-                #    an operation execution must seprate them.
-                #
-                if (
-                    node in inputs
-                    # Don't pin sideffect nodes.
-                    and "sideffect" not in pruned_dag.nodes[node]
-                    # Pin only if non-prune operation generating it.
-                    and pruned_dag.pred[node]
-                ):
-                    add_step_once(_PinInstruction(node))
-
-            elif isinstance(node, Operation):
+            if isinstance(node, Operation):
                 steps.append(node)
 
                 # NO EVICTIONS when no specific outputs asked.
@@ -902,7 +871,7 @@ class Network(Plotter):
                 # A provided-data is evicted if no future operation needs it
                 # (and is not an asked output).
                 # It MUST use the broken dag, not to evict data
-                # that will be pinned, but to populate overwrites with them.
+                # that will be pinned(?), but to populate overwrites with them.
                 #
                 # .. image:: doc/source/images/unpruned_useless_provides.svg
                 #
@@ -912,7 +881,9 @@ class Network(Plotter):
                         add_step_once(_EvictInstruction(provide))
 
             else:
-                raise AssertionError(f"Unrecognized network graph node {node}")
+                assert isinstance(
+                    node, _DataNode
+                ), f"Unrecognized network graph node {node, type(node)}"
 
         return steps
 
