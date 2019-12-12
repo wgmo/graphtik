@@ -2,10 +2,14 @@
 API Reference
 =============
 
-Package: `graphtik`
-===================
+.. autosummary::
 
-.. automodule:: graphtik
+     graphtik
+     graphtik.op
+     graphtik.netop
+     graphtik.network
+     graphtik.plot
+     graphtik.base
 
 Module: `base`
 ==============
