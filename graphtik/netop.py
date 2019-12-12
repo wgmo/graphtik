@@ -12,7 +12,7 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
-from .network import Network, yield_operations
+from .network import Network, yield_ops
 from .op import FunctionalOperation, Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ class NetworkOperation(Operation, Plotter):
         clsname = type(self).__name__
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
-        nops = sum(1 for i in yield_operations(self.net.graph))
+        nops = sum(1 for i in yield_ops(self.net.graph))
         return (
             f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{nops}ops)"
         )

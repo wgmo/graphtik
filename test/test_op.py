@@ -4,7 +4,7 @@
 import pytest
 
 from graphtik import compose, operation, optional, vararg, varargs
-from graphtik.network import yield_operations
+from graphtik.network import yield_ops
 from graphtik.op import Operation, reparse_operation_data
 
 

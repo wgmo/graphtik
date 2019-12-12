@@ -179,7 +179,7 @@ def _yield_datanodes(nodes):
     return (n for n in nodes if isinstance(n, _DataNode))
 
 
-def yield_operations(nodes):
+def yield_ops(nodes):
     return (n for n in nodes if isinstance(n, Operation))
 
 
@@ -200,7 +200,7 @@ def _optionalized(graph, data):
 
 def collect_requirements(graph) -> Tuple[iset, iset]:
     """Collect & split datanodes in (possibly overlapping) `needs`/`provides`."""
-    operations = list(yield_operations(graph))
+    operations = list(yield_ops(graph))
     provides = iset(p for op in operations for p in op.provides)
     needs = iset(_optionalized(graph, n) for op in operations for n in op.needs)
     # TODO: Unify _DataNode + modifiers to avoid ugly hack `net.collect_requirements()`.
@@ -500,6 +500,8 @@ class ExecutionPlan(
                 or set(solution).issubset(self.provides)
             ), f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
 
+            assert len(solution.maps) == 1 + sum(1 for i in yield_ops(self.steps)), (
+                f"operations executed({sum(1 for i in yield_ops(self.dag))})!"
             return solution
         except Exception as ex:
             jetsam(ex, locals(), "solution", "executed")
