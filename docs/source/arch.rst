@@ -184,6 +184,5 @@ Architecture
         :meth:`~.NetworkOperation.narrowed`.
 
 .. default-role:: obj
-.. |v410-flowchart| image:: images/GraphtikFlowchart-v4.1.0.svg
-    :alt: graphtik-v4.1.0 flowchart
-    :scale: 50%
+.. |v410-flowchart| raw:: html
+    :file: images/GraphtikFlowchart-v4.1.0.svg

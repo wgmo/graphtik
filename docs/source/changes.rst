@@ -5,9 +5,8 @@
     :alt: sample graphtik plot
     :width: 120px
     :align: bottom
-.. |v410-flowchart| image:: images/GraphtikFlowchart-v4.1.0.svg
-    :alt: graphtik-v4.1.0 flowchart
-    :scale: 50%
+.. |v410-flowchart| raw:: html
+    :file: images/GraphtikFlowchart-v4.1.0.svg
 .. |v130-flowchart| image:: images/GraphtikFlowchart-v1.3.0.svg
     :alt: graphtik-v1.3.0 flowchart
     :scale: 75%

@@ -6,24 +6,37 @@ digraph {
     label="graphtik-v4.1.0 flowchart";
     labelloc=t;
 
-    operations  [shape=parallelogram fontname="italic" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-operation"];
-    compose     [fontname="italic" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-composition"];
-    network     [shape=parallelogram fontname="italic" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-network"];
-    inputs      [shape=rect label="input names" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-inputs"];
-    outputs     [shape=rect label="output names" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-outputs"];
-    predicate     [shape=rect label="node predicate" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-node-predicate"];
+    operations  [shape=parallelogram fontname="italic" tooltip=class
+                 URL="#term-operation"];
+    compose     [fontname="italic" tooltip=phase
+                 URL="#term-composition"];
+    network     [shape=parallelogram fontname="italic" tooltip=class
+                 URL="#term-network"];
+    inputs      [shape=rect label="input names" tooltip=mappings
+                 URL="#term-inputs"];
+    outputs     [shape=rect label="output names" tooltip=mappings
+                 URL="#term-outputs"];
+    predicate   [shape=rect label="node predicate" tooltip=function
+                 URL="#term-node-predicate"];
     subgraph cluster_compute {
         label=compute
         fontname=bold
-        style=dashed;
-        labelloc=b;
+        style=dashed
+        labelloc=b
+        tooltip="process, NetOp's method"
+        URL="#term-compute"
 
-        compile     [fontname="italic" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-compilation"];
-        plan        [shape=parallelogram label="execution plan" fontname="italic" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-execution-plan"];
-        execute     [fontname=italic fontname="italic" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-execution"];
+        compile     [fontname="italic" tooltip="phase, Network's method"
+                     URL="#term-compilation"];
+        plan        [shape=parallelogram label="execution plan" fontname="italic" tooltip=class
+                     URL="#term-execution-plan"];
+        execute     [fontname=italic fontname="italic" tooltip="phase, Plan's method"
+                     URL="#term-execution"];
     }
-    values      [shape=rect label="input values" URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-inputs"];
-    solution    [shape=parallelogram URL="https://graphtik.readthedocs.io/en/latest/arch.html#term-solution"];
+    values      [shape=rect label="input values" tooltip=mappings
+                 URL="#term-inputs"];
+    solution    [shape=parallelogram tooltip=class
+                 URL="#term-solution"];
 
     operations -> compose -> network    [arrowhead=vee];
     {network inputs outputs predicate} -> compile -> plan  [arrowhead=vee];

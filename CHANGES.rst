@@ -467,9 +467,8 @@ First public release in PyPi & GitHub.
     :alt: sample graphkit plot
     :width: 120px
     :align: bottom
-.. |v410-flowchart| image:: docs/source/images/GraphtikFlowchart-v4.1.0.svg
-    :alt: graphtik-v4.1.0 flowchart
-    :scale: 75%
+.. |v410-flowchart| raw:: html
+    :file: docs/source/images/GraphtikFlowchart-v4.1.0.svg
 .. |v130-flowchart| image:: docs/source/images/GraphkitFlowchart-v1.3.0.svg
     :alt: graphkit-v1.3.0 flowchart
     :scale: 75%
