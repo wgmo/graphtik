@@ -129,6 +129,7 @@ Architecture
         `compile` an `execution plan` or `prune` a cloned *network* for
         given `inputs`/`outputs`/`node predicate`.
 
+    plan
     execution plan
         the :class:`.ExecutionPlan` that performs the `execution`.
 

@@ -6,6 +6,39 @@ TODO
 ====
 See :gg:`1`.
 
+v4.1.0 (13  Dec 2019, @ankostis): ChainMap Solution for PINs, stable TOPOLOGICAL sort
+=====================================================================================
+|v410-flowchart|
+
++ FIX(NET): TOPOLOGICALLY-sort now break ties respecting operations insertion order.
+
++ ENH(NET): new :class:`.Solution` class to collect all computation values,
+  based on a :class:`collections.ChainMap` to distinguish outputs per operation executed:
+
+  + ENH(NETOP): ``compute()`` return :class:`.Solution`, consolidating:
+
+    + :term:`overwrites`,
+    + ``executed`` operations, and
+    + the generating :term:`plan`.
+
+  + drop(net): ``_PinInstruction`` class is not needed.
+  + drop(netop): `overwrites_collector` parameter; now in :meth:`.Solution.overwrites()`.
+  + ENH(plot): ``Solution`` is also a :class:`.Plotter`;  e.g. use ``sol.plot(...)```.
+
++ DROP(plot): `executed` arg from plotting; now embeded in `solution`.
+
++ ENH(PLOT.jupyter,doc): allow to set jupyter graph-styling selectively;
+  fix instructions for jupyter cell-resizing.
+
++ fix(plan): time-keeping worked only for sequential execution, not parallel.
+  Refactor it to happen centrally.
+
++ enh(NET,.TC): Add PREDICATE argument also for ``compile()``.
+
++ FEAT(DOC): add GLOSSARY as new :ref:`arch` section, linked from API HEADERS.
+
+
+
 v4.0.1 (12 Dec 2019, @ankostis): bugfix
 =======================================
 + FIX(plan): ``plan.repr()`` was failing on empty plans.
@@ -434,6 +467,9 @@ First public release in PyPi & GitHub.
     :alt: sample graphkit plot
     :width: 120px
     :align: bottom
+.. |v410-flowchart| image:: docs/source/images/GraphtikFlowchart-v4.1.0.svg
+    :alt: graphtik-v4.1.0 flowchart
+    :scale: 75%
 .. |v130-flowchart| image:: docs/source/images/GraphkitFlowchart-v1.3.0.svg
     :alt: graphkit-v1.3.0 flowchart
     :scale: 75%
