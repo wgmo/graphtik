@@ -45,22 +45,6 @@ def astuple(i, argname, allowed_types=tuple):
     return i
 
 
-def collect_overwrites(maps) -> Mapping[Any, List]:
-    """
-    Collect items in the maps that exist more than once.
-
-    :return:
-        a dictionary with keys only those items that existed in more than one map,
-        an values, all those values, in the order of given `maps`
-    """
-    dd = defaultdict(list)
-    for d in maps:
-        for k, v in d.items():
-            dd[k].append(v)
-
-    return {k: v for k, v in dd.items() if len(v) > 1}
-
-
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
     Annotate exception with salvaged values from locals() and raise!

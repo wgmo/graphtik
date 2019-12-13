@@ -87,7 +87,6 @@ with the folllowing properties, as a debug aid:
 ... except ValueError as ex:
 ...     pprint(ex.jetsam)
 {'args': {'args': [None], 'kwargs': {}},
- 'executed': set(),
  'network': Network(
     +--a
     +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')
@@ -99,7 +98,7 @@ with the folllowing properties, as a debug aid:
  'provides': None,
  'results_fn': None,
  'results_op': None,
- 'solution':  ChainMap({'a': None})}
+ 'solution': {'a': None}}
 
 
 In interactive *REPL* console you may use this to get the last raised exception::
@@ -137,8 +136,9 @@ The following annotated attributes *might* have meaningfull value on an exceptio
 ``op_results``
     the results, always a dictionary, as matched with operation's `provides`
 
-``executed```
-    a set with the operation nodes & instructions executed till the error happened.
+``solution``
+    an instance of :class:`.Solution`, contains `inputs` & `outputs` till the error happened;
+    note that :attr:`.Solution.executed` contain the list of executed `operations` so far.
 
 Ofcourse you may use many of the above "jetsam" values when plotting.
 

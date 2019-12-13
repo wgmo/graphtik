@@ -63,10 +63,52 @@ def is_skip_evictions():
     return _execution_configs.get()["skip_evictions"]
 
 
-def _del_chain_key(amap: ChainMap, key):
-    log.debug("removing data '%s' from solution.", key)
-    for d in amap.maps:
-        d.pop(key, None)
+class Solution(ChainMap):
+    """Collects outputs from operations, preserving :term:`overwrites`."""
+
+    def __init__(self, plan, *args, **kw):
+        super().__init__(*args, **kw)
+        self.executed = iset()
+        self.finished = False
+        self.plan = plan
+
+    def __repr__(self):
+        items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
+        return f"{{{items}}}"
+
+    def operation_executed(self, op, outputs):
+        """invoked once per operation, with its results"""
+        assert not self.finished, f"Cannot reuse solution: {self}"
+        self.maps.append(outputs)
+        self.executed.add(op)
+
+    def finish(self):
+        """invoked only once, after all ops have been executed"""
+        # Invert solution so that last value wins
+        if not self.finished:
+            self.maps = self.maps[::-1]
+            self.finised = True
+
+    def __delitem__(self, key):
+        log.debug("removing data '%s' from solution.", key)
+        for d in self.maps:
+            d.pop(key, None)
+
+    def overwrites(self) -> Mapping[Any, List]:
+        """
+        Collect items in the maps that exist more than once.
+
+        :return:
+            a dictionary with keys only those items that existed in more than one map,
+            an values, all those values, in the order of given `maps`
+        """
+        maps = self.maps
+        dd = defaultdict(list)
+        for d in maps:
+            for k, v in d.items():
+                dd[k].append(v)
+
+        return {k: v for k, v in dd.items() if len(v) > 1}
 
 
 class _DataNode(str):
@@ -241,14 +283,14 @@ class ExecutionPlan(
         try:
             return op.compute(solution)
         except Exception as ex:
-            jetsam(ex, locals(), plan="self")
+            jetsam(ex, locals(), "solution", plan="self")
         finally:
             # record execution time
             t_complete = round(time.time() - t0, 5)
             self.times[op.name] = t_complete
             log.debug("...step completion time: %s", t_complete)
 
-    def _execute_thread_pool_barrier_method(self, solution: ChainMap, executed):
+    def _execute_thread_pool_barrier_method(self, solution: Solution):
         """
         This method runs the graph using a parallel pool of thread executors.
         You may achieve lower total latency if your graph is sufficiently
@@ -263,7 +305,7 @@ class ExecutionPlan(
         # scheduled, then schedule them onto a thread pool, then collect their
         # results onto a memory solution for use upon the next iteration.
         while True:
-            self._check_if_aborted(executed)
+            self._check_if_aborted(solution.executed)
 
             # the upnext list contains a list of operations for scheduling
             # in the current round of scheduling
@@ -273,14 +315,14 @@ class ExecutionPlan(
                 #  based on what has already been executed.
                 if (
                     isinstance(node, Operation)
-                    and node not in executed
+                    and node not in solution.executed
                     #  Use `broken_dag` to allow executing operations from given inputs
                     #  regardless of whether their producers have yet to re-calc them.
                     and set(
                         n
                         for n in nx.ancestors(self.broken_dag, node)
                         if isinstance(n, Operation)
-                    ).issubset(executed)
+                    ).issubset(solution.executed)
                 ):
                     upnext.append(node)
                 elif isinstance(node, _EvictInstruction):
@@ -294,10 +336,12 @@ class ExecutionPlan(
                             node not in self.dag.nodes
                             # Scan node's successors in `broken_dag`, not to block
                             # an op waiting for calced data already given as input.
-                            or set(self.broken_dag.successors(node)).issubset(executed)
+                            or set(self.broken_dag.successors(node)).issubset(
+                                solution.executed
+                            )
                         )
                     ):
-                        _del_chain_key(solution, node)
+                        del solution[node]
 
             # stop if no nodes left to schedule, exit out of the loop
             if not upnext:
@@ -308,10 +352,9 @@ class ExecutionPlan(
             )
 
             for op, outputs in done_iterator:
-                solution.maps.append(outputs)
-                executed.add(op)
+                solution.operation_executed(op, outputs)
 
-    def _execute_sequential_method(self, solution: ChainMap, executed):
+    def _execute_sequential_method(self, solution: Solution):
         """
         This method runs the graph one operation at a time in a single thread
 
@@ -319,25 +362,23 @@ class ExecutionPlan(
             must contain the input values only, gets modified
         """
         for step in self.steps:
-            self._check_if_aborted(executed)
+            self._check_if_aborted(solution.executed)
 
             if isinstance(step, Operation):
                 log.debug("%sexecuting step: %s", "-" * 32, step.name)
 
                 outputs = self._call_operation(step, solution)
-                solution.maps.append(outputs)
-                executed.add(step)
+                solution.operation_executed(step, outputs)
+
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.
                 if step in solution:
-                    _del_chain_key(solution, step)
+                    del solution[step]
 
             else:
                 raise AssertionError(f"Unrecognized instruction.{step}")
 
-    def execute(
-        self, named_inputs, outputs=None, *, solution: ChainMap = None, method=None
-    ):
+    def execute(self, named_inputs, outputs=None, *, method=None) -> Solution:
         """
         :param named_inputs:
             A maping of names --> values that must contain at least
@@ -347,16 +388,10 @@ class ExecutionPlan(
         :param outputs:
             If not None, they are just checked if possible, based on :attr:`provides`,
             and scream if not.
-        :param solution:
-            If not None, it must be a :class:`collections.ChainMap`, which will
-            collect all results in a separate dictionary for each operation execution.
-            The 1st dictionary in its maplist will collect the inputs, but will endup
-            to the be last one when execution finishes.
-
-            See :term:`solution`
 
         :return:
-            the populates `solution`
+            The :term:`solution` which contains the results of each operation executed
+            +1 for inputs in separate dictionaries.
 
         :raises ValueError:
             - If plan does not contain any operations, with msg:
@@ -382,25 +417,20 @@ class ExecutionPlan(
                 else self._execute_sequential_method
             )
 
-            if solution is None:
-                solution = ChainMap()
-            preload_layers = len(solution.maps)  # TODO: move to solution
-
             # If certain outputs asked, put relevant-only inputs in solution,
             # otherwise, keep'em all.
             #
             # Note: clone and keep original `inputs` in the 1st chained-map.
-            solution.update(
+            solution = Solution(
+                self,
                 {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
                 if self.evict
-                else named_inputs
+                else named_inputs,
             )
-            executed = set()
-            executor(solution, executed)
-
-            # Invert solution so that last value wins
-            # TODO: move to solution
-            solution.maps = solution.maps[::-1]
+            try:
+                executor(solution)
+            finally:
+                solution.finish()
 
             # Validate eviction was perfect
             #
@@ -411,20 +441,9 @@ class ExecutionPlan(
                 or set(solution).issubset(self.provides)
             ), f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
 
-            # Validate solution layers match operations executed + 1(inputs)
-            # TODO: move to solution
-            #
-            assert len(solution.maps) - preload_layers == sum(
-                1 for i in yield_ops(self.steps)
-            ), (
-                f"Solution layers({len(solution.maps)}, preloaded: {preload_layers}) mismatched "
-                f"operations executed({sum(1 for i in yield_ops(self.dag))})!"
-                f"\n  {self}\n  solution: {solution}"
-            )
-
             return solution
         except Exception as ex:
-            jetsam(ex, locals(), "solution", "executed")
+            jetsam(ex, locals(), "solution")
 
 
 class Network(Plotter):

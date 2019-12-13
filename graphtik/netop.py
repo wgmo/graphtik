@@ -4,7 +4,7 @@
 
 import logging
 import re
-from collections import ChainMap, abc
+from collections import abc
 from typing import Any, Callable, Mapping
 
 import networkx as nx
@@ -12,7 +12,7 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
-from .network import Network, yield_ops
+from .network import Network, Solution, yield_ops
 from .op import FunctionalOperation, Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
@@ -161,7 +161,7 @@ class NetworkOperation(Operation, Plotter):
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
-    def compute(self, named_inputs, outputs=None, solution: ChainMap = None) -> dict:
+    def compute(self, named_inputs, outputs=None) -> Solution:
         """
         Solve & execute the graph, sequentially or parallel.
 
@@ -176,18 +176,10 @@ class NetworkOperation(Operation, Plotter):
             a string or a list of strings with all data asked to compute.
             If you set this variable to ``None``, all data nodes will be kept
             and returned at runtime.
-        :param solution:
-            If not None, it must be a :class:`collections.ChainMap`, which will
-            collect all results in a separate dictionary for each operation execution.
-            The 1st dictionary in its maplist will collect the inputs, but will endup
-            to the be last one when execution finishes.
-
-            See :term:`solution`
 
         :return:
-            the chained-map `solution` "compressed" as a plain dictionary;
-            if you you want to acccess all intermediate values provide your own
-            ``ChainMap`` instance in this method.
+            The :term:`solution` which contains the results of each operation executed
+            +1 for inputs in separate dictionaries.
 
         :raises ValueError:
             - If `outputs` asked do not exist in network, with msg:
@@ -209,23 +201,16 @@ class NetworkOperation(Operation, Plotter):
         try:
             net = self.net  # jetsam
 
-            if solution is not None and not isinstance(solution, ChainMap):
-                raise ValueError(
-                    f"Solution was not ChainMap, but {type(solution)}!\n  solution; {solution}"
-                )
-
             # Build the execution plan.
             self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
 
-            solution = plan.execute(
-                named_inputs, outputs, solution=solution, method=self.execution_method
-            )
+            solution = plan.execute(named_inputs, outputs, method=self.execution_method)
 
-            return dict(solution)  # Convert ChainMap --> plain dict.
+            return solution
         except Exception as ex:
             jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
 
-    def __call__(self, **input_kwargs) -> dict:
+    def __call__(self, **input_kwargs) -> Solution:
         """
         Delegates to :meth:`compute()`, respecting any narrowed `outputs`.
         """

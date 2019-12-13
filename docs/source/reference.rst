@@ -40,11 +40,16 @@ Module: `network`
 .. autoclass:: graphtik.network.Network
      :members:
      :private-members:
+     :special-members:
      :undoc-members:
 .. autoclass:: graphtik.network.ExecutionPlan
      :members:
      :private-members:
+     :special-members:
      :undoc-members:
+.. autoclass:: graphtik.network.Solution
+     :members:
+     :special-members:
 
 Module: `plot`
 ===============

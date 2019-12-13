@@ -149,7 +149,7 @@ class _ScreamingOperation(op.Operation):
                 op=_ScreamingOperation(),
                 solution={},
             ),
-            ["plan"],
+            ["plan", "solution"],
         ),
         # Not easy to test Network calling a screaming func (see next TC).
     ],
@@ -189,13 +189,13 @@ class _DummyOperation(op.Operation):
                 op=operation(_scream, name="auch")(),
                 solution={},
             ),
-            "outputs provides results_fn results_op operation args plan".split(),
+            "solution outputs provides results_fn results_op operation args plan".split(),
         ),
         (
             fnt.partial(
                 network.ExecutionPlan(*([None] * 7), {}).execute, named_inputs=None
             ),
-            ["solution", "executed"],
+            ["solution"],
         ),
         (
             fnt.partial(
