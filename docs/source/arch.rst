@@ -44,8 +44,8 @@ Architecture
 
     compose
     COMPOSITION
-        The phase where `operation`\s are constructed and grouped into `netop`\s;
-        a `network` is assembled for each *netop* during this phase.
+        The *phase* where `operation`\s are constructed and grouped into `netop`\s and
+        corresponding `network`\s.
 
         .. Tip::
             - Use :class:`~.graphtik.operation()` builder class to construct
@@ -81,8 +81,6 @@ Architecture
         The :attr:`.ExecutionPlan.dag` is a directed-acyclic-graph that contains
         the `prune`\d nodes as build by :meth:`.Network._prune_graph()`.
         This pruned subgraph is used to decide the `execution steps`.
-        The containing :class:`ExecutionPlan.steps` instance is cached
-        in :attr:`_cached_plans` across runs with inputs/`outputs` as key.
 
     steps
     execution steps
@@ -131,10 +129,10 @@ Architecture
 
     plan
     execution plan
-        the :class:`.ExecutionPlan` that performs the `execution`.
+        Class :class:`.ExecutionPlan` perform the `execution` phase.
 
         `Compile`\ed *execution plans* are cached in :attr:`.Network._cached_plans`
-        across runs with `inputs`/`outputs` as key.
+        across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     inputs
         a dictionary of named input values given to :meth:`.NetworkOperation.compute()`
