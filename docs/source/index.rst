@@ -79,8 +79,16 @@ Run the graph-operation and request all of the outputs::
 
 Run the graph-operation and request a subset of the outputs::
 
-   >>> graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+   >>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+   >>> solution
    {'a_minus_ab': -8}
+
+... and plot the results (if in *jupyter*, no need to create the file)::
+
+    >>> solution.plot('graphop.svg')      # doctest: +SKIP
+
+|sample-sol|
+|plot-legend|
 
 As you can see, any function can be used as an operation in Graphtik,
 even ones imported from system modules!
@@ -89,6 +97,10 @@ even ones imported from system modules!
     :alt: sample graphtik plot
     :width: 120px
     :align: middle
-
+.. |sample-sol| raw:: html
+    :file:  images/executed_3ops.svg
+.. |plot-legend| image:: images/GraphtikLegend.svg
+    :alt: graphtik legend
+    :align: middle
 .. include:: ../../README.rst
     :start-after: _substs:

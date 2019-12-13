@@ -68,14 +68,27 @@ Run the graph and request all of the outputs::
    >>> graphop(a=2, b=5)
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
-..or request a subset of outputs::
+... or request a subset of outputs::
 
-   >>> graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+   >>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+   >>> solution
    {'a_minus_ab': -8}
+
+... and plot the results (if in *jupyter*, no need to create the file)::
+
+    >>> solution.plot('graphop.svg')    # doctest: +SKIP
+
+|sample-sol|
+|plot-legend|
 
 .. |sample-plot| image:: docs/source/images/barebone_2ops.svg
     :alt: sample graphtik plot
     :width: 120px
+    :align: middle
+.. |sample-sol| raw:: html
+    :file:  docs/source/images/executed_3ops.svg
+.. |plot-legend| image:: docs/source/images/GraphtikLegend.svg
+    :alt: graphtik legend
     :align: middle
 
 .. _substs:

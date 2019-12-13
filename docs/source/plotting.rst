@@ -11,10 +11,14 @@ For :ref:`debugging` it is necessary to visualize the graph-operation.
 You may plot the original plot and annotate on top the *execution plan* and
 solution of the last computation, calling methods with arguments like this::
 
-   netop.plot(show=True)                # open a matplotlib window
+   netop.plot(show=True)              # open a matplotlib window
    netop.plot("netop.svg")            # other supported formats: png, jpg, pdf, ...
-   netop.plot()                         # without arguments return a pydot.DOT object
-   netop.plot(solution=out)             # annotate graph with solution values
+   netop.plot()                       # without arguments return a pydot.DOT object
+   netop.plot(solution=solution)      # annotate graph with solution values
+
+... or for the last ...::
+
+   solution.plot(...)
 
 .. image:: images/executed_3ops.svg
     :alt: execution plan
@@ -47,9 +51,13 @@ dependencies, and the sequence of the execution-plan.
 But as soon as you run it, the net plot calls will print more of the internals.
 Internally it delegates to :meth:`.ExecutionPlan.plot()` of :attr:`.NetworkOperation.last_plan`
 attribute, which *caches* the last run to facilitate debugging.
-If you want the bare-bone diagram, plot network::
+If you want the bare-bone diagram, plot the network::
 
    netop.net.plot(...)
+
+If you want all details, plot the solution::
+
+   solution.net.plot(...)
 
 .. Note::
    For plots, `Graphviz <https://graphviz.org>`_ program must be in your PATH,
