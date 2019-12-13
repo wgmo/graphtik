@@ -144,7 +144,6 @@ def build_pydot(
     inputs=None,
     outputs=None,
     solution=None,
-    executed=None,
     title=None,
     node_props=None,
     edge_props=None,
@@ -226,7 +225,7 @@ def build_pydot(
             if steps and nx_node in steps:
                 kw["penwdth"] = steps_thickness
             shape = "egg" if isinstance(nx_node, NetworkOperation) else "oval"
-            if executed and nx_node in executed:
+            if nx_node in getattr(solution, "executed", ()):
                 kw["style"] = "filled"
                 kw["fillcolor"] = fill_color
             try:

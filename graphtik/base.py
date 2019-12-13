@@ -185,9 +185,10 @@ class Plotter(abc.ABC):
             as an "inverted-house"
         :param solution:
             an optional dict with values to annotate nodes, drawn "filled"
-            (currently content not shown, but node drawn as "filled")
-        :param executed:
-            an optional container with operations executed, drawn "filled"
+            (currently content not shown, but node drawn as "filled").
+            It extracts more infos from a :class:`.Solution` instance, such as,
+            if `solution` has an ``executed`` attribute, operations contained in it
+            are  drawn as "filled".
         :param title:
             an optional string to display at the bottom of the graph
         :param node_props:
