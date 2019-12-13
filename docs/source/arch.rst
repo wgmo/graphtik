@@ -10,7 +10,8 @@ Architecture
 
     COMPUTE
     computation
-        The computation of networked operation is splitted in 3 phases:
+        |v410-flowchart|
+        The definition & execution of networked operation is splitted in 1+2 phases:
 
         - `COMPOSITION`
         - `COMPILATION`
@@ -38,6 +39,7 @@ Architecture
             graphtik.netop.NetworkOperation
             graphtik.network.Network
             graphtik.network.ExecutionPlan
+            graphtik.network.Solution
 
 
     compose
@@ -65,8 +67,8 @@ Architecture
 
     graph
     network graph
-        The :attr:`.Network.graph` (currently a DAG) contains interchanging layers
-        of all :class:`Operation` and :class:`_DataNode` nodes of a `netop`.
+        The :attr:`.Network.graph` (currently a DAG) contains all :class:`FunctionalOperation`
+        and :class:`_DataNode` nodes of some `netop`.
 
         They are layed out and connected by repeated calls of
         :meth:`.Network._append_operation()` by Network constructor.
@@ -96,10 +98,12 @@ Architecture
         further down the dag, to reduce memory footprint while computing.
 
     solution
-        A :class:`collections.ChainMap` created internally by :meth:`.NetworkOperation.compute()`
-        (if not given externally) to hold the values of the `inputs`,
-        and those of the generated (intermediate and possibly overwritten) `outputs`.
-        One dictionary is contained for each `operation` execution.
+        A :class:`.Solution` created internally by :meth:`.NetworkOperation.compute()`
+        to hold the values of the `inputs`, and those of the generated
+        (intermediate and possibly overwritten) `outputs`.
+        It is based on a :class:`collections.ChainMap`, to keep one dictionary
+        for each `operation` executed +1 for inputs.
+
 
         The last operation result wins in the final *outputs* produced,
         BUT while executing, the `needs` of each operation receive the *solution* values
@@ -114,11 +118,10 @@ Architecture
 
             But at the end we want to affect the calculation results by adding
             operations into some *netop* - furthermore, it wouldn't be very usefull
-            to get back the given inputs in case of *overwrites*.
+            to get back the given inputs in case of `overwrites`.
 
-        Note that ``compute()`` returns the chained-maps "compressed" in a plain dictionary;
-        if you you want to acccess all intermediate values provide your own
-        ``ChainMap`` instance in the method.
+    overwrites
+        Values in the `solution` that are written by more than one `operation`\s.
 
     net
     network
@@ -150,10 +153,12 @@ Architecture
         The :class:`.NetworkOperation` class holding a `network` of `operation`\s.
 
     needs
-        A list of names of the compulsory/optional values an operation requires to execute.
+        A list of names of the compulsory/optional values an operation's
+        underlying callable requires to execute.
 
     provides
-        A list of names of the values produced when an operation executes.
+        A list of names of the values produced when the `operation`'s
+        underlying callable executes.
 
     prune
     pruning
@@ -178,3 +183,6 @@ Architecture
         :meth:`~.NetworkOperation.narrowed`.
 
 .. default-role:: obj
+.. |v410-flowchart| image:: images/GraphtikFlowchart-v4.1.0.svg
+    :alt: graphtik-v4.1.0 flowchart
+    :scale: 50%
