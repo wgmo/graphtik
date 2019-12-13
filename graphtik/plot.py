@@ -366,6 +366,10 @@ def legend(filename=None, show=None, jupyter_render: Mapping = None):
     _monkey_patch_for_jupyter(pydot)
 
     ## From https://stackoverflow.com/questions/3499056/making-a-legend-key-in-graphviz
+    # Render it manually with these python commands, and remember to update result in git:
+    #
+    #   from graphtik.plot import legend
+    #   legend('docs/source/images/GraphtikLegend.svg')
     dot_text = """
     digraph {
         rankdir=LR;
