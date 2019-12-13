@@ -110,16 +110,32 @@ def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     solution = pipeline.compute(inputs, outputs)
 
     # Plotting delegates to netwrok plan.
-    plan_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))
+    netop_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))
+    assert netop_dot
+    assert netop_dot != base_dot
+    assert pipeline.name in str(netop_dot)
+
+    # Plotting plan alone has not label.
+    plan_dot = str(pipeline.last_plan.plot(inputs=inputs, outputs=outputs))
     assert plan_dot
     assert plan_dot != base_dot
-    assert pipeline.name in str(plan_dot)
+    assert plan_dot != netop_dot
+    assert pipeline.name not in str(plan_dot)
 
     # Plot a plan + solution, which must be different from all before.
-    sol_plan_dot = str(pipeline.plot(inputs=inputs, outputs=outputs, solution=solution))
-    assert sol_plan_dot != base_dot
-    assert sol_plan_dot != plan_dot
-    assert pipeline.name in str(plan_dot)
+    sol_netop_dot = str(
+        pipeline.plot(inputs=inputs, outputs=outputs, solution=solution)
+    )
+    assert sol_netop_dot != base_dot
+    assert sol_netop_dot != netop_dot
+    assert sol_netop_dot != plan_dot
+    assert pipeline.name in str(netop_dot)
+
+    # Plot a solution, which must equal plan + sol.
+    sol_plan_dot = str(
+        pipeline.last_plan.plot(inputs=inputs, outputs=outputs, solution=solution)
+    )
+    assert str(solution.plot(inputs=inputs, outputs=outputs)) == sol_plan_dot
 
     plan = pipeline.last_plan
     pipeline.last_plan = None

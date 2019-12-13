@@ -63,7 +63,7 @@ def is_skip_evictions():
     return _execution_configs.get()["skip_evictions"]
 
 
-class Solution(ChainMap):
+class Solution(ChainMap, Plotter):
     """Collects outputs from operations, preserving :term:`overwrites`."""
 
     def __init__(self, plan, *args, **kw):
@@ -109,6 +109,12 @@ class Solution(ChainMap):
                 dd[k].append(v)
 
         return {k: v for k, v in dd.items() if len(v) > 1}
+
+    def _build_pydot(self, **kws):
+        """delegate to network"""
+        kws.setdefault("solution", self)
+        plotter = self.plan
+        return plotter._build_pydot(**kws)
 
 
 class _DataNode(str):
