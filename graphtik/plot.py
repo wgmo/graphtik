@@ -390,16 +390,15 @@ def legend(filename=None, show=None, jupyter_render: Mapping = None):
         sol     [shape=rect style=filled fillcolor=wheat label="in solution"];
         data -> input -> output -> inp_out -> evicted -> sol [style=invis];
 
-        e1 [style=invis] e2 [color=invis label="dependency"];
+        e1 [style=invis];
         e1 -> e2;
-        e3 [color=invis label="optional"];
+        e2 [color=invis label="dependency"];
         e2 -> e3 [style=dashed];
-        e33 [color=invis label="sideffect"];
-        e3 -> e33 [color=blue];
-        e4 [color=invis penwidth=3 label="pruned dependency"];
-        e33 -> e4 [color=wheat penwidth=2];
-        e5 [color=invis penwidth=4 label="execution sequence"];
+        e3 [color=invis label="optional"];
+        e3 -> e4 [color=blue];
+        e4 [color=invis label="sideffect"];
         e4 -> e5 [color="#009999" penwidth=4 style=dotted arrowhead=vee label=1 fontcolor="#009999"];
+        e5 [color=invis penwidth=4 label="execution sequence"];
         }
     }
     """
