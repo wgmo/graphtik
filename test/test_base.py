@@ -145,7 +145,7 @@ class _ScreamingOperation(op.Operation):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 7), {})._call_operation,
+                network.ExecutionPlan(*([None] * 6), {})._call_operation,
                 op=_ScreamingOperation(),
                 solution={},
             ),
@@ -185,7 +185,7 @@ class _DummyOperation(op.Operation):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 7), {})._call_operation,
+                network.ExecutionPlan(*([None] * 6), {})._call_operation,
                 op=operation(_scream, name="auch")(),
                 solution={},
             ),
@@ -193,7 +193,7 @@ class _DummyOperation(op.Operation):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 7), {}).execute, named_inputs=None
+                network.ExecutionPlan(*([None] * 6), {}).execute, named_inputs=None
             ),
             ["solution"],
         ),

@@ -177,8 +177,7 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
 
 
 class ExecutionPlan(
-    namedtuple("ExecPlan", "net needs provides dag broken_edges steps evict times"),
-    Plotter,
+    namedtuple("ExecPlan", "net needs provides dag steps evict times"), Plotter
 ):
     """
     A pre-compiled list of operation steps that can :term:`execute` for the given inputs/outputs.
@@ -195,8 +194,6 @@ class ExecutionPlan(
         An :class:`iset` with the outputs names produces when all `inputs` are given.
     :ivar dag:
         The regular (not broken) *pruned* subgraph of net-graph.
-    :ivar broken_edges:
-        Tuple of broken incoming edges to given data.
     :ivar steps:
         The tuple of operation-nodes & *instructions* needed to evaluate
         the given inputs & asked outputs, free memory and avoid overwritting
@@ -204,10 +201,6 @@ class ExecutionPlan(
     :ivar evict:
         when false, keep all inputs & outputs, and skip prefect-evictions check.
     """
-
-    @property
-    def broken_dag(self):
-        return nx.restricted_view(self.dag, nodes=(), edges=self.broken_edges)
 
     def _build_pydot(self, **kws):
         from .plot import build_pydot
@@ -220,9 +213,6 @@ class ExecutionPlan(
             "steps": self.steps,
             "inputs": self.needs,
             "outputs": self.provides,
-            "edge_props": {
-                e: {"color": "wheat", "penwidth": 2} for e in self.broken_edges
-            },
             "clusters": clusters,
         }
         mykws.update(kws)
@@ -322,11 +312,9 @@ class ExecutionPlan(
                 if (
                     isinstance(node, Operation)
                     and node not in solution.executed
-                    #  Use `broken_dag` to allow executing operations from given inputs
-                    #  regardless of whether their producers have yet to re-calc them.
                     and set(
                         n
-                        for n in nx.ancestors(self.broken_dag, node)
+                        for n in nx.ancestors(self.dag, node)
                         if isinstance(n, Operation)
                     ).issubset(solution.executed)
                 ):
@@ -342,7 +330,7 @@ class ExecutionPlan(
                             node not in self.dag.nodes
                             # Scan node's successors in `broken_dag`, not to block
                             # an op waiting for calced data already given as input.
-                            or set(self.broken_dag.successors(node)).issubset(
+                            or set(self.dag.successors(node)).issubset(
                                 solution.executed
                             )
                         )
@@ -638,8 +626,8 @@ class Network(Plotter):
             that should return true for nodes to include; if None, all nodes included.
 
         :return:
-            a 4-tuple with the *pruned_dag*, the out-edges of the inputs,
-            and needs/provides resolved based on given inputs/outputs
+            a 3-tuple with the *pruned_dag* & the needs/provides resolved based
+            on the given inputs/outputs
             (which might be a subset of all needs/outputs of the returned graph).
 
             Use the returned `needs/provides` to build a new plan.
@@ -731,7 +719,7 @@ class Network(Plotter):
         assert inputs is not None or isinstance(inputs, abc.Collection)
         assert outputs is not None or isinstance(outputs, abc.Collection)
 
-        return pruned_dag, broken_edges, tuple(inputs), tuple(outputs)
+        return pruned_dag, tuple(inputs), tuple(outputs)
 
     def narrowed(
         self,
@@ -761,9 +749,7 @@ class Network(Plotter):
         if outputs is not None:
             outputs = astuple(outputs, "outputs", allowed_types=(list, tuple))
 
-        pruned_dag, _br_edges, _needs, _provides = self._prune_graph(
-            inputs, outputs, predicate
-        )
+        pruned_dag, _needs, _provides = self._prune_graph(inputs, outputs, predicate)
         return Network(graph=pruned_dag)
 
     def _build_execution_steps(
@@ -917,16 +903,13 @@ class Network(Plotter):
         if cache_key in self._cached_plans:
             plan = self._cached_plans[cache_key]
         else:
-            pruned_dag, broken_edges, needs, provides = self._prune_graph(
-                inputs, outputs, predicate
-            )
+            pruned_dag, needs, provides = self._prune_graph(inputs, outputs, predicate)
             steps = self._build_execution_steps(pruned_dag, needs, outputs or ())
             plan = ExecutionPlan(
                 self,
                 needs,
                 provides,
                 pruned_dag,
-                tuple(broken_edges),
                 tuple(steps),
                 evict=outputs is not None,
                 times={},
