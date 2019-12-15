@@ -64,13 +64,26 @@ def is_skip_evictions():
 
 
 class Solution(ChainMap, Plotter):
-    """Collects outputs from operations, preserving :term:`overwrites`."""
+    """
+    Collects outputs from operations, preserving :term:`overwrites`.
 
+    :ivar plan:
+        the plan that produced this solution
+    :ivar executed:
+        A set with operations executed
+    :ivar finished:
+        a flag denoting that this instance cannot acccept more results
+        (after the :meth:`finished` has been invoked)
+    :ivar times:
+        a dictionary with execution timings for each operation
+    """
     def __init__(self, plan, *args, **kw):
         super().__init__(*args, **kw)
+
+        self.plan = plan
         self.executed = iset()
         self.finished = False
-        self.plan = plan
+        self.times = {}
 
     def __repr__(self):
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
@@ -177,7 +190,7 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
 
 
 class ExecutionPlan(
-    namedtuple("ExecPlan", "net needs provides dag steps evict times"), Plotter
+    namedtuple("ExecPlan", "net needs provides dag steps evict"), Plotter
 ):
     """
     A pre-compiled list of operation steps that can :term:`execute` for the given inputs/outputs.
@@ -283,7 +296,7 @@ class ExecutionPlan(
         finally:
             # record execution time
             t_complete = round(time.time() - t0, 5)
-            self.times[op.name] = t_complete
+            solution.times[op.name] = t_complete
             log.debug("...step completion time: %s", t_complete)
 
     def _execute_thread_pool_barrier_method(self, solution: Solution):
@@ -401,7 +414,6 @@ class ExecutionPlan(
                 *Impossible outputs...*
         """
         try:
-            self.times.clear()
             self.validate(named_inputs, outputs)
 
             # choose a method of execution
@@ -912,7 +924,6 @@ class Network(Plotter):
                 pruned_dag,
                 tuple(steps),
                 evict=outputs is not None,
-                times={},
             )
 
             self._cached_plans[cache_key] = plan

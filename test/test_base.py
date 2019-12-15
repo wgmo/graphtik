@@ -8,6 +8,7 @@ import pytest
 
 from graphtik import base, network, op, operation
 from graphtik.netop import NetworkOperation
+from graphtik.network import Solution
 
 
 @pytest.mark.parametrize("locs", [None, (), [], [0], "bad"])
@@ -145,9 +146,9 @@ class _ScreamingOperation(op.Operation):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6), {})._call_operation,
+                network.ExecutionPlan(*([None] * 6))._call_operation,
                 op=_ScreamingOperation(),
-                solution={},
+                solution=Solution(None),
             ),
             ["plan", "solution"],
         ),
@@ -185,15 +186,15 @@ class _DummyOperation(op.Operation):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6), {})._call_operation,
+                network.ExecutionPlan(*([None] * 6))._call_operation,
                 op=operation(_scream, name="auch")(),
-                solution={},
+                solution=Solution(None),
             ),
             "solution outputs provides results_fn results_op operation args plan".split(),
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6), {}).execute, named_inputs=None
+                network.ExecutionPlan(*([None] * 6)).execute, named_inputs=None
             ),
             ["solution"],
         ),
