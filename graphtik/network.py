@@ -55,8 +55,8 @@ def is_abort():
     return _execution_configs.get()["abort"]
 
 
-def set_evictions_skipped(skipped):
-    _execution_configs.get()["skip_evictions"] = skipped
+def set_skip_evictions(skipped):
+    _execution_configs.get()["skip_evictions"] = bool(skipped)
 
 
 def is_skip_evictions():

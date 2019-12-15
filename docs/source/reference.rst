@@ -29,8 +29,8 @@ Module: `network`
 =================
 
 .. automodule:: graphtik.network
-     :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_evictions_skipped,
-               _execution_configs, _break_incoming_edges, _unsatisfied_operations
+     :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_skip_evictions,
+               _execution_configs, _unsatisfied_operations
 .. autoclass:: graphtik.network.Network
      :members:
      :private-members:
@@ -58,4 +58,3 @@ Module: `base`
 .. automodule:: graphtik.base
      :members:
      :undoc-members:
-

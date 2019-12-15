@@ -16,7 +16,7 @@ from .network import (
     abort_run,
     is_abort,
     is_skip_evictions,
-    set_evictions_skipped,
+    set_skip_evictions,
 )
 from .netop import compose
 from .op import operation
