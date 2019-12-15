@@ -62,6 +62,11 @@ def set_evictions_skipped(skipped):
 def is_skip_evictions():
     return _execution_configs.get()["skip_evictions"]
 
+def _break_incoming_edges(dag, nodes):
+    """Modifies `dag` by removing all incoming edges of `nodes`."""
+    for n in nodes:
+        # Coalesce to a list, to avoid concurrent modification.
+        dag.remove_edges_from(list(dag.in_edges(n)))
 
 class Solution(ChainMap, Plotter):
     """
@@ -686,7 +691,6 @@ class Network(Plotter):
         assert outputs is None or isinstance(outputs, abc.Collection)
 
         broken_dag = dag.copy()  # preserve net's graph
-        broken_edges = set()  # unordered, not iterated
 
         if predicate:
             self._apply_graph_predicate(broken_dag, predicate)
@@ -699,9 +703,7 @@ class Network(Plotter):
         # and they will drop out while collecting ancestors from the outputs.
         #
         if inputs:
-            for given in inputs:
-                broken_edges.update(broken_dag.in_edges(given))
-            broken_dag.remove_edges_from(broken_edges)
+            _break_incoming_edges(broken_dag, inputs)
 
         # Drop stray input values and operations (if any).
         if outputs is not None:
