@@ -168,7 +168,7 @@ Architecture
         asked `outputs`, `node predicate` and `operation` `needs` & `provides`.
 
     unsatisfied operation
-        Method :meth:`.Network._unsatisfied_operations()` collects all `operation`\s
+        Method :func:`.network._unsatisfied_operations()` collects all `operation`\s
         that fall into any of these two cases:
 
         - it has `needs` that do not correspond to any given `inputs` or

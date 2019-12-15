@@ -68,6 +68,63 @@ def _break_incoming_edges(dag, nodes):
         # Coalesce to a list, to avoid concurrent modification.
         dag.remove_edges_from(list(dag.in_edges(n)))
 
+def _unsatisfied_operations(dag, inputs: Collection) -> List:
+    """
+    Traverse topologically sorted dag to collect un-satisfied operations.
+
+    Unsatisfied operations are those suffering from ANY of the following:
+
+    - They are missing at least one compulsory need-input.
+        Since the dag is ordered, as soon as we're on an operation,
+        all its needs have been accounted, so we can get its satisfaction.
+
+    - Their provided outputs are not linked to any data in the dag.
+        An operation might not have any output link when :meth:`_prune_graph()`
+        has broken them, due to given intermediate inputs.
+
+    :param dag:
+        a graph with broken edges those arriving to existing inputs
+    :param inputs:
+        an iterable of the names of the input values
+    :return:
+        a list of unsatisfied operations to prune
+
+    """
+    # To collect data that will be produced.
+    ok_data = set(inputs)
+    # To colect the map of operations --> satisfied-needs.
+    op_satisfaction = defaultdict(set)
+    # To collect the operations to drop.
+    unsatisfied = []
+    # Topo-sort dag respecting operation-insertion order to break ties.
+    sorted_nodes = nx.topological_sort(dag)
+    for node in sorted_nodes:
+        if isinstance(node, Operation):
+            if not dag.adj[node]:
+                # Prune operations that ended up providing no output.
+                unsatisfied.append(node)
+            else:
+                # It's ok not to dig into edge-data("optional") here,
+                # we care about all needs, including broken ones.
+                real_needs = set(n for n in node.needs if not isinstance(n, optional))
+                if real_needs.issubset(op_satisfaction[node]):
+                    # We have a satisfied operation; mark its output-data
+                    # as ok.
+                    ok_data.update(dag.adj[node])
+                else:
+                    # Prune operations with partial inputs.
+                    unsatisfied.append(node)
+        elif isinstance(node, (_DataNode, str)):  # `str` are givens
+            if node in ok_data:
+                # mark satisfied-needs on all future operations
+                for future_op in dag.adj[node]:
+                    op_satisfaction[future_op].add(node)
+        else:
+            raise AssertionError(f"Unrecognized network graph node {node}")
+
+    return unsatisfied
+
+
 class Solution(ChainMap, Plotter):
     """
     Collects outputs from operations, preserving :term:`overwrites`.
@@ -549,64 +606,6 @@ class Network(Plotter):
         node_keys = dict(zip(dag.nodes, count()))
         return nx.lexicographical_topological_sort(dag, key=node_keys.get)
 
-    def _unsatisfied_operations(self, dag, inputs: Collection):
-        """
-        Traverse topologically sorted dag to collect un-satisfied operations.
-
-        Unsatisfied operations are those suffering from ANY of the following:
-
-        - They are missing at least one compulsory need-input.
-          Since the dag is ordered, as soon as we're on an operation,
-          all its needs have been accounted, so we can get its satisfaction.
-
-        - Their provided outputs are not linked to any data in the dag.
-          An operation might not have any output link when :meth:`_prune_graph()`
-          has broken them, due to given intermediate inputs.
-
-        :param dag:
-            a graph with broken edges those arriving to existing inputs
-        :param inputs:
-            an iterable of the names of the input values
-        :return:
-            a list of unsatisfied operations to prune
-
-        """
-        # To collect data that will be produced.
-        ok_data = set(inputs)
-        # To colect the map of operations --> satisfied-needs.
-        op_satisfaction = defaultdict(set)
-        # To collect the operations to drop.
-        unsatisfied = []
-        # Topo-sort dag respecting operation-insertion order to break ties.
-        sorted_dag = nx.topological_sort(dag)
-        for node in sorted_dag:
-            if isinstance(node, Operation):
-                if not dag.adj[node]:
-                    # Prune operations that ended up providing no output.
-                    unsatisfied.append(node)
-                else:
-                    # It's ok not to dig into edge-data("optional") here,
-                    # we care about all needs, including broken ones.
-                    real_needs = set(
-                        n for n in node.needs if not isinstance(n, optional)
-                    )
-                    if real_needs.issubset(op_satisfaction[node]):
-                        # We have a satisfied operation; mark its output-data
-                        # as ok.
-                        ok_data.update(dag.adj[node])
-                    else:
-                        # Prune operations with partial inputs.
-                        unsatisfied.append(node)
-            elif isinstance(node, (_DataNode, str)):  # `str` are givens
-                if node in ok_data:
-                    # mark satisfied-needs on all future operations
-                    for future_op in dag.adj[node]:
-                        op_satisfaction[future_op].add(node)
-            else:
-                raise AssertionError(f"Unrecognized network graph node {node}")
-
-        return unsatisfied
-
     def _apply_graph_predicate(self, graph, predicate):
         to_del = []
         for node, data in graph.nodes.items():
@@ -716,7 +715,7 @@ class Network(Plotter):
             broken_dag = broken_dag.subgraph(ending_in_outputs)
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
-        unsatisfied = self._unsatisfied_operations(broken_dag, satisfied_inputs)
+        unsatisfied = _unsatisfied_operations(broken_dag, satisfied_inputs)
         # Clone it, to modify it.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
         # Clean unlinked data-nodes.
