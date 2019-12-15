@@ -11,13 +11,6 @@ API Reference
      graphtik.plot
      graphtik.base
 
-Module: `base`
-==============
-
-.. automodule:: graphtik.base
-     :members:
-     :undoc-members:
-
 Module: `op`
 ====================
 
@@ -36,7 +29,8 @@ Module: `network`
 =================
 
 .. automodule:: graphtik.network
-     :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_evictions_skipped, _execution_configs
+     :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_evictions_skipped,
+               _execution_configs, _break_incoming_edges, _unsatisfied_operations
 .. autoclass:: graphtik.network.Network
      :members:
      :private-members:
@@ -57,3 +51,11 @@ Module: `plot`
 .. automodule:: graphtik.plot
      :members:
      :undoc-members:
+
+Module: `base`
+==============
+
+.. automodule:: graphtik.base
+     :members:
+     :undoc-members:
+
