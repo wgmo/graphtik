@@ -15,7 +15,9 @@ from .network import (
     AbortedException,
     abort_run,
     is_abort,
+    is_endure_execution,
     is_skip_evictions,
+    set_endure_execution,
     set_skip_evictions,
 )
 from .netop import compose

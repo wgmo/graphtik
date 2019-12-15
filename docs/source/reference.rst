@@ -30,7 +30,7 @@ Module: `network`
 
 .. automodule:: graphtik.network
      :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_skip_evictions,
-               _execution_configs, _unsatisfied_operations
+               set_endure_execution, is_endure_execution, _execution_configs, _unsatisfied_operations
 .. autoclass:: graphtik.network.Network
      :members:
      :private-members:

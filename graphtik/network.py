@@ -35,7 +35,12 @@ log = logging.getLogger(__name__)
 #: Global configurations for all (nested) networks in a computaion run.
 _execution_configs: ContextVar[dict] = ContextVar(
     "execution_configs",
-    default={"execution_pool": Pool(7), "abort": False, "skip_evictions": False},
+    default={
+        "execution_pool": Pool(7),
+        "abort": False,
+        "skip_evictions": False,
+        "endure_execution": False,
+    },
 )
 
 
@@ -62,11 +67,22 @@ def set_skip_evictions(skipped):
 def is_skip_evictions():
     return _execution_configs.get()["skip_evictions"]
 
-def _break_incoming_edges(dag, nodes):
-    """Modifies `dag` by removing all incoming edges of `nodes`."""
+
+def set_endure_execution(endure):
+    _execution_configs.get()["endure_execution"] = bool(endure)
+
+
+def is_endure_execution():
+    return _execution_configs.get()["endure_execution"]
+
+
+def _break_node_edges(dag, *nodes, incoming: bool):
+    """Modifies `dag` by removing all incoming/outgoing edges of `nodes`."""
+    selector = dag.in_edges if incoming else dag.out_edges
     for n in nodes:
         # Coalesce to a list, to avoid concurrent modification.
-        dag.remove_edges_from(list(dag.in_edges(n)))
+        dag.remove_edges_from(list(selector(n)))
+
 
 def _unsatisfied_operations(dag, inputs: Collection) -> List:
     """
@@ -132,18 +148,27 @@ class Solution(ChainMap, Plotter):
     :ivar plan:
         the plan that produced this solution
     :ivar executed:
-        A set with operations executed
+        A dictionary with keys the operations executed, and values their status:
+
+        - no key: not executed yet
+        - value None: execution ok
+        - value Exception: execution failed
+    :ivar passed:
+        a "virtual" property with executed operations that had no exception
+    :ivar failures:
+        a "virtual" property with executed operations that raised an exception
     :ivar finished:
         a flag denoting that this instance cannot acccept more results
         (after the :meth:`finished` has been invoked)
     :ivar times:
         a dictionary with execution timings for each operation
     """
+
     def __init__(self, plan, *args, **kw):
         super().__init__(*args, **kw)
 
         self.plan = plan
-        self.executed = iset()
+        self.executed = {}
         self.finished = False
         self.times = {}
 
@@ -151,11 +176,24 @@ class Solution(ChainMap, Plotter):
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
         return f"{{{items}}}"
 
+    @property
+    def passed(self):
+        return {k: v for k, v in self.executed.items() if v is None}
+
+    @property
+    def failures(self):
+        return {k: v for k, v in self.executed.items() if isinstance(v, Exception)}
+
     def operation_executed(self, op, outputs):
         """invoked once per operation, with its results"""
         assert not self.finished, f"Cannot reuse solution: {self}"
         self.maps.append(outputs)
-        self.executed.add(op)
+        self.executed[op] = None
+
+    def operation_failed(self, op, ex):
+        """invoked once per operation, with its results"""
+        assert not self.finished, f"Cannot reuse solution: {self}"
+        self.executed[op] = ex
 
     def finish(self):
         """invoked only once, after all ops have been executed"""
@@ -251,6 +289,26 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
     return needs, provides
 
 
+class _Endurance:
+    """
+    Utility to collect canceled ops downstream from failed ones.
+
+    :ivar canceled:
+        Unsattisfied operations downstream from failed ones.
+    """
+
+    def __init__(self, dag):
+        ## Clone to remove the downstream edges from the `provides`
+        #  of failed operations.
+        self.dag = dag.copy()
+        self.canceled = set()  # not iterated, order not important
+
+    def operation_failed(self, op: Operation, inputs):
+        """update :attr:`canceled` with the unsatisfiead ops downstream of `op`."""
+        _break_node_edges(self.dag, op, incoming=False)
+        self.canceled.update(_unsatisfied_operations(self.dag, inputs))
+
+
 class ExecutionPlan(
     namedtuple("ExecPlan", "net needs provides dag steps evict"), Plotter
 ):
@@ -337,8 +395,7 @@ class ExecutionPlan(
             )
             if unknown:
                 raise ValueError(
-                    f"Impossible outputs: {list(unknown)}\n for graph: {self}"
-                    f"\n  {self}"
+                    f"Impossible outputs: {list(unknown)}\n for graph: {self}\n  {self}"
                 )
 
     def _check_if_aborted(self, executed):
@@ -347,19 +404,33 @@ class ExecutionPlan(
             _reset_abort()
             raise AbortedException({s: s in executed for s in self.steps})
 
-    def _call_operation(self, op, solution):
+    def _call_operation(self, op, solution, endurance):
         # Although `plan` have added to jetsam in `compute()``,
         # add it again, in case compile()/execute is called separately.
         t0 = time.time()
+        log.debug("+++ Executing op(%r)...", op.name)
         try:
-            return op.compute(solution)
+            outputs = op.compute(solution)
+            solution.operation_executed(op, outputs)
         except Exception as ex:
-            jetsam(ex, locals(), "solution", plan="self")
+            if not endurance:
+                jetsam(ex, locals(), "solution", plan="self")
+                raise
+
+            log.warning(
+                "... enduring while op(%r) FAILED due to: %s(%s)",
+                op.name,
+                type(ex).__name__,
+                ex,
+            )
+            solution.operation_failed(op, ex)
+            endurance.operation_failed(op, solution)
+
         finally:
             # record execution time
             t_complete = round(time.time() - t0, 5)
             solution.times[op.name] = t_complete
-            log.debug("...step completion time: %s", t_complete)
+            log.debug("... step completion time: %s", t_complete)
 
     def _execute_thread_pool_barrier_method(self, solution: Solution):
         """
@@ -371,6 +442,8 @@ class ExecutionPlan(
             must contain the input values only, gets modified
         """
         pool = _execution_configs.get()["execution_pool"]
+        # If endurance is enabled, create a collector of canceled ops downstream.
+        endurance = is_endure_execution() and _Endurance(self.dag)
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
@@ -393,7 +466,12 @@ class ExecutionPlan(
                         if isinstance(n, Operation)
                     ).issubset(solution.executed)
                 ):
-                    upnext.append(node)
+                    if endurance and node in endurance.canceled:
+                        log.debug(
+                            "+++ SKIPPED op(%r) due to previously failed ops.", node.name
+                        )
+                    else:
+                        upnext.append(node)
                 elif isinstance(node, _EvictInstruction):
                     # Only evict if all successors for the data node
                     # have been executed.
@@ -416,12 +494,13 @@ class ExecutionPlan(
             if not upnext:
                 break
 
-            done_iterator = pool.imap_unordered(
-                (lambda op: (op, self._call_operation(op, solution))), upnext
+            # FIXME: parallel does not execute nodes in insertion-order (same as sequential)!
+            list(
+                pool.imap_unordered(
+                    (lambda op: (op, self._call_operation(op, solution, endurance))),
+                    upnext,
+                )
             )
-
-            for op, outputs in done_iterator:
-                solution.operation_executed(op, outputs)
 
     def _execute_sequential_method(self, solution: Solution):
         """
@@ -430,14 +509,18 @@ class ExecutionPlan(
         :param solution:
             must contain the input values only, gets modified
         """
+        # If endurance is enabled, create a collector of canceled ops downstream.
+        endurance = is_endure_execution() and _Endurance(self.dag)
         for step in self.steps:
             self._check_if_aborted(solution.executed)
 
             if isinstance(step, Operation):
-                log.debug("%sexecuting step: %s", "-" * 32, step.name)
-
-                outputs = self._call_operation(step, solution)
-                solution.operation_executed(step, outputs)
+                if endurance and step in endurance.canceled:
+                    log.debug(
+                        "+++ SKIPPED op(%r) due to previously failed ops.", step.name
+                    )
+                    continue
+                self._call_operation(step, solution, endurance)
 
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.
@@ -702,7 +785,7 @@ class Network(Plotter):
         # and they will drop out while collecting ancestors from the outputs.
         #
         if inputs:
-            _break_incoming_edges(broken_dag, inputs)
+            _break_node_edges(broken_dag, *inputs, incoming=True)
 
         # Drop stray input values and operations (if any).
         if outputs is not None:

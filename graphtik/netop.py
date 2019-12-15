@@ -202,8 +202,10 @@ class NetworkOperation(Operation, Plotter):
             net = self.net  # jetsam
 
             # Build the execution plan.
+            log.debug("=== Compiling netop(%s)...", self.name)
             self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
 
+            log.debug("=== Executing netop(%s)...", self.name)
             solution = plan.execute(named_inputs, outputs, method=self.execution_method)
 
             return solution

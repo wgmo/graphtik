@@ -18,6 +18,7 @@ from graphtik import (
     operation,
     optional,
     set_skip_evictions,
+    set_endure_execution,
     sideffect,
     vararg,
 )
@@ -31,9 +32,7 @@ def exemethod(request):
 
 
 def scream(*args, **kwargs):
-    raise AssertionError(
-        "Must not have run!\n    args: %s\n  kwargs: %s", (args, kwargs)
-    )
+    raise AssertionError(f"Must not have run!\n    args: {args}\n  kwargs: {kwargs}")
 
 
 def identity(*x):
@@ -1076,6 +1075,33 @@ def test_skip_eviction_flag():
         assert graph.compute({"a": 1, "b": 3}, "aab") == exp
     finally:
         set_skip_evictions(False)
+
+
+def test_execution_endurance(exemethod):
+    set_endure_execution(True)
+
+    opb = operation(scream, needs=["a", "b"], provides=["a+b", "c"])
+    scream1 = opb(name="scream1")
+    scream2 = opb(name="scream2")
+    add1 = operation(name="add1", needs=["a", "b"], provides=["a+b"])(add)
+    add2 = operation(name="add2", needs=["a+b", "b"], provides=["a+2b"])(add)
+    canceled = operation(name="canceled", needs=["c"], provides="cc")(identity)
+    graph = compose("graph", scream1, add1, scream2, add2, canceled, method=exemethod)
+
+    inp = {"a": 1, "b": 2}
+    sol = graph(**inp)
+    assert sol.failures.keys() == {scream1, scream2}
+    assert "Must not have run!" in str(sol.failures[scream1])
+    assert sol == {"a+b": 3, "a+2b": 5, **inp}
+
+    sol = graph.narrowed(outputs="a+2b")(**inp)
+    assert sol.failures.keys() == {scream1, scream2}
+    assert "Must not have run!" in str(sol.failures[scream1])
+    assert sol == {"a+2b": 5}
+
+    # SILENTLY failing asked outputs
+    sol = graph.compute(inp, outputs=["a+2b", "cc"])
+    assert sol == {"a+2b": 5}
 
 
 def test_multithreading_plan_execution():
