@@ -12,7 +12,7 @@
 <text text-anchor="middle" x="244.59" y="-478.8" font-family="Times,serif" font-size="14.00">graphtik&#45;v4.1.0 flowchart</text>
 <g id="clust1" class="cluster">
 <title>cluster_compute</title>
-<g id="a_clust1"><a xlink:href="#term-compute" xlink:title="process, NetOp&#39;s method">
+<g id="a_clust1"><a xlink:href="arch.html#term-compute" xlink:title="process, NetOp&#39;s method">
 <polygon fill="none" stroke="black" stroke-dasharray="5,2" points="147.67,-44 147.67,-263 395.67,-263 395.67,-44 147.67,-44"/>
 <text text-anchor="middle" x="271.67" y="-51.8" font-family="bold" font-size="14.00">compute</text>
 </a>
@@ -21,7 +21,7 @@
 <!-- operations -->
 <g id="node1" class="node">
 <title>operations</title>
-<g id="a_node1"><a xlink:href="#term-operation" xlink:title="class">
+<g id="a_node1"><a xlink:href="arch.html#term-operation" xlink:title="class">
 <polygon fill="none" stroke="black" points="175.51,-471 35.78,-471 -0.17,-435 139.56,-435 175.51,-471"/>
 <text text-anchor="middle" x="87.67" y="-449.3" font-family="italic" font-size="14.00">operations</text>
 </a>
@@ -30,7 +30,7 @@
 <!-- compose -->
 <g id="node2" class="node">
 <title>compose</title>
-<g id="a_node2"><a xlink:href="#term-composition" xlink:title="phase">
+<g id="a_node2"><a xlink:href="arch.html#term-composition" xlink:title="phase">
 <ellipse fill="none" stroke="black" cx="87.67" cy="-381" rx="51.99" ry="18"/>
 <text text-anchor="middle" x="87.67" y="-377.3" font-family="italic" font-size="14.00">compose</text>
 </a>
@@ -45,7 +45,7 @@
 <!-- network -->
 <g id="node3" class="node">
 <title>network</title>
-<g id="a_node3"><a xlink:href="#term-network" xlink:title="class">
+<g id="a_node3"><a xlink:href="arch.html#term-network" xlink:title="class">
 <polygon fill="none" stroke="black" points="160.02,-327 44.93,-327 15.32,-291 130.41,-291 160.02,-327"/>
 <text text-anchor="middle" x="87.67" y="-305.3" font-family="italic" font-size="14.00">network</text>
 </a>
@@ -60,7 +60,7 @@
 <!-- compile -->
 <g id="node7" class="node">
 <title>compile</title>
-<g id="a_node7"><a xlink:href="#term-compilation" xlink:title="phase, Network&#39;s method">
+<g id="a_node7"><a xlink:href="arch.html#term-compilation" xlink:title="phase, Network&#39;s method">
 <ellipse fill="none" stroke="black" cx="271.67" cy="-237" rx="47.39" ry="18"/>
 <text text-anchor="middle" x="271.67" y="-233.3" font-family="italic" font-size="14.00">compile</text>
 </a>
@@ -75,7 +75,7 @@
 <!-- inputs -->
 <g id="node4" class="node">
 <title>inputs</title>
-<g id="a_node4"><a xlink:href="#term-inputs" xlink:title="mappings">
+<g id="a_node4"><a xlink:href="arch.html#term-inputs" xlink:title="mappings">
 <polygon fill="none" stroke="black" points="261.17,-327 178.17,-327 178.17,-291 261.17,-291 261.17,-327"/>
 <text text-anchor="middle" x="219.67" y="-305.3" font-family="Times,serif" font-size="14.00">input names</text>
 </a>
@@ -90,7 +90,7 @@
 <!-- outputs -->
 <g id="node5" class="node">
 <title>outputs</title>
-<g id="a_node5"><a xlink:href="#term-outputs" xlink:title="mappings">
+<g id="a_node5"><a xlink:href="arch.html#term-outputs" xlink:title="mappings">
 <polygon fill="none" stroke="black" points="369.67,-327 279.67,-327 279.67,-291 369.67,-291 369.67,-327"/>
 <text text-anchor="middle" x="324.67" y="-305.3" font-family="Times,serif" font-size="14.00">output names</text>
 </a>
@@ -105,7 +105,7 @@
 <!-- predicate -->
 <g id="node6" class="node">
 <title>predicate</title>
-<g id="a_node6"><a xlink:href="#term-node-predicate" xlink:title="function">
+<g id="a_node6"><a xlink:href="arch.html#term-node-predicate" xlink:title="function">
 <polygon fill="none" stroke="black" points="483.67,-327 387.67,-327 387.67,-291 483.67,-291 483.67,-327"/>
 <text text-anchor="middle" x="435.67" y="-305.3" font-family="Times,serif" font-size="14.00">node predicate</text>
 </a>
@@ -120,7 +120,7 @@
 <!-- plan -->
 <g id="node8" class="node">
 <title>plan</title>
-<g id="a_node8"><a xlink:href="#term-execution-plan" xlink:title="class">
+<g id="a_node8"><a xlink:href="arch.html#term-execution-plan" xlink:title="class">
 <polygon fill="none" stroke="black" points="387.69,-183 203.13,-183 155.65,-147 340.21,-147 387.69,-183"/>
 <text text-anchor="middle" x="271.67" y="-161.3" font-family="italic" font-size="14.00">execution plan</text>
 </a>
@@ -135,7 +135,7 @@
 <!-- execute -->
 <g id="node9" class="node">
 <title>execute</title>
-<g id="a_node9"><a xlink:href="#term-execution" xlink:title="phase, Plan&#39;s method">
+<g id="a_node9"><a xlink:href="arch.html#term-execution" xlink:title="phase, Plan&#39;s method">
 <ellipse fill="none" stroke="black" cx="305.67" cy="-93" rx="47.39" ry="18"/>
 <text text-anchor="middle" x="305.67" y="-89.3" font-family="italic" font-size="14.00">execute</text>
 </a>
@@ -150,7 +150,7 @@
 <!-- solution -->
 <g id="node11" class="node">
 <title>solution</title>
-<g id="a_node11"><a xlink:href="#term-solution" xlink:title="class">
+<g id="a_node11"><a xlink:href="arch.html#term-solution" xlink:title="class">
 <polygon fill="none" stroke="black" points="363.02,-36 271.79,-36 248.32,0 339.55,0 363.02,-36"/>
 <text text-anchor="middle" x="305.67" y="-14.3" font-family="Times,serif" font-size="14.00">solution</text>
 </a>
@@ -165,7 +165,7 @@
 <!-- values -->
 <g id="node10" class="node">
 <title>values</title>
-<g id="a_node10"><a xlink:href="#term-inputs" xlink:title="mappings">
+<g id="a_node10"><a xlink:href="arch.html#term-inputs" xlink:title="mappings">
 <polygon fill="none" stroke="black" points="489.17,-183 406.17,-183 406.17,-147 489.17,-147 489.17,-183"/>
 <text text-anchor="middle" x="447.67" y="-161.3" font-family="Times,serif" font-size="14.00">input values</text>
 </a>

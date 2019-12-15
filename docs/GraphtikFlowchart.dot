@@ -7,36 +7,36 @@ digraph {
     labelloc=t;
 
     operations  [shape=parallelogram fontname="italic" tooltip=class
-                 URL="#term-operation"];
+                 URL="arch.html#term-operation"];
     compose     [fontname="italic" tooltip=phase
-                 URL="#term-composition"];
+                 URL="arch.html#term-composition"];
     network     [shape=parallelogram fontname="italic" tooltip=class
-                 URL="#term-network"];
+                 URL="arch.html#term-network"];
     inputs      [shape=rect label="input names" tooltip=mappings
-                 URL="#term-inputs"];
+                 URL="arch.html#term-inputs"];
     outputs     [shape=rect label="output names" tooltip=mappings
-                 URL="#term-outputs"];
+                 URL="arch.html#term-outputs"];
     predicate   [shape=rect label="node predicate" tooltip=function
-                 URL="#term-node-predicate"];
+                 URL="arch.html#term-node-predicate"];
     subgraph cluster_compute {
         label=compute
         fontname=bold
         style=dashed
         labelloc=b
         tooltip="process, NetOp's method"
-        URL="#term-compute"
+        URL="arch.html#term-compute"
 
         compile     [fontname="italic" tooltip="phase, Network's method"
-                     URL="#term-compilation"];
+                     URL="arch.html#term-compilation"];
         plan        [shape=parallelogram label="execution plan" fontname="italic" tooltip=class
-                     URL="#term-execution-plan"];
+                     URL="arch.html#term-execution-plan"];
         execute     [fontname=italic fontname="italic" tooltip="phase, Plan's method"
-                     URL="#term-execution"];
+                     URL="arch.html#term-execution"];
     }
     values      [shape=rect label="input values" tooltip=mappings
-                 URL="#term-inputs"];
+                 URL="arch.html#term-inputs"];
     solution    [shape=parallelogram tooltip=class
-                 URL="#term-solution"];
+                 URL="arch.html#term-solution"];
 
     operations -> compose -> network    [arrowhead=vee];
     {network inputs outputs predicate} -> compile -> plan  [arrowhead=vee];

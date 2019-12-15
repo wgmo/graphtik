@@ -91,14 +91,17 @@ Architecture
         It is built by :meth:`.Network._build_execution_steps()` based on
         the subgraph `dag`.
 
-        There is a single type of *instruction*, :class:`_EvictInstruction`:,
-        which evicts items from `solution` as soon as they are not needed
-        further down the dag, to reduce memory footprint while computing.
+        The only *instruction* step is for performing `eviction`.
+
+    evict
+    eviction
+        The :class:`_EvictInstruction` `steps` erase items from
+        `solution` as soon as they are not needed further down the dag,
+        to reduce memory footprint while computing.
 
     solution
         A :class:`.Solution` created internally by :meth:`.NetworkOperation.compute()`
-        to hold the values of the `inputs`, and those of the generated
-        (intermediate and possibly overwritten) `outputs`.
+        to hold the values both `inputs` & `outputs`, and the status of *executed* operations.
         It is based on a :class:`collections.ChainMap`, to keep one dictionary
         for each `operation` executed +1 for inputs.
 
@@ -129,7 +132,8 @@ Architecture
 
     plan
     execution plan
-        Class :class:`.ExecutionPlan` perform the `execution` phase.
+        Class :class:`.ExecutionPlan` perform the `execution` phase which contains
+        the `dag` and the `steps`.
 
         `Compile`\ed *execution plans* are cached in :attr:`.Network._cached_plans`
         across runs with (`inputs`, `outputs`, `predicate`) as key.
@@ -152,12 +156,18 @@ Architecture
         The :class:`.NetworkOperation` class holding a `network` of `operation`\s.
 
     needs
-        A list of names of the compulsory/optional values an operation's
+        A list of names of the compulsory/optional values or `sideffects` an operation's
         underlying callable requires to execute.
 
     provides
         A list of names of the values produced when the `operation`'s
         underlying callable executes.
+
+    sideffects
+        Fictive `needs` or `provides` not consumed/produced by the underlying function
+        of an `operation`, annotated with :class:`.sideffect`.
+        A *sideffect* participates in the solution of the graph but is never
+        given/asked to/from functions.
 
     prune
     pruning

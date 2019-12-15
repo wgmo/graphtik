@@ -376,29 +376,54 @@ def legend(filename=None, show=None, jupyter_render: Mapping = None):
         subgraph cluster_legend {
         label="Graphtik Legend";
 
-        operation   [shape=oval fontname=italic];
-        graphop     [shape=egg label="graph operation" fontname=italic];
-        insteps     [penwidth=3 label="execution step" fontname=italic];
-        executed    [style=filled fillcolor=wheat fontname=italic];
-        operation -> graphop -> insteps -> executed [style=invis];
+        operation   [shape=oval fontname=italic
+                     tooltip="A function with needs & provides."
+                     URL="arch.html#term-operation"];
+        insteps     [penwidth=3 label="execution step" fontname=italic
+                     tooltip="Execution plan included this operation/eviction."
+                     URL="arch.html#term-execution-steps"];
+        executed    [style=filled fillcolor=wheat fontname=italic
+                     tooltip="Step executed."
+                     URL="arch.html#term-solution"];
+        operation -> insteps -> executed [style=invis];
 
-        data    [shape=rect];
-        input   [shape=invhouse];
-        output  [shape=house];
-        inp_out [shape=hexagon label="inp+out"];
-        evicted [shape=rect penwidth=3 color="#990000"];
-        sol     [shape=rect style=filled fillcolor=wheat label="in solution"];
+        data    [shape=rect
+                 tooltip="Any data not given or asked."
+                 URL="arch.html#term-graph"];
+        input   [shape=invhouse
+                 tooltip="Solution value given into the computation."
+                 URL="arch.html#term-inputs"];
+        output  [shape=house
+                 tooltip="Solution value asked from the computation."
+                 URL="arch.html#term-outputs"];
+        inp_out [shape=hexagon label="inp+out"
+                 tooltip="Data both given and asked (overwrites)."
+                 URL="arch.html#term-overwrites"];
+        evicted [shape=rect penwidth=3 color="#990000"
+                 tooltip="Data erased from solution to save memory."
+                 URL="arch.html#term-evictions"];
+        sol     [shape=rect style=filled fillcolor=wheat label="in solution"
+                 tooltip="Solution contains a value for this data."
+                 URL="arch.html#term-solution"];
         data -> input -> output -> inp_out -> evicted -> sol [style=invis];
 
         e1 [style=invis];
         e1 -> e2;
-        e2 [color=invis label="dependency"];
+        e2 [color=invis label="dependency"
+            tooltip="Regular `needs` or a `provides`."
+            URL="arch.html#term-needs"];
         e2 -> e3 [style=dashed];
-        e3 [color=invis label="optional"];
+        e3 [color=invis label="optional"
+            tooltip="Optional/**kw/*vararg `needs`."
+            URL="arch.html#term-needs"];
         e3 -> e4 [color=blue];
-        e4 [color=invis label="sideffect"];
+        e4 [color=invis label="sideffect"
+            tooltip="Fictive data not consumed/produced by underlying function."
+            URL="arch.html#term-sideffects"];
         e4 -> e5 [color="#009999" penwidth=4 style=dotted arrowhead=vee label=1 fontcolor="#009999"];
-        e5 [color=invis penwidth=4 label="execution sequence"];
+        e5 [color=invis penwidth=4 label="execution sequence"
+            tooltip="Sequence of execution steps."
+            URL="arch.html#term-execution-steps"];
         }
     }
     """
