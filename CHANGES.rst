@@ -14,8 +14,14 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
-v4.2.0 (  Dec 2019, @ankostis): ENDURED Execution
-=================================================
+v4.3.0 (16 Dec 2019, @ankostis): Aliases
+========================================
++ FEAT(OP): support "aliases" of `provides`, to avoid pipe-through operations
+  just to rename & match operations.
+
+
+v4.2.0 (16 Dec 2019, @ankostis): ENDURED Execution (NOT PyPi-RELEASED)
+======================================================================
 + FEAT(NET): when :func:`.set_endure_execution` configuration is set to true,
   a :term:`netop` will keep on calculating solution, skipping any operations
   downstream from failed ones.  The :term:`solution` eventually collects all failures
