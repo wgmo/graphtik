@@ -360,8 +360,20 @@ def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str 
     return dot
 
 
-def legend(filename=None, show=None, jupyter_render: Mapping = None):
-    """Generate a legend for all plots (see :meth:`.Plotter.plot()` for args)"""
+def legend(
+    filename=None,
+    show=None,
+    jupyter_render: Mapping = None,
+    arch_url="https://graphtik.readthedocs.io/en/latest/arch.html",
+):
+    """
+    Generate a legend for all plots (see :meth:`.Plotter.plot()` for args)
+
+    :param arch_url:
+        the url to the architecture section explaining *graphtik* glassary.
+
+    See :func:`render_pydot` for the rest argyments.
+    """
 
     _monkey_patch_for_jupyter(pydot)
 
@@ -378,55 +390,67 @@ def legend(filename=None, show=None, jupyter_render: Mapping = None):
 
         operation   [shape=oval fontname=italic
                      tooltip="A function with needs & provides."
-                     URL="arch.html#term-operation"];
+                     URL="%(url)s#term-operation"];
         insteps     [penwidth=3 label="execution step" fontname=italic
-                     tooltip="Execution plan included this operation/eviction."
-                     URL="arch.html#term-execution-steps"];
+                     tooltip="Either an operation or ean eviction-instruction."
+                     URL="%(url)s#term-execution-steps"];
         executed    [style=filled fillcolor=wheat fontname=italic
-                     tooltip="Step executed."
-                     URL="arch.html#term-solution"];
-        operation -> insteps -> executed [style=invis];
+                     tooltip="Step executed succesfully."
+                     URL="%(url)s#term-solution"];
+        failed      [style=filled fillcolor=LightCoral fontname=italic
+                     tooltip="Step failed."
+                     URL="%(url)s#term-endurance"];
+        canceled    [style=filled fillcolor=Grey fontname=italic
+                     tooltip="Canceled step due to failures upstream."
+                     URL="%(url)s#term-endurance"];
+        operation -> insteps -> executed -> failed -> canceled [style=invis];
 
         data    [shape=rect
                  tooltip="Any data not given or asked."
-                 URL="arch.html#term-graph"];
+                 URL="%(url)s#term-graph"];
         input   [shape=invhouse
                  tooltip="Solution value given into the computation."
-                 URL="arch.html#term-inputs"];
+                 URL="%(url)s#term-inputs"];
         output  [shape=house
                  tooltip="Solution value asked from the computation."
-                 URL="arch.html#term-outputs"];
+                 URL="%(url)s#term-outputs"];
         inp_out [shape=hexagon label="inp+out"
-                 tooltip="Data both given and asked (overwrites)."
-                 URL="arch.html#term-overwrites"];
+                 tooltip="Data both given and asked."
+                 URL="%(url)s#term-netop"];
         evicted [shape=rect penwidth=3 color="#990000"
-                 tooltip="Data erased from solution to save memory."
-                 URL="arch.html#term-evictions"];
+                 tooltip="Data erased from solution, to save memory."
+                 URL="%(url)s#term-evictions"];
         sol     [shape=rect style=filled fillcolor=wheat label="in solution"
-                 tooltip="Solution contains a value for this data."
-                 URL="arch.html#term-solution"];
-        data -> input -> output -> inp_out -> evicted -> sol [style=invis];
+                 tooltip="Data contained in the solution."
+                 URL="%(url)s#term-solution"];
+        overwrite [shape=rect style=filled fillcolor=SkyBlue
+                 tooltip="More than 1 values exist in solution with this name."
+                 URL="%(url)s#term-overwrites"];
+        data -> input -> output -> inp_out -> evicted -> sol -> overwrite [style=invis];
 
-        e1 [style=invis];
-        e1 -> e2;
-        e2 [color=invis label="dependency"
-            tooltip="Regular `needs` or a `provides`."
-            URL="arch.html#term-needs"];
-        e2 -> e3 [style=dashed];
-        e3 [color=invis label="optional"
-            tooltip="Optional/**kw/*vararg `needs`."
-            URL="arch.html#term-needs"];
-        e3 -> e4 [color=blue];
-        e4 [color=invis label="sideffect"
-            tooltip="Fictive data not consumed/produced by underlying function."
-            URL="arch.html#term-sideffects"];
-        e4 -> e5 [color="#009999" penwidth=4 style=dotted arrowhead=vee label=1 fontcolor="#009999"];
-        e5 [color=invis penwidth=4 label="execution sequence"
-            tooltip="Sequence of execution steps."
-            URL="arch.html#term-execution-steps"];
+        e1          [style=invis];
+        e1          -> requirement;
+        requirement [color=invis
+                     tooltip="From operation --> `provides`, or from `needs` --> operation."
+                     URL="%(url)s#term-needs"];
+        requirement -> optional     [style=dashed];
+        optional    [color=invis
+                     tooltip="The operation can run even if this `need` is missing (e.g. *varag, **kw)."
+                     URL="%(url)s#term-needs"];
+        optional    -> sideffect    [color=blue];
+        sideffect   [color=invis
+                     tooltip="Fictive data not consumed/produced by underlying function."
+                     URL="%(url)s#term-sideffects"];
+        sideffect   -> sequence     [color="#009999" penwidth=4 style=dotted
+                                     arrowhead=vee label=1 fontcolor="#009999"];
+        sequence    [color=invis penwidth=4 label="execution sequence"
+                     tooltip="Sequence of execution steps."
+                     URL="%(url)s#term-execution-steps"];
         }
     }
-    """
+    """ % {
+        "url": arch_url
+    }
 
     dot = pydot.graph_from_dot_data(dot_text)[0]
     # clus = pydot.Cluster("Graphtik legend", label="Graphtik legend")
