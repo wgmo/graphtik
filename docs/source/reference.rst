@@ -15,7 +15,7 @@ Module: `op`
 ====================
 
 .. automodule:: graphtik.op
-     :members:
+     :members: Operation, FunctionalOperation, reparse_operation_data
      :undoc-members:
 
 Module: `netop`

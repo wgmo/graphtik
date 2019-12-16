@@ -24,7 +24,6 @@ use the ``operation`` builder class:
    :members:  withset, __call__
    :special-members:
 
-
 Operations are just functions
 ------------------------------
 

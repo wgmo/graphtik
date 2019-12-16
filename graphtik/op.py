@@ -24,6 +24,7 @@ def _dict_without(kw, *todel):
 
 
 def as_renames(i, argname):
+    """parses a list of (source-->destination) from dict, list-of-2-items, single 2-tuple."""
     if not i:
         return ()
 
