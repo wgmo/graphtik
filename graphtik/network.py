@@ -49,6 +49,7 @@ class AbortedException(Exception):
 
 
 def abort_run():
+    """Signal to the 1st running network to stop :term:`execution`."""
     _execution_configs.get()["abort"] = True
 
 
@@ -57,22 +58,27 @@ def _reset_abort():
 
 
 def is_abort():
+    """Return `True` if networks have been signaled to stop :term:`execution`."""
     return _execution_configs.get()["abort"]
 
 
 def set_skip_evictions(skipped):
+    """If true, keep all intermediate solution values, regardless of asked outputs."""
     _execution_configs.get()["skip_evictions"] = bool(skipped)
 
 
 def is_skip_evictions():
+    """Return `True` if keeping all intermediate solution values, regardless of asked outputs."""
     return _execution_configs.get()["skip_evictions"]
 
 
 def set_endure_execution(endure):
+    """If set to true, keep executing even of some operations fail."""
     _execution_configs.get()["endure_execution"] = bool(endure)
 
 
 def is_endure_execution():
+    """Is execution going even of some operations fail?"""
     return _execution_configs.get()["endure_execution"]
 
 
@@ -157,6 +163,8 @@ class Solution(ChainMap, Plotter):
         a "virtual" property with executed operations that had no exception
     :ivar failures:
         a "virtual" property with executed operations that raised an exception
+    :ivar canceled:
+        A sorted set of operations canceled due to upstream failures.
     :ivar finished:
         a flag denoting that this instance cannot acccept more results
         (after the :meth:`finished` has been invoked)
@@ -169,6 +177,7 @@ class Solution(ChainMap, Plotter):
 
         self.plan = plan
         self.executed = {}
+        self.canceled = iset()  # not iterated, order not important, but ...
         self.finished = False
         self.times = {}
 
@@ -297,11 +306,11 @@ class _Endurance:
         Unsattisfied operations downstream from failed ones.
     """
 
-    def __init__(self, dag):
+    def __init__(self, dag, canceled):
         ## Clone to remove the downstream edges from the `provides`
         #  of failed operations.
         self.dag = dag.copy()
-        self.canceled = set()  # not iterated, order not important
+        self.canceled = canceled
 
     def operation_failed(self, op: Operation, inputs):
         """update :attr:`canceled` with the unsatisfiead ops downstream of `op`."""
@@ -443,7 +452,7 @@ class ExecutionPlan(
         """
         pool = _execution_configs.get()["execution_pool"]
         # If endurance is enabled, create a collector of canceled ops downstream.
-        endurance = is_endure_execution() and _Endurance(self.dag)
+        endurance = is_endure_execution() and _Endurance(self.dag, solution.canceled)
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
@@ -468,7 +477,8 @@ class ExecutionPlan(
                 ):
                     if endurance and node in endurance.canceled:
                         log.debug(
-                            "+++ SKIPPED op(%r) due to previously failed ops.", node.name
+                            "+++ SKIPPED op(%r) due to previously failed ops.",
+                            node.name,
                         )
                     else:
                         upnext.append(node)
@@ -510,7 +520,7 @@ class ExecutionPlan(
             must contain the input values only, gets modified
         """
         # If endurance is enabled, create a collector of canceled ops downstream.
-        endurance = is_endure_execution() and _Endurance(self.dag)
+        endurance = is_endure_execution() and _Endurance(self.dag, solution.canceled)
         for step in self.steps:
             self._check_if_aborted(solution.executed)
 
