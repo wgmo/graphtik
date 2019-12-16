@@ -3,6 +3,7 @@
 """About :term:`operation` nodes (but not net-ops to break cycle)."""
 
 import abc
+import itertools as itt
 import logging
 from collections import abc as cabc
 from collections import namedtuple
@@ -14,6 +15,37 @@ from .base import Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
+
+
+def _dict_without(kw, *todel):
+    for i in todel:
+        del kw[i]
+    return kw
+
+
+def as_renames(i, argname):
+    if not i:
+        return ()
+
+    def is_list_of_2(i):
+        try:
+            return all(len(ii) == 2 for ii in i)
+        except Exception:
+            pass  # Let it be, it may be a dictionary...
+
+    if isinstance(i, tuple) and len(i) == 2:
+        i = [i]
+    elif not isinstance(i, cabc.Collection):
+        raise ValueError(
+            f"Argument {argname} must be a list of 2-element items, was: {i!r}"
+        ) from None
+    elif not is_list_of_2(i):
+        try:
+            i = dict(i).items()
+        except Exception as ex:
+            raise ValueError(f"Cannot dict-ize {argname}({i!r}) due to: {ex}") from None
+
+    return i
 
 
 def reparse_operation_data(name, needs, provides):
@@ -52,7 +84,7 @@ class Operation(abc.ABC):
         It is called by :class:`.Network`.
         End-users should simply call the operation with `named_inputs` as kwargs.
 
-        :param list named_inputs:
+        :param named_inputs:
             the input values with which to feed the computation.
         :returns list:
             Should return a list values representing
@@ -62,12 +94,20 @@ class Operation(abc.ABC):
 
 
 class FunctionalOperation(
-    namedtuple("FnOp", "fn name needs provides parents node_props returns_dict"),
+    namedtuple(
+        "FnOp",
+        "fn name needs provides real_provides aliases parents node_props returns_dict",
+    ),
     Operation,
 ):
     """
     An :term:`operation` performing a callable (ie a function, a method, a
     lambda).
+
+    :ivar provides:
+        Names of output values this operation provides (including aliases).
+    :ivar real_provides:
+        Names of output values the underlying function provides.
 
     .. Tip::
         Use :class:`operation()` builder class to build instances of this class instead.
@@ -79,6 +119,7 @@ class FunctionalOperation(
         name,
         needs: Items = None,
         provides: Items = None,
+        aliases: Mapping = None,
         *,
         parents: Tuple = None,
         node_props: Mapping = None,
@@ -93,7 +134,9 @@ class FunctionalOperation(
         :param needs:
             Names of input data objects this operation requires.
         :param provides:
-            Names of output data objects this provides.
+            Names of the **real output values** the underlying function provides.
+        :param aliases:
+            an optional mapping of real `provides` to additional ones
         :param parents:
             a tuple wth the names of the parents, prefixing `name`,
             but also kept for equality/hash check.
@@ -109,15 +152,46 @@ class FunctionalOperation(
         if not fn or not callable(fn):
             raise ValueError(f"Operation was not provided with a callable: {fn}")
         if parents and not isinstance(parents, tuple):
-            raise ValueError(f"Operation `parents` must be tuple, was {parents}")
+            raise ValueError(
+                f"Operation `parents` must be tuple, was {type(parents): }{parents}"
+            )
         if node_props is not None and not isinstance(node_props, cabc.Mapping):
-            raise ValueError(f"Operation `node_props` must be a dict, was {node_props}")
+            raise ValueError(
+                f"Operation `node_props` must be a dict, was {type(node_props)}: {node_props}"
+            )
 
         ## Overwrite reparsed op-data.
         name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
-        name, needs, provides = reparse_operation_data(name, needs, provides)
+        name, needs, real_provides = reparse_operation_data(name, needs, provides)
+
+        if aliases:
+            aliases = as_renames(aliases, "aliases")
+            alias_src, alias_dst = list(zip(*aliases))
+            full_provides = iset(itt.chain(real_provides, alias_dst))
+            if not set(alias_src) <= set(real_provides):
+                raise ValueError(
+                    f"Operation `aliases` contain sources not found in real `provides`: {list(iset(alias_src) - real_provides)}"
+                )
+            if any(isinstance(i, sideffect) for i in alias_src) or any(
+                isinstance(i, sideffect) for i in alias_dst
+            ):
+                raise ValueError(
+                    f"Operation `aliases` must not contain `sideffects`: {aliases}"
+                    "\n  Simply add any extra `sideffects` in the `provides`."
+                )
+        else:
+            full_provides = real_provides
         return super().__new__(
-            cls, fn, name, needs, provides, parents, node_props, returns_dict
+            cls,
+            fn,
+            name,
+            needs,
+            full_provides,
+            real_provides,
+            aliases,
+            parents,
+            node_props,
+            returns_dict,
         )
 
     def __eq__(self, other):
@@ -158,8 +232,9 @@ class FunctionalOperation(
         name = kw["name"] if "name" in kw else self.name
         needs = kw["needs"] if "needs" in kw else self.needs
         provides = kw["provides"] if "provides" in kw else self.provides
+        aliases = kw["aliases"] if "aliases" in kw else self.aliases
 
-        return FunctionalOperation(fn, name, needs, provides, **kw)
+        return FunctionalOperation(fn, name, needs, provides, aliases, **kw)
 
     def _zip_results_with_provides(self, results, real_provides: iset) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
@@ -196,6 +271,10 @@ class FunctionalOperation(
             raise ValueError(
                 f"Results({results}) mismatched provides({real_provides})!\n  {self}"
             )
+
+        if self.aliases:
+            alias_values = [(dst, results[src]) for src, dst in self.aliases]
+            results.update(alias_values)
 
         return results
 
@@ -244,7 +323,9 @@ class FunctionalOperation(
 
             results_fn = self.fn(*args, **optionals)
 
-            provides = iset(n for n in self.provides if not isinstance(n, sideffect))
+            provides = iset(
+                n for n in self.real_provides if not isinstance(n, sideffect)
+            )
             results_op = self._zip_results_with_provides(results_fn, provides)
 
             if outputs:
@@ -260,6 +341,7 @@ class FunctionalOperation(
                 ex,
                 locals(),
                 "outputs",
+                "aliases",
                 "provides",
                 "results_fn",
                 "results_op",
@@ -284,14 +366,16 @@ class operation:
         be set via ``__call__`` later.
     :param str name:
         The name of the operation in the computation graph.
-    :param list needs:
+    :param needs:
         Names of input data objects this operation requires.  These should
         correspond to the ``args`` of ``fn``.
-    :param list provides:
+    :param provides:
         Names of output data objects this operation provides.
         If more than one given, those must be returned in an iterable,
         unless `returns_dict` is true, in which cae a dictionary with as many
         elements must be returned
+    :param aliases:
+        an optional mapping of `provides` to additional ones
     :param bool returns_dict:
         if true, it means the `fn` returns a dictionary with all `provides`,
         and no further processing is done on them
@@ -334,15 +418,11 @@ class operation:
         name=None,
         needs: Items = None,
         provides: Items = None,
+        aliases: Mapping = None,
         returns_dict=None,
         node_props: Mapping = None,
     ):
-        self.fn = fn
-        self.name = name
-        self.needs = needs
-        self.provides = provides
-        self.returns_dict = returns_dict
-        self.node_props = node_props
+        vars(self).update(_dict_without(locals(), "self"))
 
     def withset(
         self,
@@ -351,9 +431,11 @@ class operation:
         name=None,
         needs: Items = None,
         provides: Items = None,
+        aliases: Mapping = None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> "operation":
+        """See :class:`operation` for arguments here."""
         if fn is not None:
             self.fn = fn
         if name is not None:
@@ -362,6 +444,8 @@ class operation:
             self.needs = needs
         if provides is not None:
             self.provides = provides
+        if aliases is not None:
+            self.aliases = aliases
         if returns_dict is not None:
             self.returns_dict = returns_dict
         if node_props is not None:
@@ -376,6 +460,7 @@ class operation:
         name=None,
         needs: Items = None,
         provides: Items = None,
+        aliases: Mapping = None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> FunctionalOperation:
@@ -400,15 +485,7 @@ class operation:
             Returns an operation class that can be called as a function or
             composed into a computation graph.
         """
-
-        self.withset(
-            fn=fn,
-            name=name,
-            needs=needs,
-            provides=provides,
-            returns_dict=returns_dict,
-            node_props=node_props,
-        )
+        self.withset(**_dict_without(locals(), "self"))
 
         return FunctionalOperation(**vars(self))
 

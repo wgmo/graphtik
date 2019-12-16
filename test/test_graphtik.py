@@ -325,6 +325,12 @@ def test_network_merge_in_doctests():
         "provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'], x4ops)"
     )
 
+def test_aliases(exemethod):
+    op = compose("test_net",
+    operation(lambda: 'A', name='op1', provides='a', aliases={'a':'b'})(),
+    operation(lambda x: x * 2, name='op2', needs='b', provides='c')(),
+    )
+    assert op() == {'a': 'A', 'b': 'A', 'c': 'AA'}
 
 @pytest.fixture
 def samplenet():

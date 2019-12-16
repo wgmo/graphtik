@@ -3,9 +3,9 @@
 
 import pytest
 
-from graphtik import compose, operation, optional, vararg, varargs
+from graphtik import compose, operation, optional, sideffect, vararg, varargs
 from graphtik.network import yield_ops
-from graphtik.op import Operation, reparse_operation_data
+from graphtik.op import Operation, as_renames, reparse_operation_data
 
 
 @pytest.fixture(params=[None, ["some"]])
@@ -195,3 +195,52 @@ def test_netop_merge_node_props():
     exp = {"a": {"a": 1, "bb": 22, "c": 44}, "b": {"a": 3, "bb": 22, "c": 44}}
     node_props = _collect_op_props(netop)
     assert node_props == exp
+
+
+@pytest.mark.parametrize(
+    "inp, exp",
+    [
+        ({"a": "b"}, {"a": "b"}.items()),
+        ((1, 2), [(1, 2)]),
+        ([(1, 2)], [(1, 2)]),
+        ([], []),
+        ((), []),
+        (("ab", "ad"), [("a", "b"), ("a", "d")]),
+    ],
+)
+def test_as_renames(inp, exp):
+    as_renames((1, 2), "talias")
+
+
+@pytest.mark.parametrize(
+    "opbuilder, ex",
+    [
+        (
+            operation(str, aliases={"a": 1}),
+            r"Operation `aliases` contain sources not found in real `provides`: \['a'\]",
+        ),
+        (
+            operation(str, name="t", provides="a", aliases={"a": 1, "b": 2}),
+            r"Operation `aliases` contain sources not found in real `provides`: \['b'\]",
+        ),
+        (
+            operation(
+                str, name="t", provides=sideffect("a"), aliases={sideffect("a"): 1}
+            ),
+            r"must not contain `sideffects`",
+        ),
+        (
+            operation(str, name="t", provides="a", aliases={"a": sideffect("AA")}),
+            r"must not contain `sideffects`",
+        ),
+    ],
+)
+def test_provides_aliases_BAD(opbuilder, ex):
+    with pytest.raises(ValueError, match=ex):
+        opbuilder()
+
+
+def test_provides_aliases():
+    op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})()
+    assert op.provides == {"a", "aa"}
+    assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}

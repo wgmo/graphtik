@@ -101,7 +101,8 @@ with the folllowing properties, as a debug aid:
 ...     )(a=None)
 ... except ValueError as ex:
 ...     pprint(ex.jetsam)
-{'args': {'args': [None], 'kwargs': {}},
+{'aliases': None,
+ 'args': {'args': [None], 'kwargs': {}},
  'network': Network(
     +--a
     +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')

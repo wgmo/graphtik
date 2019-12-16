@@ -142,7 +142,7 @@ class _ScreamingOperation(op.Operation):
                 operation(name="test", needs=["a"], provides=["b"])(_scream).compute,
                 named_inputs={"a": 1},
             ),
-            "outputs provides results_fn results_op operation args".split(),
+            "outputs provides aliases results_fn results_op operation args".split(),
         ),
         (
             fnt.partial(
@@ -183,7 +183,7 @@ class _DummyOperation(op.Operation):
         # NO old-stuff Operation(fn=_jetsamed_fn, name="test", needs="['a']", provides=[]),
         (
             fnt.partial(operation(_scream, name="test")().compute, named_inputs=None),
-            "outputs provides results_fn results_op operation args".split(),
+            "outputs provides aliases results_fn results_op operation args".split(),
         ),
         (
             fnt.partial(
@@ -192,7 +192,7 @@ class _DummyOperation(op.Operation):
                 solution=Solution(None),
                 endurance=None,
             ),
-            "solution outputs provides results_fn results_op operation args plan".split(),
+            "solution outputs provides aliases results_fn results_op operation args plan".split(),
         ),
         (
             fnt.partial(
