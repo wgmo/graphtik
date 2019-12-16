@@ -166,6 +166,9 @@ def build_pydot(
 
     steps_thickness = 3
     fill_color = "wheat"
+    failed_color = "LightCoral"
+    cancel_color = "Grey"
+    overwrite_color = "SkyBlue"
     steps_color = "#009999"
     new_clusters = {}
 
@@ -214,7 +217,11 @@ def build_pydot(
             # LABEL change with solution.
             if solution and nx_node in solution:
                 kw["style"] = "filled"
-                kw["fillcolor"] = fill_color
+                kw["fillcolor"] = (
+                    overwrite_color
+                    if nx_node in getattr(solution, "overwrites", ())
+                    else fill_color
+                )
                 ## NOTE: SVG tooltips not working without URL:
                 #  https://gitlab.com/graphviz/graphviz/issues/1425
                 kw["tooltip"] = str(solution.get(nx_node))
@@ -225,9 +232,15 @@ def build_pydot(
             if steps and nx_node in steps:
                 kw["penwdth"] = steps_thickness
             shape = "egg" if isinstance(nx_node, NetworkOperation) else "oval"
-            if nx_node in getattr(solution, "executed", ()):
+            if nx_node in getattr(solution, "failures", ()):
+                kw["style"] = "filled"
+                kw["fillcolor"] = failed_color
+            elif nx_node in getattr(solution, "executed", ()):
                 kw["style"] = "filled"
                 kw["fillcolor"] = fill_color
+            elif nx_node in getattr(solution, "canceled", ()):
+                kw["style"] = "filled"
+                kw["fillcolor"] = cancel_color
             try:
                 kw["URL"] = f"file://{inspect.getfile(nx_node.fn)}"
             except Exception as ex:

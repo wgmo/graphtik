@@ -504,8 +504,14 @@ def test_pruning_multiouts_not_override_intermediates1(exemethod):
     assert solution == exp
     assert solution.overwrites == {"overidden": [5, 1]}
 
+    # Check plotting Overwrites.
+    assert "SkyBlue" in str(solution.plot())
+
     solution = pipeline.compute(inp1, "asked")
     assert solution.overwrites == {}
+
+    # Check not plotting Overwrites.
+    assert "SkyBlue" not in str(solution.plot())
 
 
 @pytest.mark.xfail(
@@ -1103,6 +1109,11 @@ def test_execution_endurance(exemethod):
     sol = graph.compute(inp, outputs=["a+2b", "cc"])
     assert sol == {"a+2b": 5}
 
+    # Check plotting Fail & Cancel.
+    #
+    dot = str(sol.plot())
+    assert "LightCoral" in dot # failed
+    assert "Grey" in dot # Canceled
 
 def test_multithreading_plan_execution():
     # From Huygn's test-code given in yahoo/graphkit#31
