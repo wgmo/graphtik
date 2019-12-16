@@ -23,6 +23,7 @@ setup(
     version=version,
     description="Lightweight computation graphs for Python",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="Kostis Anagnostopoulos, Huy Nguyen, Arel Cordero, Pierre Garrigues, Rob Hess, "
     "Tobi Baumgartner, Clayton Mellina",
     author_email="ankostis@gmail.com",
