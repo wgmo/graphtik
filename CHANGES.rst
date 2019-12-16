@@ -20,8 +20,8 @@ v4.3.0 (16 Dec 2019, @ankostis): Aliases
   just to rename & match operations.
 
 
-v4.2.0 (16 Dec 2019, @ankostis): ENDURED Execution (NOT PyPi-RELEASED)
-======================================================================
+v4.2.0 (16 Dec 2019, @ankostis): ENDURED Execution
+==================================================  
 + FEAT(NET): when :func:`.set_endure_execution` configuration is set to true,
   a :term:`netop` will keep on calculating solution, skipping any operations
   downstream from failed ones.  The :term:`solution` eventually collects all failures
