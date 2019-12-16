@@ -192,6 +192,16 @@ Architecture
         A callable(op, node-data) that should return true for nodes not to be
         :meth:`~.NetworkOperation.narrowed`.
 
+    endurance
+        Keep executing as many `operation`\s as possible, even of some of them fail.
+        If :func:`.set_endure_execution()` is se to true, you may interogate
+        :class:`.Solution` properties to discover whether an operation may be:
+
+        - executed successfully,
+        - *failed*, or
+        - *canceled*, if another operation, the sole provider of a compulsory `needs`,
+          has failed upstreams.
+
 .. default-role:: obj
 .. |v410-flowchart| raw:: html
     :file: images/GraphtikFlowchart-v4.1.0.svg

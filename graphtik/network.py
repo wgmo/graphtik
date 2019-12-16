@@ -63,7 +63,7 @@ def is_abort():
 
 
 def set_skip_evictions(skipped):
-    """If true, keep all intermediate solution values, regardless of asked outputs."""
+    """If :term:`eviction` is true, keep all intermediate solution values, regardless of asked outputs."""
     _execution_configs.get()["skip_evictions"] = bool(skipped)
 
 
@@ -73,7 +73,7 @@ def is_skip_evictions():
 
 
 def set_endure_execution(endure):
-    """If set to true, keep executing even of some operations fail."""
+    """If :term:`endurance` set to true, keep executing even of some operations fail."""
     _execution_configs.get()["endure_execution"] = bool(endure)
 
 
