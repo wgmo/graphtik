@@ -16,12 +16,16 @@ def test_README_as_PyPi_landing_page(monkeypatch):
     )
     assert long_desc
 
-    monkeypatch.setattr(sys, "exit", lambda *args: None)
+    # See `docutils.frontend`
     dcore.publish_string(
         long_desc,
         enable_exit_status=False,
-        settings_overrides={  # see `docutils.frontend` for more.
-            "halt_level": 2  # 2=WARN, 1=INFO
+        # The specific options are a selective copy of:
+        # https://github.com/pypa/readme_renderer/blob/master/readme_renderer/rst.py
+        settings_overrides={
+            "halt_level": 2,  # 2=WARN, 1=INFO
+            "output_encoding": "unicode",
+            "raw_enabled": False,
         },
     )
 
