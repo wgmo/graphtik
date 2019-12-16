@@ -85,8 +85,10 @@ Run the graph and request all of the outputs::
     :alt: sample graphtik plot
     :width: 120px
     :align: middle
-.. |sample-sol| raw:: html
-    :file:  docs/source/images/executed_3ops.svg
+.. |sample-sol| image:: docs/source/images/executed_3ops.svg
+    :alt: sample graphtik plot
+    :width: 120px
+    :align: middle
 .. |plot-legend| image:: docs/source/images/GraphtikLegend.svg
     :alt: graphtik legend
     :align: middle

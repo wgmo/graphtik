@@ -93,14 +93,11 @@ Run the graph-operation and request a subset of the outputs::
 As you can see, any function can be used as an operation in Graphtik,
 even ones imported from system modules!
 
-.. |sample-plot| image:: images/barebone_2ops.svg
-    :alt: sample graphtik plot
-    :width: 120px
-    :align: middle
+.. |sample-plot| raw:: html
+    :file:  images/barebone_2ops.svg
 .. |sample-sol| raw:: html
     :file:  images/executed_3ops.svg
-.. |plot-legend| image:: images/GraphtikLegend.svg
-    :alt: graphtik legend
-    :align: middle
+.. |plot-legend| raw:: html
+    :file:  images/GraphtikLegend.svg
 .. include:: ../../README.rst
     :start-after: _substs:
