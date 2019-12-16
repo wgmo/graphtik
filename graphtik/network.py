@@ -165,6 +165,12 @@ class Solution(ChainMap, Plotter):
         a "virtual" property with executed operations that raised an exception
     :ivar canceled:
         A sorted set of operations canceled due to upstream failures.
+    :ivar overwrites:
+        a "virtual" property to a dictionary with keys the names of values that
+        exist more than once, and values, all those values in a list, ordered:
+
+        - before :meth:`finsihed()`, as computed;
+        - after :meth:`finsihed()`, in reverse.
     :ivar finished:
         a flag denoting that this instance cannot acccept more results
         (after the :meth:`finished` has been invoked)
@@ -216,13 +222,14 @@ class Solution(ChainMap, Plotter):
         for d in self.maps:
             d.pop(key, None)
 
+    @property
     def overwrites(self) -> Mapping[Any, List]:
         """
-        Collect items in the maps that exist more than once.
+        The data in the solution that exist more than once.
 
         :return:
             a dictionary with keys only those items that existed in more than one map,
-            an values, all those values, in the order of given `maps`
+            and values, all those values, in the order of given `maps`
         """
         maps = self.maps
         dd = defaultdict(list)

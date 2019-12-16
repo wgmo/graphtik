@@ -457,11 +457,11 @@ def test_pruning_not_overrides_given_intermediate(exemethod):
     #
     solution = pipeline.compute(inputs, ["asked"])
     assert solution == filtdict(exp, "asked")
-    assert solution.overwrites() == {}  # unjust must have been pruned
+    assert solution.overwrites == {}  # unjust must have been pruned
 
     solution = pipeline(**inputs)
     assert solution == exp
-    assert solution.overwrites() == {}  # unjust must have been pruned
+    assert solution.overwrites == {}  # unjust must have been pruned
 
 
 def test_pruning_multiouts_not_override_intermediates1(exemethod):
@@ -488,7 +488,7 @@ def test_pruning_multiouts_not_override_intermediates1(exemethod):
     # - on v4.0.0 (overidden, asked) := (5, 11)
     solution = pipeline.compute(inp1)
     assert solution == exp
-    assert solution.overwrites() == {"overidden": [5, 1]}
+    assert solution.overwrites == {"overidden": [5, 1]}
 
     # FAILs
     # - on v1.2.4 with KeyError: 'e',
@@ -496,16 +496,16 @@ def test_pruning_multiouts_not_override_intermediates1(exemethod):
     # FIXED on #26
     solution = pipeline.compute(inp2, "asked")
     assert solution == exp2
-    assert solution.overwrites() == {}
+    assert solution.overwrites == {}
 
     ## Test OVERWITES
     #
     solution = pipeline.compute(inp1)
     assert solution == exp
-    assert solution.overwrites() == {"overidden": [5, 1]}
+    assert solution.overwrites == {"overidden": [5, 1]}
 
     solution = pipeline.compute(inp1, "asked")
-    assert solution.overwrites() == {}
+    assert solution.overwrites == {}
 
 
 @pytest.mark.xfail(
@@ -546,17 +546,17 @@ def test_pruning_multiouts_not_override_intermediates2(exemethod):
     #
     solution = pipeline.compute(inputs)
     assert solution == exp
-    assert solution.overwrites() == {"overidden": [5, 1]}
+    assert solution.overwrites == {"overidden": [5, 1]}
     # No overwrites when evicted.
     #
     solution = pipeline.compute(inputs, "asked")
     assert solution == filtdict(exp, "asked")
-    assert solution.overwrites() == {}
+    assert solution.overwrites == {}
     # ... but overrites collected if asked.
     #
     solution = pipeline.compute(inputs, ["asked", "overidden"])
     assert solution == filtdict(exp, "asked", "overidden")
-    assert solution.overwrites() == {"overidden": [5, 1]}
+    assert solution.overwrites == {"overidden": [5, 1]}
 
 
 def test_pruning_with_given_intermediate_and_asked_out(exemethod):
@@ -585,11 +585,11 @@ def test_pruning_with_given_intermediate_and_asked_out(exemethod):
     #
     solution = pipeline.compute(inps)
     assert solution == exp
-    assert solution.overwrites() == {}
+    assert solution.overwrites == {}
 
     solution = pipeline.compute(inps, "asked")
     assert solution == filtdict(exp, "asked")
-    assert solution.overwrites() == {}
+    assert solution.overwrites == {}
 
 
 def test_same_outputs_operations_order():
@@ -617,17 +617,17 @@ def test_same_outputs_operations_order():
     # Notice that `ab` assumed as 2 for `AB` but results in `2`
     solution = addsub.compute(inp)
     assert solution == {"a": 3, "b": 1, "ab": 2, "AB": 4}
-    assert solution.overwrites() == {"ab": [2, 4]}
+    assert solution.overwrites == {"ab": [2, 4]}
     solution = addsub.compute(inp, "AB")
     assert solution == {"AB": 4}
-    assert solution.overwrites() == {}
+    assert solution.overwrites == {}
 
     solution = subadd.compute(inp)
     assert solution == {"a": 3, "b": 1, "ab": 4, "AB": 2}
-    assert solution.overwrites() == {"ab": [4, 2]}
+    assert solution.overwrites == {"ab": [4, 2]}
     solution = subadd.compute(inp, "AB")
     assert solution == {"AB": 2}
-    assert solution.overwrites() == {}
+    assert solution.overwrites == {}
 
     assert subadd.compute(inp, "AB") == {"AB": 2}
     assert len(subadd.last_plan.steps) == 6

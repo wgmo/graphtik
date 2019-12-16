@@ -122,7 +122,8 @@ Architecture
             to get back the given inputs in case of `overwrites`.
 
     overwrites
-        Values in the `solution` that are written by more than one `operation`\s.
+        Values in the `solution` that are written by more than one `operation`\s,
+        accessed by :attr:`Solution.overwrites`:
 
     net
     network
