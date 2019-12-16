@@ -2,9 +2,34 @@
 Graphtik Changelog
 ##################
 
-TODO
-====
+TODOs
+%%%%%
 See :gg:`1`.
+
+GitHub Releases
+%%%%%%%%%%%%%%%
+
+https://github.com/pygraphkit/graphtik/releases
+
+Changelog
+%%%%%%%%%
+
+v4.2.0 (  Dec 2019, @ankostis): ENDURED Execution
+=================================================
++ FEAT(NET): when :func:`.set_endure_execution` configuration is set to true,
+  a :term:`netop` will keep on calculating solution, skipping any operations
+  downstream from failed ones.  The :term:`solution` eventually collects all failures
+  in :attr:`.Solution.failures`.
+
++ ENH(DOC,plot): Links in Legend and :ref:`arch` Workflow SVGs now work,
+  and delegate to *architecture* terms.
+
++ ENH(plot): mark :term:`overwrites`, *failed* & *canceled* (see :term:`endurance`).
+
++ refact(conf): fully rename confguration opetion ``skip_evictions``.
+
++ enh(net): improve logging.
+
 
 v4.1.0 (13  Dec 2019, @ankostis): ChainMap Solution for PINs, stable TOPOLOGICAL sort
 =====================================================================================
