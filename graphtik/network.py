@@ -82,13 +82,6 @@ def is_endure_execution():
     return _execution_configs.get()["endure_execution"]
 
 
-def _break_node_edges(dag, *nodes, incoming: bool):
-    """Modifies `dag` by removing all incoming/outgoing edges of `nodes`."""
-    selector = dag.in_edges if incoming else dag.out_edges
-    for n in nodes:
-        # Coalesce to a list, to avoid concurrent modification.
-        dag.remove_edges_from(list(selector(n)))
-
 
 def _unsatisfied_operations(dag, inputs: Collection) -> List:
     """
@@ -321,8 +314,9 @@ class _Rescheduler:
 
     def operation_failed(self, op: Operation, inputs):
         """update :attr:`canceled` with the unsatisfiead ops downstream of `op`."""
-        _break_node_edges(self.dag, op, incoming=False)
-        self.canceled.update(_unsatisfied_operations(self.dag, inputs))
+        dag = self.dag
+        dag.remove_edges_from(list(dag.out_edges(op)))
+        self.canceled.update(_unsatisfied_operations(dag, inputs))
 
 
 class ExecutionPlan(
@@ -806,7 +800,9 @@ class Network(Plotter):
         # and they will drop out while collecting ancestors from the outputs.
         #
         if inputs:
-            _break_node_edges(broken_dag, *inputs, incoming=True)
+            for n in inputs:
+                # Coalesce to a list, to avoid concurrent modification.
+                broken_dag.remove_edges_from(list(broken_dag.in_edges(n)))
 
         # Drop stray input values and operations (if any).
         if outputs is not None:
