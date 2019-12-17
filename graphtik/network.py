@@ -305,7 +305,7 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
     return needs, provides
 
 
-class _Endurance:
+class _Rescheduler:
     """
     Utility to collect canceled ops downstream from failed ones.
 
@@ -420,7 +420,7 @@ class ExecutionPlan(
             _reset_abort()
             raise AbortedException({s: s in executed for s in self.steps})
 
-    def _call_operation(self, op, solution, endurance):
+    def _call_operation(self, op, solution, rescheduler):
         # Although `plan` have added to jetsam in `compute()``,
         # add it again, in case compile()/execute is called separately.
         t0 = time.time()
@@ -429,7 +429,7 @@ class ExecutionPlan(
             outputs = op.compute(solution)
             solution.operation_executed(op, outputs)
         except Exception as ex:
-            if not endurance:
+            if not rescheduler:
                 jetsam(ex, locals(), "solution", plan="self")
                 raise
 
@@ -440,7 +440,7 @@ class ExecutionPlan(
                 ex,
             )
             solution.operation_failed(op, ex)
-            endurance.operation_failed(op, solution)
+            rescheduler.operation_failed(op, solution)
 
         finally:
             # record execution time
@@ -459,7 +459,9 @@ class ExecutionPlan(
         """
         pool = _execution_configs.get()["execution_pool"]
         # If endurance is enabled, create a collector of canceled ops downstream.
-        endurance = is_endure_execution() and _Endurance(self.dag, solution.canceled)
+        rescheduler = is_endure_execution() and _Rescheduler(
+            self.dag, solution.canceled
+        )
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
@@ -482,7 +484,7 @@ class ExecutionPlan(
                         if isinstance(n, Operation)
                     ).issubset(solution.executed)
                 ):
-                    if endurance and node in endurance.canceled:
+                    if rescheduler and node in rescheduler.canceled:
                         log.debug(
                             "+++ SKIPPED op(%r) due to previously failed ops.",
                             node.name,
@@ -514,7 +516,7 @@ class ExecutionPlan(
             # FIXME: parallel does not execute nodes in insertion-order (same as sequential)!
             list(
                 pool.imap_unordered(
-                    (lambda op: (op, self._call_operation(op, solution, endurance))),
+                    (lambda op: (op, self._call_operation(op, solution, rescheduler))),
                     upnext,
                 )
             )
@@ -527,17 +529,19 @@ class ExecutionPlan(
             must contain the input values only, gets modified
         """
         # If endurance is enabled, create a collector of canceled ops downstream.
-        endurance = is_endure_execution() and _Endurance(self.dag, solution.canceled)
+        rescheduler = is_endure_execution() and _Rescheduler(
+            self.dag, solution.canceled
+        )
         for step in self.steps:
             self._check_if_aborted(solution.executed)
 
             if isinstance(step, Operation):
-                if endurance and step in endurance.canceled:
+                if rescheduler and step in rescheduler.canceled:
                     log.debug(
                         "+++ SKIPPED op(%r) due to previously failed ops.", step.name
                     )
                     continue
-                self._call_operation(step, solution, endurance)
+                self._call_operation(step, solution, rescheduler)
 
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.
