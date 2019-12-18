@@ -148,6 +148,7 @@ def build_pydot(
     node_props=None,
     edge_props=None,
     clusters=None,
+    legend_url="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg",
 ) -> pydot.Dot:
     """
     Build a *Graphviz* out of a Network graph/steps/inputs/outputs and return it.
@@ -195,7 +196,7 @@ def build_pydot(
             a = a.name
         return quote_dot_kws(a)
 
-    dot = pydot.Dot(graph_type="digraph", label=quote_dot_kws(title), fontname="italic")
+    dot = pydot.Dot(graph_type="digraph", label=quote_dot_kws(title), fontname="italic", URL=legend_url or None)
 
     # draw nodes
     for nx_node in graph.nodes:
@@ -400,69 +401,69 @@ def legend(
 
         operation   [shape=oval fontname=italic
                      tooltip="A function with needs & provides."
-                     URL="%(url)s#term-operation"];
+                     URL="%(arch_url)s#term-operation"];
         insteps     [label="execution step" fontname=italic
                      tooltip="Either an operation or ean eviction-instruction."
-                     URL="%(url)s#term-execution-steps"];
+                     URL="%(arch_url)s#term-execution-steps"];
         executed    [shape=oval style=filled fillcolor=wheat fontname=italic
                      tooltip="Operation executed succesfully."
-                     URL="%(url)s#term-solution"];
+                     URL="%(arch_url)s#term-solution"];
         failed      [shape=oval style=filled fillcolor=LightCoral fontname=italic
                      tooltip="Failed operation - downstream ops will cancel."
-                     URL="%(url)s#term-endurance"];
+                     URL="%(arch_url)s#term-endurance"];
         reschedule  [shape=oval penwidth=4 fontname=italic
                      tooltip="Operation may fail / provide partial outputs so `net` must reschedule."
-                     URL="%(url)s#term-reschedule"];
+                     URL="%(arch_url)s#term-reschedule"];
         canceled    [shape=oval style=filled fillcolor=Grey fontname=italic
                      tooltip="Canceled operation due to failures or partial outputs upstreams."
-                     URL="%(url)s#term-reschedule"];
+                     URL="%(arch_url)s#term-reschedule"];
         operation -> insteps -> executed -> failed -> reschedule -> canceled [style=invis];
 
         data    [shape=rect
                  tooltip="Any data not given or asked."
-                 URL="%(url)s#term-graph"];
+                 URL="%(arch_url)s#term-graph"];
         input   [shape=invhouse
                  tooltip="Solution value given into the computation."
-                 URL="%(url)s#term-inputs"];
+                 URL="%(arch_url)s#term-inputs"];
         output  [shape=house
                  tooltip="Solution value asked from the computation."
-                 URL="%(url)s#term-outputs"];
+                 URL="%(arch_url)s#term-outputs"];
         inp_out [shape=hexagon label="inp+out"
                  tooltip="Data both given and asked."
-                 URL="%(url)s#term-netop"];
+                 URL="%(arch_url)s#term-netop"];
         evicted [shape=rect color="#990000"
                  tooltip="Data erased from solution, to save memory."
-                 URL="%(url)s#term-evictions"];
+                 URL="%(arch_url)s#term-evictions"];
         sol     [shape=rect style=filled fillcolor=wheat label="in solution"
                  tooltip="Data contained in the solution."
-                 URL="%(url)s#term-solution"];
+                 URL="%(arch_url)s#term-solution"];
         overwrite [shape=rect style=filled fillcolor=SkyBlue
                  tooltip="More than 1 values exist in solution with this name."
-                 URL="%(url)s#term-overwrites"];
+                 URL="%(arch_url)s#term-overwrites"];
         data -> input -> output -> inp_out -> evicted -> sol -> overwrite [style=invis];
 
         e1          [style=invis];
         e1          -> requirement;
         requirement [color=invis
                      tooltip="From operation --> `provides`, or from `needs` --> operation."
-                     URL="%(url)s#term-needs"];
+                     URL="%(arch_url)s#term-needs"];
         requirement -> optional     [style=dashed];
         optional    [color=invis
                      tooltip="The operation can run even if this `need` is missing (e.g. *varag, **kw)."
-                     URL="%(url)s#term-needs"];
+                     URL="%(arch_url)s#term-needs"];
         optional    -> sideffect    [color=blue];
         sideffect   [color=invis
                      tooltip="Fictive data not consumed/produced by underlying function."
-                     URL="%(url)s#term-sideffects"];
+                     URL="%(arch_url)s#term-sideffects"];
         sideffect   -> sequence     [color="#009999" penwidth=4 style=dotted
                                      arrowhead=vee label=1 fontcolor="#009999"];
         sequence    [color=invis penwidth=4 label="execution sequence"
                      tooltip="Sequence of execution steps."
-                     URL="%(url)s#term-execution-steps"];
+                     URL="%(arch_url)s#term-execution-steps"];
         }
     }
     """ % {
-        "url": arch_url
+        "arch_url": arch_url
     }
 
     dot = pydot.graph_from_dot_data(dot_text)[0]

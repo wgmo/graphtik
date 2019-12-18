@@ -10,6 +10,7 @@ import pytest
 from graphtik import base, compose, network, operation, plot
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
+from graphtik.plot import build_pydot
 
 
 @pytest.fixture
@@ -200,3 +201,18 @@ def test_plot_legend(pipeline, tmp_path):
 
     img = plot.legend(show=-1)
     _check_plt_img(img)
+
+
+def test_link_to_legend(pipeline):
+    dot = str(pipeline.plot())
+    # last argument of `build_pydot(..., legend_url)`.
+    assert build_pydot.__defaults__[-1] in dot
+    dot = str(pipeline.plot(legend_url=None))
+    assert build_pydot.__defaults__[-1] not in dot
+    dot = str(pipeline.plot(legend_url=""))
+    assert build_pydot.__defaults__[-1] not in dot
+
+    url = "http://example.org"
+    dot = str(pipeline.plot(legend_url=url))
+    assert build_pydot.__defaults__[-1] not in dot
+    assert url in dot

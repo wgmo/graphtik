@@ -201,6 +201,8 @@ class Plotter(abc.ABC):
             a nested dictionary controlling the rendering of graph-plots in Jupyter cells,
             if `None`, defaults to :data:`jupyter_render` (you may modify it in place
             and apply for all future calls).
+        :param legend_url:
+            a URL to the *graphtik* legend; if it evaluates to false, none is added.
 
         :return:
             a `pydot.Dot <https://pypi.org/project/pydot/>`_ instance
@@ -283,9 +285,10 @@ class Plotter(abc.ABC):
         >>> dot = netop.plot(solution=solution);   # just get the `pydoit.Dot` object, renderable in Jupyter
         >>> print(dot)
         digraph G {
-          fontname=italic;
-          label=netop;
-          a [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
+            URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg";
+            fontname=italic;
+            label=netop;
+            a [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
         ...
 
         """
