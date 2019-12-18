@@ -212,6 +212,7 @@ class NetworkOperation(Operation, Plotter):
             return solution
         except Exception as ex:
             jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
+            raise
 
     def __call__(self, **input_kwargs) -> Solution:
         """

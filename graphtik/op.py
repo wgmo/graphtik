@@ -389,6 +389,7 @@ class FunctionalOperation(
                     "kwargs": locs.get("optionals"),
                 },
             )
+            raise
 
     def __call__(self, *args, **kwargs):
         return self.fn(*args, **kwargs)

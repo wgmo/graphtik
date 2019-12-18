@@ -88,6 +88,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
             raise Exception()
         exception Exception as ex:
             jetsam(ex, locals(), "a", b="salvaged_b", c_var="c")
+            raise
 
     And then from a REPL::
 
@@ -144,9 +145,6 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
     except Exception as ex2:
         log.warning("Supressed error while annotating exception: %r", ex2, exc_info=1)
         raise ex2
-
-    # pylint: disable=misplaced-bare-raise
-    raise  # noqa #re-raise without ex-arg, not to insert my frame
 
 
 ## Defined here, to avoid subclasses importig `plot` module.

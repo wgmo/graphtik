@@ -654,6 +654,7 @@ class ExecutionPlan(
             return solution
         except Exception as ex:
             jetsam(ex, locals(), "solution")
+            raise
 
 
 class Network(Plotter):
