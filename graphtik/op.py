@@ -11,6 +11,7 @@ from typing import Callable, Mapping, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
+from . import NO_RESULT
 from .base import Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect, vararg, varargs
 
@@ -97,7 +98,7 @@ class Operation(abc.ABC):
 class FunctionalOperation(
     namedtuple(
         "FnOp",
-        "fn name needs provides real_provides aliases parents node_props returns_dict",
+        "fn name needs provides real_provides aliases parents reschedule returns_dict node_props",
     ),
     Operation,
 ):
@@ -123,8 +124,9 @@ class FunctionalOperation(
         aliases: Mapping = None,
         *,
         parents: Tuple = None,
-        node_props: Mapping = None,
+        reschedule=None,
         returns_dict=None,
+        node_props: Mapping = None,
     ):
         """
         Build a new operation out of some function and its requirements.
@@ -141,12 +143,17 @@ class FunctionalOperation(
         :param parents:
             a tuple wth the names of the parents, prefixing `name`,
             but also kept for equality/hash check.
-        :param node_props:
-            added as-is into NetworkX graph
+        :param reschedule:
+            If true, underlying *callable* may produce a subset of `provides`,
+            and the :term:`plan` must then :term:`reschedule` after the operation
+            has executed.  In that case, it makes more sense for the *callable*
+            to `returns_dict`.
         :param returns_dict:
             if true, it means the `fn` returns a dictionary with all `provides`,
             and no further processing is done on them
             (i.e. the returned output-values are not zipped with `provides`)
+        :param node_props:
+            added as-is into NetworkX graph
         """
         node_props = node_props = node_props if node_props else {}
 
@@ -191,8 +198,9 @@ class FunctionalOperation(
             real_provides,
             aliases,
             parents,
-            node_props,
+            reschedule,
             returns_dict,
+            node_props,
         )
 
     def __eq__(self, other):
@@ -216,9 +224,10 @@ class FunctionalOperation(
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         returns_dict_marker = self.returns_dict and "{}" or ""
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
+        resched = "?" if self.reschedule else ""
         return (
             f"FunctionalOperation(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}, fn{returns_dict_marker}={fn_name!r}{nprops})"
+            f"provides={provides!r}{resched}, fn{returns_dict_marker}={fn_name!r}{nprops})"
         )
 
     def withset(self, **kw) -> "FunctionalOperation":
@@ -239,6 +248,9 @@ class FunctionalOperation(
 
     def _zip_results_with_provides(self, results, real_provides: iset) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
+        if results is NO_RESULT:
+            results = {}
+
         if not real_provides:  # All outputs were sideffects?
             if results:
                 ## Do not scream,
@@ -250,31 +262,49 @@ class FunctionalOperation(
                     self,
                 )
             results = {}
-        elif not self.returns_dict:
-            nexpected = len(real_provides)
+        elif self.returns_dict:
+            if not isinstance(results, cabc.Mapping):
+                raise ValueError(f"Expected dict-results, got: {results}\n  {self}")
+        else:
+            # Cannot check results-vs-expected on a rescheduled operation
+            # bc by definition it may return fewer result.
+            #
+            if not self.reschedule:
+                nexpected = len(real_provides)
 
-            if nexpected > 1 and (
-                not isinstance(results, cabc.Iterable) or len(results) != nexpected
-            ):
-                raise ValueError(
-                    f"Expected x{nexpected} ITERABLE results, got: {results}"
-                )
+                if nexpected > 1 and (
+                    not isinstance(results, cabc.Iterable) or len(results) != nexpected
+                ):
+                    raise ValueError(
+                        f"Expected x{nexpected} ITERABLE results, got: {results}"
+                    )
 
-            if nexpected == 1:
-                results = [results]
+                if nexpected == 1:
+                    results = [results]
 
             results = dict(zip(real_provides, results))
 
-        if self.returns_dict:
-            if not isinstance(results, cabc.Mapping):
-                raise ValueError(f"Expected dict-results, got: {results}\n  {self}")
-        if set(results) != real_provides:
-            raise ValueError(
-                f"Results({results}) mismatched provides({real_provides})!\n  {self}"
-            )
+        if self.reschedule:
+            if set(results) < set(real_provides):
+                log.warning(
+                    "... Op %r did not provide%s",
+                    self.name,
+                    list(iset(real_provides) - set(results)),
+                )
+            if set(results) - set(real_provides):
+                raise ValueError(
+                    f"Results({results}) contained unkown provides{list(iset(results) - real_provides)})!\n  {self}"
+                )
+        else:
+            if set(results) != real_provides:
+                raise ValueError(
+                    f"Results({results}) mismatched provides({real_provides})!\n  {self}"
+                )
 
         if self.aliases:
-            alias_values = [(dst, results[src]) for src, dst in self.aliases]
+            alias_values = [
+                (dst, results[src]) for src, dst in self.aliases if src in results
+            ]
             results.update(alias_values)
 
         return results
@@ -373,11 +403,16 @@ class operation:
     :param provides:
         Names of output data objects this operation provides.
         If more than one given, those must be returned in an iterable,
-        unless `returns_dict` is true, in which cae a dictionary with as many
+        unless `returns_dict` is true, in which case a dictionary with as many
         elements must be returned
     :param aliases:
         an optional mapping of `provides` to additional ones
-    :param bool returns_dict:
+    :param reschedule:
+        If true, underlying *callable* may produce a subset of `provides`,
+        and the :term:`plan` must then :term:`reschedule` after the operation
+        has executed.  In that case, it makes more sense for the *callable*
+        to `returns_dict`.
+    :param returns_dict:
         if true, it means the `fn` returns a dictionary with all `provides`,
         and no further processing is done on them
         (i.e. the returned output-values are not zipped with `provides`)
@@ -420,6 +455,7 @@ class operation:
         needs: Items = None,
         provides: Items = None,
         aliases: Mapping = None,
+        reschedule=None,
         returns_dict=None,
         node_props: Mapping = None,
     ):
@@ -433,6 +469,7 @@ class operation:
         needs: Items = None,
         provides: Items = None,
         aliases: Mapping = None,
+        reschedule=None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> "operation":
@@ -447,6 +484,8 @@ class operation:
             self.provides = provides
         if aliases is not None:
             self.aliases = aliases
+        if reschedule is not None:
+            self.reschedule = reschedule
         if returns_dict is not None:
             self.returns_dict = returns_dict
         if node_props is not None:
@@ -462,6 +501,7 @@ class operation:
         needs: Items = None,
         provides: Items = None,
         aliases: Mapping = None,
+        reschedule=None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> FunctionalOperation:
@@ -496,9 +536,12 @@ class operation:
         """
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
+        aliases = aslist(self.aliases, "aliases")
+        aliases = f", aliases={aliases!r}" if aliases else ""
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
+        resched = "?" if self.reschedule else ""
         return (
             f"operation(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}, fn={fn_name!r}{nprops})"
+            f"provides={provides!r}{resched}{aliases}, fn={fn_name!r}{nprops})"
         )

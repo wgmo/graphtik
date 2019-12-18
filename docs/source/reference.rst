@@ -44,6 +44,9 @@ Module: `network`
 .. autoclass:: graphtik.network.Solution
      :members:
      :special-members:
+.. autoclass:: graphtik.network._Rescheduler
+     :members:
+     :special-members:
 
 Module: `plot`
 ===============

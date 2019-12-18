@@ -143,7 +143,9 @@ Architecture
         a dictionary of named input values given to :meth:`.NetworkOperation.compute()`
 
     outputs
-        A dictionary of computed values returned by :meth:`.NetworkOperation.compute()`.
+        A dictionary of computed values returned by :meth:`.NetworkOperation.compute()`,
+        or the actual (*partial* or complete) `provides` returned by
+        some :class:`FunctionalOperation`.
 
         All computed values are retained in it when no specific outputs requested,
         to :meth:`.NetworkOperation.compute()`, that is, no data-eviction happens.
@@ -187,20 +189,25 @@ Architecture
         - all its `provides` are NOT needed by any other operation, nor are asked
           as `outputs`.
 
-    predicate
-    node predicate
-        A callable(op, node-data) that should return true for nodes not to be
-        :meth:`~.NetworkOperation.narrowed`.
+    reschedule
+        When an `operation` is marked as such, its underlying *callable* may produce
+        a subset of its `provides` on execution; the `plan` must then *reschedule*
+        the remaining operations downstreams, and *cancel* some of those.
 
     endurance
-        Keep executing as many `operation`\s as possible, even of some of them fail.
-        If :func:`.set_endure_execution()` is se to true, you may interogate
+        Keep executing as many `operation`\s as possible, even if some of them fail.
+        If :func:`.set_endure_execution()` is set to true, you may interogate
         :class:`.Solution` properties to discover whether an operation may be:
 
         - executed successfully,
         - *failed*, or
         - *canceled*, if another operation, the sole provider of a compulsory `needs`,
-          has failed upstreams.
+          has failed upstreams, and this operation was `reschedule`\d.
+
+    predicate
+    node predicate
+        A callable(op, node-data) that should return true for nodes not to be
+        :meth:`~.NetworkOperation.narrowed`.
 
 .. default-role:: obj
 .. |v410-flowchart| raw:: html

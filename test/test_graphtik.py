@@ -13,6 +13,7 @@ import pytest
 import graphtik.network as network
 from graphtik import (
     AbortedException,
+    NO_RESULT,
     abort_run,
     compose,
     operation,
@@ -325,12 +326,15 @@ def test_network_merge_in_doctests():
         "provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'], x4ops)"
     )
 
+
 def test_aliases(exemethod):
-    op = compose("test_net",
-    operation(lambda: 'A', name='op1', provides='a', aliases={'a':'b'})(),
-    operation(lambda x: x * 2, name='op2', needs='b', provides='c')(),
+    op = compose(
+        "test_net",
+        operation(lambda: "A", name="op1", provides="a", aliases={"a": "b"})(),
+        operation(lambda x: x * 2, name="op2", needs="b", provides="c")(),
     )
-    assert op() == {'a': 'A', 'b': 'A', 'c': 'AA'}
+    assert op() == {"a": "A", "b": "A", "c": "AA"}
+
 
 @pytest.fixture
 def samplenet():
@@ -1118,8 +1122,27 @@ def test_execution_endurance(exemethod):
     # Check plotting Fail & Cancel.
     #
     dot = str(sol.plot())
-    assert "LightCoral" in dot # failed
-    assert "Grey" in dot # Canceled
+    assert "LightCoral" in dot  # failed
+    assert "Grey" in dot  # Canceled
+
+
+def test_rescheduling(exemethod):
+    op = compose(
+        "netop",
+        operation(lambda: [1], name="op1", provides=["a", "b"], reschedule=1)(),
+        operation(lambda: NO_RESULT, name="op2", provides=["c"], reschedule=1)(),
+        operation(lambda: None, name="canc", needs=["b"], provides="cc")(),
+        operation(
+            lambda *args: sum(args),
+            name="op3",
+            needs=["a", optional("b"), optional("c")],
+            provides=["d"],
+        )(),
+        method=exemethod,
+    )
+    assert "Grey" in str(op().plot())  # Canceled
+    assert op() == {"a": 1, "d": 1}
+
 
 def test_multithreading_plan_execution():
     # From Huygn's test-code given in yahoo/graphkit#31

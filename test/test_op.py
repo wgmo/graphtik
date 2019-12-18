@@ -3,7 +3,7 @@
 
 import pytest
 
-from graphtik import compose, operation, optional, sideffect, vararg, varargs
+from graphtik import NO_RESULT, compose, operation, optional, sideffect, vararg, varargs
 from graphtik.network import yield_ops
 from graphtik.op import Operation, as_renames, reparse_operation_data
 
@@ -244,3 +244,61 @@ def test_provides_aliases():
     op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})()
     assert op.provides == {"a", "aa"}
     assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}
+
+
+def test_reschedule_unknown_dict_outs():
+    op = operation(
+        lambda: {"b": "B"}, name="t", provides=["a"], reschedule=1, returns_dict=1
+    )()
+    with pytest.raises(ValueError, match=r"contained unkown provides\['b'\]"):
+        op.compute({})
+
+    op = operation(
+        lambda: {"BAD": "B"}, name="t", provides=["a"], reschedule=1, returns_dict=1
+    )()
+    with pytest.raises(ValueError, match=r"contained unkown provides\['BAD'\]"):
+        op.compute({})
+
+
+def test_rescheduled_op_repr():
+    op = operation(
+        lambda: ["A", "B"], name="t", provides=["a", "b", "c"], reschedule=True
+    )
+    assert (
+        str(op)
+        == "operation(name='t', needs=[], provides=['a', 'b', 'c']?, fn='<lambda>')"
+    )
+    op = op()
+    assert (
+        str(op)
+        == "FunctionalOperation(name='t', needs=[], provides=['a', 'b', 'c']?, fn='<lambda>')"
+    )
+
+
+def test_reschedule_outputs():
+    op = operation(
+        lambda: ["A", "B"], name="t", provides=["a", "b", "c"], reschedule=True
+    )()
+    assert op.compute({}) == {"a": "A", "b": "B"}
+
+    # NOTE that for a single return item, it must be a collection.
+    op = operation(lambda: ["AA"], name="t", provides=["a", "b"], reschedule=True)()
+    assert op.compute({}) == {"a": "AA"}
+
+    op = operation(lambda: NO_RESULT, name="t", provides=["a", "b"], reschedule=True)()
+    assert op.compute({}) == {}
+
+    op = operation(
+        lambda: {"b": "B"}, name="t", provides=["a", "b"], reschedule=1, returns_dict=1
+    )()
+    assert op.compute({}) == {"b": "B"}
+
+    op = operation(
+        lambda: {"b": "B"},
+        name="t",
+        provides=["a", "b"],
+        aliases={"a": "aa", "b": "bb"},
+        reschedule=1,
+        returns_dict=1,
+    )()
+    assert op.compute({}) == {"b": "B", "bb": "B"}

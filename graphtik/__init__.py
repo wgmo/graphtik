@@ -10,6 +10,8 @@ __title__ = "graphtik"
 __summary__ = __doc__.splitlines()[0]
 __uri__ = "https://github.com/pygraphkit/graphtik"
 
+NO_RESULT = object()
+
 from .modifiers import *  # noqa, on purpose to include any new modifiers
 from .network import (
     AbortedException,
