@@ -1140,7 +1140,9 @@ def test_rescheduling(exemethod):
         )(),
         method=exemethod,
     )
-    assert "Grey" in str(op().plot())  # Canceled
+    dot = str(op().plot())
+    assert "Grey" in dot  # Canceled
+    assert "penwidth=4" in dot  # Rescheduled
     assert op() == {"a": 1, "d": 1}
 
 

@@ -156,7 +156,6 @@ def build_pydot(
     the legend of the plots.
     """
     from .op import Operation
-    from .netop import NetworkOperation
     from .modifiers import optional
     from .network import _EvictInstruction
 
@@ -164,7 +163,7 @@ def build_pydot(
 
     assert graph is not None
 
-    steps_thickness = 3
+    resched_thickness = 4
     fill_color = "wheat"
     failed_color = "LightCoral"
     cancel_color = "Grey"
@@ -205,7 +204,7 @@ def build_pydot(
 
             # FrameColor change by step type
             if steps and nx_node in steps:
-                kw = {"color": "#990000", "penwidth": steps_thickness}
+                kw = {"color": "#990000"}
 
             # SHAPE change if with inputs/outputs.
             # tip: https://graphviz.gitlab.io/_pages/doc/info/shapes.html
@@ -229,8 +228,8 @@ def build_pydot(
         else:  # Operation
             kw = {"fontname": "italic"}
 
-            if steps and nx_node in steps:
-                kw["penwdth"] = steps_thickness
+            if nx_node.reschedule:
+                kw["penwidth"] = resched_thickness
             if nx_node in getattr(solution, "failures", ()):
                 kw["style"] = "filled"
                 kw["fillcolor"] = failed_color
@@ -296,7 +295,6 @@ def build_pydot(
                 fontcolor=steps_color,
                 fontname="bold",
                 fontsize=18,
-                penwidth=steps_thickness,
                 arrowhead="vee",
                 splines=True,
             )
@@ -403,19 +401,22 @@ def legend(
         operation   [shape=oval fontname=italic
                      tooltip="A function with needs & provides."
                      URL="%(url)s#term-operation"];
-        insteps     [penwidth=3 label="execution step" fontname=italic
+        insteps     [label="execution step" fontname=italic
                      tooltip="Either an operation or ean eviction-instruction."
                      URL="%(url)s#term-execution-steps"];
-        executed    [style=filled fillcolor=wheat fontname=italic
-                     tooltip="Step executed succesfully."
+        executed    [shape=oval style=filled fillcolor=wheat fontname=italic
+                     tooltip="Operation executed succesfully."
                      URL="%(url)s#term-solution"];
-        failed      [style=filled fillcolor=LightCoral fontname=italic
-                     tooltip="Step failed."
+        failed      [shape=oval style=filled fillcolor=LightCoral fontname=italic
+                     tooltip="Failed operation - downstream ops will cancel."
                      URL="%(url)s#term-endurance"];
-        canceled    [style=filled fillcolor=Grey fontname=italic
-                     tooltip="Canceled step due to failures upstream."
-                     URL="%(url)s#term-endurance"];
-        operation -> insteps -> executed -> failed -> canceled [style=invis];
+        reschedule  [shape=oval penwidth=4 fontname=italic
+                     tooltip="Operation may fail / provide partial outputs so `net` must reschedule."
+                     URL="%(url)s#term-reschedule"];
+        canceled    [shape=oval style=filled fillcolor=Grey fontname=italic
+                     tooltip="Canceled operation due to failures or partial outputs upstreams."
+                     URL="%(url)s#term-reschedule"];
+        operation -> insteps -> executed -> failed -> reschedule -> canceled [style=invis];
 
         data    [shape=rect
                  tooltip="Any data not given or asked."
@@ -429,7 +430,7 @@ def legend(
         inp_out [shape=hexagon label="inp+out"
                  tooltip="Data both given and asked."
                  URL="%(url)s#term-netop"];
-        evicted [shape=rect penwidth=3 color="#990000"
+        evicted [shape=rect color="#990000"
                  tooltip="Data erased from solution, to save memory."
                  URL="%(url)s#term-evictions"];
         sol     [shape=rect style=filled fillcolor=wheat label="in solution"
