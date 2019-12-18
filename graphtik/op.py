@@ -98,7 +98,8 @@ class Operation(abc.ABC):
 class FunctionalOperation(
     namedtuple(
         "FnOp",
-        "fn name needs provides real_provides aliases parents reschedule returns_dict node_props",
+        "fn name needs provides real_provides aliases "
+        "parents reschedule endured returns_dict node_props",
     ),
     Operation,
 ):
@@ -125,6 +126,7 @@ class FunctionalOperation(
         *,
         parents: Tuple = None,
         reschedule=None,
+        endured=None,
         returns_dict=None,
         node_props: Mapping = None,
     ):
@@ -148,6 +150,9 @@ class FunctionalOperation(
             and the :term:`plan` must then :term:`reschedule` after the operation
             has executed.  In that case, it makes more sense for the *callable*
             to `returns_dict`.
+        :param endured:
+            If true, even if *callable* fails, solution will :term:`reschedule`;
+            ignored if :term:`endurance` enabled globally.
         :param returns_dict:
             if true, it means the `fn` returns a dictionary with all `provides`,
             and no further processing is done on them
@@ -199,6 +204,7 @@ class FunctionalOperation(
             aliases,
             parents,
             reschedule,
+            endured,
             returns_dict,
             node_props,
         )
@@ -225,8 +231,9 @@ class FunctionalOperation(
         returns_dict_marker = self.returns_dict and "{}" or ""
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
         resched = "?" if self.reschedule else ""
+        endured = "!" if self.endured else ""
         return (
-            f"FunctionalOperation(name={self.name!r}, needs={needs!r}, "
+            f"FunctionalOperation{endured}(name={self.name!r}, needs={needs!r}, "
             f"provides={provides!r}{resched}, fn{returns_dict_marker}={fn_name!r}{nprops})"
         )
 
@@ -412,6 +419,9 @@ class operation:
         and the :term:`plan` must then :term:`reschedule` after the operation
         has executed.  In that case, it makes more sense for the *callable*
         to `returns_dict`.
+    :param endured:
+        If true, even if *callable* fails, solution will :term:`reschedule`.
+        ignored if :term:`endurance` enabled globally.
     :param returns_dict:
         if true, it means the `fn` returns a dictionary with all `provides`,
         and no further processing is done on them
@@ -456,6 +466,7 @@ class operation:
         provides: Items = None,
         aliases: Mapping = None,
         reschedule=None,
+        endured=None,
         returns_dict=None,
         node_props: Mapping = None,
     ):
@@ -470,6 +481,7 @@ class operation:
         provides: Items = None,
         aliases: Mapping = None,
         reschedule=None,
+        endured=None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> "operation":
@@ -486,6 +498,8 @@ class operation:
             self.aliases = aliases
         if reschedule is not None:
             self.reschedule = reschedule
+        if endured is not None:
+            self.endured = endured
         if returns_dict is not None:
             self.returns_dict = returns_dict
         if node_props is not None:
@@ -502,6 +516,7 @@ class operation:
         provides: Items = None,
         aliases: Mapping = None,
         reschedule=None,
+        endured=None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> FunctionalOperation:
@@ -541,7 +556,8 @@ class operation:
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
         resched = "?" if self.reschedule else ""
+        endured = "!" if self.endured else ""
         return (
-            f"operation(name={self.name!r}, needs={needs!r}, "
+            f"operation{endured}(name={self.name!r}, needs={needs!r}, "
             f"provides={provides!r}{resched}{aliases}, fn={fn_name!r}{nprops})"
         )

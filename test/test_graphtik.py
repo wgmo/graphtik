@@ -1093,10 +1093,16 @@ def test_skip_eviction_flag():
         set_skip_evictions(False)
 
 
-def test_execution_endurance(exemethod):
-    set_endure_execution(True)
+@pytest.mark.parametrize("endurance, endured", [
+    (None, True),
+    (True, None),
+    (False, True),
+    (1,1),
+    ])
+def test_execution_endurance(exemethod, endurance, endured):
+    set_endure_execution(endurance)
 
-    opb = operation(scream, needs=["a", "b"], provides=["a+b", "c"])
+    opb = operation(scream, needs=["a", "b"], provides=["a+b", "c"], endured=endured)
     scream1 = opb(name="scream1")
     scream2 = opb(name="scream2")
     add1 = operation(name="add1", needs=["a", "b"], provides=["a+b"])(add)

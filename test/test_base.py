@@ -128,6 +128,7 @@ class _ScreamingOperation(op.Operation):
         self.needs = ()
         self.provides = ("a",)
         self.node_props = {}
+        self.reschedule = self.endured = None
 
     def compute(self, named_inputs, outputs=None):
         _scream()

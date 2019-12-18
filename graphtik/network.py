@@ -442,7 +442,7 @@ class ExecutionPlan(
             if op.reschedule:
                 rescheduler.operation_executed(op, solution, outputs)
         except Exception as ex:
-            if not is_endurance:
+            if not is_endurance and not op.endured:
                 jetsam(ex, locals(), "solution", plan="self")
                 raise
 
@@ -618,13 +618,18 @@ class ExecutionPlan(
 
             ## Decide if a rescheduler should be used,
             #  to collect canceled ops downstreams:
-            #  - If endurance is enabled, or
-            #  - If any operation needs rescheduling.
+            #  - if endurance is globally enabled, or
+            #  - if any operation is endured, or,
+            #  - if any operation needs rescheduling.
             #
             is_endurance = is_endure_execution()
             rescheduler = (
                 is_endurance
-                or any(op.reschedule for op in self.steps if isinstance(op, Operation))
+                or any(
+                    op.reschedule or op.endured
+                    for op in self.steps
+                    if isinstance(op, Operation)
+                )
             ) and _Rescheduler(self.dag, solution.canceled)
 
             try:

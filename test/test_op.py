@@ -261,17 +261,28 @@ def test_reschedule_unknown_dict_outs():
 
 
 def test_rescheduled_op_repr():
-    op = operation(
-        lambda: ["A", "B"], name="t", provides=["a", "b", "c"], reschedule=True
-    )
+    op = operation(str, name="t", provides=["a"], reschedule=True)
+    assert str(op) == "operation(name='t', needs=[], provides=['a']?, fn='str')"
     assert (
-        str(op)
-        == "operation(name='t', needs=[], provides=['a', 'b', 'c']?, fn='<lambda>')"
+        str(op())
+        == "FunctionalOperation(name='t', needs=[], provides=['a']?, fn='str')"
     )
-    op = op()
+
+
+def test_endured_op_repr():
+    op = operation(str, name="t", provides=["a"], endured=True)
+    assert str(op) == "operation!(name='t', needs=[], provides=['a'], fn='str')"
     assert (
-        str(op)
-        == "FunctionalOperation(name='t', needs=[], provides=['a', 'b', 'c']?, fn='<lambda>')"
+        str(op())
+        == "FunctionalOperation!(name='t', needs=[], provides=['a'], fn='str')"
+    )
+
+
+def test_endured_rescheduled_op_repr():
+    op = operation(str, name="t", reschedule=1, endured=1)
+    assert str(op) == "operation!(name='t', needs=[], provides=[]?, fn='str')"
+    assert (
+        str(op()) == "FunctionalOperation!(name='t', needs=[], provides=[]?, fn='str')"
     )
 
 
