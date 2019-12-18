@@ -29,8 +29,9 @@ Module: `network`
 =================
 
 .. automodule:: graphtik.network
-     :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_skip_evictions,
-               set_endure_execution, is_endure_execution, _execution_configs, _unsatisfied_operations
+     :members: AbortedException, _unsatisfied_operations, _execution_configs,
+               abort_run, is_abort, is_endure_execution, is_skip_evictions,
+               set_endure_execution, set_execution_pool, set_skip_evictions
      :private-members:
 .. autoclass:: graphtik.network.Network
      :members:

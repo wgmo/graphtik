@@ -48,6 +48,11 @@ class AbortedException(Exception):
     """Raised from the Network code when :func:`abort_run()` is called."""
 
 
+def set_execution_pool(pool: "ProcessPool"):
+    """Set the process-pool for :term:`parallel` plan executions."""
+    _execution_configs.get()["execution_pool"] = pool
+
+
 def abort_run():
     """Signal to the 1st running network to stop :term:`execution`."""
     _execution_configs.get()["abort"] = True

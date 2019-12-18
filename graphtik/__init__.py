@@ -13,6 +13,7 @@ __uri__ = "https://github.com/pygraphkit/graphtik"
 NO_RESULT = object()
 
 from .modifiers import *  # noqa, on purpose to include any new modifiers
+from .netop import compose
 from .network import (
     AbortedException,
     abort_run,
@@ -20,7 +21,7 @@ from .network import (
     is_endure_execution,
     is_skip_evictions,
     set_endure_execution,
+    set_execution_pool,
     set_skip_evictions,
 )
-from .netop import compose
 from .op import operation
