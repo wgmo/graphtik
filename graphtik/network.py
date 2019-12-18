@@ -704,6 +704,8 @@ class Network(Plotter):
         from .plot import build_pydot
 
         kws.setdefault("graph", self.graph)
+        kws.setdefault("inputs", self.needs)
+        kws.setdefault("outputs", self.provides)
 
         return build_pydot(**kws)
 

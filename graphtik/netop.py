@@ -157,6 +157,7 @@ class NetworkOperation(Operation, Plotter):
 
     def _build_pydot(self, **kws):
         """delegate to network"""
+        # FIXME:  demarcate netop inputs/outputs in plots.
         kws.setdefault("title", self.name)
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
