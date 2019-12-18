@@ -231,7 +231,6 @@ def build_pydot(
 
             if steps and nx_node in steps:
                 kw["penwdth"] = steps_thickness
-            shape = "egg" if isinstance(nx_node, NetworkOperation) else "oval"
             if nx_node in getattr(solution, "failures", ()):
                 kw["style"] = "filled"
                 kw["fillcolor"] = failed_color
@@ -247,7 +246,7 @@ def build_pydot(
                 log.debug("Ignoring error while inspecting file of %s: %s", nx_node, ex)
             node = pydot.Node(
                 name=quote_dot_kws(nx_node.name),
-                shape=shape,
+                shape="oval",
                 ## NOTE: Jupyter lab is bocking local-urls (e.g. on SVGs).
                 **kw,
             )
