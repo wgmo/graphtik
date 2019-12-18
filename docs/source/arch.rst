@@ -61,9 +61,16 @@ Architecture
 
     execute
     EXECUTION
-        The *phase* where the :class:`.ExecutionPlan` calls sequentially or parallel
-        the underlying functions of all `operation`\s contained in `execution steps`,
-        with `inputs`/`outputs` taken from the `solution`.
+    parallel
+    sequential
+        The *phase* where the :class:`.ExecutionPlan` calls the underlying functions
+        of all `operation`\s contained in `execution steps`, with `inputs`/`outputs`
+        taken from the `solution`.
+
+        Currently there are 2 ways to execute:
+
+        - *sequential*
+        - *parallel*, with a :class:`multiprocessing.ProcessPool`
 
     configurations
         A global :data:`._execution_configs` affecting `execution`
@@ -71,7 +78,15 @@ Architecture
 
         .. Tip::
             Instead of directly modifying ``_execution_configs``, prefer
-            the special ``set_...()`` & ``is_...()`` methods exposed from ``graptik`` package.
+            the special ``set_...()`` & ``is_...()`` methods exposed from
+            the ``graptik`` package:
+
+            - :func:`.abort_run` & :func:`.is_abort`
+            - :func:`.set_skip_evictions` & :func:`.is_skip_evictions`
+              (for disabling `eviction`\s globally);
+            - :func:`.set_endure_execution` & :func:`.is_endure_execution`
+              (for enabling `endurance` globally);
+            - :func:`.set_execution_pool` (for `parallel` executions).
 
     graph
     network graph
@@ -204,6 +219,7 @@ Architecture
     reschedule
     rescheduling
     partial outputs
+    canceled operation
         The partial `pruning` of the `solution`'s dag during `execution`.
         It happens when any of these 2 conditions apply:
 
@@ -214,18 +230,19 @@ Architecture
           for a specific *operation*.
 
         the *solution* must then *reschedule* the remaining operations downstreams,
-        and *cancel* some of those.
+        and possibly *cancel* some of those ( assigned in :attr:`.Solution.canceled`).
 
     endurance
         Keep executing as many `operation`\s as possible, even if some of them fail.
-        If :func:`.set_endure_execution()` in the `configurations` is set to true,
-        you may interogate :class:`.Solution` properties to discover whether
-        an operation may be:
+        Endurance for an operation  is enabled if :func:`.set_endure_execution()`
+        is true globally in the `configurations` or if :attr:`.FunctionalOperation.endurance`
+        is true.
 
-        - executed successfully,
-        - *failed*, or
-        - *canceled*, if another operation, the sole provider of a compulsory `needs`,
-          has failed upstreams, and this operation was `reschedule`\d.
+        You may interogate :class:`.Solution` operations to discover whether
+        they have been:
+
+        - :attr:`.Solution.executed` successfully;
+        - :attr:`.Solution.failed`. or
 
     predicate
     node predicate

@@ -161,7 +161,7 @@ class Solution(ChainMap, Plotter):
 
     .. attribute:: canceled
 
-        A sorted set of operations canceled due to upstream failures.
+        A sorted set of :term:`canceled operation`\\s due to upstream failures.
     .. attribute:: finished
 
         a flag denoting that this instance cannot acccept more results
