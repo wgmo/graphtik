@@ -65,6 +65,14 @@ Architecture
         the underlying functions of all `operation`\s contained in `execution steps`,
         with `inputs`/`outputs` taken from the `solution`.
 
+    configurations
+        A global :data:`._execution_configs` affecting `execution`
+        stored in a :class:`contextvars.ContextVar`.
+
+        .. Tip::
+            Instead of directly modifying ``_execution_configs``, prefer
+            the special ``set_...()`` & ``is_...()`` methods exposed from ``graptik`` package.
+
     graph
     network graph
         The :attr:`.Network.graph` (currently a DAG) contains all :class:`FunctionalOperation`
@@ -78,9 +86,12 @@ Architecture
 
     dag
     execution dag
-        The :attr:`.ExecutionPlan.dag` is a directed-acyclic-graph that contains
-        the `prune`\d nodes as build by :meth:`.Network._prune_graph()`.
-        This pruned subgraph is used to decide the `execution steps`.
+        There are 2 *directed-acyclic-graphs* instances used:
+
+        - the :attr:`.ExecutionPlan.dag`,  in the `execution plan`, which contains
+          the `prune`\d  nodes, used to decide the `execution steps`;
+        - the :attr:`.Solution.dag` in the `solution`, which contains
+          the `reschedule`\d nodes.
 
     steps
     execution steps
@@ -100,13 +111,12 @@ Architecture
         to reduce memory footprint while computing.
 
     solution
-        A :class:`.Solution` created internally by :meth:`.NetworkOperation.compute()`
+        A :class:`.Solution` instance created internally by :meth:`.NetworkOperation.compute()`
         to hold the values both `inputs` & `outputs`, and the status of *executed* operations.
         It is based on a :class:`collections.ChainMap`, to keep one dictionary
         for each `operation` executed +1 for inputs.
 
-
-        The last operation result wins in the final *outputs* produced,
+        The results of the last operation executed "wins" in the final *outputs* produced,
         BUT while executing, the `needs` of each operation receive the *solution* values
         in **reversed order**, that is, the 1st operation result (or given input) wins
         for some *needs* name.
@@ -122,7 +132,7 @@ Architecture
             to get back the given inputs in case of `overwrites`.
 
     overwrites
-        Values in the `solution` that are written by more than one `operation`\s,
+        Values in the `solution` that have been written by more than one `operation`\s,
         accessed by :attr:`Solution.overwrites`:
 
     net
@@ -152,7 +162,8 @@ Architecture
 
     operation
         Either the abstract notion of an action with specified `needs` and `provides`,
-        or the concrete wraper :class:`.FunctionalOperation` for arbitrary :class:`.callables`.
+        or the concrete wraper :class:`.FunctionalOperation` for arbitrary functions
+        (any :class:`callable`).
 
     netop
     network operation
@@ -174,30 +185,42 @@ Architecture
 
     prune
     pruning
-        Method :meth:`.Network._prune_graph()` extracts a subgraph `dag` that
-        does not contain any `unsatisfied operation`\s.
+        A subphase of `compilation` performed by method :meth:`.Network._prune_graph()`,
+        which extracts a subgraph `dag` that does not contain any `unsatisfied operation`\s.
 
         It topologically sorts the `graph`, and *prunes* based on given `inputs`,
         asked `outputs`, `node predicate` and `operation` `needs` & `provides`.
 
     unsatisfied operation
-        Method :func:`.network._unsatisfied_operations()` collects all `operation`\s
-        that fall into any of these two cases:
+        The core of `pruning` & `rescheduling`, performed by method
+        :func:`.network._unsatisfied_operations()`, which collects all `operation`\s
+        that fall into any of these 2 cases:
 
-        - it has `needs` that do not correspond to any given `inputs` or
-          intermediately `compute`\d `outputs` of the `solution`;
-        - all its `provides` are NOT needed by any other operation, nor are asked
-          as `outputs`.
+        - they have `needs` that do not correspond to any of the given `inputs` or
+          the intermediately `compute`\d `outputs` of the `solution`;
+        - all threir `provides` are NOT needed by any other operation, nor are asked
+          as *outputs*.
 
     reschedule
-        When an `operation` is marked as such, its underlying *callable* may produce
-        a subset of its `provides` on execution; the `plan` must then *reschedule*
-        the remaining operations downstreams, and *cancel* some of those.
+    rescheduling
+    partial outputs
+        The partial `pruning` of the `solution`'s dag during `execution`.
+        It happens when any of these 2 conditions apply:
+
+        - an `operation` is marked with the :attr:`FunctionalOperation.reschedule`
+          attribute, which means that its underlying *callable* may produce
+          only a subset of its `provides` (*partial outputs*);
+        - `endurance` is enabled, either globally (in the `configurations`), or
+          for a specific *operation*.
+
+        the *solution* must then *reschedule* the remaining operations downstreams,
+        and *cancel* some of those.
 
     endurance
         Keep executing as many `operation`\s as possible, even if some of them fail.
-        If :func:`.set_endure_execution()` is set to true, you may interogate
-        :class:`.Solution` properties to discover whether an operation may be:
+        If :func:`.set_endure_execution()` in the `configurations` is set to true,
+        you may interogate :class:`.Solution` properties to discover whether
+        an operation may be:
 
         - executed successfully,
         - *failed*, or

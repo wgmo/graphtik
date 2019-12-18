@@ -106,9 +106,9 @@ class FunctionalOperation(
     An :term:`operation` performing a callable (ie a function, a method, a
     lambda).
 
-    :ivar provides:
+    .. attribute:: provides
         Names of output values this operation provides (including aliases).
-    :ivar real_provides:
+    .. attribute:: real_provides
         Names of output values the underlying function provides.
 
     .. Tip::

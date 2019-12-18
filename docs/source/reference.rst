@@ -15,7 +15,7 @@ Module: `op`
 ====================
 
 .. automodule:: graphtik.op
-     :members: Operation, FunctionalOperation, reparse_operation_data
+     :members: Operation, reparse_operation_data
      :undoc-members:
 
 Module: `netop`
@@ -31,6 +31,7 @@ Module: `network`
 .. automodule:: graphtik.network
      :members: AbortedException, abort_run, is_abort, is_skip_evictions, set_skip_evictions,
                set_endure_execution, is_endure_execution, _execution_configs, _unsatisfied_operations
+     :private-members:
 .. autoclass:: graphtik.network.Network
      :members:
      :private-members:

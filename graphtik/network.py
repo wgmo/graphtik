@@ -32,7 +32,7 @@ from .op import Operation
 log = logging.getLogger(__name__)
 
 
-#: Global configurations for all (nested) networks in a computaion run.
+#: Global :term:`configurations` affecting :term:`execution` phase.
 _execution_configs: ContextVar[dict] = ContextVar(
     "execution_configs",
     default={
@@ -143,30 +143,26 @@ class Solution(ChainMap, Plotter):
     """
     Collects outputs from operations, preserving :term:`overwrites`.
 
-    :ivar plan:
+    .. attribute:: plan
+
         the plan that produced this solution
-    :ivar executed:
+    .. attribute:: executed
+
         A dictionary with keys the operations executed, and values their status:
 
         - no key: not executed yet
         - value None: execution ok
         - value Exception: execution failed
-    :ivar passed:
-        a "virtual" property with executed operations that had no exception
-    :ivar failures:
-        a "virtual" property with executed operations that raised an exception
-    :ivar canceled:
-        A sorted set of operations canceled due to upstream failures.
-    :ivar overwrites:
-        a "virtual" property to a dictionary with keys the names of values that
-        exist more than once, and values, all those values in a list, ordered:
 
-        - before :meth:`finsihed()`, as computed;
-        - after :meth:`finsihed()`, in reverse.
-    :ivar finished:
+    .. attribute:: canceled
+
+        A sorted set of operations canceled due to upstream failures.
+    .. attribute:: finished
+
         a flag denoting that this instance cannot acccept more results
         (after the :meth:`finished` has been invoked)
-    :ivar times:
+    .. attribute:: times
+
         a dictionary with execution timings for each operation
     """
 
@@ -185,10 +181,12 @@ class Solution(ChainMap, Plotter):
 
     @property
     def passed(self):
+        """a "virtual" property with executed operations that had no exception"""
         return {k: v for k, v in self.executed.items() if v is None}
 
     @property
     def failures(self):
+        """a "virtual" property with executed operations that raised an exception"""
         return {k: v for k, v in self.executed.items() if isinstance(v, Exception)}
 
     def operation_executed(self, op, outputs):
@@ -219,9 +217,11 @@ class Solution(ChainMap, Plotter):
         """
         The data in the solution that exist more than once.
 
-        :return:
-            a dictionary with keys only those items that existed in more than one map,
-            and values, all those values, in the order of given `maps`
+        A "virtual" property to a dictionary with keys the names of values that
+        exist more than once, and values, all those values in a list, ordered:
+
+        - before :meth:`finsihed()`, as computed;
+        - after :meth:`finsihed()`, in reverse.
         """
         maps = self.maps
         dd = defaultdict(list)
@@ -298,12 +298,7 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
 
 
 class _Rescheduler:
-    """
-    Utility to collect canceled ops downstream from failed ones.
-
-    :ivar canceled:
-        Unsattisfied operations downstream from failed ones.
-    """
+    """Utility to collect canceled ops downstream from failed ones."""
 
     def __init__(self, dag, canceled):
         ## Clone to remove the downstream edges from the `provides`
@@ -343,19 +338,25 @@ class ExecutionPlan(
 
     Note the execution plan's attributes are on purpose immutable tuples.
 
-    :ivar net:
+    .. attribute:: net
+
         The parent :class:`Network`
-    :ivar needs:
+    .. attribute:: needs
+
         An :class:`iset` with the input names needed to exist in order to produce all `provides`.
-    :ivar provides:
+    .. attribute:: provides
+
         An :class:`iset` with the outputs names produces when all `inputs` are given.
-    :ivar dag:
+    .. attribute:: dag
+
         The regular (not broken) *pruned* subgraph of net-graph.
-    :ivar steps:
+    .. attribute:: steps
+
         The tuple of operation-nodes & *instructions* needed to evaluate
         the given inputs & asked outputs, free memory and avoid overwritting
         any given intermediate inputs.
-    :ivar evict:
+    .. attribute:: evict
+
         when false, keep all inputs & outputs, and skip prefect-evictions check.
     """
 
@@ -649,9 +650,11 @@ class Network(Plotter):
     """
     A graph of operations that can :term:`compile` an execution plan.
 
-    :ivar needs:
+    .. attribute:: needs
+
         the "base", all data-nodes that are not produced by some operation
-    :ivar provides:
+    .. attribute:: provides
+
         the "base", all data-nodes produced by some operation
     """
 
