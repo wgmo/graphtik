@@ -313,3 +313,25 @@ def test_reschedule_outputs():
         returns_dict=1,
     )()
     assert op.compute({}) == {"b": "B", "bb": "B"}
+
+
+
+@pytest.mark.parametrize(
+    "attr, value",
+    [
+        ("reschedule", None),
+        ("reschedule", 1),
+        ("reschedule", False),
+        ("endured", None),
+        ("endured", True),
+        ("endured", 0),
+    ],
+)
+def test_netop_conveys_attr(attr, value):
+    def _opsattrs(ops, attr, value):
+        vals = [getattr(op, attr) for op in ops if isinstance(op, Operation)]
+        assert all(v == value for v in vals)
+
+    kw = {attr: value}
+    _opsattrs(compose('1', operation(str)(), **kw).net.graph, attr, value)
+    _opsattrs(compose('2', operation(str, name=1)(), operation(str, name=2)(), **kw).net.graph, attr, value)

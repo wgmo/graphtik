@@ -44,6 +44,8 @@ class NetworkOperation(Operation, Plotter):
         inputs=None,
         outputs=None,
         predicate: Callable[[Any, Mapping], bool] = None,
+        # reschedule=None,
+        # endured=None,
         method=None,
     ):
         """
@@ -67,6 +69,8 @@ class NetworkOperation(Operation, Plotter):
         self.name = name
         self.inputs = inputs
         self.provides = outputs
+        # self.reschedule = reschedule
+        # self.endured = endured
         self.set_execution_method(method)
 
         # TODO: Is it really necessary to sroe IO on netop?
@@ -95,8 +99,11 @@ class NetworkOperation(Operation, Plotter):
         self,
         inputs: Items = None,
         outputs: Items = None,
-        name=None,
         predicate: Callable[[Any, Mapping], bool] = None,
+        *,
+        name=None,
+        reschedule=None,
+        endured=None,
     ) -> "NetworkOperation":
         """
         Return a copy with a network pruned for the given `needs` & `provides`.
@@ -111,6 +118,10 @@ class NetworkOperation(Operation, Plotter):
             method will RAISE if any irrelevant outputs asked.
             If `None`, they are collected from the :attr:`net`.
             They become the `provides` of the returned `netop`.
+        :param predicate:
+            the :term:`node predicate` is a 2-argument callable(op, node-data)
+            that should return true for nodes to include; if None, all nodes included.
+            If `None`, t
         :param name:
             the name for the new netop:
 
@@ -120,9 +131,10 @@ class NetworkOperation(Operation, Plotter):
                 <old-name>-<uid>
 
             - otherwise, the given `name` is applied.
-        :param predicate:
-            the :term:`node predicate` is a 2-argument callable(op, node-data)
-            that should return true for nodes to include; if None, all nodes included.
+        :param reschedule:
+            applies :term:`reschedule` to all contained `operations`
+        :param endured:
+            applies :term:`endurance` to all contained `operations`
 
         :return:
             A narrowed netop clone, which **MIGHT be empty!***
@@ -152,6 +164,8 @@ class NetworkOperation(Operation, Plotter):
             inputs=inputs,
             outputs=outputs,
             predicate=predicate,
+            # reschedule=reschedule
+            # endured=endured
             method=self.method,
         )
 
@@ -243,6 +257,8 @@ def compose(
     *operations,
     needs: Items = None,
     provides: Items = None,
+    reschedule=None,
+    endured=None,
     merge=False,
     node_props=None,
     method=None,
@@ -269,6 +285,10 @@ def compose(
         this ``compose`` instance).  If any two operations are the same
         (based on name), then that operation is computed only once, instead
         of multiple times (one for each time the operation appears).
+    :param reschedule:
+        applies :term:`reschedule` to all contained `operations`
+    :param endured:
+        applies :term:`endurance` to all contained `operations`
     :param node_props:
         added as-is into NetworkX graph, to provide for filtering
         by :meth:`.NetworkOperation.narrowed()`.
@@ -296,8 +316,13 @@ def compose(
         ## Convey any node-props specified in the netop here
         #  to all sub-operations.
         #
-        if node_props or (not merge and parent):
-            kw = {}
+        if (
+            node_props
+            or (not merge and parent)
+            or reschedule is not None
+            or endured is not None
+        ):
+            kw = {"reschedule": reschedule, "endured": endured}
             if node_props:
                 op_node_props = op.node_props.copy()
                 op_node_props.update(node_props)
@@ -319,8 +344,7 @@ def compose(
             )
         else:
             merge_set.add(proc_op(op))
-    operations = merge_set
 
-    net = Network(*operations)
+    net = Network(*merge_set)
 
     return NetworkOperation(net, name, inputs=needs, outputs=provides, method=method)
