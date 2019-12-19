@@ -368,11 +368,11 @@ def test_node_predicate_based_prune():
 
     pred = lambda n, d: d.get("color", None) != "red"
     assert netop.narrowed(predicate=pred)(**inp)["sum"] == 5
-    assert len(netop.net.compile(predicate=pred).dag.nodes) == 9
+    assert len(netop.narrowed(predicate=pred).compile().dag.nodes) == 9
 
     pred = lambda n, d: "color" not in d
     assert netop.narrowed(predicate=pred)(**inp)["sum"] == 3
-    assert len(netop.net.compile(predicate=pred).dag.nodes) == 7
+    assert len(netop.narrowed(predicate=pred).compile().dag.nodes) == 7
 
 
 def test_input_based_pruning():
@@ -425,8 +425,8 @@ def test_deps_pruning_vs_narrowing(samplenet):
     assert results["sum3"] == add(c, sum2)
 
     # Compare with both `narrowed()`.
-    net = samplenet.narrowed(inputs=["c", "sum2"], outputs=["sum3"])
-    results = net(c=c, sum2=sum2)
+    net = samplenet.narrowed(outputs=["sum3"])
+    assert net(c=c, sum2=sum2) == results
 
     # Make sure we got expected result without having to pass a, b, or d.
     assert "sum3" in results
@@ -762,72 +762,66 @@ def test_optional():
 
 @pytest.mark.parametrize("reverse", [0, 1])
 def test_narrow_and_optionality(reverse):
-    def add(a=0, b=0):
-        return a + b
-
     op1 = operation(name="op1", needs=[optional("a"), optional("bb")], provides="sum1")(
-        add
+        addall
     )
-    op2 = operation(name="op2", needs=["a", optional("bb")], provides="sum2")(add)
+    op2 = operation(name="op2", needs=["a", optional("bb")], provides="sum2")(addall)
     ops = [op1, op2]
     provs = "'sum1', 'sum2'"
     if reversed:
         ops = list(reversed(ops))
         provs = "'sum2', 'sum1'"
+    netop_str = (
+        f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provs}], x2ops)"
+    )
 
     netop = compose("t", *ops)
-    assert (
-        repr(netop)
-        == f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provs}], x2ops)"
-    )
+    assert repr(netop) == netop_str
 
-    ## Narrow by `needs`
+    ## IO & predicate do not affect network, but solution.
+
+    ## Compose with `inputs`
     #
-    netop = compose("t", *ops, inputs=["a"])
-    assert (
-        repr(netop)
-        == f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provs}], x2ops)"
+    netop = compose("t", *ops)
+    assert repr(netop) == netop_str
+    assert repr(netop.compile('a')).startswith(
+        "ExecutionPlan(needs=['a'], provides=['sum2', 'sum1'], x2 steps:"
     )
-
-    netop = compose("t", *ops, inputs=["bb"])
-    assert (
-        repr(netop)
-        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
+    #
+    netop = compose("t", *ops)
+    assert repr(netop) == netop_str
+    assert repr(netop.compile(["bb"])).startswith(
+        "ExecutionPlan(needs=[optional('bb')], provides=['sum1'], x1 steps:"
     )
 
     ## Narrow by `provides`
     #
     netop = compose("t", *ops, outputs="sum1")
-    assert (
-        repr(netop)
-        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
+    assert repr(netop) == netop_str
+    assert repr(netop.compile('bb')).startswith(
+        "ExecutionPlan(needs=[optional('bb')], provides=['sum1'], x3 steps:"
     )
+    assert repr(netop.compile('bb')) == repr(netop.compute({"bb": 1}).plan)
 
     netop = compose("t", *ops, outputs=["sum2"])
-    assert (
-        repr(netop)
-        == "NetworkOperation('t', needs=['a', optional('bb')], provides=['sum2'], x1ops)"
+    assert repr(netop) == netop_str
+    assert not netop.compile("bb").steps
+    assert len(netop.compile("a").steps) == 3
+    assert repr(netop.compile("a")).startswith(
+        "ExecutionPlan(needs=['a'], provides=['sum2'], x3 steps:"
     )
 
     ## Narrow by BOTH
     #
-    netop = compose("t", *ops, inputs="a", outputs=["sum1"])
+    netop = compose("t", *ops, outputs=["sum1"])
     assert (
-        repr(netop)
-        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
+        repr(netop.compile(inputs="a")).startswith("ExecutionPlan(needs=[optional('a')], provides=['sum1'], x3 steps:")
     )
 
-    netop = compose("t", *ops, inputs="bb", outputs=["sum2"])
+    netop = compose("t", *ops , outputs=["sum2"])
     with pytest.raises(ValueError, match="Unsolvable graph:"):
         netop.compute({"bb": 11})
 
-    ## Narrow by unknown needs
-    #
-    netop = compose("t", *ops, inputs="BAD")
-    assert (
-        repr(netop)
-        == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
-    )
 
 
 # Function without return value.
@@ -1093,12 +1087,9 @@ def test_skip_eviction_flag():
         set_skip_evictions(False)
 
 
-@pytest.mark.parametrize("endurance, endured", [
-    (None, True),
-    (True, None),
-    (False, True),
-    (1,1),
-    ])
+@pytest.mark.parametrize(
+    "endurance, endured", [(None, True), (True, None), (False, True), (1, 1)]
+)
 def test_execution_endurance(exemethod, endurance, endured):
     set_endure_execution(endurance)
 

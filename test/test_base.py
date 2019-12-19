@@ -175,17 +175,6 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
     assert set(ex.jetsam.keys()) == set(expected_jetsam)
 
 
-class _DummyOperation(op.Operation):
-    def __init__(self):
-        self.name = ("",)
-        self.needs = ()
-        self.provides = ("a",)
-        self.node_props = {}
-
-    def compute(self, named_inputs, outputs=None):
-        pass
-
-
 @pytest.mark.parametrize(
     "acallable, expected_jetsam",
     [
@@ -212,7 +201,7 @@ class _DummyOperation(op.Operation):
         ),
         (
             fnt.partial(
-                NetworkOperation(network.Network(_DummyOperation()), None).compute,
+                NetworkOperation([operation(str)()], "name").compute,
                 named_inputs=None,
                 outputs="bad",
             ),

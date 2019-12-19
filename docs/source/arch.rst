@@ -246,8 +246,8 @@ Architecture
 
     predicate
     node predicate
-        A callable(op, node-data) that should return true for nodes not to be
-        :meth:`~.NetworkOperation.narrowed`.
+        A callable(op, node-data) that should return true for nodes to be
+        included in `graph` during `compilation`.
 
 .. default-role:: obj
 .. |v410-flowchart| raw:: html

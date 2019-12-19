@@ -31,6 +31,7 @@ from .op import Operation
 
 log = logging.getLogger(__name__)
 
+NodePredicate = Callable[[Any, Mapping], bool]
 
 #: Global :term:`configurations` affecting :term:`execution` phase.
 _execution_configs: ContextVar[dict] = ContextVar(
@@ -676,6 +677,11 @@ class Network(Plotter):
             to be added in the graph
         :param graph:
             if None, create a new.
+
+        :raises ValueError:
+            if dupe operation, with msg:
+
+                *Operations may only be added once, ...*
         """
         ## Check for duplicate, operations can only append  once.
         #
@@ -692,6 +698,7 @@ class Network(Plotter):
         else:
             if not isinstance(graph, nx.Graph):
                 raise ValueError(f"Must be a NetworkX graph, was: {graph}")
+
         self.graph = graph
 
         for op in operations:
@@ -763,13 +770,14 @@ class Network(Plotter):
                 raise ValueError(
                     f"Node-predicate({predicate}) failed due to: {ex}\n  node: {node}, {self}"
                 ) from ex
+        log.debug("... predicate filtered out %s.", [op.name for op in to_del])
         graph.remove_nodes_from(to_del)
 
     def _prune_graph(
         self,
         inputs: Items,
         outputs: Items,
-        predicate: Callable[[Any, Mapping], bool] = None,
+        predicate: NodePredicate = None,
     ) -> Tuple[nx.DiGraph, Collection, Collection, Collection]:
         """
         Determines what graph steps need to run to get to the requested
@@ -883,37 +891,6 @@ class Network(Plotter):
 
         return pruned_dag, tuple(inputs), tuple(outputs)
 
-    def narrowed(
-        self,
-        inputs: Items = None,
-        outputs: Items = None,
-        predicate: Callable[[Any, Mapping], bool] = None,
-    ) -> "Network":
-        """
-        Return a pruned network supporting just the given `inputs` & `outputs`.
-
-        :param inputs:
-            all possible inputs names
-        :param outputs:
-            all possible output names
-        :param predicate:
-            the :term:`node predicate` is a 2-argument callable(op, node-data)
-            that should return true for nodes to include; if None, all nodes included.
-
-        :return:
-            the pruned clone, or this, if both `inputs` & `outputs` were `None`
-        """
-        if (inputs, outputs, predicate) == (None, None, None):
-            return self
-
-        if inputs is not None:
-            inputs = astuple(inputs, "outputs", allowed_types=(list, tuple))
-        if outputs is not None:
-            outputs = astuple(outputs, "outputs", allowed_types=(list, tuple))
-
-        pruned_dag, _needs, _provides = self._prune_graph(inputs, outputs, predicate)
-        return Network(graph=pruned_dag)
-
     def _build_execution_steps(
         self, pruned_dag, inputs: Collection, outputs: Optional[Collection]
     ) -> List:
@@ -1025,7 +1002,7 @@ class Network(Plotter):
             that should return true for nodes to include; if None, all nodes included.
 
         :return:
-            the cached or fresh new execution-plan
+            the cached or fresh new :term:`execution plan`
 
         :raises ValueError:
             - If `outputs` asked do not exist in network, with msg:

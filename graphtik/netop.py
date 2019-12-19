@@ -12,10 +12,57 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
-from .network import Network, Solution, yield_ops
+from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
 from .op import FunctionalOperation, Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
+
+_unset = object()
+
+
+def _make_network(
+    operations, reschedule=None, endured=None, merge=None, node_props=None
+):
+    def proc_op(op, parent=None):
+        """clone FuncOperation with certain props changed"""
+        assert isinstance(op, FunctionalOperation), op
+
+        ## Convey any node-props specified in the netop here
+        #  to all sub-operations.
+        #
+        if (
+            node_props
+            or (not merge and parent)
+            or reschedule is not None
+            or endured is not None
+        ):
+            kw = {"reschedule": reschedule, "endured": endured}
+            if node_props:
+                op_node_props = op.node_props.copy()
+                op_node_props.update(node_props)
+                kw["node_props"] = op_node_props
+            ## If `merge` asked, leave original `name` to deduplicate operations,
+            #  otherwise rename the op by prefixing them with their parent netop.
+            #
+            if not merge and parent:
+                kw["parents"] = (parent,) + (op.parents or ())
+            op = op.withset(**kw)
+
+        return op
+
+    merge_set = iset()  # Preseve given node order.
+    for op in operations:
+        if isinstance(op, NetworkOperation):
+            merge_set.update(
+                proc_op(s, op.name) for s in op.net.graph if isinstance(s, Operation)
+            )
+        else:
+            merge_set.add(proc_op(op))
+
+    assert all(bool(n) for n in merge_set)
+    net = Network(*merge_set)
+
+    return net
 
 
 class NetworkOperation(Operation, Plotter):
@@ -27,58 +74,52 @@ class NetworkOperation(Operation, Plotter):
         instances of this class.
     """
 
-    #: set execution mode to single-threaded sequential by default
+    #: The name for the new netop, used when nesting them.
+    name = None
+    #: Will prune `net` against these possible outputs when :meth:`compute()` called.
+    outputs = None
+    #: The :term:`node predicate` is a 2-argument callable(op, node-data)
+    #: that should return true for nodes to include; if None, all nodes included.
+    predicate = None
+    #: either `parallel` or None (default);
+    #: if ``"parallel"``, launches multi-threading.
+    #: When `None`, sequential by default.
     method = None
     #: The execution_plan of the last call to compute(), stored as debugging aid.
     last_plan = None
-    #: The inputs names (possibly `None`) used to compile the :attr:`plan`.
-    inputs = None
     #: The outputs names (possibly `None`) used to compile the :attr:`plan`.
     outputs = None
 
     def __init__(
         self,
-        net,
+        operations,
         name,
         *,
-        inputs=None,
         outputs=None,
-        predicate: Callable[[Any, Mapping], bool] = None,
-        # reschedule=None,
-        # endured=None,
+        predicate: NodePredicate = None,
+        reschedule=None,
+        endured=None,
+        merge=None,
         method=None,
+        node_props=None,
     ):
         """
-        :param inputs:
-            see :meth:`narrowed()`
-        :param outputs:
-            see :meth:`narrowed()`
-        :param predicate:
-            the :term:`node predicate` is a 2-argument callable(op, node-data)
-            that should return true for nodes to include; if None, all nodes included.
-        :param method:
-            either `parallel` or None (default);
-            if ``"parallel"``, launches multi-threading.
-            Set when invoking a composed graph or by
-            :meth:`.NetworkOperation.set_execution_method()`.
+        For arguments, ee :meth:`narrowed()` & class attributes.
 
         :raises ValueError:
-            see :meth:`narrowed()`
+            if dupe operation, with msg:
+
+                *Operations may only be added once, ...*
         """
         ## Set data asap, for debugging, although `net.narrowed()` will reset them.
         self.name = name
-        self.inputs = inputs
-        self.provides = outputs
-        # self.reschedule = reschedule
-        # self.endured = endured
+        # Remember Outputs for future `compute()`?
+        self.outputs = outputs
+        self.predicate = predicate
         self.set_execution_method(method)
 
-        # TODO: Is it really necessary to sroe IO on netop?
-        self.inputs = inputs
-        self.outputs = outputs
-
         # Prune network
-        self.net = net.narrowed(inputs, outputs, predicate)
+        self.net = _make_network(operations, reschedule, endured, merge, node_props)
         self.name, self.needs, self.provides = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
         )
@@ -97,9 +138,8 @@ class NetworkOperation(Operation, Plotter):
 
     def narrowed(
         self,
-        inputs: Items = None,
-        outputs: Items = None,
-        predicate: Callable[[Any, Mapping], bool] = None,
+        outputs: Items = _unset,
+        predicate: NodePredicate = _unset,
         *,
         name=None,
         reschedule=None,
@@ -108,20 +148,12 @@ class NetworkOperation(Operation, Plotter):
         """
         Return a copy with a network pruned for the given `needs` & `provides`.
 
-        :param inputs:
-            prune `net` against these possbile inputs for :meth:`compute()`;
-            method will WARN for any irrelevant inputs given.
-            If `None`, they are collected from the :attr:`net`.
-            They become the `needs` of the returned `netop`.
         :param outputs:
-            prune `net` against these possible outputs for :meth:`compute()`;
-            method will RAISE if any irrelevant outputs asked.
-            If `None`, they are collected from the :attr:`net`.
-            They become the `provides` of the returned `netop`.
+            Will be stored and applied on the next :meth:`compute()` or :meth:`compile()`.
+            If not given, the value of this instance is conveyed to the clone.
         :param predicate:
-            the :term:`node predicate` is a 2-argument callable(op, node-data)
-            that should return true for nodes to include; if None, all nodes included.
-            If `None`, t
+            Will be stored and applied on the next :meth:`compute()` or :meth:`compile()`.
+            If not given, the value of this instance is conveyed to the clone.
         :param name:
             the name for the new netop:
 
@@ -145,6 +177,9 @@ class NetworkOperation(Operation, Plotter):
                 *Unknown output nodes: ...*
 
         """
+        outputs = self.outputs if outputs is _unset else outputs
+        predicate = self.predicate if predicate is _unset else predicate
+
         if name is None:
             name = self.name
         elif name is True:
@@ -154,8 +189,7 @@ class NetworkOperation(Operation, Plotter):
             #
             uid = str(
                 abs(
-                    hash(str(inputs))
-                    ^ hash(str(outputs))
+                    hash(str(outputs))
                     ^ hash(predicate)
                     ^ bool(reschedule)
                     ^ (2 * bool(endured))
@@ -167,13 +201,12 @@ class NetworkOperation(Operation, Plotter):
             name = f"{name}-{uid}"
 
         return NetworkOperation(
-            self.net,
+            [op for op in self.net.graph if isinstance(op, Operation)],
             name,
-            inputs=inputs,
             outputs=outputs,
             predicate=predicate,
-            # reschedule=reschedule
-            # endured=endured
+            reschedule=reschedule,
+            endured=endured,
             method=self.method,
         )
 
@@ -184,21 +217,62 @@ class NetworkOperation(Operation, Plotter):
         plotter = self.last_plan or self.net
         return plotter._build_pydot(**kws)
 
-    def compute(self, named_inputs, outputs=None) -> Solution:
+    def compile(
+        self, inputs=None, outputs=_unset, predicate: NodePredicate = _unset
+    ) -> ExecutionPlan:
         """
-        Solve & execute the graph, sequentially or parallel.
+        Produce a :term:`plan` for the given args or `outputs`/`predicate` narrrowed earlier.
 
-        It see also :meth:`.Operation.compute()`.
+        :param named_inputs:
+            a string or a list of strings that should be fed to the `needs` of all operations.
+        :param outputs:
+            A string or a list of strings with all data asked to compute.
+            If ``None``, all possible intermediate outputs will be kept.
+            If not given, those set by a previous call to :meth:`narrowed()` or cstor are used.
+        :param predicate:
+            Will be stored and applied on the next :meth:`compute()` or :meth:`compile()`.
+            If not given, those set by a previous call to :meth:`narrowed()` or cstor are used.
 
-        :param dict named_inputs:
-            A maping of names --> values that must contain at least
-            the compulsory inputs that were specified when the plan was built
-            (but cannot enforce that!).
+        :return:
+            the :term:`execution plan` satisfying the given `inputs`, `outputs` & `predicate`
+
+        :raises ValueError:
+            - If `outputs` asked do not exist in network, with msg:
+
+                *Unknown output nodes: ...*
+
+            - If solution does not contain any operations, with msg:
+
+                *Unsolvable graph: ...*
+
+            - If given `inputs` mismatched plan's :attr:`needs`, with msg:
+
+                *Plan needs more inputs...*
+
+            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+
+                *Impossible outputs...*
+        """
+        outputs = self.outputs if outputs is _unset else outputs
+        predicate = self.predicate if predicate is _unset else predicate
+
+        return self.net.compile(inputs, outputs, predicate)
+
+    def compute(
+        self,
+        named_inputs: Mapping,
+        outputs: Items = _unset,
+        predicate: NodePredicate = _unset,
+    ) -> Solution:
+        """
+        Compile a plan & :term:`execute` the graph, sequentially or parallel.
+
+        :param named_inputs:
+            A maping of names --> values that will be fed to the `needs` of all operations.
             Cloned, not modified.
         :param outputs:
-            a string or a list of strings with all data asked to compute.
-            If you set this variable to ``None``, all data nodes will be kept
-            and returned at runtime.
+            A string or a list of strings with all data asked to compute.
+            If ``None``, all intermediate data will be kept.
 
         :return:
             The :term:`solution` which contains the results of each operation executed
@@ -220,13 +294,17 @@ class NetworkOperation(Operation, Plotter):
             - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
 
                 *Impossible outputs...*
+
+        See also :meth:`.Operation.compute()`.
         """
         try:
             net = self.net  # jetsam
+            outputs = self.outputs if outputs is _unset else outputs
+            predicate = self.predicate if predicate is _unset else predicate
 
             # Build the execution plan.
             log.debug("=== Compiling netop(%s)...", self.name)
-            self.last_plan = plan = net.compile(named_inputs.keys(), outputs)
+            self.last_plan = plan = net.compile(named_inputs.keys(), outputs, predicate)
 
             log.debug("=== Executing netop(%s)...", self.name)
             solution = plan.execute(named_inputs, outputs, method=self.execution_method)
@@ -263,7 +341,6 @@ def compose(
     name,
     op1,
     *operations,
-    inputs: Items = None,
     outputs: Items = None,
     reschedule=None,
     endured=None,
@@ -317,42 +394,13 @@ def compose(
     if not all(isinstance(op, Operation) for op in operations):
         raise ValueError(f"Non-Operation instances given: {operations}")
 
-    def proc_op(op, parent=None):
-        """clone FuncOperation with certain props changed"""
-        assert isinstance(op, FunctionalOperation), op
-
-        ## Convey any node-props specified in the netop here
-        #  to all sub-operations.
-        #
-        if (
-            node_props
-            or (not merge and parent)
-            or reschedule is not None
-            or endured is not None
-        ):
-            kw = {"reschedule": reschedule, "endured": endured}
-            if node_props:
-                op_node_props = op.node_props.copy()
-                op_node_props.update(node_props)
-                kw["node_props"] = op_node_props
-            ## If `merge` asked, leave original `name` to deduplicate operations,
-            #  otherwise rename the op by prefixing them with their parent netop.
-            #
-            if not merge and parent:
-                kw["parents"] = (parent,) + (op.parents or ())
-            op = op.withset(**kw)
-
-        return op
-
-    merge_set = iset()  # Preseve given node order.
-    for op in operations:
-        if isinstance(op, NetworkOperation):
-            merge_set.update(
-                proc_op(s, op.name) for s in op.net.graph if isinstance(s, Operation)
-            )
-        else:
-            merge_set.add(proc_op(op))
-
-    net = Network(*merge_set)
-
-    return NetworkOperation(net, name, inputs=inputs, outputs=outputs, method=method)
+    return NetworkOperation(
+        operations,
+        name,
+        outputs=outputs,
+        reschedule=reschedule,
+        endured=endured,
+        method=method,
+        merge=merge,
+        node_props=node_props,
+    )

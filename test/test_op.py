@@ -315,6 +315,11 @@ def test_reschedule_outputs():
     assert op.compute({}) == {"b": "B", "bb": "B"}
 
 
+@pytest.mark.parametrize("attr, value", [("outputs", [1]), ("predicate", lambda: None)])
+def test_netop_narrow_attributes(attr, value):
+    netop = compose("1", operation(str, name="op1")())
+    assert getattr(netop.narrowed(**{attr: value}), attr) == value
+
 
 @pytest.mark.parametrize(
     "attr, value",
@@ -333,5 +338,11 @@ def test_netop_conveys_attr(attr, value):
         assert all(v == value for v in vals)
 
     kw = {attr: value}
-    _opsattrs(compose('1', operation(str)(), **kw).net.graph, attr, value)
-    _opsattrs(compose('2', operation(str, name=1)(), operation(str, name=2)(), **kw).net.graph, attr, value)
+    _opsattrs(compose("1", operation(str)(), **kw).net.graph, attr, value)
+    _opsattrs(
+        compose(
+            "2", operation(str, name=1)(), operation(str, name=2)(), **kw
+        ).net.graph,
+        attr,
+        value,
+    )
