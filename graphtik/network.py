@@ -386,7 +386,7 @@ class ExecutionPlan(
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
         steps = "".join(f"\n  +--{s}" for s in self.steps)
-        return f"ExecutionPlan(needs={needs}, provides={provides}, steps:{steps})"
+        return f"ExecutionPlan(needs={needs}, provides={provides}, x{len(self.steps)} steps:{steps})"
 
     def validate(self, inputs: Items, outputs: Items):
         """
