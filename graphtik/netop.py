@@ -255,8 +255,8 @@ def compose(
     name,
     op1,
     *operations,
-    needs: Items = None,
-    provides: Items = None,
+    inputs: Items = None,
+    outputs: Items = None,
     reschedule=None,
     endured=None,
     merge=False,
@@ -347,4 +347,4 @@ def compose(
 
     net = Network(*merge_set)
 
-    return NetworkOperation(net, name, inputs=needs, outputs=provides, method=method)
+    return NetworkOperation(net, name, inputs=inputs, outputs=outputs, method=method)

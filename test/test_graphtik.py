@@ -783,13 +783,13 @@ def test_narrow_and_optionality(reverse):
 
     ## Narrow by `needs`
     #
-    netop = compose("t", *ops, needs=["a"])
+    netop = compose("t", *ops, inputs=["a"])
     assert (
         repr(netop)
         == f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provs}], x2ops)"
     )
 
-    netop = compose("t", *ops, needs=["bb"])
+    netop = compose("t", *ops, inputs=["bb"])
     assert (
         repr(netop)
         == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
@@ -797,13 +797,13 @@ def test_narrow_and_optionality(reverse):
 
     ## Narrow by `provides`
     #
-    netop = compose("t", *ops, provides="sum1")
+    netop = compose("t", *ops, outputs="sum1")
     assert (
         repr(netop)
         == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
     )
 
-    netop = compose("t", *ops, provides=["sum2"])
+    netop = compose("t", *ops, outputs=["sum2"])
     assert (
         repr(netop)
         == "NetworkOperation('t', needs=['a', optional('bb')], provides=['sum2'], x1ops)"
@@ -811,19 +811,19 @@ def test_narrow_and_optionality(reverse):
 
     ## Narrow by BOTH
     #
-    netop = compose("t", *ops, needs="a", provides=["sum1"])
+    netop = compose("t", *ops, inputs="a", outputs=["sum1"])
     assert (
         repr(netop)
         == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
     )
 
-    netop = compose("t", *ops, needs="bb", provides=["sum2"])
+    netop = compose("t", *ops, inputs="bb", outputs=["sum2"])
     with pytest.raises(ValueError, match="Unsolvable graph:"):
         netop.compute({"bb": 11})
 
     ## Narrow by unknown needs
     #
-    netop = compose("t", *ops, needs="BAD")
+    netop = compose("t", *ops, inputs="BAD")
     assert (
         repr(netop)
         == "NetworkOperation('t', needs=[optional('a'), optional('bb')], provides=['sum1'], x1ops)"
