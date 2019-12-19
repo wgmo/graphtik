@@ -2,6 +2,7 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """:term:`Compile` & :term:`execute` network graphs of operations."""
 import copy
+import itertools as itt
 import logging
 import re
 import sys
@@ -181,6 +182,28 @@ class Solution(ChainMap, Plotter):
         self.finished = False
         self.times = {}
 
+        ## Decide if a the `plan.dag` will be modified,
+        #  to cancel ops downstreams:
+        #
+        #  - if endurance is globally enabled, or
+        #  - if any operation is endured, or,
+        #  - if any operation needs rescheduling.
+        #
+        ## From the cloned `dag` the downstream edges from the `provides`
+        #  of failed operations will be removed.
+        #
+        self.is_endurance = is_endure_execution()
+        self.dag = (
+            plan.dag.copy()
+            if self.is_endurance
+            or any(
+                op.reschedule or op.endured
+                for op in plan.steps
+                if isinstance(op, Operation)
+            )
+            else plan.dag
+        )
+
     def __repr__(self):
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
         return f"{{{items}}}"
@@ -196,15 +219,44 @@ class Solution(ChainMap, Plotter):
         return {k: v for k, v in self.executed.items() if isinstance(v, Exception)}
 
     def operation_executed(self, op, outputs):
-        """invoked once per operation, with its results"""
+        """
+        Invoked once per operation, with its results.
+
+        It will update :attr:`executed` with the operation status and
+        if `outputs` were partials, it will update :attr:`canceled`
+        with the unsatisfiead ops downstream of `op`.
+
+        :param op:
+            the operation that completed ok
+        :param outputs:
+            The names of the `outputs` values the op` actually produced,
+            which may be a subset of its `provides`.  Sideffects are not considered.
+
+        """
         assert not self.finished, f"Cannot reuse solution: {self}"
         self.maps.append(outputs)
         self.executed[op] = None
 
+        if op.reschedule:
+            dag = self.dag
+            to_brake = set(op.provides) - set(outputs)
+            to_brake = [(op, out) for out in to_brake if not isinstance(out, sideffect)]
+            dag.remove_edges_from(to_brake)
+            self.canceled.update(_unsatisfied_operations(dag, self))
+
     def operation_failed(self, op, ex):
-        """invoked once per operation, with its results"""
+        """
+        Invoked once per operation, with its results.
+
+        It will update :attr:`executed` with the operation status and
+        the :attr:`canceled` with the unsatisfiead ops downstream of `op`.
+        """
         assert not self.finished, f"Cannot reuse solution: {self}"
         self.executed[op] = ex
+
+        dag = self.dag
+        dag.remove_edges_from(list(dag.out_edges(op)))
+        self.canceled.update(_unsatisfied_operations(dag, self))
 
     def finish(self):
         """invoked only once, after all ops have been executed"""
@@ -301,37 +353,6 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
     # TODO: Unify _DataNode + modifiers to avoid ugly hack `net.collect_requirements()`.
     provides = iset(str(n) if not isinstance(n, sideffect) else n for n in provides)
     return needs, provides
-
-
-class _Rescheduler:
-    """Utility to collect canceled ops downstream from failed ones."""
-
-    def __init__(self, dag, canceled):
-        ## Clone to remove the downstream edges from the `provides`
-        #  of failed operations.
-        self.dag = dag.copy()
-
-    def operation_executed(self, op: Operation, solution, eventual_outputs: Collection):
-        """
-        update :attr:`canceled` with the unsatisfiead ops downstream of `op`.
-
-        :param op:
-            the operation that completed ok
-        :param eventual_outputs:
-            The names of the `outputs` values the op` actually produced,
-            which may be a subset of its `provides`.  Sideffects are not considered.
-        """
-        dag = self.dag
-        to_brake = set(op.provides) - set(eventual_outputs)
-        to_brake = [(op, out) for out in to_brake if not isinstance(out, sideffect)]
-        dag.remove_edges_from(to_brake)
-        solution.canceled.update(_unsatisfied_operations(dag, solution))
-
-    def operation_failed(self, op: Operation, solution):
-        """update :attr:`canceled` with the unsatisfiead ops downstream of `op`."""
-        dag = self.dag
-        dag.remove_edges_from(list(dag.out_edges(op)))
-        solution.canceled.update(_unsatisfied_operations(dag, solution))
 
 
 class ExecutionPlan(
@@ -435,9 +456,7 @@ class ExecutionPlan(
             _reset_abort()
             raise AbortedException({s: s in executed for s in self.steps})
 
-    def _call_operation(
-        self, op, solution, rescheduler: _Rescheduler, is_endurance: bool
-    ):
+    def _call_operation(self, op, solution):
         # Although `plan` have added to jetsam in `compute()``,
         # add it again, in case compile()/execute is called separately.
         t0 = time.time()
@@ -445,10 +464,8 @@ class ExecutionPlan(
         try:
             outputs = op.compute(solution)
             solution.operation_executed(op, outputs)
-            if op.reschedule:
-                rescheduler.operation_executed(op, solution, outputs)
         except Exception as ex:
-            if not is_endurance and not op.endured:
+            if not solution.is_endurance and not op.endured:
                 jetsam(ex, locals(), "solution", plan="self")
                 raise
 
@@ -459,7 +476,6 @@ class ExecutionPlan(
                 ex,
             )
             solution.operation_failed(op, ex)
-            rescheduler.operation_failed(op, solution)
 
         finally:
             # record execution time
@@ -467,9 +483,7 @@ class ExecutionPlan(
             solution.times[op.name] = t_complete
             log.debug("... step completion time: %s", t_complete)
 
-    def _execute_thread_pool_barrier_method(
-        self, solution: Solution, rescheduler: _Rescheduler, is_endurance: bool
-    ):
+    def _execute_thread_pool_barrier_method(self, solution: Solution):
         """
         This method runs the graph using a parallel pool of thread executors.
         You may achieve lower total latency if your graph is sufficiently
@@ -501,7 +515,7 @@ class ExecutionPlan(
                         if isinstance(n, Operation)
                     ).issubset(solution.executed)
                 ):
-                    if rescheduler and node in solution.canceled:
+                    if node in solution.canceled:
                         log.debug(
                             "+++ SKIPPED op(%r) due to previously failed ops.",
                             node.name,
@@ -533,21 +547,12 @@ class ExecutionPlan(
             # FIXME: parallel does not execute nodes in insertion-order (same as sequential)!
             list(
                 pool.imap_unordered(
-                    (
-                        lambda op: (
-                            op,
-                            self._call_operation(
-                                op, solution, rescheduler, is_endurance
-                            ),
-                        )
-                    ),
-                    upnext,
+                    (lambda op_sol: self._call_operation(*op_sol)),
+                    zip(upnext, itt.repeat(solution)),
                 )
             )
 
-    def _execute_sequential_method(
-        self, solution: Solution, rescheduler: _Rescheduler, is_endurance: bool
-    ):
+    def _execute_sequential_method(self, solution: Solution):
         """
         This method runs the graph one operation at a time in a single thread
 
@@ -558,12 +563,12 @@ class ExecutionPlan(
             self._check_if_aborted(solution.executed)
 
             if isinstance(step, Operation):
-                if rescheduler and step in solution.canceled:
+                if step in solution.canceled:
                     log.debug(
                         "+++ SKIPPED op(%r) due to previously failed ops.", step.name
                     )
                     continue
-                self._call_operation(step, solution, rescheduler, is_endurance)
+                self._call_operation(step, solution)
 
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.
@@ -622,24 +627,8 @@ class ExecutionPlan(
                 else named_inputs,
             )
 
-            ## Decide if a rescheduler should be used,
-            #  to collect canceled ops downstreams:
-            #  - if endurance is globally enabled, or
-            #  - if any operation is endured, or,
-            #  - if any operation needs rescheduling.
-            #
-            is_endurance = is_endure_execution()
-            rescheduler = (
-                is_endurance
-                or any(
-                    op.reschedule or op.endured
-                    for op in self.steps
-                    if isinstance(op, Operation)
-                )
-            ) and _Rescheduler(self.dag, solution.canceled)
-
             try:
-                executor(solution, rescheduler, is_endurance)
+                executor(solution)
             finally:
                 solution.finish()
 
@@ -774,10 +763,7 @@ class Network(Plotter):
         graph.remove_nodes_from(to_del)
 
     def _prune_graph(
-        self,
-        inputs: Items,
-        outputs: Items,
-        predicate: NodePredicate = None,
+        self, inputs: Items, outputs: Items, predicate: NodePredicate = None
     ) -> Tuple[nx.DiGraph, Collection, Collection, Collection]:
         """
         Determines what graph steps need to run to get to the requested

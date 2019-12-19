@@ -3,6 +3,7 @@
 import functools as fnt
 import itertools as itt
 import logging
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -156,9 +157,7 @@ class _ScreamingOperation(op.Operation):
             fnt.partial(
                 network.ExecutionPlan(*([None] * 6))._call_operation,
                 op=_ScreamingOperation(),
-                solution=Solution(None),
-                rescheduler=None,
-                is_endurance=None,
+                solution=Solution(MagicMock()),
             ),
             ["plan", "solution"],
         ),
@@ -187,9 +186,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
             fnt.partial(
                 network.ExecutionPlan(*([None] * 6))._call_operation,
                 op=operation(_scream, name="auch")(),
-                solution=Solution(None),
-                rescheduler=None,
-                is_endurance=None,
+                solution=Solution(MagicMock()),
             ),
             "solution outputs provides aliases results_fn results_op operation args plan".split(),
         ),
