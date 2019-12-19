@@ -157,7 +157,7 @@ class _ScreamingOperation(op.Operation):
             fnt.partial(
                 network.ExecutionPlan(*([None] * 6))._call_operation,
                 op=_ScreamingOperation(),
-                solution=Solution(MagicMock()),
+                solution=Solution(MagicMock(), {}),
             ),
             ["plan", "solution"],
         ),
@@ -186,7 +186,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
             fnt.partial(
                 network.ExecutionPlan(*([None] * 6))._call_operation,
                 op=operation(_scream, name="auch")(),
-                solution=Solution(MagicMock()),
+                solution=Solution(MagicMock(), {}),
             ),
             "solution outputs provides aliases results_fn results_op operation args plan".split(),
         ),

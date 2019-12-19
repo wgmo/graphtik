@@ -173,14 +173,20 @@ class Solution(ChainMap, Plotter):
         a dictionary with execution timings for each operation
     """
 
-    def __init__(self, plan, *args, **kw):
-        super().__init__(*args, **kw)
+    def __init__(self, plan, input_values):
+        super().__init__(input_values)
 
         self.plan = plan
         self.executed = {}
         self.canceled = iset()  # not iterated, order not important, but ...
         self.finished = False
         self.times = {}
+
+        ## Pre-populate chainmaps with 1 dict per plan's operation
+        #  (appended after of inputs map).
+        #
+        self._layers = {op: {} for op in yield_ops(plan.dag)}
+        self.maps.extend(self._layers.values())
 
         ## Decide if a the `plan.dag` will be modified,
         #  to cancel ops downstreams:
@@ -234,7 +240,7 @@ class Solution(ChainMap, Plotter):
 
         """
         assert not self.finished, f"Cannot reuse solution: {self}"
-        self.maps.append(outputs)
+        self._layers[op].update(outputs)
         self.executed[op] = None
 
         if op.reschedule:
@@ -544,7 +550,6 @@ class ExecutionPlan(
             if not upnext:
                 break
 
-            # FIXME: parallel does not execute nodes in insertion-order (same as sequential)!
             list(
                 pool.imap_unordered(
                     (lambda op_sol: self._call_operation(*op_sol)),
