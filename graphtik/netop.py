@@ -150,9 +150,17 @@ class NetworkOperation(Operation, Plotter):
         elif name is True:
             name = self.name
 
-            ## Devise a new UID based on inputs & outputs.
+            ## Devise a stable UID based args.
             #
-            uid = str(abs(hash(f"{inputs}{outputs}")))[:7]
+            uid = str(
+                abs(
+                    hash(str(inputs))
+                    ^ hash(str(outputs))
+                    ^ hash(predicate)
+                    ^ bool(reschedule)
+                    ^ (2 * bool(endured))
+                )
+            )[:7]
             m = re.match(r"^(.*)-(\d+)$", name)
             if m:
                 name = m.group(1)
