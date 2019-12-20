@@ -12,7 +12,7 @@ from typing import Callable, Mapping, Tuple, Union
 from boltons.setutils import IndexedSet as iset
 
 from . import NO_RESULT
-from .base import Items, Plotter, aslist, astuple, jetsam
+from .base import Items, Plotter, UNSET, aslist, astuple, jetsam
 from .modifiers import optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
@@ -212,9 +212,8 @@ class FunctionalOperation(
     def __eq__(self, other):
         """Operation identity is based on `name` and `parents`."""
         return bool(
-            self.name is not None
-            and self.name == getattr(other, "name", None)
-            and self.parents == getattr(other, "parents", None)
+            self.name == getattr(other, "name", UNSET)
+            and self.parents == getattr(other, "parents", UNSET)
         )
 
     def __hash__(self):
