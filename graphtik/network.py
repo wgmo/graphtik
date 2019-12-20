@@ -245,10 +245,22 @@ class Solution(ChainMap, Plotter):
 
         if op.reschedule:
             dag = self.dag
-            to_brake = set(op.provides) - set(outputs)
-            to_brake = [(op, out) for out in to_brake if not isinstance(out, sideffect)]
+            missing_outs = iset(op.provides) - set(outputs)
+            to_brake = [
+                (op, out) for out in missing_outs if not isinstance(out, sideffect)
+            ]
             dag.remove_edges_from(to_brake)
-            self.canceled.update(_unsatisfied_operations(dag, self))
+            canceled = _unsatisfied_operations(dag, self)
+            newly_canceled = iset(canceled) - self.canceled
+            if newly_canceled and log.isEnabledFor(logging.INFO):
+                log.info(
+                    "... SKIPPING +%s ops%s due to partial outs%s of op(%s).",
+                    len(newly_canceled),
+                    [n.name for n in newly_canceled],
+                    list(missing_outs),
+                    op.name,
+                )
+            self.canceled.update(newly_canceled)
 
     def operation_failed(self, op, ex):
         """
@@ -262,7 +274,16 @@ class Solution(ChainMap, Plotter):
 
         dag = self.dag
         dag.remove_edges_from(list(dag.out_edges(op)))
-        self.canceled.update(_unsatisfied_operations(dag, self))
+        canceled = _unsatisfied_operations(dag, self)
+        newly_canceled = iset(canceled) - self.canceled
+        if newly_canceled and log.isEnabledFor(logging.INFO):
+            log.info(
+                "... SKIPPING +%s ops%s due to failed op(%s).",
+                len(newly_canceled),
+                [n.name for n in newly_canceled],
+                op.name,
+            )
+        self.canceled.update(newly_canceled)
 
     def finish(self):
         """invoked only once, after all ops have been executed"""
@@ -476,7 +497,7 @@ class ExecutionPlan(
                 raise
 
             log.warning(
-                "... enduring while op(%r) FAILED due to: %s(%s)",
+                "... enduring op(%r) FAILED due to: %s(%s)",
                 op.name,
                 type(ex).__name__,
                 ex,
@@ -521,12 +542,7 @@ class ExecutionPlan(
                         if isinstance(n, Operation)
                     ).issubset(solution.executed)
                 ):
-                    if node in solution.canceled:
-                        log.info(
-                            "+++ SKIPPED op(%r) due to previously failed ops.",
-                            node.name,
-                        )
-                    else:
+                    if node not in solution.canceled:
                         upnext.append(node)
                 elif isinstance(node, _EvictInstruction):
                     # Only evict if all successors for the data node
@@ -569,9 +585,6 @@ class ExecutionPlan(
 
             if isinstance(step, Operation):
                 if step in solution.canceled:
-                    log.info(
-                        "+++ SKIPPED op(%r) due to previously failed ops.", step.name
-                    )
                     continue
                 self._call_operation(step, solution)
 
@@ -764,7 +777,7 @@ class Network(Plotter):
                 raise ValueError(
                     f"Node-predicate({predicate}) failed due to: {ex}\n  node: {node}, {self}"
                 ) from ex
-        log.debug("... predicate filtered out %s.", [op.name for op in to_del])
+        log.info("... predicate filtered out %s.", [op.name for op in to_del])
         graph.remove_nodes_from(to_del)
 
     def _prune_graph(
@@ -861,9 +874,20 @@ class Network(Plotter):
                 ending_in_outputs.add(_DataNode(output_name))
                 ending_in_outputs.update(nx.ancestors(dag, output_name))
             broken_dag = broken_dag.subgraph(ending_in_outputs)
+            if log.isEnabledFor(logging.INFO) and len(broken_dag) != len(dag):
+                log.info(
+                    "... dropping irrelevant ops%s.",
+                    [
+                        op.name
+                        for op in dag
+                        if isinstance(op, Operation) and op not in ending_in_outputs
+                    ],
+                )
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
         unsatisfied = _unsatisfied_operations(broken_dag, satisfied_inputs)
+        if log.isEnabledFor(logging.INFO) and unsatisfied:
+            log.info("... dropping unsatisfied ops%s.", [op.name for op in unsatisfied])
         # Clone it, to modify it.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
         # Clean unlinked data-nodes.
