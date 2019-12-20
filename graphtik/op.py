@@ -42,7 +42,7 @@ def as_renames(i, argname):
         ) from None
     elif not is_list_of_2(i):
         try:
-            i = dict(i).items()
+            i = list(dict(i).items())
         except Exception as ex:
             raise ValueError(f"Cannot dict-ize {argname}({i!r}) due to: {ex}") from None
 
