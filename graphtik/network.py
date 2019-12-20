@@ -366,7 +366,7 @@ def _optionalized(graph, data):
         if all_optionals
         # Nodes are _DataNode instances, not `optional` or `sideffect`
         # TODO: Unify _DataNode + modifiers to avoid ugly hack `net.collect_requirements()`.
-        else sideffect(re.match(r"sideffect\((.*)\)", data).group(1))
+        else sideffect(data)
         if sideffector[data]
         else str(data)  # un-optionalize
     )

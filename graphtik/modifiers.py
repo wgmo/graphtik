@@ -1,12 +1,11 @@
+# Copyright 2016, Yahoo Inc.
+# Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
 This sub-module contains input/output modifiers that can be applied to
 arguments to ``needs`` and ``provides`` to let Graphtik know it should treat
 them differently.
-
-Copyright 2016, Yahoo Inc.
-Licensed under the terms of the Apache License, Version 2.0. See the LICENSE
-file associated with the project for terms.
 """
+import re
 
 
 class optional(str):
@@ -189,4 +188,7 @@ class sideffect(str):
     __slots__ = ()  # avoid __dict__ on instances
 
     def __new__(cls, name):
-        return super(sideffect, cls).__new__(cls, "sideffect(%s)" % name)
+        m = re.match(r"sideffect\((.*)\)", name)
+        if m:
+            name = m.group(1)
+        return super().__new__(cls, f"sideffect({name})")
