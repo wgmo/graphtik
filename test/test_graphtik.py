@@ -332,6 +332,7 @@ def test_aliases(exemethod):
         "test_net",
         operation(lambda: "A", name="op1", provides="a", aliases={"a": "b"})(),
         operation(lambda x: x * 2, name="op2", needs="b", provides="c")(),
+        method=exemethod
     )
     assert op() == {"a": "A", "b": "A", "c": "AA"}
 
@@ -854,6 +855,7 @@ def netop_sideffect1(request) -> NetworkOperation:
 
 def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
     graph = netop_sideffect1
+    graph.set_execution_method(exemethod)
     inp = {"box": [0], "a": True}
 
     ## Normal data must not match sideffects.
@@ -896,11 +898,8 @@ def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
     assert sol == {"box": [1, 2, 3]}
 
 
-@pytest.mark.parametrize("bools", range(4))
-def test_sideffect_real_input(bools):
-    reverse = bools >> 0 & 1
-    parallel = bools >> 1 & 1
-
+@pytest.mark.parametrize("reverse", [0, 1])
+def test_sideffect_real_input(reverse, exemethod):
     ops = [
         operation(name="extend", needs=["box", "a"], provides=[sideffect("b")])(
             _box_extend
@@ -912,9 +911,7 @@ def test_sideffect_real_input(bools):
     if reverse:
         ops = reversed(ops)
     # Designate `a`, `b` as sideffect inp/out arguments.
-    graph = compose("mygraph", *ops)
-    if parallel:
-        graph.set_execution_method("parallel")
+    graph = compose("mygraph", *ops, method=exemethod)
 
     assert graph(**{"box": [0], "a": True}) == {"a": True, "box": [1, 2, 3], "c": None}
     assert graph.compute({"box": [0], "a": True}, ["box", "c"]) == {
@@ -925,6 +922,7 @@ def test_sideffect_real_input(bools):
 
 def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
     netop = netop_sideffect1
+    netop.set_execution_method(exemethod)
     sol = netop.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
     assert sol == {"box": [1, 2, 3]}
     assert len(netop.last_plan.steps) == 4
@@ -940,7 +938,7 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
     reason="PY3.5- have unstable dicts."
     "E.g. https://travis-ci.org/ankostis/graphtik/jobs/595793872",
 )
-def test_optional_per_function_with_same_output():
+def test_optional_per_function_with_same_output(exemethod):
     # Test that the same need can be both optional and not on different operations.
     #
     ## ATTENTION, the selected function is NOT the one with more inputs
@@ -953,7 +951,7 @@ def test_optional_per_function_with_same_output():
 
     # Normal order
     #
-    pipeline = compose("partial_optionals", add_op, sub_op_optional)
+    pipeline = compose("partial_optionals", add_op, sub_op_optional, method=exemethod)
     #
     named_inputs = {"a": 1, "b": 2}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
@@ -965,7 +963,7 @@ def test_optional_per_function_with_same_output():
 
     # Inverse op order
     #
-    pipeline = compose("partial_optionals", sub_op_optional, add_op)
+    pipeline = compose("partial_optionals", sub_op_optional, add_op, method=exemethod)
     #
     named_inputs = {"a": 1, "b": 2}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
@@ -977,25 +975,12 @@ def test_optional_per_function_with_same_output():
 
     # PARALLEL + Normal order
     #
-    pipeline = compose("partial_optionals", add_op, sub_op_optional)
+    pipeline = compose("partial_optionals", add_op, sub_op_optional, method=exemethod)
     pipeline.set_execution_method("parallel")
     #
     named_inputs = {"a": 1, "b": 2}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
     assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -1}
-    #
-    named_inputs = {"a": 1}
-    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
-    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -9}
-
-    # PARALLEL + Inverse op order
-    #
-    pipeline = compose("partial_optionals", sub_op_optional, add_op)
-    pipeline.set_execution_method("parallel")
-    #
-    named_inputs = {"a": 1, "b": 2}
-    assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
-    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
     #
     named_inputs = {"a": 1}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
