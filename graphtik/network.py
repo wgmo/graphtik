@@ -168,9 +168,6 @@ class Solution(ChainMap, Plotter):
 
         a flag denoting that this instance cannot acccept more results
         (after the :meth:`finished` has been invoked)
-    .. attribute:: times
-
-        a dictionary with execution timings for each operation
     """
 
     def __init__(self, plan, input_values):
@@ -180,7 +177,6 @@ class Solution(ChainMap, Plotter):
         self.executed = {}
         self.canceled = iset()  # not iterated, order not important, but ...
         self.finished = False
-        self.times = {}
 
         ## Pre-populate chainmaps with 1 dict per plan's operation
         #  (appended after of inputs map).
@@ -503,12 +499,6 @@ class ExecutionPlan(
                 ex,
             )
             solution.operation_failed(op, ex)
-
-        finally:
-            # record execution time
-            t_complete = round(time.time() - t0, 5)
-            solution.times[op.name] = t_complete
-            log.debug("... step completion time: %s", t_complete)
 
     def _execute_thread_pool_barrier_method(self, solution: Solution):
         """
