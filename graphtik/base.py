@@ -11,6 +11,8 @@ Items = Union[Collection, str, None]
 
 log = logging.getLogger(__name__)
 
+UNSET = object()
+
 
 def aslist(i, argname, allowed_types=list):
     """Utility to accept singular strings as lists, and None --> []."""

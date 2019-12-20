@@ -10,14 +10,12 @@ from typing import Any, Callable, Mapping
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Items, Plotter, aslist, astuple, jetsam
+from .base import Items, Plotter, UNSET, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
 from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
 from .op import FunctionalOperation, Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
-
-_unset = object()
 
 
 def _make_network(
@@ -138,8 +136,8 @@ class NetworkOperation(Operation, Plotter):
 
     def narrowed(
         self,
-        outputs: Items = _unset,
-        predicate: NodePredicate = _unset,
+        outputs: Items = UNSET,
+        predicate: NodePredicate = UNSET,
         *,
         name=None,
         reschedule=None,
@@ -177,8 +175,8 @@ class NetworkOperation(Operation, Plotter):
                 *Unknown output nodes: ...*
 
         """
-        outputs = self.outputs if outputs is _unset else outputs
-        predicate = self.predicate if predicate is _unset else predicate
+        outputs = self.outputs if outputs is UNSET else outputs
+        predicate = self.predicate if predicate is UNSET else predicate
 
         if name is None:
             name = self.name
@@ -218,7 +216,7 @@ class NetworkOperation(Operation, Plotter):
         return plotter._build_pydot(**kws)
 
     def compile(
-        self, inputs=None, outputs=_unset, predicate: NodePredicate = _unset
+        self, inputs=None, outputs=UNSET, predicate: NodePredicate = UNSET
     ) -> ExecutionPlan:
         """
         Produce a :term:`plan` for the given args or `outputs`/`predicate` narrrowed earlier.
@@ -253,16 +251,16 @@ class NetworkOperation(Operation, Plotter):
 
                 *Impossible outputs...*
         """
-        outputs = self.outputs if outputs is _unset else outputs
-        predicate = self.predicate if predicate is _unset else predicate
+        outputs = self.outputs if outputs is UNSET else outputs
+        predicate = self.predicate if predicate is UNSET else predicate
 
         return self.net.compile(inputs, outputs, predicate)
 
     def compute(
         self,
         named_inputs: Mapping,
-        outputs: Items = _unset,
-        predicate: NodePredicate = _unset,
+        outputs: Items = UNSET,
+        predicate: NodePredicate = UNSET,
     ) -> Solution:
         """
         Compile a plan & :term:`execute` the graph, sequentially or parallel.
@@ -299,8 +297,8 @@ class NetworkOperation(Operation, Plotter):
         """
         try:
             net = self.net  # jetsam
-            outputs = self.outputs if outputs is _unset else outputs
-            predicate = self.predicate if predicate is _unset else predicate
+            outputs = self.outputs if outputs is UNSET else outputs
+            predicate = self.predicate if predicate is UNSET else predicate
 
             # Build the execution plan.
             log.debug("=== Compiling netop(%s)...", self.name)
