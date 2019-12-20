@@ -522,7 +522,7 @@ class ExecutionPlan(
                     ).issubset(solution.executed)
                 ):
                     if node in solution.canceled:
-                        log.debug(
+                        log.info(
                             "+++ SKIPPED op(%r) due to previously failed ops.",
                             node.name,
                         )
@@ -569,7 +569,7 @@ class ExecutionPlan(
 
             if isinstance(step, Operation):
                 if step in solution.canceled:
-                    log.debug(
+                    log.info(
                         "+++ SKIPPED op(%r) due to previously failed ops.", step.name
                     )
                     continue
