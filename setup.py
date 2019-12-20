@@ -42,7 +42,13 @@ setup(
         "networkx == 2.2; python_version < '3.5'",
         "boltons",  # for IndexSet
     ],
-    extras_require={"plot": plot_reqs, "test": test_reqs},
+    extras_require={
+        "plot": plot_reqs,
+        "test": test_reqs,
+        # May help for pickling `parallel` tasks.
+        # See `graphtik.set_marshal_parallel_tasks()` config option.
+        "dill": ["dill"],
+    },
     tests_require=test_reqs,
     license="Apache-2.0",
     keywords=[
