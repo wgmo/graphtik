@@ -11,8 +11,7 @@ from typing import Callable, Mapping, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
-from . import NO_RESULT
-from .base import Items, Plotter, UNSET, aslist, astuple, jetsam
+from .base import Items, NO_RESULT, Plotter, UNSET, aslist, astuple, jetsam
 from .modifiers import optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)

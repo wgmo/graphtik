@@ -4,6 +4,7 @@
 
 import abc
 import logging
+import random
 from collections import defaultdict
 from typing import Any, Collection, List, Mapping, Union
 
@@ -11,7 +12,40 @@ Items = Union[Collection, str, None]
 
 log = logging.getLogger(__name__)
 
-UNSET = object()
+
+class Token(str):
+    __slots__ = ("hashid",)
+
+    def __init__(self, *args):
+        self.hashid = random.randint(-2 ** 32, 2 ** 32 - 1)
+
+    def __eq__(self, other):
+        return self.hashid == getattr(other, "hashid", None)
+
+    def __hash__(self):
+        return self.hashid
+
+    def __getstate__(self):
+        return self.hashid
+
+    def __setstate__(self, state):
+        self.hashid = state
+
+    def __bool__(self):
+        return True
+
+    def __str__(self):
+        return "<%s>" % super().__str__()
+
+    def __repr__(self):
+        return self.__str__()
+
+
+#: When an operation function returns this special value,
+#: it implies operation has no result at all,
+#: (otherwise, it would have been a single result, ``None``).`
+NO_RESULT = object()
+UNSET = Token("UNSET")
 
 
 def aslist(i, argname, allowed_types=list):
