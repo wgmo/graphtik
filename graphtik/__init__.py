@@ -17,11 +17,14 @@ from .netop import compose
 from .network import (
     AbortedException,
     abort_run,
+    get_execution_pool,
     is_abort,
     is_endure_execution,
+    is_marshal_parallel_tasks,
     is_skip_evictions,
     set_endure_execution,
     set_execution_pool,
+    set_marshal_parallel_tasks,
     set_skip_evictions,
 )
 from .op import operation

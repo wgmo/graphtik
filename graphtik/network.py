@@ -2,7 +2,7 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """:term:`Compile` & :term:`execute` network graphs of operations."""
 import copy
-import itertools as itt
+import ctypes
 import logging
 import re
 import sys
@@ -10,7 +10,7 @@ import time
 from collections import ChainMap, abc, defaultdict, namedtuple
 from contextvars import ContextVar
 from itertools import count
-from multiprocessing.dummy import Pool
+from multiprocessing import Value
 from typing import (
     Any,
     Callable,
@@ -26,7 +26,7 @@ from typing import (
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Items, Plotter, aslist, astuple, jetsam
+from .base import UNSET, Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect
 from .op import Operation
 
@@ -38,10 +38,11 @@ NodePredicate = Callable[[Any, Mapping], bool]
 _execution_configs: ContextVar[dict] = ContextVar(
     "execution_configs",
     default={
-        "execution_pool": Pool(7),
-        "abort": False,
+        "execution_pool": None,
+        "abort": Value(ctypes.c_bool, lock=False),
         "skip_evictions": False,
         "endure_execution": False,
+        "marshal_parallel_tasks": False,
     },
 )
 
@@ -50,23 +51,50 @@ class AbortedException(Exception):
     """Raised from the Network code when :func:`abort_run()` is called."""
 
 
-def set_execution_pool(pool: "ProcessPool"):
-    """Set the process-pool for :term:`parallel` plan executions."""
+def set_execution_pool(pool: "Optional[Pool]"):
+    """
+    Set the process-pool for :term:`parallel` plan executions.
+
+    You may have to :func:`set_marshal_parallel_tasks()` to resolve
+    pickling issues.
+    """
     _execution_configs.get()["execution_pool"] = pool
+
+def get_execution_pool() -> "Optional[Pool]":
+    """Get the process-pool for :term:`parallel` plan executions."""
+    return _execution_configs.get()["execution_pool"]
+
+
+def set_marshal_parallel_tasks(masrhal):
+    """
+    If true, dill & un-dill :term:`parallel` operation tasks & results ...
+
+    which might help for pickling problems.
+    """
+    _execution_configs.get()["marshal_parallel_tasks"] = bool(masrhal)
+
+
+def is_marshal_parallel_tasks():
+    """
+    Return true if dilling & un-dilling :term:`parallel` operation tasks & results ...
+
+    which might help for pickling problems.
+    """
+    return _execution_configs.get()["marshal_parallel_tasks"]
 
 
 def abort_run():
     """Signal to the 1st running network to stop :term:`execution`."""
-    _execution_configs.get()["abort"] = True
+    _execution_configs.get()["abort"].value = True
 
 
 def _reset_abort():
-    _execution_configs.get()["abort"] = False
+    _execution_configs.get()["abort"].value = False
 
 
 def is_abort():
     """Return `True` if networks have been signaled to stop :term:`execution`."""
-    return _execution_configs.get()["abort"]
+    return _execution_configs.get()["abort"].value
 
 
 def set_skip_evictions(skipped):
@@ -378,6 +406,67 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
     return needs, provides
 
 
+class _OpTask:
+    """
+    Mimic :class:`concurrent.futures.Future` for :term:`sequential` execution.
+
+    This intermediate class is needed to solve pickiling issue with process executor.
+    """
+
+    __slots__ = ("op", "sol", "result", "d")
+    logname = __name__
+
+    def __init__(self, op, sol):
+        self.op = op
+        self.sol = sol
+        self.result = UNSET
+
+    def marshaled(self):
+        import dill
+
+        return dill.dumps(self)
+
+    def __call__(self):
+        if self.result == UNSET:
+            self.result = None
+            log = logging.getLogger(self.logname)
+            op = self.op
+            t0 = time.time()
+            log.debug("+++ Executing op(%s)...", op.name)
+            try:
+                self.result = op.compute(self.sol)
+            finally:
+                elapsed_ms = round(1000 * (time.time() - t0), 3)
+                log.debug("... completed op(%s) in %sms.", op.name, elapsed_ms)
+        else:
+            print(type(self.result), id(self.result), getattr(self.result, "hashid", -1), id(UNSET), UNSET.hashid)
+
+        return self.result
+
+    get = __call__
+
+
+def _do_task(task):
+    """
+    Un-dill the *simpler* :class:`_OpTask` & Dill the results, to pass through pool-processes.
+
+    See https://stackoverflow.com/a/24673524/548792
+    """
+    ## Note, the "else" case is only for debugging aid,
+    #  by skipping `_OpTask.marshal()`` call.
+    #
+    if isinstance(task, bytes):
+        import dill
+
+        task = dill.loads(task)
+        result = task()
+        result = dill.dumps(result)
+    else:
+        result = task()
+
+    return result
+
+
 class ExecutionPlan(
     namedtuple("ExecPlan", "net needs provides dag steps evict"), Plotter
 ):
@@ -479,16 +568,20 @@ class ExecutionPlan(
             _reset_abort()
             raise AbortedException({s: s in executed for s in self.steps})
 
-    def _call_operation(self, op, solution):
-        # Although `plan` have added to jetsam in `compute()``,
-        # add it again, in case compile()/execute is called separately.
-        t0 = time.time()
-        log.debug("+++ Executing op(%r)...", op.name)
+    def _handle_op_task(self, op, solution, future):
+        """Un-dill parallel task results (if marshaled), and update solution / handle failure."""
         try:
-            outputs = op.compute(solution)
+            outputs = future.get()
+            if isinstance(outputs, bytes):
+                import dill
+
+                outputs = dill.loads(outputs)
+
             solution.operation_executed(op, outputs)
         except Exception as ex:
             if not solution.is_endurance and not op.endured:
+                # Although `plan` have added to jetsam in `compute()``,
+                # add it again, in case compile()/execute() is called separately.
                 jetsam(ex, locals(), "solution", plan="self")
                 raise
 
@@ -509,7 +602,13 @@ class ExecutionPlan(
         :param solution:
             must contain the input values only, gets modified
         """
-        pool = _execution_configs.get()["execution_pool"]
+        # TODO: require user to create & enter pools.
+        pool = get_execution_pool()
+        if not pool:
+            raise ValueError(
+                "With `parallel` execution you need to `set_execution_pool().`"
+            )
+        masrhal_tasks = is_marshal_parallel_tasks()
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
@@ -556,12 +655,24 @@ class ExecutionPlan(
             if not upnext:
                 break
 
-            list(
-                pool.imap_unordered(
-                    (lambda op_sol: self._call_operation(*op_sol)),
-                    zip(upnext, itt.repeat(solution)),
-                )
-            )
+            ## Submit selected `upnext` tasks.
+            #
+            ## (Optionally) DILL the *simpler* _OpTask & `sol` dict
+            #  so as to pass through pool-processes,
+            #  (s)ee https://stackoverflow.com/a/24673524/548792)
+            #  and handle results in this thread, to evade Solution locks.
+            #
+            sol = dict(solution)
+            # args = [(op.compute, [sol]) for op in upnext]
+            tasks = [_OpTask(op, sol) for op in upnext]
+            if masrhal_tasks:
+                tasks = [t.marshaled() for t in tasks]
+            futures = [pool.apply_async(_do_task, (t,)) for t in tasks]
+
+            ## Handle results.
+            #
+            for op, future in zip(upnext, futures):
+                self._handle_op_task(op, solution, future)
 
     def _execute_sequential_method(self, solution: Solution):
         """
@@ -576,7 +687,9 @@ class ExecutionPlan(
             if isinstance(step, Operation):
                 if step in solution.canceled:
                     continue
-                self._call_operation(step, solution)
+
+                task = _OpTask(step, solution)
+                self._handle_op_task(step, solution, task)
 
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.

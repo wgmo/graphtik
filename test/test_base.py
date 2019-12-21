@@ -9,7 +9,7 @@ import pytest
 
 from graphtik import base, network, op, operation
 from graphtik.netop import NetworkOperation
-from graphtik.network import Solution
+from graphtik.network import Solution, _OpTask
 
 
 @pytest.mark.parametrize("locs", [None, (), [], [0], "bad"])
@@ -155,9 +155,10 @@ class _ScreamingOperation(op.Operation):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6))._call_operation,
+                network.ExecutionPlan(*([None] * 6))._handle_op_task,
                 op=_ScreamingOperation(),
                 solution=Solution(MagicMock(), {}),
+                future=_OpTask(_ScreamingOperation(), {}),
             ),
             ["plan", "solution"],
         ),
@@ -184,11 +185,12 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6))._call_operation,
+                network.ExecutionPlan(*([None] * 6))._handle_op_task,
                 op=operation(_scream, name="auch")(),
                 solution=Solution(MagicMock(), {}),
+                future=_OpTask(_ScreamingOperation(), {}),
             ),
-            "solution outputs provides aliases results_fn results_op operation args plan".split(),
+            "solution plan".split(),
         ),
         (
             fnt.partial(

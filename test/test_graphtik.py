@@ -2,24 +2,33 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 
 import math
+import os
 import re
 import sys
+import time
+import types
 from functools import partial
+from multiprocessing import Pool, get_context
+from multiprocessing import dummy as mp_dummy
 from operator import add, floordiv, mul, sub
 from pprint import pprint
 
 import pytest
 
-import graphtik.network as network
 from graphtik import (
-    AbortedException,
     NO_RESULT,
+    AbortedException,
     abort_run,
     compose,
+    get_execution_pool,
+    is_marshal_parallel_tasks,
+    network,
     operation,
     optional,
-    set_skip_evictions,
     set_endure_execution,
+    set_execution_pool,
+    set_marshal_parallel_tasks,
+    set_skip_evictions,
     sideffect,
     vararg,
 )
@@ -27,9 +36,57 @@ from graphtik.netop import NetworkOperation
 from graphtik.op import Operation
 
 
-@pytest.fixture(params=[None, "parallel"])
+_slow = pytest.mark.slow
+_proc = pytest.mark.proc
+_thread = pytest.mark.thread
+_parallel = pytest.mark.parallel
+_marshal = pytest.mark.marshal
+
+
+@pytest.fixture(
+    params=[
+        # Sequential
+        (None, None, None),
+        # Thread, unmarshalled
+        pytest.param(("parallel", 0, 0), marks=(_parallel, _thread)),
+        # Thread, Marshalled
+        pytest.param(("parallel", 0, 1), marks=(_parallel, _thread, _marshal, _slow)),
+        # # PROCESS, unmarshalled
+        pytest.param(
+            ("parallel", 1, 0),
+            marks=(
+                _parallel,
+                _proc,
+                _slow,
+                pytest.mark.xfail(reason="ProcessPool non-masrhal may fail."),
+            ),
+        ),
+        # # PROCESS, Marshalled
+        pytest.param(("parallel", 1, 1), marks=(_parallel, _proc, _marshal, _slow)),
+    ]
+)
 def exemethod(request):
-    return request.param
+    """Returns (exemethod, marshal) combinations"""
+    meth, proc_pool, marshal = request.param
+    nsharks = None  # number of pool swimmers....
+
+    set_marshal_parallel_tasks(marshal)
+    if meth == "parallel":
+        if proc_pool:
+            if os.name == 'posix':
+                pool = get_context("fork").Pool(nsharks)
+            else:
+                pool = Pool(nsharks)
+        else:
+            pool = mp_dummy.Pool(nsharks)
+        try:
+            set_execution_pool(pool)
+            yield meth
+        finally:
+            pool.terminate()
+            set_execution_pool(None)
+    else:
+        yield meth
 
 
 def scream(*args, **kwargs):
@@ -332,7 +389,7 @@ def test_aliases(exemethod):
         "test_net",
         operation(lambda: "A", name="op1", provides="a", aliases={"a": "b"})(),
         operation(lambda x: x * 2, name="op2", needs="b", provides="c")(),
-        method=exemethod
+        method=exemethod,
     )
     assert op() == {"a": "A", "b": "A", "c": "AA"}
 
@@ -665,12 +722,13 @@ def test_same_inputs_evictions():
     assert len(pipeline.last_plan.steps) == 4
 
 
-def test_unsatisfied_operations():
+def test_unsatisfied_operations(exemethod):
     # Test that operations with partial inputs are culled and not failing.
     pipeline = compose(
         "pipeline",
         operation(name="add", needs=["a", "b1"], provides=["a+b1"])(add),
         operation(name="sub", needs=["a", "b2"], provides=["a-b2"])(sub),
+        method=exemethod,
     )
 
     exp = {"a": 10, "b1": 2, "a+b1": 12}
@@ -684,50 +742,25 @@ def test_unsatisfied_operations():
     assert pipeline(**{"a": 10, "b2": 2}) == exp
     assert pipeline.compute({"a": 10, "b2": 2}, ["a-b2"]) == filtdict(exp, "a-b2")
 
-    ## Test parallel
-    #
-    pipeline.set_execution_method("parallel")
-    exp = {"a": 10, "b1": 2, "a+b1": 12}
-    assert pipeline(**{"a": 10, "b1": 2}) == exp
-    assert pipeline.compute({"a": 10, "b1": 2}, ["a+b1"]) == filtdict(exp, "a+b1")
 
-    exp = {"a": 10, "b2": 2, "a-b2": 8}
-    assert pipeline(**{"a": 10, "b2": 2}) == exp
-    assert pipeline.compute({"a": 10, "b2": 2}, ["a-b2"]) == filtdict(exp, "a-b2")
-
-
-def test_unsatisfied_operations_same_out():
+def test_unsatisfied_operations_same_out(exemethod):
     # Test unsatisfied pairs of operations providing the same output.
     pipeline = compose(
         "pipeline",
         operation(name="mul", needs=["a", "b1"], provides=["ab"])(mul),
         operation(name="div", needs=["a", "b2"], provides=["ab"])(floordiv),
         operation(name="add", needs=["ab", "c"], provides=["ab_plus_c"])(add),
+        method=exemethod,
     )
 
+    #  Parallel FAIL! in #26
     exp = {"a": 10, "b1": 2, "c": 1, "ab": 20, "ab_plus_c": 21}
     assert pipeline(**{"a": 10, "b1": 2, "c": 1}) == exp
     assert pipeline.compute({"a": 10, "b1": 2, "c": 1}, ["ab_plus_c"]) == filtdict(
         exp, "ab_plus_c"
     )
 
-    exp = {"a": 10, "b2": 2, "c": 1, "ab": 5, "ab_plus_c": 6}
-    assert pipeline(**{"a": 10, "b2": 2, "c": 1}) == exp
-    assert pipeline.compute({"a": 10, "b2": 2, "c": 1}, ["ab_plus_c"]) == filtdict(
-        exp, "ab_plus_c"
-    )
-
-    ## Test parallel
-    #
-    #  FAIL! in #26
-    pipeline.set_execution_method("parallel")
-    exp = {"a": 10, "b1": 2, "c": 1, "ab": 20, "ab_plus_c": 21}
-    assert pipeline(**{"a": 10, "b1": 2, "c": 1}) == exp
-    assert pipeline.compute({"a": 10, "b1": 2, "c": 1}, ["ab_plus_c"]) == filtdict(
-        exp, "ab_plus_c"
-    )
-    #
-    #  FAIL! in #26
+    #  Parallel FAIL! in #26
     exp = {"a": 10, "b2": 2, "c": 1, "ab": 5, "ab_plus_c": 6}
     assert pipeline(**{"a": 10, "b2": 2, "c": 1}) == exp
     assert pipeline.compute({"a": 10, "b2": 2, "c": 1}, ["ab_plus_c"]) == filtdict(
@@ -785,7 +818,7 @@ def test_narrow_and_optionality(reverse):
     #
     netop = compose("t", *ops)
     assert repr(netop) == netop_str
-    assert repr(netop.compile('a')).startswith(
+    assert repr(netop.compile("a")).startswith(
         "ExecutionPlan(needs=['a'], provides=['sum2', 'sum1'], x2 steps:"
     )
     #
@@ -799,10 +832,10 @@ def test_narrow_and_optionality(reverse):
     #
     netop = compose("t", *ops, outputs="sum1")
     assert repr(netop) == netop_str
-    assert repr(netop.compile('bb')).startswith(
+    assert repr(netop.compile("bb")).startswith(
         "ExecutionPlan(needs=[optional('bb')], provides=['sum1'], x3 steps:"
     )
-    assert repr(netop.compile('bb')) == repr(netop.compute({"bb": 1}).plan)
+    assert repr(netop.compile("bb")) == repr(netop.compute({"bb": 1}).plan)
 
     netop = compose("t", *ops, outputs=["sum2"])
     assert repr(netop) == netop_str
@@ -815,14 +848,13 @@ def test_narrow_and_optionality(reverse):
     ## Narrow by BOTH
     #
     netop = compose("t", *ops, outputs=["sum1"])
-    assert (
-        repr(netop.compile(inputs="a")).startswith("ExecutionPlan(needs=[optional('a')], provides=['sum1'], x3 steps:")
+    assert repr(netop.compile(inputs="a")).startswith(
+        "ExecutionPlan(needs=[optional('a')], provides=['sum1'], x3 steps:"
     )
 
-    netop = compose("t", *ops , outputs=["sum2"])
+    netop = compose("t", *ops, outputs=["sum2"])
     with pytest.raises(ValueError, match="Unsolvable graph:"):
         netop.compute({"bb": 11})
-
 
 
 # Function without return value.
@@ -854,6 +886,10 @@ def netop_sideffect1(request) -> NetworkOperation:
 
 
 def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
+    sidefx_fail = is_marshal_parallel_tasks() and not isinstance(
+        get_execution_pool(), types.FunctionType  # mp_dummy.Pool
+    )
+
     graph = netop_sideffect1
     graph.set_execution_method(exemethod)
     inp = {"box": [0], "a": True}
@@ -879,27 +915,33 @@ def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
         # Cannot run, since no sideffect inputs given.
         graph.compute(inp)
 
+    box_orig = [0]
+
     ## OK INPUT SIDEFFECTS
     #
     # ok, no asked out
     sol = graph.compute({"box": [0], sideffect("a"): True})
-    assert sol == {"box": [1, 2, 3], sideffect("a"): True}
+    assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3], sideffect("a"): True}
     #
     # bad, not asked the out-sideffect
     with pytest.raises(ValueError, match="Unsolvable graph"):
-        sol = graph.compute({"box": [0], sideffect("a"): True}, "box")
+        graph.compute({"box": [0], sideffect("a"): True}, "box")
     #
     # ok, asked the 1st out-sideffect
     sol = graph.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("b")])
-    assert sol == {"box": [0, 1, 2]}
+    assert sol == {"box": box_orig if sidefx_fail else [0, 1, 2]}
     #
     # ok, asked the 2nd out-sideffect
     sol = graph.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
-    assert sol == {"box": [1, 2, 3]}
+    assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3]}
 
 
 @pytest.mark.parametrize("reverse", [0, 1])
 def test_sideffect_real_input(reverse, exemethod):
+    sidefx_fail = is_marshal_parallel_tasks() and not isinstance(
+        get_execution_pool(), types.FunctionType  # mp_dummy.Pool
+    )
+
     ops = [
         operation(name="extend", needs=["box", "a"], provides=[sideffect("b")])(
             _box_extend
@@ -913,18 +955,28 @@ def test_sideffect_real_input(reverse, exemethod):
     # Designate `a`, `b` as sideffect inp/out arguments.
     graph = compose("mygraph", *ops, method=exemethod)
 
-    assert graph(**{"box": [0], "a": True}) == {"a": True, "box": [1, 2, 3], "c": None}
+    box_orig = [0]
+    assert graph(**{"box": [0], "a": True}) == {
+        "a": True,
+        "box": box_orig if sidefx_fail else [1, 2, 3],
+        "c": None,
+    }
     assert graph.compute({"box": [0], "a": True}, ["box", "c"]) == {
-        "box": [1, 2, 3],
+        "box": box_orig if sidefx_fail else [1, 2, 3],
         "c": None,
     }
 
 
 def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
+    sidefx_fail = is_marshal_parallel_tasks() and not isinstance(
+        get_execution_pool(), types.FunctionType  # mp_dummy.Pool
+    )
+
     netop = netop_sideffect1
     netop.set_execution_method(exemethod)
+    box_orig = [0]
     sol = netop.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
-    assert sol == {"box": [1, 2, 3]}
+    assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3]}
     assert len(netop.last_plan.steps) == 4
 
     ## Check sideffect links plotted as blue
@@ -968,19 +1020,6 @@ def test_optional_per_function_with_same_output(exemethod):
     named_inputs = {"a": 1, "b": 2}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": 3, "b": 2}
     assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": 3}
-    #
-    named_inputs = {"a": 1}
-    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
-    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -9}
-
-    # PARALLEL + Normal order
-    #
-    pipeline = compose("partial_optionals", add_op, sub_op_optional, method=exemethod)
-    pipeline.set_execution_method("parallel")
-    #
-    named_inputs = {"a": 1, "b": 2}
-    assert pipeline(**named_inputs) == {"a": 1, "a+-b": -1, "b": 2}
-    assert pipeline.compute(named_inputs, ["a+-b"]) == {"a+-b": -1}
     #
     named_inputs = {"a": 1}
     assert pipeline(**named_inputs) == {"a": 1, "a+-b": -9}
@@ -1130,7 +1169,6 @@ def test_rescheduling(exemethod):
 
 def test_multithreading_plan_execution():
     # From Huygn's test-code given in yahoo/graphkit#31
-    from multiprocessing.dummy import Pool
     from graphtik import compose, operation
 
     # Compose the mul, sub, and abspow operations into a computation graph.
@@ -1143,19 +1181,23 @@ def test_multithreading_plan_execution():
         )(partial(abspow, p=3)),
     )
 
-    pool = Pool(10)
-    graph.set_execution_method("parallel")
-    pool.map(
-        lambda i: graph.compute(
-            {"a": 2, "b": 5}, ["a_minus_ab", "abs_a_minus_ab_cubed"]
-        ),
-        range(100),
-    )
+    with mp_dummy.Pool(10) as pool:
+        set_execution_pool(pool)
+        try:
+            pool.map(
+                lambda i: graph.compute(
+                    {"a": 2, "b": 5}, ["a_minus_ab", "abs_a_minus_ab_cubed"]
+                ),
+                range(100),
+            )
+        finally:
+            set_execution_pool(None)
 
 
 @pytest.mark.slow
-def test_parallel_execution():
-    import time
+def test_parallel_execution(exemethod):
+    if exemethod != "parallel":
+        return
 
     delay = 0.5
 
@@ -1205,10 +1247,8 @@ def test_parallel_execution():
 
 
 @pytest.mark.slow
-def test_multi_threading():
-    import time
+def test_multi_threading_computes():
     import random
-    from multiprocessing.dummy import Pool
 
     def op_a(a, b):
         time.sleep(random.random() * 0.02)
@@ -1242,14 +1282,15 @@ def test_multi_threading():
 
     N = 33
     for i in range(13, 61):
-        pool = Pool(i)
-        pool.map(infer, range(N))
-        pool.close()
+        with mp_dummy.Pool(i) as pool:
+            pool.map(infer, range(N))
 
 
 @pytest.mark.parametrize("bools", range(4))
-def test_compose_another_network(bools):
+def test_compose_another_network(exemethod, bools):
     # Code from `compose.rst` examples
+    if exemethod != "parallel":
+        return
 
     parallel1 = bools >> 0 & 1
     parallel2 = bools >> 1 & 1
@@ -1287,8 +1328,8 @@ def test_abort(exemethod):
         operation(name="A", needs=["a"], provides=["b"])(identity),
         operation(name="B", needs=["b"], provides=["c"])(lambda x: abort_run()),
         operation(name="C", needs=["c"], provides=["d"])(identity),
+        method=exemethod
     )
-    pipeline.set_execution_method(exemethod)
     with pytest.raises(AbortedException) as exinfo:
         pipeline(a=1)
     assert exinfo.value.jetsam["solution"] == {"a": 1, "b": 1, "c": None}
@@ -1296,7 +1337,7 @@ def test_abort(exemethod):
     assert executed == {"A": True, "B": True, "C": False}
 
     pipeline = compose(
-        "pipeline", operation(name="A", needs=["a"], provides=["b"])(identity)
+        "pipeline", operation(name="A", needs=["a"], provides=["b"])(identity),
+        method=exemethod
     )
-    pipeline.set_execution_method(exemethod)
     assert pipeline.compute({"a": 1}) == {"a": 1, "b": 1}

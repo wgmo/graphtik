@@ -73,7 +73,6 @@ def reparse_operation_data(name, needs, provides):
     return name, needs, provides
 
 
-# TODO: immutable `Operation` by inheriting from `namedtuple`.
 class Operation(abc.ABC):
     """An abstract class representing an action with :meth:`.compute()`."""
 
@@ -94,14 +93,7 @@ class Operation(abc.ABC):
         """
 
 
-class FunctionalOperation(
-    namedtuple(
-        "FnOp",
-        "fn name needs provides real_provides aliases "
-        "parents reschedule endured returns_dict node_props",
-    ),
-    Operation,
-):
+class FunctionalOperation(Operation):
     """
     An :term:`operation` performing a callable (ie a function, a method, a
     lambda).
@@ -115,8 +107,10 @@ class FunctionalOperation(
         Use :class:`operation()` builder class to build instances of this class instead.
     """
 
-    def __new__(
-        cls,
+    def __init__(
+        self,
+        # def __new__(
+        # cls,
         fn: Callable,
         name,
         needs: Items = None,
@@ -159,6 +153,7 @@ class FunctionalOperation(
         :param node_props:
             added as-is into NetworkX graph
         """
+        super().__init__()
         node_props = node_props = node_props if node_props else {}
 
         if not fn or not callable(fn):
@@ -193,20 +188,18 @@ class FunctionalOperation(
                 )
         else:
             full_provides = real_provides
-        return super().__new__(
-            cls,
-            fn,
-            name,
-            needs,
-            full_provides,
-            real_provides,
-            aliases,
-            parents,
-            reschedule,
-            endured,
-            returns_dict,
-            node_props,
-        )
+
+        self.fn = fn
+        self.name = name
+        self.needs = needs
+        self.provides = full_provides
+        self.real_provides = real_provides
+        self.aliases = aliases
+        self.parents = parents
+        self.reschedule = reschedule
+        self.endured = endured
+        self.returns_dict = returns_dict
+        self.node_props = node_props
 
     def __eq__(self, other):
         """Operation identity is based on `name` and `parents`."""
@@ -253,7 +246,7 @@ class FunctionalOperation(
 
     def _zip_results_with_provides(self, results, real_provides: iset) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
-        if results is NO_RESULT:
+        if results == NO_RESULT:
             results = {}
 
         if not real_provides:  # All outputs were sideffects?

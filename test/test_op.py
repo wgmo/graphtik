@@ -1,11 +1,17 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 
+import dill
 import pytest
 
 from graphtik import NO_RESULT, compose, operation, optional, sideffect, vararg, varargs
 from graphtik.network import yield_ops
-from graphtik.op import Operation, as_renames, reparse_operation_data
+from graphtik.op import (
+    Operation,
+    FunctionalOperation,
+    as_renames,
+    reparse_operation_data,
+)
 
 
 @pytest.fixture(params=[None, ["some"]])
@@ -346,3 +352,11 @@ def test_netop_conveys_attr(attr, value):
         attr,
         value,
     )
+
+
+@pytest.mark.parametrize(
+    "op", [Operation, FunctionalOperation,
+    operation(str)(), operation(lambda: None)()]
+)
+def test_dill_ops(op):
+    dill.loads(dill.dumps(op))

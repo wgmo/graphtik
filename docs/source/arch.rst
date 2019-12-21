@@ -82,11 +82,12 @@ Architecture
             the ``graptik`` package:
 
             - :func:`.abort_run` & :func:`.is_abort`
-            - :func:`.set_skip_evictions` & :func:`.is_skip_evictions`
               (for disabling `eviction`\s globally);
             - :func:`.set_endure_execution` & :func:`.is_endure_execution`
               (for enabling `endurance` globally);
-            - :func:`.set_execution_pool` (for `parallel` executions).
+            - :func:`.set_execution_pool` & :func:`.get_execution_pool` (for `parallel` executions).
+            - :func:`.set_marshal_parallel_tasks` & :func:`.is_marshal_parallel_tasks`
+            - :func:`.set_skip_evictions` & :func:`.is_skip_evictions`
 
     graph
     network graph

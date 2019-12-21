@@ -175,8 +175,8 @@ class NetworkOperation(Operation, Plotter):
                 *Unknown output nodes: ...*
 
         """
-        outputs = self.outputs if outputs is UNSET else outputs
-        predicate = self.predicate if predicate is UNSET else predicate
+        outputs = self.outputs if outputs == UNSET else outputs
+        predicate = self.predicate if predicate == UNSET else predicate
 
         if name is None:
             name = self.name
@@ -251,8 +251,8 @@ class NetworkOperation(Operation, Plotter):
 
                 *Impossible outputs...*
         """
-        outputs = self.outputs if outputs is UNSET else outputs
-        predicate = self.predicate if predicate is UNSET else predicate
+        outputs = self.outputs if outputs == UNSET else outputs
+        predicate = self.predicate if predicate == UNSET else predicate
 
         return self.net.compile(inputs, outputs, predicate)
 
@@ -297,8 +297,8 @@ class NetworkOperation(Operation, Plotter):
         """
         try:
             net = self.net  # jetsam
-            outputs = self.outputs if outputs is UNSET else outputs
-            predicate = self.predicate if predicate is UNSET else predicate
+            outputs = self.outputs if outputs == UNSET else outputs
+            predicate = self.predicate if predicate == UNSET else predicate
 
             # Build the execution plan.
             log.debug("=== Compiling netop(%s)...", self.name)
