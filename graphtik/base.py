@@ -31,6 +31,12 @@ class Token(str):
     def __setstate__(self, state):
         self.hashid = state
 
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, memo):
+        return self
+
     def __bool__(self):
         return True
 
