@@ -229,7 +229,7 @@ def build_pydot(
         else:  # Operation
             kw = {"fontname": "italic"}
 
-            if nx_node.reschedule:
+            if nx_node.rescheduled:
                 kw["penwidth"] = resched_thickness
             if nx_node in getattr(solution, "failures", ()):
                 kw["style"] = "filled"

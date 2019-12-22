@@ -118,7 +118,7 @@ class FunctionalOperation(Operation):
         aliases: Mapping = None,
         *,
         parents: Tuple = None,
-        reschedule=None,
+        rescheduled=None,
         endured=None,
         returns_dict=None,
         node_props: Mapping = None,
@@ -138,7 +138,7 @@ class FunctionalOperation(Operation):
         :param parents:
             a tuple wth the names of the parents, prefixing `name`,
             but also kept for equality/hash check.
-        :param reschedule:
+        :param rescheduled:
             If true, underlying *callable* may produce a subset of `provides`,
             and the :term:`plan` must then :term:`reschedule` after the operation
             has executed.  In that case, it makes more sense for the *callable*
@@ -196,7 +196,7 @@ class FunctionalOperation(Operation):
         self.real_provides = real_provides
         self.aliases = aliases
         self.parents = parents
-        self.reschedule = reschedule
+        self.rescheduled = rescheduled
         self.endured = endured
         self.returns_dict = returns_dict
         self.node_props = node_props
@@ -223,7 +223,7 @@ class FunctionalOperation(Operation):
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         returns_dict_marker = self.returns_dict and "{}" or ""
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
-        resched = "?" if self.reschedule else ""
+        resched = "?" if self.rescheduled else ""
         endured = "!" if self.endured else ""
         return (
             f"FunctionalOperation{endured}(name={self.name!r}, needs={needs!r}, "
@@ -269,7 +269,7 @@ class FunctionalOperation(Operation):
             # Cannot check results-vs-expected on a rescheduled operation
             # bc by definition it may return fewer result.
             #
-            if not self.reschedule:
+            if not self.rescheduled:
                 nexpected = len(real_provides)
 
                 if nexpected > 1 and (
@@ -284,7 +284,7 @@ class FunctionalOperation(Operation):
 
             results = dict(zip(real_provides, results))
 
-        if self.reschedule:
+        if self.rescheduled:
             if set(results) < set(real_provides):
                 log.warning(
                     "... Op %r did not provide%s",
@@ -408,7 +408,7 @@ class operation:
         elements must be returned
     :param aliases:
         an optional mapping of `provides` to additional ones
-    :param reschedule:
+    :param rescheduled:
         If true, underlying *callable* may produce a subset of `provides`,
         and the :term:`plan` must then :term:`reschedule` after the operation
         has executed.  In that case, it makes more sense for the *callable*
@@ -459,7 +459,7 @@ class operation:
         needs: Items = None,
         provides: Items = None,
         aliases: Mapping = None,
-        reschedule=None,
+        rescheduled=None,
         endured=None,
         returns_dict=None,
         node_props: Mapping = None,
@@ -474,7 +474,7 @@ class operation:
         needs: Items = None,
         provides: Items = None,
         aliases: Mapping = None,
-        reschedule=None,
+        rescheduled=None,
         endured=None,
         returns_dict=None,
         node_props: Mapping = None,
@@ -490,8 +490,8 @@ class operation:
             self.provides = provides
         if aliases is not None:
             self.aliases = aliases
-        if reschedule is not None:
-            self.reschedule = reschedule
+        if rescheduled is not None:
+            self.rescheduled = rescheduled
         if endured is not None:
             self.endured = endured
         if returns_dict is not None:
@@ -509,7 +509,7 @@ class operation:
         needs: Items = None,
         provides: Items = None,
         aliases: Mapping = None,
-        reschedule=None,
+        rescheduled=None,
         endured=None,
         returns_dict=None,
         node_props: Mapping = None,
@@ -549,7 +549,7 @@ class operation:
         aliases = f", aliases={aliases!r}" if aliases else ""
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
-        resched = "?" if self.reschedule else ""
+        resched = "?" if self.rescheduled else ""
         endured = "!" if self.endured else ""
         return (
             f"operation{endured}(name={self.name!r}, needs={needs!r}, "

@@ -254,20 +254,20 @@ def test_provides_aliases():
 
 def test_reschedule_unknown_dict_outs():
     op = operation(
-        lambda: {"b": "B"}, name="t", provides=["a"], reschedule=1, returns_dict=1
+        lambda: {"b": "B"}, name="t", provides=["a"], rescheduled=1, returns_dict=1
     )()
     with pytest.raises(ValueError, match=r"contained unkown provides\['b'\]"):
         op.compute({})
 
     op = operation(
-        lambda: {"BAD": "B"}, name="t", provides=["a"], reschedule=1, returns_dict=1
+        lambda: {"BAD": "B"}, name="t", provides=["a"], rescheduled=1, returns_dict=1
     )()
     with pytest.raises(ValueError, match=r"contained unkown provides\['BAD'\]"):
         op.compute({})
 
 
 def test_rescheduled_op_repr():
-    op = operation(str, name="t", provides=["a"], reschedule=True)
+    op = operation(str, name="t", provides=["a"], rescheduled=True)
     assert str(op) == "operation(name='t', needs=[], provides=['a']?, fn='str')"
     assert (
         str(op())
@@ -285,7 +285,7 @@ def test_endured_op_repr():
 
 
 def test_endured_rescheduled_op_repr():
-    op = operation(str, name="t", reschedule=1, endured=1)
+    op = operation(str, name="t", rescheduled=1, endured=1)
     assert str(op) == "operation!(name='t', needs=[], provides=[]?, fn='str')"
     assert (
         str(op()) == "FunctionalOperation!(name='t', needs=[], provides=[]?, fn='str')"
@@ -294,19 +294,19 @@ def test_endured_rescheduled_op_repr():
 
 def test_reschedule_outputs():
     op = operation(
-        lambda: ["A", "B"], name="t", provides=["a", "b", "c"], reschedule=True
+        lambda: ["A", "B"], name="t", provides=["a", "b", "c"], rescheduled=True
     )()
     assert op.compute({}) == {"a": "A", "b": "B"}
 
     # NOTE that for a single return item, it must be a collection.
-    op = operation(lambda: ["AA"], name="t", provides=["a", "b"], reschedule=True)()
+    op = operation(lambda: ["AA"], name="t", provides=["a", "b"], rescheduled=True)()
     assert op.compute({}) == {"a": "AA"}
 
-    op = operation(lambda: NO_RESULT, name="t", provides=["a", "b"], reschedule=True)()
+    op = operation(lambda: NO_RESULT, name="t", provides=["a", "b"], rescheduled=True)()
     assert op.compute({}) == {}
 
     op = operation(
-        lambda: {"b": "B"}, name="t", provides=["a", "b"], reschedule=1, returns_dict=1
+        lambda: {"b": "B"}, name="t", provides=["a", "b"], rescheduled=1, returns_dict=1
     )()
     assert op.compute({}) == {"b": "B"}
 
@@ -315,7 +315,7 @@ def test_reschedule_outputs():
         name="t",
         provides=["a", "b"],
         aliases={"a": "aa", "b": "bb"},
-        reschedule=1,
+        rescheduled=1,
         returns_dict=1,
     )()
     assert op.compute({}) == {"b": "B", "bb": "B"}
@@ -330,9 +330,9 @@ def test_netop_narrow_attributes(attr, value):
 @pytest.mark.parametrize(
     "attr, value",
     [
-        ("reschedule", None),
-        ("reschedule", 1),
-        ("reschedule", False),
+        ("rescheduled", None),
+        ("rescheduled", 1),
+        ("rescheduled", False),
         ("endured", None),
         ("endured", True),
         ("endured", 0),

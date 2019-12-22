@@ -1150,8 +1150,8 @@ def test_execution_endurance(exemethod, endurance, endured):
 def test_rescheduling(exemethod):
     op = compose(
         "netop",
-        operation(lambda: [1], name="op1", provides=["a", "b"], reschedule=1)(),
-        operation(lambda: NO_RESULT, name="op2", provides=["c"], reschedule=1)(),
+        operation(lambda: [1], name="op1", provides=["a", "b"], rescheduled=1)(),
+        operation(lambda: NO_RESULT, name="op2", provides=["c"], rescheduled=1)(),
         operation(lambda: None, name="canc", needs=["b"], provides="cc")(),
         operation(
             lambda *args: sum(args),

@@ -80,6 +80,7 @@ Architecture
         and that may fail. You may `marshal` them with *dill* library to fix them.
 
     marshal
+    marshalling
         Pickling `parallel` `operation`\s and their `inputs`/`outputs` using
         the :mod:`dill` module.
 
@@ -117,8 +118,8 @@ Architecture
 
         - the :attr:`.ExecutionPlan.dag`,  in the `execution plan`, which contains
           the `prune`\d  nodes, used to decide the `execution steps`;
-        - the :attr:`.Solution.dag` in the `solution`, which contains
-          the `reschedule`\d nodes.
+        - the :attr:`.Solution.dag` in the `solution`, which derives the
+          `canceled operation`\s due to `reschedule`\d/failed operations upstreams.
 
     steps
     execution steps
@@ -237,7 +238,7 @@ Architecture
         The partial `pruning` of the `solution`'s dag during `execution`.
         It happens when any of these 2 conditions apply:
 
-        - an `operation` is marked with the :attr:`FunctionalOperation.reschedule`
+        - an `operation` is marked with the :attr:`FunctionalOperation.rescheduled`
           attribute, which means that its underlying *callable* may produce
           only a subset of its `provides` (*partial outputs*);
         - `endurance` is enabled, either globally (in the `configurations`), or

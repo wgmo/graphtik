@@ -224,7 +224,7 @@ class Solution(ChainMap, Plotter):
             plan.dag.copy()
             if self.is_endurance
             or any(
-                op.reschedule or op.endured
+                op.rescheduled or op.endured
                 for op in plan.steps
                 if isinstance(op, Operation)
             )
@@ -264,7 +264,7 @@ class Solution(ChainMap, Plotter):
         self._layers[op].update(outputs)
         self.executed[op] = None
 
-        if op.reschedule:
+        if op.rescheduled:
             dag = self.dag
             missing_outs = iset(op.provides) - set(outputs)
             to_brake = [

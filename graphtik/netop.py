@@ -19,7 +19,11 @@ log = logging.getLogger(__name__)
 
 
 def _make_network(
-    operations, reschedule=None, endured=None, merge=None, node_props=None
+    operations,
+    rescheduled=None,
+    endured=None,
+    merge=None,
+    node_props=None,
 ):
     def proc_op(op, parent=None):
         """clone FuncOperation with certain props changed"""
@@ -31,10 +35,13 @@ def _make_network(
         if (
             node_props
             or (not merge and parent)
-            or reschedule is not None
+            or rescheduled is not None
             or endured is not None
         ):
-            kw = {"reschedule": reschedule, "endured": endured}
+            kw = {
+                "rescheduled": rescheduled,
+                "endured": endured,
+            }
             if node_props:
                 op_node_props = op.node_props.copy()
                 op_node_props.update(node_props)
@@ -95,7 +102,7 @@ class NetworkOperation(Operation, Plotter):
         *,
         outputs=None,
         predicate: NodePredicate = None,
-        reschedule=None,
+        rescheduled=None,
         endured=None,
         merge=None,
         method=None,
@@ -117,7 +124,7 @@ class NetworkOperation(Operation, Plotter):
         self.set_execution_method(method)
 
         # Prune network
-        self.net = _make_network(operations, reschedule, endured, merge, node_props)
+        self.net = _make_network(operations, rescheduled, endured, merge, node_props)
         self.name, self.needs, self.provides = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
         )
@@ -140,7 +147,7 @@ class NetworkOperation(Operation, Plotter):
         predicate: NodePredicate = UNSET,
         *,
         name=None,
-        reschedule=None,
+        rescheduled=None,
         endured=None,
     ) -> "NetworkOperation":
         """
@@ -161,8 +168,8 @@ class NetworkOperation(Operation, Plotter):
                 <old-name>-<uid>
 
             - otherwise, the given `name` is applied.
-        :param reschedule:
-            applies :term:`reschedule` to all contained `operations`
+        :param rescheduled:
+            applies :term:`reschedule`\\d to all contained `operations`
         :param endured:
             applies :term:`endurance` to all contained `operations`
 
@@ -189,7 +196,7 @@ class NetworkOperation(Operation, Plotter):
                 abs(
                     hash(str(outputs))
                     ^ hash(predicate)
-                    ^ bool(reschedule)
+                    ^ (1 * bool(rescheduled))
                     ^ (2 * bool(endured))
                 )
             )[:7]
@@ -203,7 +210,7 @@ class NetworkOperation(Operation, Plotter):
             name,
             outputs=outputs,
             predicate=predicate,
-            reschedule=reschedule,
+            rescheduled=rescheduled,
             endured=endured,
             method=self.method,
         )
@@ -340,7 +347,7 @@ def compose(
     op1,
     *operations,
     outputs: Items = None,
-    reschedule=None,
+    rescheduled=None,
     endured=None,
     merge=False,
     node_props=None,
@@ -368,8 +375,8 @@ def compose(
         this ``compose`` instance).  If any two operations are the same
         (based on name), then that operation is computed only once, instead
         of multiple times (one for each time the operation appears).
-    :param reschedule:
-        applies :term:`reschedule` to all contained `operations`
+    :param rescheduled:
+        applies :term:`reschedule`\\d to all contained `operations`
     :param endured:
         applies :term:`endurance` to all contained `operations`
     :param node_props:
@@ -396,7 +403,7 @@ def compose(
         operations,
         name,
         outputs=outputs,
-        reschedule=reschedule,
+        rescheduled=rescheduled,
         endured=endured,
         method=method,
         merge=merge,
