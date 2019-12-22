@@ -55,7 +55,7 @@ def set_execution_pool(pool: "Optional[Pool]"):
     """
     Set the process-pool for :term:`parallel` plan executions.
 
-    You may have to :func:`set_marshal_parallel_tasks()` to resolve
+    You may have to :also func:`set_marshal_parallel_tasks()` to resolve
     pickling issues.
     """
     _execution_configs.get()["execution_pool"] = pool
@@ -65,21 +65,18 @@ def get_execution_pool() -> "Optional[Pool]":
     return _execution_configs.get()["execution_pool"]
 
 
-def set_marshal_parallel_tasks(masrhal):
+def set_marshal_parallel_tasks(marshal: Optional[bool]):
     """
-    If true, dill & un-dill :term:`parallel` operation tasks & results ...
+    Enable/disable globally :term:`marshaling<marshal>` of :term:`parallel` operations, ...
 
-    which might help for pickling problems.
+    inputs & outputs with :mod:`dill`,  which might help for pickling problems.
+
     """
-    _execution_configs.get()["marshal_parallel_tasks"] = bool(masrhal)
+    _execution_configs.get()["marshal_parallel_tasks"] = bool(marshal)
 
 
-def is_marshal_parallel_tasks():
-    """
-    Return true if dilling & un-dilling :term:`parallel` operation tasks & results ...
-
-    which might help for pickling problems.
-    """
+def is_marshal_parallel_tasks() -> Optional[bool]:
+    """see :meth:`set_marshal_parallel_tasks()`"""
     return _execution_configs.get()["marshal_parallel_tasks"]
 
 
@@ -608,7 +605,7 @@ class ExecutionPlan(
             raise ValueError(
                 "With `parallel` execution you need to `set_execution_pool().`"
             )
-        masrhal_tasks = is_marshal_parallel_tasks()
+        marshal_tasks = is_marshal_parallel_tasks()
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
@@ -665,7 +662,7 @@ class ExecutionPlan(
             sol = dict(solution)
             # args = [(op.compute, [sol]) for op in upnext]
             tasks = [_OpTask(op, sol) for op in upnext]
-            if masrhal_tasks:
+            if marshal_tasks:
                 tasks = [t.marshaled() for t in tasks]
             futures = [pool.apply_async(_do_task, (t,)) for t in tasks]
 

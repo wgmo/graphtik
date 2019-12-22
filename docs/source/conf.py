@@ -352,5 +352,6 @@ intersphinx_mapping = {
     "python": ("http://docs.python.org/3.8", None),
     "networkx": ("https://networkx.github.io/documentation/latest/", None),
     "boltons": ("https://boltons.readthedocs.io/en/latest/", None),
+    "dill": ("https://dill.readthedocs.io/en/latest/", None),
 }
 autodoc_mock_imports = ["boltons", "networkx", "pydot"]

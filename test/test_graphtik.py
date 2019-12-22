@@ -58,7 +58,7 @@ _marshal = pytest.mark.marshal
                 _parallel,
                 _proc,
                 _slow,
-                pytest.mark.xfail(reason="ProcessPool non-masrhal may fail."),
+                pytest.mark.xfail(reason="ProcessPool non-marshal may fail."),
             ),
         ),
         # # PROCESS, Marshalled

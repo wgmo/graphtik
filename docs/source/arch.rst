@@ -61,7 +61,6 @@ Architecture
 
     execute
     EXECUTION
-    parallel
     sequential
         The *phase* where the :class:`.ExecutionPlan` calls the underlying functions
         of all `operation`\s contained in `execution steps`, with `inputs`/`outputs`
@@ -71,6 +70,18 @@ Architecture
 
         - *sequential*
         - *parallel*, with a :class:`multiprocessing.ProcessPool`
+
+    parallel
+    parallel execution
+    process pool
+        Execute operation *in parallel*, with a *thread/process pool* (instead of `sequential`).
+        When a *process pool* is used, data & operations must be `*pickled*
+        <https://docs.python.org/library/pickle.html>`_ to/from the worker process,
+        and that may fail. You may `marshal` them with *dill* library to fix them.
+
+    marshal
+        Pickling `parallel` `operation`\s and their `inputs`/`outputs` using
+        the :mod:`dill` module.
 
     configurations
         A global :data:`._execution_configs` affecting `execution`
@@ -166,10 +177,12 @@ Architecture
         across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     inputs
-        a dictionary of named input values given to :meth:`.NetworkOperation.compute()`
+        a dictionary of named input values given to a single `operation`, or to
+        a `netop`, fed into :meth:`.Operation.compute()` method.
 
     outputs
-        A dictionary of computed values returned by :meth:`.NetworkOperation.compute()`,
+        A dictionary of computed values returned by a single `operation` or a `netop`
+        when method :meth:`.Operation.compute()` is called,
         or the actual (*partial* or complete) `provides` returned by
         some :class:`FunctionalOperation`.
 
