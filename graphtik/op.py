@@ -218,6 +218,8 @@ class FunctionalOperation(Operation):
         """
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
+        aliases = aslist(self.aliases, "aliases")
+        aliases = f", aliases={aliases!r}" if aliases else ""
         fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
         returns_dict_marker = self.returns_dict and "{}" or ""
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
@@ -225,7 +227,7 @@ class FunctionalOperation(Operation):
         endured = "!" if self.endured else ""
         return (
             f"FunctionalOperation{endured}(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}{resched}, fn{returns_dict_marker}={fn_name!r}{nprops})"
+            f"provides={provides!r}{resched}{aliases}, fn{returns_dict_marker}={fn_name!r}{nprops})"
         )
 
     def withset(self, **kw) -> "FunctionalOperation":
