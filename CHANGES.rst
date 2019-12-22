@@ -14,6 +14,12 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+v4.4.1 (22 Dec 2019, @ankostis): bugfix debug print
+===================================================
++ fix(net): had forgotten a debug-print on every operation call.
++ doc(arch): explain :term:`parallel` & the need for :term:`marshalling <marshal>`
+  with process pools.
+
 v4.4.0 (21 Dec 2019, @ankostis): RESCHEDULE for PARTIAL Outputs, on a per op basis
 ==================================================================================
 - [x] dynamic Reschedule after operations with partial outputs execute.
