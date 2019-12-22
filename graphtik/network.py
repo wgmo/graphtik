@@ -435,8 +435,6 @@ class _OpTask:
             finally:
                 elapsed_ms = round(1000 * (time.time() - t0), 3)
                 log.debug("... completed op(%s) in %sms.", op.name, elapsed_ms)
-        else:
-            print(type(self.result), id(self.result), getattr(self.result, "hashid", -1), id(UNSET), UNSET.hashid)
 
         return self.result
 
