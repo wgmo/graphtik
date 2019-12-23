@@ -11,7 +11,7 @@ from typing import Callable, Mapping, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
-from .base import Items, NO_RESULT, Plotter, UNSET, aslist, astuple, jetsam
+from .base import NO_RESULT, UNSET, Items, Plotter, aslist, astuple, jetsam
 from .modifiers import optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
@@ -134,9 +134,11 @@ class FunctionalOperation(Operation):
         :param needs:
             Names of input data objects this operation requires.
         :param provides:
-            Names of the **real output values** the underlying function provides.
+            Names of the **real output values** the underlying function provides
+            (without `aliases`)
         :param aliases:
-            an optional mapping of real `provides` to additional ones
+            an optional mapping of real `provides` to additional ones, togetherher
+            comprising this operations :term:`provides`.
         :param parents:
             a tuple wth the names of the parents, prefixing `name`,
             but also kept for equality/hash check.
@@ -206,8 +208,8 @@ class FunctionalOperation(Operation):
         self.parents = parents
         self.rescheduled = rescheduled
         self.endured = endured
-        self.parallel=parallel
-        self.marshalled=marshalled
+        self.parallel = parallel
+        self.marshalled = marshalled
         self.returns_dict = returns_dict
         self.node_props = node_props
 
@@ -250,13 +252,17 @@ class FunctionalOperation(Operation):
             Using :meth:`namedtuple._replace()` would not pass through cstor,
             so would not get a nested `name` with `parents`, not arguments validation.
         """
-        fn = kw["fn"] if "fn" in kw else self.fn
-        name = kw["name"] if "name" in kw else self.name
-        needs = kw["needs"] if "needs" in kw else self.needs
-        provides = kw["provides"] if "provides" in kw else self.provides
-        aliases = kw["aliases"] if "aliases" in kw else self.aliases
+        # fn = kw["fn"] if "fn" in kw else self.fn
+        # name = kw["name"] if "name" in kw else self.name
+        # needs = kw["needs"] if "needs" in kw else self.needs
+        # provides = kw["provides"] if "provides" in kw else self.provides
+        # aliases = kw["aliases"] if "aliases" in kw else self.aliases
+        kw2 = vars(self).copy()
+        kw2["provides"] = kw2["real_provides"]
+        del kw2["real_provides"]
+        kw2.update(kw)
 
-        return FunctionalOperation(fn, name, needs, provides, aliases, **kw)
+        return FunctionalOperation(**kw2)
 
     def _zip_results_with_provides(self, results, real_provides: iset) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""

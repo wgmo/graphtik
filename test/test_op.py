@@ -358,9 +358,7 @@ def test_netop_narrow_attributes(attr, value):
     assert getattr(netop.narrowed(**{attr: value}), attr) == value
 
 
-@pytest.mark.parametrize(
-    "attr, value",
-    [
+_attr_values = [
         ("rescheduled", None),
         ("rescheduled", 1),
         ("rescheduled", False),
@@ -373,9 +371,24 @@ def test_netop_narrow_attributes(attr, value):
         ("marshalled", None),
         ("marshalled", True),
         ("marshalled", 0),
-    ],
-)
-def test_netop_conveys_attr(attr, value):
+    ]
+
+@pytest.mark.parametrize( "attr, value", _attr_values )
+def test_op_withset_conveys_attr(attr, value):
+    kw = {attr: value}
+    op1 = operation(str,)()
+    assert getattr(op1, attr) is None
+
+    op2 = op1.withset(**kw)
+    assert getattr(op2, attr) == value
+    assert getattr(op1, attr) is None
+
+    op3 = op2.withset()
+    assert getattr(op3, attr) == value
+
+
+@pytest.mark.parametrize( "attr, value", _attr_values )
+def test_netop_conveys_attr_to_ops(attr, value):
     def _opsattrs(ops, attr, value):
         vals = [getattr(op, attr) for op in ops if isinstance(op, Operation)]
         assert all(v == value for v in vals)
