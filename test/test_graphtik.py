@@ -50,7 +50,7 @@ _marshal = pytest.mark.marshal
         # Thread, unmarshalled
         pytest.param(("parallel", 0, 0), marks=(_parallel, _thread)),
         # Thread, Marshalled
-        pytest.param(("parallel", 0, 1), marks=(_parallel, _thread, _marshal, _slow)),
+        pytest.param(("parallel", 0, 1), marks=(_parallel, _thread, _marshal)),
         # # PROCESS, unmarshalled
         pytest.param(
             ("parallel", 1, 0),
