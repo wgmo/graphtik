@@ -239,16 +239,6 @@ class Solution(ChainMap, Plotter):
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
         return f"{{{items}}}"
 
-    @property
-    def passed(self):
-        """a "virtual" property with executed operations that had no exception"""
-        return {k: v for k, v in self.executed.items() if v is None}
-
-    @property
-    def failures(self):
-        """a "virtual" property with executed operations that raised an exception"""
-        return {k: v for k, v in self.executed.items() if isinstance(v, Exception)}
-
     def operation_executed(self, op, outputs):
         """
         Invoked once per operation, with its results.
@@ -321,6 +311,9 @@ class Solution(ChainMap, Plotter):
         log.debug("removing data '%s' from solution.", key)
         for d in self.maps:
             d.pop(key, None)
+
+    def is_failed(self, op):
+        return isinstance(self.executed.get(op), Exception)
 
     @property
     def overwrites(self) -> Mapping[Any, List]:

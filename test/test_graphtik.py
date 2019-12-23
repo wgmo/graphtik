@@ -1127,13 +1127,13 @@ def test_execution_endurance(exemethod, endurance, endured):
 
     inp = {"a": 1, "b": 2}
     sol = graph(**inp)
-    assert sol.failures.keys() == {scream1, scream2}
-    assert "Must not have run!" in str(sol.failures[scream1])
+    assert sol.is_failed(scream1) and sol.is_failed(scream2)
+    assert "Must not have run!" in str(sol.executed[scream1])
     assert sol == {"a+b": 3, "a+2b": 5, **inp}
 
     sol = graph.narrowed(outputs="a+2b")(**inp)
-    assert sol.failures.keys() == {scream1, scream2}
-    assert "Must not have run!" in str(sol.failures[scream1])
+    assert sol.is_failed(scream1) and sol.is_failed(scream2)
+    assert "Must not have run!" in str(sol.executed[scream1])
     assert sol == {"a+2b": 5}
 
     # SILENTLY failing asked outputs

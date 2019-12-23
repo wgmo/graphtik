@@ -253,11 +253,8 @@ Architecture
         is true globally in the `configurations` or if :attr:`.FunctionalOperation.endurance`
         is true.
 
-        You may interogate :class:`.Solution` operations to discover whether
-        they have been:
-
-        - :attr:`.Solution.executed` successfully;
-        - :attr:`.Solution.failed`. or
+        You may interogate :attr:`.Solution.executed` to discover the status
+        of each executed operations.
 
     predicate
     node predicate
