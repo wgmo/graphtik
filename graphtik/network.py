@@ -425,13 +425,20 @@ class _OpTask:
             self.result = None
             log = logging.getLogger(self.logname)
             op = self.op
-            t0 = time.time()
             log.debug("+++ Executing op(%s)...", op.name)
+            t0 = time.time()
+            ok = False
             try:
                 self.result = op.compute(self.sol)
+                ok = True
             finally:
                 elapsed_ms = round(1000 * (time.time() - t0), 3)
-                log.debug("... completed op(%s) in %sms.", op.name, elapsed_ms)
+                log.debug(
+                    "... op(%s) %s in %sms.",
+                    op.name,
+                    "completed" if ok else "FAILED",
+                    elapsed_ms,
+                )
 
         return self.result
 
