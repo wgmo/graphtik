@@ -196,7 +196,12 @@ def build_pydot(
             a = a.name
         return quote_dot_kws(a)
 
-    dot = pydot.Dot(graph_type="digraph", label=quote_dot_kws(title), fontname="italic", URL=legend_url or None)
+    dot = pydot.Dot(
+        graph_type="digraph",
+        label=quote_dot_kws(title),
+        fontname="italic",
+        URL=legend_url or None,
+    )
 
     # draw nodes
     for nx_node in graph.nodes:
@@ -227,7 +232,7 @@ def build_pydot(
                 kw["tooltip"] = str(solution.get(nx_node))
             node = pydot.Node(name=quote_dot_kws(nx_node), shape=shape, **kw)
         else:  # Operation
-            kw = {"fontname": "italic"}
+            kw = {"fontname": "italic", "tooltip": str(nx_node)}
 
             if nx_node.rescheduled:
                 kw["penwidth"] = resched_thickness
@@ -247,7 +252,7 @@ def build_pydot(
             node = pydot.Node(
                 name=quote_dot_kws(nx_node.name),
                 shape="oval",
-                ## NOTE: Jupyter lab is bocking local-urls (e.g. on SVGs).
+                ## NOTE: Jupyter lab is blocking local-urls (e.g. on SVGs).
                 **kw,
             )
 
