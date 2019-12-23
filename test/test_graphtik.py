@@ -1328,16 +1328,21 @@ def test_abort(exemethod):
         operation(name="A", needs=["a"], provides=["b"])(identity),
         operation(name="B", needs=["b"], provides=["c"])(lambda x: abort_run()),
         operation(name="C", needs=["c"], provides=["d"])(identity),
-        method=exemethod
+        method=exemethod,
     )
     with pytest.raises(AbortedException) as exinfo:
         pipeline(a=1)
-    assert exinfo.value.jetsam["solution"] == {"a": 1, "b": 1, "c": None}
-    executed = {op.name: val for op, val in exinfo.value.args[0].items()}
-    assert executed == {"A": True, "B": True, "C": False}
+
+    exp = {"a": 1, "b": 1, "c": None}
+    solution = exinfo.value.args[0]
+    assert  solution == exp
+    assert exinfo.value.jetsam["solution"] == exp
+    executed = {op.name: val for op, val in solution.executed.items()}
+    assert executed == {"A": None, "B": None}
 
     pipeline = compose(
-        "pipeline", operation(name="A", needs=["a"], provides=["b"])(identity),
-        method=exemethod
+        "pipeline",
+        operation(name="A", needs=["a"], provides=["b"])(identity),
+        method=exemethod,
     )
     assert pipeline.compute({"a": 1}) == {"a": 1, "b": 1}

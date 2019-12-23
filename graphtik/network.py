@@ -48,7 +48,11 @@ _execution_configs: ContextVar[dict] = ContextVar(
 
 
 class AbortedException(Exception):
-    """Raised from the Network code when :func:`abort_run()` is called."""
+    """
+    Raised from Network when :func:`abort_run()` is called, and contains the solution ...
+
+    with any values populated so far.
+    """
 
 
 def set_execution_pool(pool: "Optional[Pool]"):
@@ -557,11 +561,11 @@ class ExecutionPlan(
                     f"Impossible outputs: {list(unknown)}\n for graph: {self}\n  {self}"
                 )
 
-    def _check_if_aborted(self, executed):
+    def _check_if_aborted(self, solution):
         if is_abort():
             # Restore `abort` flag for next run.
             _reset_abort()
-            raise AbortedException({s: s in executed for s in self.steps})
+            raise AbortedException(solution)
 
     def _handle_op_task(self, op, solution, future):
         """Un-dill parallel task results (if marshaled), and update solution / handle failure."""
@@ -609,7 +613,7 @@ class ExecutionPlan(
         # scheduled, then schedule them onto a thread pool, then collect their
         # results onto a memory solution for use upon the next iteration.
         while True:
-            self._check_if_aborted(solution.executed)
+            self._check_if_aborted(solution)
 
             # the upnext list contains a list of operations for scheduling
             # in the current round of scheduling
@@ -677,7 +681,7 @@ class ExecutionPlan(
             must contain the input values only, gets modified
         """
         for step in self.steps:
-            self._check_if_aborted(solution.executed)
+            self._check_if_aborted(solution)
 
             if isinstance(step, Operation):
                 if step in solution.canceled:
