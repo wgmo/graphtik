@@ -136,10 +136,9 @@ Architecture
         It is built by :meth:`.Network._build_execution_steps()` based on
         the subgraph `dag`.
 
-        The only *instruction* step is for performing `eviction`.
+        The only *instruction* step is for performing `evictions`.
 
-    evict
-    eviction
+    evictions
         The :class:`_EvictInstruction` `steps` erase items from
         `solution` as soon as they are not needed further down the dag,
         to reduce memory footprint while computing.

@@ -2,7 +2,9 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """:term:`Configurations` for network execution, and utilities on them."""
 import ctypes
+from contextlib import contextmanager
 from contextvars import ContextVar
+from functools import partial
 from multiprocessing import Value
 from typing import Optional
 
@@ -25,6 +27,24 @@ _reschedule_operations: ContextVar[Optional[bool]] = ContextVar(
 )
 
 
+def _getter(context_var) -> Optional[bool]:
+    return context_var.get()
+
+
+@contextmanager
+def _tristate_set(context_var, enabled):
+    return context_var.set(enabled if enabled is None else bool(enabled))
+
+
+@contextmanager
+def _tristate_armed(context_var: ContextVar, enabled):
+    resetter = context_var.set(enabled if enabled is None else bool(enabled))
+    try:
+        yield
+    finally:
+        context_var.reset(resetter)
+
+
 def abort_run():
     """Signal to the 1st running network to stop :term:`execution`."""
     _abort.get().value = True
@@ -39,14 +59,28 @@ def is_abort():
     return _abort.get().value
 
 
-def set_skip_evictions(skipped):
-    """If :term:`eviction` is true, keep all intermediate solution values, regardless of asked outputs."""
-    return _skip_evictions.set(bool(skipped))
+evictions_skipped = partial(_tristate_armed, _skip_evictions)
+"""Like :meth:`set_skip_evictions()` as a context-manager to reset old value. """
+is_skip_evictions = partial(_getter, _skip_evictions)
+"""see :meth:`set_skip_evictions()`"""
+set_skip_evictions = partial(_tristate_set, _skip_evictions)
+"""
+When true, disable globally :term:`evictions`, to keep all intermediate solution values, ...
+
+regardless of asked outputs.
+
+:return:
+    a "reset" token (see :meth:`.ContextVar.set`)
+"""
 
 
-def is_skip_evictions():
-    """Return `True` if keeping all intermediate solution values, regardless of asked outputs."""
-    return _skip_evictions.get()
+@contextmanager
+def execution_pool(pool: "Optional[Pool]"):
+    resetter = _execution_pool.set(pool)
+    try:
+        yield
+    finally:
+        _execution_pool.set(resetter)
 
 
 def set_execution_pool(pool: "Optional[Pool]"):
@@ -64,84 +98,76 @@ def get_execution_pool() -> "Optional[Pool]":
     return _execution_pool.get()
 
 
-def set_parallel_tasks(enable: Optional[bool]):
-    """
-    Enable/disable globally :term:`parallel` execution of operations.
+tasks_in_parallel = partial(_tristate_armed, _parallel_tasks)
+"""Like :meth:`set_parallel_tasks()` as a context-manager to reset old value. """
+is_parallel_tasks = partial(_getter, _parallel_tasks)
+"""see :meth:`set_parallel_tasks()`"""
+set_parallel_tasks = partial(_tristate_set, _parallel_tasks)
+"""
+Enable/disable globally :term:`parallel` execution of operations.
 
-    :param enable:
-        - If ``None`` (default), respect the flag on each operation.
-        - If true/false, force it for operations.
+:param enable:
+    - If ``None`` (default), respect the respective flag on each operation;
+    - If true/false, force it for all operations.
 
-    :return:
-        a "reset" token (see :meth:`.ContextVar.set`)
-    """
-    return _parallel_tasks.set(bool(enable))
-
-
-def is_parallel_tasks() -> Optional[bool]:
-    """see :meth:`set_parallel_tasks()`"""
-    return _parallel_tasks.get()
+:return:
+    a "reset" token (see :meth:`.ContextVar.set`)
+"""
 
 
-def set_marshal_tasks(enable: Optional[bool]):
-    """
-    Enable/disable globally :term:`marshalling` of :term:`parallel` operations, ...
+tasks_marshalled = partial(_tristate_armed, _marshal_tasks)
+"""Like :meth:`set_marshal_tasks()` as a context-manager to reset old value. """
+is_marshal_tasks = partial(_getter, _marshal_tasks)
+"""see :meth:`set_marshal_tasks()`"""
+set_marshal_tasks = partial(_tristate_set, _marshal_tasks)
+"""
+Enable/disable globally :term:`marshalling` of :term:`parallel` operations, ...
 
-    inputs & outputs with :mod:`dill`,  which might help for pickling problems.
+inputs & outputs with :mod:`dill`,  which might help for pickling problems.
 
-    :param enable:
-        - If ``None`` (default), respect the flag on each operation.
-        - If true/false, force it for operations.
+:param enable:
+    - If ``None`` (default), respect the respective flag on each operation;
+    - If true/false, force it for all operations.
 
-    :return:
-        a "reset" token (see :meth:`.ContextVar.set`)
-    """
-    return _marshal_tasks.set(bool(enable))
-
-
-def is_marshal_tasks() -> Optional[bool]:
-    """see :meth:`set_marshal_tasks()`"""
-    return _marshal_tasks.get()
+:return:
+    a "reset" token (see :meth:`.ContextVar.set`)
+"""
 
 
-def set_endure_operations(endure):
-    """
-    If :term:`endurance` set to true, keep executing even if some operations fail
+operations_endured = partial(_tristate_armed, _endure_operations)
+"""Like :meth:`set_endure_operations()` as a context-manager to reset old value. """
+is_endure_operations = partial(_getter, _endure_operations)
+"""see :meth:`set_endure_operations()`"""
+set_endure_operations = partial(_tristate_set, _endure_operations)
+"""
+Enable/disable globally :term:`endurance` to keep executing even if some operations fail.
 
-    :param enable:
-        - If ``None`` (default), respect the flag on each operation.
-        - If true/false, force it for operations.
+:param enable:
+    - If ``None`` (default), respect the flag on each operation;
+    - If true/false, force it for all operations.
 
-    :return:
-        a "reset" token (see :meth:`.ContextVar.set`)
+:return:
+    a "reset" token (see :meth:`.ContextVar.set`)
 
-    ."""
-    return _endure_operations.set(bool(endure))
-
-
-def is_endure_operations():
-    """see :meth:`set_endure_operations`"""
-    return _endure_operations.get()
+."""
 
 
-def set_reschedule_operations(reschedule):
-    """
-    If :term:`reschedule` set to true, operations may provide *partial outputs*.
+operations_reschedullled = partial(_tristate_armed, _reschedule_operations)
+"""Like :meth:`set_reschedule_operations()` as a context-manager to reset old value. """
+is_reschedule_operations = partial(_getter, _reschedule_operations)
+"""see :meth:`set_reschedule_operations()`"""
+set_reschedule_operations = partial(_tristate_set, _reschedule_operations)
+"""
+Enable/disable globally :term:`rescheduling` for operations returning only *partial outputs*.
 
-    :param enable:
-        - If ``None`` (default), respect the flag on each operation.
-        - If true/false, force it for operations.
+:param enable:
+    - If ``None`` (default), respect the flag on each operation;
+    - If true/false, force it for all operations.
 
-    :return:
-        a "reset" token (see :meth:`.ContextVar.set`)
+:return:
+    a "reset" token (see :meth:`.ContextVar.set`)
 
-   ."""
-    return _reschedule_operations.set(bool(reschedule))
-
-
-def is_reschedule_operations():
-    """see :meth:`set_reschedule_operations`"""
-    return _reschedule_operations.get()
+."""
 
 
 def is_solid_true(*tristates, default=False):

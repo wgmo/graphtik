@@ -14,6 +14,8 @@ __uri__ = "https://github.com/pygraphkit/graphtik"
 from .base import NO_RESULT
 from .config import (
     abort_run,
+    operations_endured,
+    execution_pool,
     get_execution_pool,
     is_abort,
     is_endure_operations,
@@ -21,12 +23,16 @@ from .config import (
     is_parallel_tasks,
     is_reschedule_operations,
     is_skip_evictions,
+    tasks_marshalled,
+    tasks_in_parallel,
+    operations_reschedullled,
     set_endure_operations,
     set_execution_pool,
     set_marshal_tasks,
     set_parallel_tasks,
     set_reschedule_operations,
     set_skip_evictions,
+    evictions_skipped,
 )
 from .modifiers import *  # noqa, on purpose to include any new modifiers
 from .netop import compose

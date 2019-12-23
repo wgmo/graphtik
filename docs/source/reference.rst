@@ -47,7 +47,6 @@ Module: `config`
 
 .. automodule:: graphtik.config
      :members:
-     :private-members:
 
 Module: `base`
 ==============
