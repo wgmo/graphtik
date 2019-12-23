@@ -290,6 +290,37 @@ def test_endured_rescheduled_op_repr():
     assert (
         str(op()) == "FunctionalOperation!(name='t', needs=[], provides=[]?, fn='str')"
     )
+def test_parallel_op_repr():
+    op = operation(str, name="t", provides=["a"], parallel=True)
+    assert str(op) == "operation|(name='t', needs=[], provides=['a'], fn='str')"
+    assert (
+        str(op())
+        == "FunctionalOperation|(name='t', needs=[], provides=['a'], fn='str')"
+    )
+
+
+def test_marshalled_op_repr():
+    op = operation(str, name="t", provides=["a"], marshalled=True)
+    assert str(op) == "operation$(name='t', needs=[], provides=['a'], fn='str')"
+    assert (
+        str(op())
+        == "FunctionalOperation$(name='t', needs=[], provides=['a'], fn='str')"
+    )
+
+
+def test_marshalled_parallel_op_repr():
+    op = operation(str, name="t", parallel=1, marshalled=1)
+    assert str(op) == "operation|$(name='t', needs=[], provides=[], fn='str')"
+    assert (
+        str(op()) == "FunctionalOperation|$(name='t', needs=[], provides=[], fn='str')"
+    )
+
+def test_ALL_op_repr():
+    op = operation(str, name="t", rescheduled=1, endured=1, parallel=1, marshalled=1)
+    assert str(op) == "operation!|$(name='t', needs=[], provides=[]?, fn='str')"
+    assert (
+        str(op()) == "FunctionalOperation!|$(name='t', needs=[], provides=[]?, fn='str')"
+    )
 
 
 def test_reschedule_outputs():
@@ -336,6 +367,12 @@ def test_netop_narrow_attributes(attr, value):
         ("endured", None),
         ("endured", True),
         ("endured", 0),
+        ("parallel", None),
+        ("parallel", True),
+        ("parallel", 0),
+        ("marshalled", None),
+        ("marshalled", True),
+        ("marshalled", 0),
     ],
 )
 def test_netop_conveys_attr(attr, value):

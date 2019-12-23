@@ -155,7 +155,7 @@ class _ScreamingOperation(op.Operation):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6))._handle_op_task,
+                network.ExecutionPlan(*([None] * 6))._handle_task,
                 op=_ScreamingOperation(),
                 solution=Solution(MagicMock(), {}),
                 future=_OpTask(_ScreamingOperation(), {}),
@@ -185,7 +185,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         ),
         (
             fnt.partial(
-                network.ExecutionPlan(*([None] * 6))._handle_op_task,
+                network.ExecutionPlan(*([None] * 6))._handle_task,
                 op=operation(_scream, name="auch")(),
                 solution=Solution(MagicMock(), {}),
                 future=_OpTask(_ScreamingOperation(), {}),

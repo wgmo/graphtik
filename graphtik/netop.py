@@ -18,10 +18,20 @@ from .op import FunctionalOperation, Operation, reparse_operation_data
 log = logging.getLogger(__name__)
 
 
+def _id_bool(b):
+    return hash(bool(b)) + 1
+
+
+def _id_tristate_bool(b):
+    return 3 if b is None else (hash(bool(b)) + 1)
+
+
 def _make_network(
     operations,
     rescheduled=None,
     endured=None,
+    parallel=None,
+    marshalled=None,
     merge=None,
     node_props=None,
 ):
@@ -37,10 +47,14 @@ def _make_network(
             or (not merge and parent)
             or rescheduled is not None
             or endured is not None
+            or parallel is not None
+            or marshalled is not None
         ):
             kw = {
                 "rescheduled": rescheduled,
                 "endured": endured,
+                "parallel": parallel,
+                "marshalled": marshalled,
             }
             if node_props:
                 op_node_props = op.node_props.copy()
@@ -104,6 +118,8 @@ class NetworkOperation(Operation, Plotter):
         predicate: NodePredicate = None,
         rescheduled=None,
         endured=None,
+        parallel=None,
+        marshalled=None,
         merge=None,
         method=None,
         node_props=None,
@@ -124,7 +140,9 @@ class NetworkOperation(Operation, Plotter):
         self.set_execution_method(method)
 
         # Prune network
-        self.net = _make_network(operations, rescheduled, endured, merge, node_props)
+        self.net = _make_network(
+            operations, rescheduled, endured, parallel, marshalled, merge, node_props
+        )
         self.name, self.needs, self.provides = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
         )
@@ -148,6 +166,8 @@ class NetworkOperation(Operation, Plotter):
         name=None,
         rescheduled=None,
         endured=None,
+        parallel=None,
+        marshalled=None,
     ) -> "NetworkOperation":
         """
         Return a copy with a network pruned for the given `needs` & `provides`.
@@ -171,6 +191,11 @@ class NetworkOperation(Operation, Plotter):
             applies :term:`reschedule`\\d to all contained `operations`
         :param endured:
             applies :term:`endurance` to all contained `operations`
+        :param parallel:
+            mark all contained `operations` to be executed in :term:`parallel`
+        :param marshalled:
+            mark all contained `operations` to be :term:`marshalled <marshalling>`
+            (usefull when run in `parallel` with a :term:`process pool`).
 
         :return:
             A narrowed netop clone, which **MIGHT be empty!***
@@ -195,8 +220,10 @@ class NetworkOperation(Operation, Plotter):
                 abs(
                     hash(str(outputs))
                     ^ hash(predicate)
-                    ^ (1 * bool(rescheduled))
-                    ^ (2 * bool(endured))
+                    ^ (1 * _id_bool(rescheduled))
+                    ^ (2 * _id_bool(endured))
+                    ^ (4 * _id_tristate_bool(parallel))
+                    ^ (8 * _id_tristate_bool(marshalled))
                 )
             )[:7]
             m = re.match(r"^(.*)-(\d+)$", name)
@@ -211,6 +238,8 @@ class NetworkOperation(Operation, Plotter):
             predicate=predicate,
             rescheduled=rescheduled,
             endured=endured,
+            parallel=parallel,
+            marshalled=marshalled,
             method=self.method,
         )
 
@@ -348,6 +377,8 @@ def compose(
     outputs: Items = None,
     rescheduled=None,
     endured=None,
+    parallel=None,
+    marshalled=None,
     merge=False,
     node_props=None,
     method=None,
@@ -378,6 +409,11 @@ def compose(
         applies :term:`reschedule`\\d to all contained `operations`
     :param endured:
         applies :term:`endurance` to all contained `operations`
+    :param parallel:
+        mark all contained `operations` to be executed in :term:`parallel`
+    :param marshalled:
+        mark all contained `operations` to be :term:`marshalled <marshalling>`
+        (usefull when run in `parallel` with a :term:`process pool`).
     :param node_props:
         added as-is into NetworkX graph, to provide for filtering
         by :meth:`.NetworkOperation.narrowed()`.
@@ -404,6 +440,8 @@ def compose(
         outputs=outputs,
         rescheduled=rescheduled,
         endured=endured,
+        parallel=parallel,
+        marshalled=marshalled,
         method=method,
         merge=merge,
         node_props=node_props,

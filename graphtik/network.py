@@ -2,49 +2,36 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """:term:`Compile` & :term:`execute` network graphs of operations."""
 import copy
-import ctypes
 import logging
 import re
 import sys
 import time
 from collections import ChainMap, abc, defaultdict, namedtuple
-from contextvars import ContextVar
+from functools import partial
 from itertools import count
-from multiprocessing import Value
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Collection, List, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
 from .base import UNSET, Items, Plotter, aslist, astuple, jetsam
+from .config import (
+    _reset_abort,
+    get_execution_pool,
+    is_abort,
+    is_endure_operations,
+    is_marshal_tasks,
+    is_parallel_tasks,
+    is_reschedule_operations,
+    is_skip_evictions,
+    is_solid_true,
+)
 from .modifiers import optional, sideffect
 from .op import Operation
 
 log = logging.getLogger(__name__)
 
 NodePredicate = Callable[[Any, Mapping], bool]
-
-#: Global :term:`configurations` affecting :term:`execution` phase.
-_execution_configs: ContextVar[dict] = ContextVar(
-    "execution_configs",
-    default={
-        "execution_pool": None,
-        "abort": Value(ctypes.c_bool, lock=False),
-        "skip_evictions": False,
-        "endure_execution": False,
-        "marshal_parallel_tasks": False,
-    },
-)
 
 
 class AbortedException(Exception):
@@ -53,69 +40,6 @@ class AbortedException(Exception):
 
     with any values populated so far.
     """
-
-
-def set_execution_pool(pool: "Optional[Pool]"):
-    """
-    Set the process-pool for :term:`parallel` plan executions.
-
-    You may have to :also func:`set_marshal_parallel_tasks()` to resolve
-    pickling issues.
-    """
-    _execution_configs.get()["execution_pool"] = pool
-
-def get_execution_pool() -> "Optional[Pool]":
-    """Get the process-pool for :term:`parallel` plan executions."""
-    return _execution_configs.get()["execution_pool"]
-
-
-def set_marshal_parallel_tasks(marshal: Optional[bool]):
-    """
-    Enable/disable globally :term:`marshaling<marshal>` of :term:`parallel` operations, ...
-
-    inputs & outputs with :mod:`dill`,  which might help for pickling problems.
-
-    """
-    _execution_configs.get()["marshal_parallel_tasks"] = bool(marshal)
-
-
-def is_marshal_parallel_tasks() -> Optional[bool]:
-    """see :meth:`set_marshal_parallel_tasks()`"""
-    return _execution_configs.get()["marshal_parallel_tasks"]
-
-
-def abort_run():
-    """Signal to the 1st running network to stop :term:`execution`."""
-    _execution_configs.get()["abort"].value = True
-
-
-def _reset_abort():
-    _execution_configs.get()["abort"].value = False
-
-
-def is_abort():
-    """Return `True` if networks have been signaled to stop :term:`execution`."""
-    return _execution_configs.get()["abort"].value
-
-
-def set_skip_evictions(skipped):
-    """If :term:`eviction` is true, keep all intermediate solution values, regardless of asked outputs."""
-    _execution_configs.get()["skip_evictions"] = bool(skipped)
-
-
-def is_skip_evictions():
-    """Return `True` if keeping all intermediate solution values, regardless of asked outputs."""
-    return _execution_configs.get()["skip_evictions"]
-
-
-def set_endure_execution(endure):
-    """If :term:`endurance` set to true, keep executing even of some operations fail."""
-    _execution_configs.get()["endure_execution"] = bool(endure)
-
-
-def is_endure_execution():
-    """Is execution going even of some operations fail?"""
-    return _execution_configs.get()["endure_execution"]
 
 
 def _unsatisfied_operations(dag, inputs: Collection) -> List:
@@ -213,27 +137,29 @@ class Solution(ChainMap, Plotter):
         self._layers = {op: {} for op in yield_ops(plan.dag)}
         self.maps.extend(self._layers.values())
 
-        ## Decide if a the `plan.dag` will be modified,
-        #  to cancel ops downstreams:
+        ## Cache context-var flags.
         #
-        #  - if endurance is globally enabled, or
-        #  - if any operation is endured, or,
-        #  - if any operation needs rescheduling.
+        self.is_endurance = is_endure_operations()
+        self.is_reschedule = is_reschedule_operations()
+        self.is_parallel = is_parallel_tasks()
+        self.is_marshal = is_marshal_tasks()
+
+        ## OPTIMIZATION: decide if the `plan.dag` will be modified,
+        #  while searching for `canceled` ops downstreams,
+        #  (to avoid cloning dag needlesly):
         #
-        ## From the cloned `dag` the downstream edges from the `provides`
-        #  of failed operations will be removed.
+        #  - if endurance is enabled globally/for any op, or
+        #  - if rescheduling is enabled globally/for any op.
         #
-        self.is_endurance = is_endure_execution()
-        self.dag = (
-            plan.dag.copy()
-            if self.is_endurance
-            or any(
-                op.rescheduled or op.endured
-                for op in plan.steps
-                if isinstance(op, Operation)
-            )
-            else plan.dag
+        dag_needs_modifs = is_solid_true(
+            self.is_endurance,
+            self.is_reschedule,
+            any(op.rescheduled or op.endured for op in yield_ops(plan.steps)),
         )
+
+        ## From the cloned `dag` will be removed the downstream edges
+        #  of partial outputs or from `provides` of failed operations.
+        self.dag = plan.dag.copy() if dag_needs_modifs else plan.dag
 
     def __repr__(self):
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
@@ -368,10 +294,12 @@ class _EvictInstruction(str):
 
 
 def _yield_datanodes(nodes):
+    """May scan dag nodes."""
     return (n for n in nodes if isinstance(n, _DataNode))
 
 
 def yield_ops(nodes):
+    """May scan (preferably)  ``plan.steps`` or dag nodes."""
     return (n for n in nodes if isinstance(n, Operation))
 
 
@@ -415,7 +343,7 @@ class _OpTask:
         self.sol = sol
         self.result = UNSET
 
-    def marshaled(self):
+    def marshalled(self):
         import dill
 
         return dill.dumps(self)
@@ -567,8 +495,42 @@ class ExecutionPlan(
             _reset_abort()
             raise AbortedException(solution)
 
-    def _handle_op_task(self, op, solution, future):
-        """Un-dill parallel task results (if marshaled), and update solution / handle failure."""
+    def _prepare_tasks(
+        self, operations, solution, pool, global_parallel, global_marshal
+    ) -> Union["Future", _OpTask]:
+        """
+        Combine ops+inputs, apply :term:`marshalling`, and submit to :term:`execution pool` (or not) ...
+
+         based on global/pre-op configs.
+        """
+        ## Selectively DILL the *simpler* _OpTask & `sol` dict
+        #  so as to pass through pool-processes,
+        #  (s)ee https://stackoverflow.com/a/24673524/548792)
+        #  and handle results in this thread, to evade Solution locks.
+        #
+        input_values = dict(solution)
+
+        def prep_task(op):
+            # TODO: jetsam from task preparation.
+            task = _OpTask(op, input_values)
+            if is_solid_true(global_marshal, op.marshalled):
+                task = task.marshalled()
+
+            if is_solid_true(global_parallel, op.parallel):
+                if not pool:
+                    raise ValueError("With `parallel` you must `set_execution_pool().`")
+                task = pool.apply_async(_do_task, (task,))
+            elif isinstance(task, bytes):
+                # Marshaled tasks need `_do_task()`.
+                task = partial(_do_task, task)
+                task.get = task.__call__
+
+            return task
+
+        return [prep_task(op) for op in operations]
+
+    def _handle_task(self, op, solution, future):
+        """Un-dill parallel task results (if marshalled), and update solution / handle failure."""
         try:
             outputs = future.get()
             if isinstance(outputs, bytes):
@@ -601,13 +563,9 @@ class ExecutionPlan(
         :param solution:
             must contain the input values only, gets modified
         """
-        # TODO: require user to create & enter pools.
-        pool = get_execution_pool()
-        if not pool:
-            raise ValueError(
-                "With `parallel` execution you need to `set_execution_pool().`"
-            )
-        marshal_tasks = is_marshal_parallel_tasks()
+        pool = get_execution_pool()  # cache pool
+        parallel = solution.is_parallel
+        marshal = solution.is_marshal
 
         # with each loop iteration, we determine a set of operations that can be
         # scheduled, then schedule them onto a thread pool, then collect their
@@ -653,25 +611,12 @@ class ExecutionPlan(
             # stop if no nodes left to schedule, exit out of the loop
             if not upnext:
                 break
-
-            ## Submit selected `upnext` tasks.
-            #
-            ## (Optionally) DILL the *simpler* _OpTask & `sol` dict
-            #  so as to pass through pool-processes,
-            #  (s)ee https://stackoverflow.com/a/24673524/548792)
-            #  and handle results in this thread, to evade Solution locks.
-            #
-            sol = dict(solution)
-            # args = [(op.compute, [sol]) for op in upnext]
-            tasks = [_OpTask(op, sol) for op in upnext]
-            if marshal_tasks:
-                tasks = [t.marshaled() for t in tasks]
-            futures = [pool.apply_async(_do_task, (t,)) for t in tasks]
+            tasks = self._prepare_tasks(upnext, solution, pool, parallel, marshal)
 
             ## Handle results.
             #
-            for op, future in zip(upnext, futures):
-                self._handle_op_task(op, solution, future)
+            for op, task in zip(upnext, tasks):
+                self._handle_task(op, solution, task)
 
     def _execute_sequential_method(self, solution: Solution):
         """
@@ -688,7 +633,7 @@ class ExecutionPlan(
                     continue
 
                 task = _OpTask(step, solution)
-                self._handle_op_task(step, solution, task)
+                self._handle_task(step, solution, task)
 
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.

@@ -73,33 +73,38 @@ Architecture
 
     parallel
     parallel execution
-    process pool
-        Execute operation *in parallel*, with a *thread/process pool* (instead of `sequential`).
-        When a *process pool* is used, data & operations must be `*pickled*
-        <https://docs.python.org/library/pickle.html>`_ to/from the worker process,
-        and that may fail. You may `marshal` them with *dill* library to fix them.
+    execution pool
+    task
+        `Execute` `operation`\s *in parallel*, with a `thread pool` or `process pool`
+        (instead of `sequential`).
+        Operations and `netop` are marked as such on construction, or enabled globally
+        from `configurations`.
 
-    marshal
+    process pool
+        When the :meth:`multiprocessing.Pool` class is used for `parallel` execution,
+        the `task`\s  must be communicated to/from the worker process, which requires
+        `pickling <https://docs.python.org/library/pickle.html>`_, and that may fail.
+        With pickling failures you may try `marshalling` with *dill* library,
+        and see if that helps.
+
+    thread pool
+        When the :func:`multiprocessing.dummy.Pool` class for `parallel` execution,
+        the `task`\s are run *in process*, so no `marshalling` is needed.
+
     marshalling
         Pickling `parallel` `operation`\s and their `inputs`/`outputs` using
-        the :mod:`dill` module.
+        the :mod:`dill` module. It is `configured <configurations>` either globally
+        with :func:`.set_marshal_tasks()` or set with a flag on each
+        operation / `netop`.
 
     configurations
-        A global :data:`._execution_configs` affecting `execution`
-        stored in a :class:`contextvars.ContextVar`.
+        The functions controlling `compile` & `execution` globally  are defined
+        in :mod:`.config` module;  they undelying global data are stored in
+        :class:`contextvars.ContextVar` instances, to allow for nested control.
 
-        .. Tip::
-            Instead of directly modifying ``_execution_configs``, prefer
-            the special ``set_...()`` & ``is_...()`` methods exposed from
-            the ``graptik`` package:
-
-            - :func:`.abort_run` & :func:`.is_abort`
-              (for disabling `eviction`\s globally);
-            - :func:`.set_endure_execution` & :func:`.is_endure_execution`
-              (for enabling `endurance` globally);
-            - :func:`.set_execution_pool` & :func:`.get_execution_pool` (for `parallel` executions).
-            - :func:`.set_marshal_parallel_tasks` & :func:`.is_marshal_parallel_tasks`
-            - :func:`.set_skip_evictions` & :func:`.is_skip_evictions`
+        All *boolean* configuration flags are **tri-state** (``None, False, True``),
+        allowing to "force" all operations, when they are not set to the ``None``
+        value.  All of them default to ``None`` (false).
 
     graph
     network graph
@@ -114,6 +119,7 @@ Architecture
 
     dag
     execution dag
+    solution dag
         There are 2 *directed-acyclic-graphs* instances used:
 
         - the :attr:`.ExecutionPlan.dag`,  in the `execution plan`, which contains
@@ -249,7 +255,7 @@ Architecture
 
     endurance
         Keep executing as many `operation`\s as possible, even if some of them fail.
-        Endurance for an operation  is enabled if :func:`.set_endure_execution()`
+        Endurance for an operation  is enabled if :func:`.set_endure_operations()`
         is true globally in the `configurations` or if :attr:`.FunctionalOperation.endurance`
         is true.
 

@@ -46,7 +46,7 @@ setup(
         "plot": plot_reqs,
         "test": test_reqs,
         # May help for pickling `parallel` tasks.
-        # See `graphtik.set_marshal_parallel_tasks()` config option.
+        # See :term:`marshalling` and :func:`set_marshal_tasks()` configuration.
         "dill": ["dill"],
     },
     tests_require=test_reqs,

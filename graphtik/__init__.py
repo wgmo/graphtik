@@ -12,19 +12,23 @@ __uri__ = "https://github.com/pygraphkit/graphtik"
 
 
 from .base import NO_RESULT
-from .modifiers import *  # noqa, on purpose to include any new modifiers
-from .netop import compose
-from .network import (
-    AbortedException,
+from .config import (
     abort_run,
     get_execution_pool,
     is_abort,
-    is_endure_execution,
-    is_marshal_parallel_tasks,
+    is_endure_operations,
+    is_marshal_tasks,
+    is_parallel_tasks,
+    is_reschedule_operations,
     is_skip_evictions,
-    set_endure_execution,
+    set_endure_operations,
     set_execution_pool,
-    set_marshal_parallel_tasks,
+    set_marshal_tasks,
+    set_parallel_tasks,
+    set_reschedule_operations,
     set_skip_evictions,
 )
+from .modifiers import *  # noqa, on purpose to include any new modifiers
+from .netop import compose
+from .network import AbortedException
 from .op import operation

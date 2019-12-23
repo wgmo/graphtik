@@ -120,6 +120,8 @@ class FunctionalOperation(Operation):
         parents: Tuple = None,
         rescheduled=None,
         endured=None,
+        parallel=None,
+        marshalled=None,
         returns_dict=None,
         node_props: Mapping = None,
     ):
@@ -146,6 +148,12 @@ class FunctionalOperation(Operation):
         :param endured:
             If true, even if *callable* fails, solution will :term:`reschedule`;
             ignored if :term:`endurance` enabled globally.
+        :param parallel:
+            execute in :term:`parallel`
+        :param marshalled:
+            If true, operation will be :term:`marshalled <marshalling>` while computed,
+            along with its `inputs` & `outputs`.
+            (usefull when run in `parallel` with a :term:`process pool`).
         :param returns_dict:
             if true, it means the `fn` returns a dictionary with all `provides`,
             and no further processing is done on them
@@ -198,6 +206,8 @@ class FunctionalOperation(Operation):
         self.parents = parents
         self.rescheduled = rescheduled
         self.endured = endured
+        self.parallel=parallel
+        self.marshalled=marshalled
         self.returns_dict = returns_dict
         self.node_props = node_props
 
@@ -225,8 +235,10 @@ class FunctionalOperation(Operation):
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
         resched = "?" if self.rescheduled else ""
         endured = "!" if self.endured else ""
+        parallel = "|" if self.parallel else ""
+        marshalled = "$" if self.marshalled else ""
         return (
-            f"FunctionalOperation{endured}(name={self.name!r}, needs={needs!r}, "
+            f"FunctionalOperation{endured}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
             f"provides={provides!r}{resched}{aliases}, fn{returns_dict_marker}={fn_name!r}{nprops})"
         )
 
@@ -416,6 +428,11 @@ class operation:
     :param endured:
         If true, even if *callable* fails, solution will :term:`reschedule`.
         ignored if :term:`endurance` enabled globally.
+    :param parallel:
+        execute in :term:`parallel`
+    :param marshalled:
+        If true, operation will be :term:`marshalled <marshalling>` while computed,        along with its `inputs` & `outputs`.
+        (usefull when run in `parallel` with a :term:`process pool`).
     :param returns_dict:
         if true, it means the `fn` returns a dictionary with all `provides`,
         and no further processing is done on them
@@ -461,6 +478,8 @@ class operation:
         aliases: Mapping = None,
         rescheduled=None,
         endured=None,
+        parallel=None,
+        marshalled=None,
         returns_dict=None,
         node_props: Mapping = None,
     ):
@@ -476,6 +495,8 @@ class operation:
         aliases: Mapping = None,
         rescheduled=None,
         endured=None,
+        parallel=None,
+        marshalled=None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> "operation":
@@ -494,6 +515,10 @@ class operation:
             self.rescheduled = rescheduled
         if endured is not None:
             self.endured = endured
+        if parallel is not None:
+            self.parallel = parallel
+        if marshalled is not None:
+            self.marshalled = marshalled
         if returns_dict is not None:
             self.returns_dict = returns_dict
         if node_props is not None:
@@ -511,6 +536,8 @@ class operation:
         aliases: Mapping = None,
         rescheduled=None,
         endured=None,
+        parallel=None,
+        marshalled=None,
         returns_dict=None,
         node_props: Mapping = None,
     ) -> FunctionalOperation:
@@ -551,7 +578,9 @@ class operation:
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
         resched = "?" if self.rescheduled else ""
         endured = "!" if self.endured else ""
+        parallel = "|" if self.parallel else ""
+        marshalled = "$" if self.marshalled else ""
         return (
-            f"operation{endured}(name={self.name!r}, needs={needs!r}, "
+            f"operation{endured}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
             f"provides={provides!r}{resched}{aliases}, fn={fn_name!r}{nprops})"
         )

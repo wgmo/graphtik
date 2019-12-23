@@ -21,13 +21,13 @@ from graphtik import (
     abort_run,
     compose,
     get_execution_pool,
-    is_marshal_parallel_tasks,
+    is_marshal_tasks,
     network,
     operation,
     optional,
-    set_endure_execution,
+    set_endure_operations,
     set_execution_pool,
-    set_marshal_parallel_tasks,
+    set_marshal_tasks,
     set_skip_evictions,
     sideffect,
     vararg,
@@ -70,23 +70,28 @@ def exemethod(request):
     meth, proc_pool, marshal = request.param
     nsharks = None  # number of pool swimmers....
 
-    set_marshal_parallel_tasks(marshal)
-    if meth == "parallel":
-        if proc_pool:
-            if os.name == 'posix':
-                pool = get_context("fork").Pool(nsharks)
+    old_marshal = set_marshal_tasks(marshal)
+    try:
+        if meth == "parallel":
+            if proc_pool:
+                if os.name == "posix":
+                    pool = get_context("fork").Pool(nsharks)
+                else:
+                    pool = Pool(nsharks)
             else:
-                pool = Pool(nsharks)
+                pool = mp_dummy.Pool(nsharks)
+            try:
+                old_pool = set_execution_pool(pool)
+                try:
+                    yield meth
+                finally:
+                    set_execution_pool(old_pool)
+            finally:
+                pool.terminate()
         else:
-            pool = mp_dummy.Pool(nsharks)
-        try:
-            set_execution_pool(pool)
             yield meth
-        finally:
-            pool.terminate()
-            set_execution_pool(None)
-    else:
-        yield meth
+    finally:
+        set_marshal_tasks(old_marshal)
 
 
 def scream(*args, **kwargs):
@@ -881,7 +886,7 @@ def netop_sideffect1(request) -> NetworkOperation:
 
 
 def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
-    sidefx_fail = is_marshal_parallel_tasks() and not isinstance(
+    sidefx_fail = is_marshal_tasks() and not isinstance(
         get_execution_pool(), types.FunctionType  # mp_dummy.Pool
     )
 
@@ -933,7 +938,7 @@ def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
 
 @pytest.mark.parametrize("reverse", [0, 1])
 def test_sideffect_real_input(reverse, exemethod):
-    sidefx_fail = is_marshal_parallel_tasks() and not isinstance(
+    sidefx_fail = is_marshal_tasks() and not isinstance(
         get_execution_pool(), types.FunctionType  # mp_dummy.Pool
     )
 
@@ -963,7 +968,7 @@ def test_sideffect_real_input(reverse, exemethod):
 
 
 def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
-    sidefx_fail = is_marshal_parallel_tasks() and not isinstance(
+    sidefx_fail = is_marshal_tasks() and not isinstance(
         get_execution_pool(), types.FunctionType  # mp_dummy.Pool
     )
 
@@ -1110,7 +1115,7 @@ def test_skip_eviction_flag():
     "endurance, endured", [(None, True), (True, None), (False, True), (1, 1)]
 )
 def test_execution_endurance(exemethod, endurance, endured):
-    set_endure_execution(endurance)
+    set_endure_operations(endurance)
 
     opb = operation(scream, needs=["a", "b"], provides=["a+b", "c"], endured=endured)
     scream1 = opb(name="scream1")
