@@ -35,7 +35,8 @@ class optional(str):
         NetworkOperation('mygraph',
                          needs=['a', 'b', optional('c')],
                          provides=['sum'],
-                         x1ops)
+                         x1 ops:
+        ...
 
     The graph works with and without `c` provided as input::
 
@@ -73,7 +74,8 @@ class vararg(optional):
         NetworkOperation('mygraph',
                          needs=['a', optional('b'), optional('c')],
                          provides=['sum'],
-                         x1ops)
+                         x1 ops:
+          +--FunctionalOperation(name='addall', needs=['a', vararg('b'), vararg('c')], provides=['sum'], fn='addall'))
 
     The graph works with and without any of `b` and `c` inputs::
 
@@ -140,7 +142,8 @@ class sideffect(str):
         ... )
         >>> graph
         NetworkOperation('mygraph', needs=['df', 'sideffect(df.b)'],
-                         provides=['sideffect(df.sum)'], x1ops)
+                         provides=['sideffect(df.sum)'], x1 ops:
+          +--FunctionalOperation(name='addcolumns', needs=['df', 'sideffect(df.b)'], provides=['sideffect(df.sum)'], fn='addcolumns'))
 
         >>> df = pd.DataFrame({'a': [5, 0], 'b': [2, 1]})   # doctest: +SKIP
         >>> graph({'df': df})['df']                         # doctest: +SKIP

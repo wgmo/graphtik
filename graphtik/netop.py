@@ -136,10 +136,9 @@ class NetworkOperation(Operation, Plotter):
         clsname = type(self).__name__
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
-        nops = sum(1 for i in yield_ops(self.net.graph))
-        return (
-            f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{nops}ops)"
-        )
+        ops = list(yield_ops(self.net.graph))
+        steps = "".join(f"\n  +--{s}" for s in ops)
+        return f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{len(ops)} ops:{steps})"
 
     def narrowed(
         self,
