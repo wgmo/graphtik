@@ -160,7 +160,7 @@ class _ScreamingOperation(op.Operation):
                 solution=Solution(MagicMock(), {}),
                 future=_OpTask(_ScreamingOperation(), {}),
             ),
-            ["plan", "solution"],
+            "plan solution task".split(),
         ),
         # Not easy to test Network calling a screaming func (see next TC).
     ],
@@ -190,7 +190,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
                 solution=Solution(MagicMock(), {}),
                 future=_OpTask(_ScreamingOperation(), {}),
             ),
-            "solution plan".split(),
+            "plan solution task".split(),
         ),
         (
             fnt.partial(

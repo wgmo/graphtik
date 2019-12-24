@@ -335,7 +335,7 @@ class _OpTask:
     This intermediate class is needed to solve pickiling issue with process executor.
     """
 
-    __slots__ = ("op", "sol", "result", "d")
+    __slots__ = ("op", "sol", "result")
     logname = __name__
 
     def __init__(self, op, sol):
@@ -353,7 +353,7 @@ class _OpTask:
             self.result = None
             log = logging.getLogger(self.logname)
             op = self.op
-            log.debug("+++ Executing op(%s)...", op.name)
+            log.debug("+++ Executing %s...", self)
             t0 = time.time()
             ok = False
             try:
@@ -372,6 +372,12 @@ class _OpTask:
 
     get = __call__
 
+    def __repr__(self):
+        try:
+            sol_items = list(self.sol)
+        except Exception:
+            sol_items = type(self.sol)
+        return f"OpTask({self.op}, sol_keys={sol_items})"
 
 def _do_task(task):
     """
@@ -511,21 +517,24 @@ class ExecutionPlan(
         input_values = dict(solution)
 
         def prep_task(op):
-            # TODO: jetsam from task preparation.
-            task = _OpTask(op, input_values)
-            if is_solid_true(global_marshal, op.marshalled):
-                task = task.marshalled()
+            try:
+                task = _OpTask(op, input_values)
+                if is_solid_true(global_marshal, op.marshalled):
+                    task = task.marshalled()
 
-            if is_solid_true(global_parallel, op.parallel):
-                if not pool:
-                    raise ValueError("With `parallel` you must `set_execution_pool().`")
-                task = pool.apply_async(_do_task, (task,))
-            elif isinstance(task, bytes):
-                # Marshaled tasks need `_do_task()`.
-                task = partial(_do_task, task)
-                task.get = task.__call__
+                if is_solid_true(global_parallel, op.parallel):
+                    if not pool:
+                        raise ValueError("With `parallel` you must `set_execution_pool().`")
+                    task = pool.apply_async(_do_task, (task,))
+                elif isinstance(task, bytes):
+                    # Marshaled tasks need `_do_task()`.
+                    task = partial(_do_task, task)
+                    task.get = task.__call__
 
-            return task
+                return task
+            except Exception as ex:
+                jetsam(ex, locals(), "task", plan="self")
+                raise
 
         return [prep_task(op) for op in operations]
 
@@ -543,7 +552,7 @@ class ExecutionPlan(
             if not solution.is_endurance and not op.endured:
                 # Although `plan` have added to jetsam in `compute()``,
                 # add it again, in case compile()/execute() is called separately.
-                jetsam(ex, locals(), "solution", plan="self")
+                jetsam(ex, locals(), "solution", task="future", plan="self")
                 raise
 
             log.warning(
