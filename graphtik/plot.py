@@ -168,6 +168,7 @@ def build_pydot(
     fill_color = "wheat"
     failed_color = "LightCoral"
     cancel_color = "Grey"
+    broken_color = "Red"
     overwrite_color = "SkyBlue"
     steps_color = "#009999"
     new_clusters = {}
@@ -236,7 +237,7 @@ def build_pydot(
 
             if nx_node.rescheduled:
                 kw["penwidth"] = resched_thickness
-            if nx_node in getattr(solution, "failures", ()):
+            if hasattr(solution, "is_failed") and solution.is_failed(nx_node):
                 kw["style"] = "filled"
                 kw["fillcolor"] = failed_color
             elif nx_node in getattr(solution, "executed", ()):
@@ -274,6 +275,11 @@ def build_pydot(
             kw["style"] = "dashed"
         if data.get("sideffect"):
             kw["color"] = "blue"
+
+        if getattr(src, "rescheduled", None) or getattr(src, "endured", None):
+            kw["style"] = "dashed"
+            if solution and dst not in solution and dst not in steps:
+                kw["color"] = broken_color
 
         # `splines=ortho` not working :-()
         edge = pydot.Edge(src=src_name, dst=dst_name, splines="ortho", **kw)
@@ -416,13 +422,13 @@ def legend(
         failed      [shape=oval style=filled fillcolor=LightCoral fontname=italic
                      tooltip="Failed operation - downstream ops will cancel."
                      URL="%(arch_url)s#term-endurance"];
-        reschedule  [shape=oval penwidth=4 fontname=italic
+        rescheduled  [shape=oval penwidth=4 fontname=italic
                      tooltip="Operation may fail / provide partial outputs so `net` must reschedule."
-                     URL="%(arch_url)s#term-reschedule"];
+                     URL="%(arch_url)s#term-reschedulling"];
         canceled    [shape=oval style=filled fillcolor=Grey fontname=italic
                      tooltip="Canceled operation due to failures or partial outputs upstreams."
                      URL="%(arch_url)s#term-reschedule"];
-        operation -> insteps -> executed -> failed -> reschedule -> canceled [style=invis];
+        operation -> insteps -> executed -> failed -> rescheduled -> canceled [style=invis];
 
         data    [shape=rect
                  tooltip="Any data not given or asked."
@@ -437,7 +443,7 @@ def legend(
                  tooltip="Data both given and asked."
                  URL="%(arch_url)s#term-netop"];
         evicted [shape=rect color="#990000"
-                 tooltip="Data erased from solution, to save memory."
+                 tooltip="Instruction step to erase data from solution, to save memory."
                  URL="%(arch_url)s#term-evictions"];
         sol     [shape=rect style=filled fillcolor=wheat label="in solution"
                  tooltip="Data contained in the solution."
@@ -450,17 +456,21 @@ def legend(
         e1          [style=invis];
         e1          -> requirement;
         requirement [color=invis
-                     tooltip="From operation --> `provides`, or from `needs` --> operation."
+                     tooltip="Source operation --> target `provides` OR source `needs` --> target operation."
                      URL="%(arch_url)s#term-needs"];
         requirement -> optional     [style=dashed];
         optional    [color=invis
-                     tooltip="The operation can run even if this `need` is missing (e.g. *varag, **kw)."
+                     tooltip="Target operation may run without source `need` OR source operation may not `provide` target data."
                      URL="%(arch_url)s#term-needs"];
         optional    -> sideffect    [color=blue];
         sideffect   [color=invis
-                     tooltip="Fictive data not consumed/produced by underlying function."
+                     tooltip="Fictive data not consumed/produced by operation functions."
                      URL="%(arch_url)s#term-sideffects"];
-        sideffect   -> sequence     [color="#009999" penwidth=4 style=dotted
+        sideffect   -> broken       [color="red" style=dashed]
+        broken      [color=invis
+                     tooltip="Target data was not `provided` by source operation due to failure / partial-outs."
+                     URL="%(arch_url)s#term-partial outputs"];
+        broken   -> sequence        [color="#009999" penwidth=4 style=dotted
                                      arrowhead=vee label=1 fontcolor="#009999"];
         sequence    [color=invis penwidth=4 label="execution sequence"
                      tooltip="Sequence of execution steps."
