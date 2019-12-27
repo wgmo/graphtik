@@ -985,6 +985,30 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
     assert "blue" in str(dot)
 
 
+def test_sideffect_NO_RESULT(caplog):
+    sfx = sideffect("b")
+    op = operation(lambda: NO_RESULT, provides=sfx)()
+    netop = compose("t", op)
+    sol = netop.compute({}, outputs=sfx)
+    assert sol == {}
+    assert op in sol.executed
+
+    ## If NO_RESULT were not translated,
+    #  a warning of unkonwn out might have emerged.
+    caplog.clear()
+    netop = compose("t", operation(lambda: 1, provides=sfx)())
+    netop.compute({}, outputs=sfx)
+    for record in caplog.records:
+        if record.levelname == "WARNING":
+            assert "Ignoring result(1) because no `provides`" in record.message
+
+    caplog.clear()
+    netop = compose("t", operation(lambda: NO_RESULT, provides=sfx)())
+    netop.compute({}, outputs=sfx)
+    for record in caplog.records:
+        assert record.levelname != "WARNING"
+
+
 @pytest.mark.xfail(
     sys.version_info < (3, 6),
     reason="PY3.5- have unstable dicts."
@@ -1165,6 +1189,15 @@ def test_rescheduling(exemethod):
     assert "Grey" in dot  # Canceled
     assert "penwidth=4" in dot  # Rescheduled
     assert op() == {"a": 1, "d": 1}
+
+
+def test_rescheduling_NO_RESULT(exemethod):
+    partial = operation(lambda: NO_RESULT, name="op1", provides=["a"], rescheduled=1)()
+    canc = operation(lambda: None, name="canc", needs="a", provides="b")()
+    op = compose("netop", partial, canc, method=exemethod)
+    sol = op()
+    assert canc in sol.canceled
+    assert partial in sol.executed
 
 
 def test_multithreading_plan_execution():

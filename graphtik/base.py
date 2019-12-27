@@ -50,7 +50,7 @@ class Token(str):
 #: When an operation function returns this special value,
 #: it implies operation has no result at all,
 #: (otherwise, it would have been a single result, ``None``).`
-NO_RESULT = object()
+NO_RESULT = Token("NO_RESULT")
 UNSET = Token("UNSET")
 
 
