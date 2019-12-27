@@ -343,11 +343,13 @@ def test_marshalled_parallel_op_repr():
         str(op()) == "FunctionalOperation|$(name='t', needs=[], provides=[], fn='str')"
     )
 
+
 def test_ALL_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1, parallel=1, marshalled=1)
     assert str(op) == "operation!|$(name='t', needs=[], provides=[]?, fn='str')"
     assert (
-        str(op()) == "FunctionalOperation!|$(name='t', needs=[], provides=[]?, fn='str')"
+        str(op())
+        == "FunctionalOperation!|$(name='t', needs=[], provides=[]?, fn='str')"
     )
 
 
@@ -387,24 +389,25 @@ def test_netop_narrow_attributes(attr, value):
 
 
 _attr_values = [
-        ("rescheduled", None),
-        ("rescheduled", 1),
-        ("rescheduled", False),
-        ("endured", None),
-        ("endured", True),
-        ("endured", 0),
-        ("parallel", None),
-        ("parallel", True),
-        ("parallel", 0),
-        ("marshalled", None),
-        ("marshalled", True),
-        ("marshalled", 0),
-    ]
+    ("rescheduled", None),
+    ("rescheduled", 1),
+    ("rescheduled", False),
+    ("endured", None),
+    ("endured", True),
+    ("endured", 0),
+    ("parallel", None),
+    ("parallel", True),
+    ("parallel", 0),
+    ("marshalled", None),
+    ("marshalled", True),
+    ("marshalled", 0),
+]
 
-@pytest.mark.parametrize( "attr, value", _attr_values )
+
+@pytest.mark.parametrize("attr, value", _attr_values)
 def test_op_withset_conveys_attr(attr, value):
     kw = {attr: value}
-    op1 = operation(str,)()
+    op1 = operation(str)()
     assert getattr(op1, attr) is None
 
     op2 = op1.withset(**kw)
@@ -415,7 +418,7 @@ def test_op_withset_conveys_attr(attr, value):
     assert getattr(op3, attr) == value
 
 
-@pytest.mark.parametrize( "attr, value", _attr_values )
+@pytest.mark.parametrize("attr, value", _attr_values)
 def test_netop_conveys_attr_to_ops(attr, value):
     def _opsattrs(ops, attr, value):
         vals = [getattr(op, attr) for op in ops if isinstance(op, Operation)]
@@ -433,8 +436,7 @@ def test_netop_conveys_attr_to_ops(attr, value):
 
 
 @pytest.mark.parametrize(
-    "op", [Operation, FunctionalOperation,
-    operation(str)(), operation(lambda: None)()]
+    "op", [Operation, FunctionalOperation, operation(str)(), operation(lambda: None)()]
 )
 def test_dill_ops(op):
     dill.loads(dill.dumps(op))
