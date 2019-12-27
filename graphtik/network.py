@@ -376,8 +376,8 @@ class _OpTask:
         try:
             sol_items = list(self.sol)
         except Exception:
-            sol_items = type(self.sol)
-        return f"OpTask({self.op}, sol_keys={sol_items})"
+            sol_items = type(self.sol).__name__
+        return f"OpTask({self.op}, sol_keys={sol_items!r})"
 
 def _do_task(task):
     """
@@ -1047,7 +1047,7 @@ class Network(Plotter):
             else:
                 assert isinstance(
                     node, _DataNode
-                ), f"Unrecognized network graph node {node, type(node)}"
+                ), f"Unrecognized network graph node {node}: {type(node).__name__!r}"
 
         return steps
 

@@ -76,6 +76,34 @@ def test_validation(opargs, exp):
         assert reparse_operation_data(*opargs) == exp
 
 
+@pytest.mark.parametrize(
+    "args, kw, exp",
+    [
+        ((), {"node_props": []}, None),
+        (
+            (),
+            {"node_props": 3.14},
+            ValueError("node_props` must be a dict, was 'float':"),
+        ),
+        (
+            (),
+            {"node_props": "ab"},
+            ValueError("node_props` must be a dict, was 'str':"),
+        ),
+        ((), {"parents": []}, None),
+        ((), {"parents": ["gg"]}, ValueError("parents` must be tuple, was 'list':")),
+        ((), {"parents": 3.14}, ValueError("parents` must be tuple, was 'float':")),
+        ((), {"parents": "gg"}, ValueError("parents` must be tuple, was 'str':")),
+    ],
+)
+def test_func_op_init(args, kw, exp):
+    if isinstance(exp, Exception):
+        with pytest.raises(type(exp), match=str(exp)):
+            FunctionalOperation(str, "", *args, **kw)
+    else:
+        FunctionalOperation(str, "", *args, **kw)
+
+
 def test_returns_dict():
     result = {"a": 1}
 

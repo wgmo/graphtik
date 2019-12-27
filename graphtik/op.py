@@ -170,11 +170,11 @@ class FunctionalOperation(Operation):
             raise ValueError(f"Operation was not provided with a callable: {fn}")
         if parents and not isinstance(parents, tuple):
             raise ValueError(
-                f"Operation `parents` must be tuple, was {type(parents): }{parents}"
+                f"Operation `parents` must be tuple, was {type(parents).__name__!r}: {parents}"
             )
         if node_props is not None and not isinstance(node_props, cabc.Mapping):
             raise ValueError(
-                f"Operation `node_props` must be a dict, was {type(node_props)}: {node_props}"
+                f"Operation `node_props` must be a dict, was {type(node_props).__name__!r}: {node_props}"
             )
 
         ## Overwrite reparsed op-data.
