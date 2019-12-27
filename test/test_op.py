@@ -68,7 +68,7 @@ def test_repr_returns_dict():
         (("", "a", [()]), ValueError("All `provides` must be str")),
     ],
 )
-def test_validation(opargs, exp):
+def test_func_op_validation(opargs, exp):
     if isinstance(exp, Exception):
         with pytest.raises(type(exp), match=str(exp)):
             reparse_operation_data(*opargs)
@@ -119,26 +119,52 @@ def asked_outputs(request):
     return request.param
 
 
+@pytest.mark.parametrize("result", [(), None, {}, {"a"}, "b", "ab", "abc", ""])
+def test_results_sequence_1_provides_ok(result, asked_outputs):
+    op = operation(lambda: result, provides=["a"])()
+    sol = op.compute({}, outputs=asked_outputs)
+    assert sol["a"] == result
+
+
+def test_results_sequence_lt_1_provides(asked_outputs):
+    op = operation(lambda: NO_RESULT, provides=["a"])()
+    with pytest.raises(ValueError, match=f"Got -1 fewer results, while expected x1"):
+        op.compute({}, outputs=asked_outputs)
+
+
 @pytest.mark.parametrize(
-    "result", [None, 3.14, (), "", "foobar", ["b", "c", "e"], {"f"}]
+    "result, nfewer", [((), -2), ({}, -2), (NO_RESULT, -2), ({"a"}, -1)]
 )
-def test_results_validation_iterable_BAD(result, asked_outputs):
-    op = operation(lambda: result, provides=["a", "b"], returns_dict=False)()
-    with pytest.raises(ValueError, match="Expected x2 ITERABLE results"):
+def test_results_sequence_lt_many_provides(result, nfewer, asked_outputs):
+    op = operation(lambda: result, provides=["a", "b"])()
+    with pytest.raises(
+        ValueError, match=f"Got {nfewer} fewer results, while expected x2"
+    ):
+
+        op.compute({}, outputs=asked_outputs)
+
+
+@pytest.mark.parametrize("result", ["", "a", "ab", "foobar", 3.14, None])
+def test_results_validation_bad_iterable(result, asked_outputs):
+    op = operation(lambda: result, provides=["a", "b"])()
+    with pytest.raises(ValueError, match=f"Expected x2 ITERABLE results, got"):
         op.compute({}, outputs=asked_outputs)
 
 
 @pytest.mark.parametrize("result", [None, 3.14, [], "foo", ["b", "c", "e"], {"a", "b"}])
 def test_dict_results_validation_BAD(result, asked_outputs):
     op = operation(lambda: result, provides=["a", "b"], returns_dict=True)()
-    with pytest.raises(ValueError, match="Expected dict-results"):
+    with pytest.raises(ValueError, match="Expected results as mapping, got '"):
         op.compute({}, outputs=asked_outputs)
 
 
-@pytest.mark.parametrize("result", [{"a": 1}, {"a": 1, "b": 2, "c": 3}])
-def test_dict_results_validation_MISMATCH(result, asked_outputs):
+@pytest.mark.parametrize(
+    "result, nmiss",
+    [({}, 2), ({"a": 1}, 1), ({"a": 1, "c": 3}, 1), ({"aa": 1, "bb": 2}, 2)],
+)
+def test_dict_results_validation_MISMATCH(result, nmiss, asked_outputs):
     op = operation(lambda: result, provides=["a", "b"], returns_dict=True)()
-    with pytest.raises(ValueError, match="mismatched provides"):
+    with pytest.raises(ValueError, match=f"mismatched -{nmiss} provides"):
         op.compute({}, outputs=asked_outputs)
 
 
@@ -280,18 +306,32 @@ def test_provides_aliases():
     assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}
 
 
-def test_reschedule_unknown_dict_outs():
+@pytest.mark.parametrize("rescheduled", [0, 1])
+def test_reschedule_more_outs(rescheduled, caplog):
+    op = operation(
+        lambda: [1, 2, 3], name="t", provides=["a", "b"], rescheduled=rescheduled
+    )()
+    op.compute({})
+    assert "+1 more results, while expected x2" in caplog.text
+
+
+def test_reschedule_unknown_dict_outs(caplog):
     op = operation(
         lambda: {"b": "B"}, name="t", provides=["a"], rescheduled=1, returns_dict=1
     )()
-    with pytest.raises(ValueError, match=r"contained unkown provides\['b'\]"):
-        op.compute({})
+    op.compute({})
+    assert "contained +1 unknown provides['b']" in caplog.text
 
+    caplog.clear()
     op = operation(
-        lambda: {"BAD": "B"}, name="t", provides=["a"], rescheduled=1, returns_dict=1
+        lambda: {"a": 1, "BAD": "B"},
+        name="t",
+        provides=["a"],
+        rescheduled=1,
+        returns_dict=1,
     )()
-    with pytest.raises(ValueError, match=r"contained unkown provides\['BAD'\]"):
-        op.compute({})
+    op.compute({})
+    assert "contained +1 unknown provides['BAD']" in caplog.text
 
 
 def test_rescheduled_op_repr():
@@ -318,6 +358,8 @@ def test_endured_rescheduled_op_repr():
     assert (
         str(op()) == "FunctionalOperation!(name='t', needs=[], provides=[]?, fn='str')"
     )
+
+
 def test_parallel_op_repr():
     op = operation(str, name="t", provides=["a"], parallel=True)
     assert str(op) == "operation|(name='t', needs=[], provides=['a'], fn='str')"

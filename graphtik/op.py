@@ -264,13 +264,11 @@ class FunctionalOperation(Operation):
 
         return FunctionalOperation(**kw2)
 
-    def _zip_results_with_provides(self, results, real_provides: iset) -> dict:
+    def _zip_results_with_provides(self, results, fn_expected: iset) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
-        if results == NO_RESULT:
-            results = {}
 
-        if not real_provides:  # All outputs were sideffects?
-            if results:
+        if not fn_expected:  # All provides were sideffects?
+            if results and results != NO_RESULT:
                 ## Do not scream,
                 #  it is common to call a function for its sideffects,
                 # which happens to return an irrelevant value.
@@ -280,44 +278,92 @@ class FunctionalOperation(Operation):
                     self,
                 )
             results = {}
-        elif self.returns_dict:
-            if not isinstance(results, cabc.Mapping):
-                raise ValueError(f"Expected dict-results, got: {results}\n  {self}")
-        else:
-            # Cannot check results-vs-expected on a rescheduled operation
-            # bc by definition it may return fewer result.
-            #
-            if not self.rescheduled:
-                nexpected = len(real_provides)
 
-                if nexpected > 1 and (
-                    not isinstance(results, cabc.Iterable) or len(results) != nexpected
-                ):
+        elif self.returns_dict:
+
+            if not isinstance(results, cabc.Mapping):
+                raise ValueError(
+                    "Expected results as mapping, "
+                    f"got {type(results).__name__!r}: {results}\n  {self}"
+                )
+
+            res_names = results.keys()
+
+            ## Allow unknown outs when dict,
+            #  bc we can safely ignore them (and it's handy for reuse).
+            #
+            if res_names - fn_expected:
+                unknown = list(res_names - fn_expected)
+                log.info(
+                    "Results%s contained +%s unknown provides%s\n  {self}",
+                    list(res_names),
+                    len(unknown),
+                    list(unknown),
+                )
+
+            missmatched = fn_expected - res_names
+            if missmatched:
+                if self.rescheduled:
+                    log.warning(
+                        "... Op %r did not provide%s",
+                        self.name,
+                        list(fn_expected - res_names),
+                    )
+                else:
                     raise ValueError(
-                        f"Expected x{nexpected} ITERABLE results, got: {results}"
+                        f"Got x{len(results)} results({list(results)}) mismatched "
+                        f"-{len(missmatched)} provides({list(fn_expected)})!\n  {self}"
                     )
 
-                if nexpected == 1:
-                    results = [results]
+        else:  # Handle result sequence: no-result, single-item, many
+            nexpected = len(fn_expected)
 
-            results = dict(zip(real_provides, results))
+            if results == NO_RESULT:
+                results = ()
+                ngot = 0
 
-        if self.rescheduled:
-            if set(results) < set(real_provides):
-                log.warning(
-                    "... Op %r did not provide%s",
-                    self.name,
-                    list(iset(real_provides) - set(results)),
-                )
-            if set(results) - set(real_provides):
+            elif nexpected == 1:
+                results = [results]
+                ngot = 1
+
+            else:  # nexpected > 1; nexpected == 0 was the very 1st check.
+                if isinstance(results, (str, bytes)) or not isinstance(
+                    results, cabc.Iterable
+                ):
+                    raise ValueError(
+                        f"Expected x{nexpected} ITERABLE results, "
+                        f"got {type(results).__name__!r}: {results}\n  {self}"
+                    )
+                ngot = len(results)
+
+            if ngot < nexpected and not self.rescheduled:
                 raise ValueError(
-                    f"Results({results}) contained unkown provides{list(iset(results) - real_provides)})!\n  {self}"
+                    f"Got {ngot - nexpected} fewer results, while expected x{nexpected} "
+                    f"provides({list(fn_expected)})!\n  {self}"
                 )
-        else:
-            if set(results) != real_provides:
-                raise ValueError(
-                    f"Results({results}) mismatched provides({real_provides})!\n  {self}"
+
+            if ngot > nexpected:
+                ## Less problematic if not expecting anything but got something
+                #  (e.g reusing some function for sideffects).
+                extra_results_loglevel = (
+                    logging.INFO if nexpected == 0 else logging.WARNING
                 )
+                logging.log(
+                    extra_results_loglevel,
+                    "Got +%s more results, while expected "
+                    "x%s provides%s\n  results: %s\n  %s",
+                    ngot - nexpected,
+                    nexpected,
+                    list(fn_expected),
+                    results,
+                    self,
+                )
+
+            results = dict(zip(fn_expected, results))  # , fillvalue=UNSET))
+
+        assert isinstance(
+            results, cabc.Mapping
+        ), f"Abnormal results type {type(results).__name__!r}: {results}!"
 
         if self.aliases:
             alias_values = [
@@ -372,6 +418,7 @@ class FunctionalOperation(Operation):
 
             results_fn = self.fn(*args, **optionals)
 
+            # TODO: rename op jetsam (real_)provides --> fn_expected
             provides = iset(
                 n for n in self.real_provides if not isinstance(n, sideffect)
             )
