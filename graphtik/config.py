@@ -172,19 +172,3 @@ Enable/disable globally :term:`rescheduling` for operations returning only *part
 
 def is_solid_true(*tristates, default=False):
     return first(tristates, default=default, key=lambda i: i is not None)
-
-
-def is_op_rescheduled(op) -> bool:
-    return is_solid_true(is_reschedule_operations(), op.rescheduled)
-
-
-def is_op_endured(op) -> bool:
-    return is_solid_true(is_endure_operations(), op.endured)
-
-
-def is_op_parallel(op) -> bool:
-    return is_solid_true(is_parallel_tasks(), op.parallel)
-
-
-def is_op_marshalled(op) -> bool:
-    return is_solid_true(is_marshal_tasks(), op.marshalled)
