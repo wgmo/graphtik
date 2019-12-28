@@ -134,7 +134,7 @@ class Solution(ChainMap, Plotter):
         ## Pre-populate chainmaps with 1 dict per plan's operation
         #  (appended after of inputs map).
         #
-        self._layers = {op: {} for op in yield_ops(plan.dag)}
+        self._layers = {op: {} for op in yield_ops(plan.steps)}
         self.maps.extend(self._layers.values())
 
         ## Cache context-var flags.
