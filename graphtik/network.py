@@ -722,7 +722,6 @@ class ExecutionPlan(
             #
             assert (
                 not self.evict
-                or is_skip_evictions()
                 # It is a proper subset when not all outputs calculated.
                 or set(solution).issubset(self.provides)
             ), f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
@@ -1134,7 +1133,7 @@ class Network(Plotter):
                 provides,
                 pruned_dag,
                 tuple(steps),
-                evict=outputs is not None,
+                evict=not (is_skip_evictions() or outputs is None),
             )
 
             self._cached_plans[cache_key] = plan
