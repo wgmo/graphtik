@@ -16,7 +16,7 @@ with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 plot_reqs = ["matplotlib", "pydot"]  # to test plot  # to test plot
-test_reqs = plot_reqs + ["pytest", "pytest-cov", "pytest-sphinx"]
+test_reqs = plot_reqs + ["pytest", "pytest-cov", "pytest-sphinx", "dill"]
 
 setup(
     name="graphtik",
@@ -48,6 +48,7 @@ setup(
         # May help for pickling `parallel` tasks.
         # See :term:`marshalling` and :func:`set_marshal_tasks()` configuration.
         "dill": ["dill"],
+        "all": plot_reqs + test_reqs + ["sphinx"],
     },
     tests_require=test_reqs,
     license="Apache-2.0",
