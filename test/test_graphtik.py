@@ -802,7 +802,7 @@ def test_narrow_and_optionality(reverse):
     op2 = operation(name="op2", needs=["a", optional("bb")], provides="sum2")(addall)
     ops = [op1, op2]
     provs = "'sum1', 'sum2'"
-    if reversed:
+    if reverse:
         ops = list(reversed(ops))
         provs = "'sum2', 'sum1'"
     netop_str = (
@@ -819,7 +819,7 @@ def test_narrow_and_optionality(reverse):
     netop = compose("t", *ops)
     assert repr(netop).startswith(netop_str)
     assert repr(netop.compile("a")).startswith(
-        "ExecutionPlan(needs=['a'], provides=['sum2', 'sum1'], x2 steps:"
+        f"ExecutionPlan(needs=['a'], provides=[{provs}], x2 steps:"
     )
     #
     netop = compose("t", *ops)
