@@ -1123,6 +1123,7 @@ class Network(Plotter):
         #  for the given inputs & outputs.
         #
         if cache_key in self._cached_plans:
+            log.debug("... cache-hit key: %s", cache_key)
             plan = self._cached_plans[cache_key]
         else:
             pruned_dag, needs, provides = self._prune_graph(inputs, outputs, predicate)
@@ -1137,5 +1138,6 @@ class Network(Plotter):
             )
 
             self._cached_plans[cache_key] = plan
+            log.debug("... cache-updated key: %s", cache_key)
 
         return plan
