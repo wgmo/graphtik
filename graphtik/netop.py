@@ -51,10 +51,14 @@ def _make_network(
             or marshalled is not None
         ):
             kw = {
-                "rescheduled": rescheduled,
-                "endured": endured,
-                "parallel": parallel,
-                "marshalled": marshalled,
+                k: v
+                for k, v in [
+                    ("rescheduled", rescheduled),
+                    ("endured", endured),
+                    ("parallel", parallel),
+                    ("marshalled", marshalled),
+                ]
+                if v is not None
             }
             if node_props:
                 op_node_props = op.node_props.copy()
