@@ -234,7 +234,6 @@ class Solution(ChainMap, Plotter):
             self.finised = True
 
     def __delitem__(self, key):
-        log.debug("removing data '%s' from solution.", key)
         for d in self.maps:
             d.pop(key, None)
 
@@ -378,6 +377,7 @@ class _OpTask:
         except Exception:
             sol_items = type(self.sol).__name__
         return f"OpTask({self.op}, sol_keys={sol_items!r})"
+
 
 def _do_task(task):
     """
@@ -524,7 +524,9 @@ class ExecutionPlan(
 
                 if is_solid_true(global_parallel, op.parallel):
                     if not pool:
-                        raise ValueError("With `parallel` you must `set_execution_pool().`")
+                        raise ValueError(
+                            "With `parallel` you must `set_execution_pool().`"
+                        )
                     task = pool.apply_async(_do_task, (task,))
                 elif isinstance(task, bytes):
                     # Marshaled tasks need `_do_task()`.
@@ -615,11 +617,18 @@ class ExecutionPlan(
                             )
                         )
                     ):
+                        log.debug(
+                            "... evicting '%s' from solution%s.", node, list(solution)
+                        )
                         del solution[node]
 
             # stop if no nodes left to schedule, exit out of the loop
             if not upnext:
                 break
+
+            log.debug(
+                "+++ Parallel batch: %s", ", ".join(str(op.name) for op in upnext)
+            )
             tasks = self._prepare_tasks(upnext, solution, pool, parallel, marshal)
 
             ## Handle results.
@@ -647,6 +656,9 @@ class ExecutionPlan(
             elif isinstance(step, _EvictInstruction):
                 # Cache value may be missing if it is optional.
                 if step in solution:
+                    log.debug(
+                        "... evicting '%s' from solution%s.", step, list(solution)
+                    )
                     del solution[step]
 
             else:
