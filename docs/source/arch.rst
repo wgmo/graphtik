@@ -80,12 +80,18 @@ Architecture
         Operations and `netop` are marked as such on construction, or enabled globally
         from `configurations`.
 
+        Note that `sideffects` are not expected to function with *process pools*,
+        certainly not when `marshalling` is enabled.
+
     process pool
         When the :meth:`multiprocessing.Pool` class is used for `parallel` execution,
         the `task`\s  must be communicated to/from the worker process, which requires
         `pickling <https://docs.python.org/library/pickle.html>`_, and that may fail.
         With pickling failures you may try `marshalling` with *dill* library,
         and see if that helps.
+
+        Note that `sideffects` are not expected to function at all.
+        certainly not when `marshalling` is enabled.
 
     thread pool
         When the :func:`multiprocessing.dummy.Pool` class for `parallel` execution,
@@ -96,6 +102,8 @@ Architecture
         the :mod:`dill` module. It is `configured <configurations>` either globally
         with :func:`.set_marshal_tasks()` or set with a flag on each
         operation / `netop`.
+
+        Note that `sideffects` do not work when this is enabled.
 
     configurations
         The functions controlling `compile` & `execution` globally  are defined
