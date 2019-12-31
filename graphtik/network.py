@@ -9,7 +9,7 @@ import sys
 import time
 from collections import ChainMap, abc, defaultdict, namedtuple
 from functools import partial
-from itertools import count
+from itertools import chain, count
 from typing import Any, Callable, Collection, List, Mapping, Optional, Tuple, Union
 
 import networkx as nx
@@ -40,6 +40,21 @@ class AbortedException(Exception):
 
     with any values populated so far.
     """
+
+
+class IncompleteExecutionError(Exception):
+    """
+    Raised by :meth:`.scream_if_incomplete()` when `netop` operations were canceled/failed.
+
+    The exception contains 3 arguments:
+
+    1. the causal errors and conditions (1st arg),
+    2. the list of collected exceptiond (2nd arg), and
+    3. the solution instance (3rd argument), to interrogate for more.
+    """
+
+    def __str__(self):
+        return self.args[0]
 
 
 def _unsatisfied_operations(dag, inputs: Collection) -> List:
@@ -255,6 +270,23 @@ class Solution(ChainMap, Plotter):
                 dd[k].append(v)
 
         return {k: v for k, v in dd.items() if len(v) > 1}
+
+    def scream_if_incomplete(self):
+        """Raise a :class:`IncompleteExecutionError` when `netop` operations failed/canceled. """
+        failures = {
+            op: ex for op, ex in self.executed.items() if isinstance(ex, Exception)
+        }
+        incomplete = iset(chain(self.canceled, failures.keys()))
+        if incomplete:
+            incomplete = [op.name for op in incomplete]
+            partial_msgs = {f"\n  +--{op.name}: {pouts}" for op, pouts in self.executed.items() if pouts and isinstance(pouts, list)}
+            err_msgs = [f"\n  +--{op.name}: {type(ex).__name__}({ex})" for op, ex in failures.items()]
+            msg = (
+                f"Not completed x{len(incomplete)} operations {list(incomplete)}"
+                f" due to x{len(failures)} failures and x{len(partial_msgs)} partial-ops:"
+                f"{''.join(err_msgs)}{''.join(partial_msgs)}"
+            )
+            raise IncompleteExecutionError(msg, self)
 
     def _build_pydot(self, **kws):
         """delegate to network"""

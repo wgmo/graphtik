@@ -256,6 +256,7 @@ Architecture
     reschedule
     rescheduling
     partial outputs
+    partial operation
     canceled operation
         The partial `pruning` of the `solution`'s dag during `execution`.
         It happens when any of these 2 conditions apply:
@@ -275,8 +276,8 @@ Architecture
         is true globally in the `configurations` or if :attr:`.FunctionalOperation.endurance`
         is true.
 
-        You may interogate :attr:`.Solution.executed` to discover the status
-        of each executed operations.
+        You may interrogate :attr:`.Solution.executed` to discover the status
+        of each executed operations or call :meth:`.scream_if_incomplete()`.
 
     predicate
     node predicate

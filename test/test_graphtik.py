@@ -20,19 +20,20 @@ import pytest
 from graphtik import (
     NO_RESULT,
     AbortedException,
+    IncompleteExecutionError,
     abort_run,
     compose,
+    evictions_skipped,
     execution_pool,
     get_execution_pool,
     is_marshal_tasks,
-    tasks_marshalled,
     network,
     operation,
-    optional,
     operations_endured,
     operations_reschedullled,
-    evictions_skipped,
+    optional,
     sideffect,
+    tasks_marshalled,
     vararg,
 )
 from graphtik.netop import NetworkOperation
@@ -1146,6 +1147,8 @@ def test_execution_endurance(exemethod, endurance, endured):
         assert sol.is_failed(scream1) and sol.is_failed(scream2)
         assert "Must not have run!" in str(sol.executed[scream1])
         assert sol == {"a+b": 3, "a+2b": 5, **inp}
+        with pytest.raises(IncompleteExecutionError, match="x2 failures"):
+            assert sol.scream_if_incomplete()
 
         sol = graph.withset(outputs="a+2b")(**inp)
         assert sol.is_failed(scream1) and sol.is_failed(scream2)
@@ -1187,6 +1190,8 @@ def test_rescheduling(exemethod, resched, rescheduled):
     dot = str(sol.plot())
     assert "Grey" in dot  # Canceled
     assert "penwidth=4" in dot  # Rescheduled
+    with pytest.raises(IncompleteExecutionError, match="x2 partial-ops"):
+        assert sol.scream_if_incomplete()
 
     ## Check if modified state fails the 2nd time.
     assert op() == {"a": 1, "d": 1}
@@ -1199,6 +1204,8 @@ def test_rescheduling_NO_RESULT(exemethod):
     sol = op()
     assert canc in sol.canceled
     assert partial in sol.executed
+    with pytest.raises(IncompleteExecutionError, match="x1 partial-ops"):
+        assert sol.scream_if_incomplete()
 
 
 @pytest.mark.xfail(reason="Spurious copied-reversed gaphs, with dubious cause....")

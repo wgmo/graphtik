@@ -37,5 +37,5 @@ from .config import (
 )
 from .modifiers import *  # noqa, on purpose to include any new modifiers
 from .netop import compose
-from .network import AbortedException
+from .network import AbortedException, IncompleteExecutionError
 from .op import operation
