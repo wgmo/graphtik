@@ -17,7 +17,7 @@ class Token(str):
     __slots__ = ("hashid",)
 
     def __init__(self, *args):
-        self.hashid = random.randint(-2 ** 32, 2 ** 32 - 1)
+        self.hashid = random.randint(-(2 ** 32), 2 ** 32 - 1)
 
     def __eq__(self, other):
         return self.hashid == getattr(other, "hashid", None)
