@@ -26,6 +26,7 @@ from .config import (
     tasks_marshalled,
     tasks_in_parallel,
     operations_reschedullled,
+    reset_abort,
     set_endure_operations,
     set_execution_pool,
     set_marshal_tasks,

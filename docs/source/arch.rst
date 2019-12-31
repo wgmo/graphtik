@@ -71,6 +71,8 @@ Architecture
         - *sequential*
         - *parallel*, with a :class:`multiprocessing.ProcessPool`
 
+        Plans may abort their execution by setting the `abort run` global flag.
+
     parallel
     parallel execution
     execution pool
@@ -280,6 +282,15 @@ Architecture
     node predicate
         A callable(op, node-data) that should return true for nodes to be
         included in `graph` during `compilation`.
+
+    abort run
+        A global `configurations` flag that when set with :func:`.abort_run()` function,
+        it halts the execution of all currently or future `plan`\s.
+
+        It is reset automatically on every call of :meth:`.NetworkOperation.compute()`
+        (after a succesfull intermediate :term:`compilation`), or manually,
+        by calling :func:`.reset_abort()`.
+
 
 .. default-role:: obj
 .. |v410-flowchart| raw:: html

@@ -11,6 +11,7 @@ import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Plotter, UNSET, aslist, astuple, jetsam
+from .config import reset_abort
 from .modifiers import optional, sideffect
 from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
 from .op import FunctionalOperation, Operation, reparse_operation_data
@@ -297,6 +298,10 @@ class NetworkOperation(Operation, Plotter):
         """
         Compile a plan & :term:`execute` the graph, sequentially or parallel.
 
+        .. Attention::
+            If intermediate :term:`compilation` is sucessfull, the "global
+            :term:`abort run` flag is reset before the :term:`execution` starts.
+
         :param named_inputs:
             A maping of names --> values that will be fed to the `needs` of all operations.
             Cloned, not modified.
@@ -335,6 +340,9 @@ class NetworkOperation(Operation, Plotter):
             # Build the execution plan.
             log.debug("=== Compiling netop(%s)...", self.name)
             self.last_plan = plan = net.compile(named_inputs.keys(), outputs, predicate)
+
+            # Restore `abort` flag for next run.
+            reset_abort()
 
             solution = plan.execute(named_inputs, outputs, name=self.name)
 

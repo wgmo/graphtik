@@ -17,7 +17,6 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import UNSET, Items, Plotter, aslist, astuple, jetsam
 from .config import (
-    _reset_abort,
     get_execution_pool,
     is_abort,
     is_endure_operations,
@@ -481,8 +480,6 @@ class ExecutionPlan(
 
     def _check_if_aborted(self, solution):
         if is_abort():
-            # Restore `abort` flag for next run.
-            _reset_abort()
             raise AbortedException(solution)
 
     def _prepare_tasks(

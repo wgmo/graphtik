@@ -46,11 +46,17 @@ def _tristate_armed(context_var: ContextVar, enabled):
 
 
 def abort_run():
-    """Signal to the 1st running network to stop :term:`execution`."""
+    """
+    Sets the :term:`abort run` global flag, to halt all currently or future executing plans.
+
+    This global flag is reset when any :meth:`.NetworkOperation.compute()` is executed,
+    or manually, by calling :func:`.reset_abort()`.
+    """
     _abort.get().value = True
 
 
-def _reset_abort():
+def reset_abort():
+    """Reset the :term:`abort run` global flag, to permit plan executions to proceed. """
     _abort.get().value = False
 
 
