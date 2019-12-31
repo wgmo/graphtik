@@ -427,7 +427,7 @@ def test_reschedule_outputs():
 @pytest.mark.parametrize("attr, value", [("outputs", [1]), ("predicate", lambda: None)])
 def test_netop_narrow_attributes(attr, value):
     netop = compose("1", operation(str, name="op1")())
-    assert getattr(netop.narrowed(**{attr: value}), attr) == value
+    assert getattr(netop.withset(**{attr: value}), attr) == value
 
 
 _attr_values = [

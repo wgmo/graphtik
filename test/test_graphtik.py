@@ -419,12 +419,12 @@ def test_node_predicate_based_prune():
     assert len(netop.net.graph.nodes) == 11
 
     pred = lambda n, d: d.get("color", None) != "red"
-    assert netop.narrowed(predicate=pred)(**inp)["sum"] == 5
-    assert len(netop.narrowed(predicate=pred).compile().dag.nodes) == 9
+    assert netop.withset(predicate=pred)(**inp)["sum"] == 5
+    assert len(netop.withset(predicate=pred).compile().dag.nodes) == 9
 
     pred = lambda n, d: "color" not in d
-    assert netop.narrowed(predicate=pred)(**inp)["sum"] == 3
-    assert len(netop.narrowed(predicate=pred).compile().dag.nodes) == 7
+    assert netop.withset(predicate=pred)(**inp)["sum"] == 3
+    assert len(netop.withset(predicate=pred).compile().dag.nodes) == 7
 
 
 def test_input_based_pruning():
@@ -476,8 +476,8 @@ def test_deps_pruning_vs_narrowing(samplenet):
     assert "sum3" in results
     assert results["sum3"] == add(c, sum2)
 
-    # Compare with both `narrowed()`.
-    net = samplenet.narrowed(outputs=["sum3"])
+    # Compare with both `withset()`.
+    net = samplenet.withset(outputs=["sum3"])
     assert net(c=c, sum2=sum2) == results
 
     # Make sure we got expected result without having to pass a, b, or d.
@@ -728,7 +728,7 @@ def test_unsatisfied_operations(exemethod):
     exp = {"a": 10, "b1": 2, "a+b1": 12}
     assert pipeline(**{"a": 10, "b1": 2}) == exp
     assert pipeline.compute({"a": 10, "b1": 2}, ["a+b1"]) == filtdict(exp, "a+b1")
-    assert pipeline.narrowed(outputs=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(
+    assert pipeline.withset(outputs=["a+b1"])(**{"a": 10, "b1": 2}) == filtdict(
         exp, "a+b1"
     )
 
@@ -884,7 +884,7 @@ def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
         get_execution_pool(), types.FunctionType  # mp_dummy.Pool
     )
 
-    graph = netop_sideffect1.narrowed(parallel=exemethod)
+    graph = netop_sideffect1.withset(parallel=exemethod)
     inp = {"box": [0], "a": True}
 
     ## Normal data must not match sideffects.
@@ -965,7 +965,7 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
         get_execution_pool(), types.FunctionType  # mp_dummy.Pool
     )
 
-    netop = netop_sideffect1.narrowed(parallel=exemethod)
+    netop = netop_sideffect1.withset(parallel=exemethod)
     box_orig = [0]
     sol = netop.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
     assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3]}
@@ -1147,7 +1147,7 @@ def test_execution_endurance(exemethod, endurance, endured):
         assert "Must not have run!" in str(sol.executed[scream1])
         assert sol == {"a+b": 3, "a+2b": 5, **inp}
 
-        sol = graph.narrowed(outputs="a+2b")(**inp)
+        sol = graph.withset(outputs="a+2b")(**inp)
         assert sol.is_failed(scream1) and sol.is_failed(scream2)
         assert "Must not have run!" in str(sol.executed[scream1])
         assert sol == {"a+2b": 5}
@@ -1216,7 +1216,7 @@ def test_multithreading_plan_execution():
 
     with mp_dummy.Pool(int(2 * cpu_count())) as pool, execution_pool(pool):
         pool.map(
-            # lambda i: graph.narrowed(name='graph').compute(
+            # lambda i: graph.withset(name='graph').compute(
             lambda i: graph.compute(
                 {"a": 2, "b": 5}, ["a_minus_ab", "abs_a_minus_ab_cubed"]
             ),
@@ -1261,14 +1261,14 @@ def test_parallel_execution(exemethod):
     )
 
     t0 = time.time()
-    result_threaded = pipeline.narrowed(parallel=True).compute(
+    result_threaded = pipeline.withset(parallel=True).compute(
         {"x": 10}, ["co", "go", "do"]
     )
     # print("threaded result")
     # print(result_threaded)
 
     t0 = time.time()
-    pipeline = pipeline.narrowed(parallel=False)
+    pipeline = pipeline.withset(parallel=False)
     result_sequential = pipeline.compute({"x": 10}, ["co", "go", "do"])
     # print("sequential result")
     # print(result_sequential)

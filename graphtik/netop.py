@@ -124,14 +124,14 @@ class NetworkOperation(Operation, Plotter):
         node_props=None,
     ):
         """
-        For arguments, ee :meth:`narrowed()` & class attributes.
+        For arguments, ee :meth:`withset()` & class attributes.
 
         :raises ValueError:
             if dupe operation, with msg:
 
                 *Operations may only be added once, ...*
         """
-        ## Set data asap, for debugging, although `net.narrowed()` will reset them.
+        ## Set data asap, for debugging, although `net.withset()` will reset them.
         self.name = name
         # Remember Outputs for future `compute()`?
         self.outputs = outputs
@@ -156,7 +156,7 @@ class NetworkOperation(Operation, Plotter):
         steps = "".join(f"\n  +--{s}" for s in ops)
         return f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{len(ops)} ops:{steps})"
 
-    def narrowed(
+    def withset(
         self,
         outputs: Items = UNSET,
         predicate: NodePredicate = UNSET,
@@ -258,10 +258,10 @@ class NetworkOperation(Operation, Plotter):
         :param outputs:
             A string or a list of strings with all data asked to compute.
             If ``None``, all possible intermediate outputs will be kept.
-            If not given, those set by a previous call to :meth:`narrowed()` or cstor are used.
+            If not given, those set by a previous call to :meth:`withset()` or cstor are used.
         :param predicate:
             Will be stored and applied on the next :meth:`compute()` or :meth:`compile()`.
-            If not given, those set by a previous call to :meth:`narrowed()` or cstor are used.
+            If not given, those set by a previous call to :meth:`withset()` or cstor are used.
 
         :return:
             the :term:`execution plan` satisfying the given `inputs`, `outputs` & `predicate`
@@ -396,7 +396,7 @@ def compose(
         (usefull when run in `parallel` with a :term:`process pool`).
     :param node_props:
         added as-is into NetworkX graph, to provide for filtering
-        by :meth:`.NetworkOperation.narrowed()`.
+        by :meth:`.NetworkOperation.withset()`.
 
     :return:
         Returns a special type of operation class, which represents an
