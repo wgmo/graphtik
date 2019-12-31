@@ -117,10 +117,10 @@ class Solution(ChainMap, Plotter):
     .. attribute:: canceled
 
         A sorted set of :term:`canceled operation`\\s due to upstream failures.
-    .. attribute:: finished
+    .. attribute:: finalized
 
         a flag denoting that this instance cannot acccept more results
-        (after the :meth:`finished` has been invoked)
+        (after the :meth:`finalized` has been invoked)
     """
 
     def __init__(self, plan, input_values):
@@ -129,7 +129,7 @@ class Solution(ChainMap, Plotter):
         self.plan = plan
         self.executed = {}
         self.canceled = iset()  # not iterated, order not important, but ...
-        self.finished = False
+        self.finalized = False
         self.elapsed_ms = {}
         self.solid = "%X" % random.randint(0, 2 ** 16)
 
@@ -172,7 +172,7 @@ class Solution(ChainMap, Plotter):
             which may be a subset of its `provides`.  Sideffects are not considered.
 
         """
-        assert not self.finished, f"Cannot reuse solution: {self}"
+        assert not self.finalized, f"Cannot reuse solution: {self}"
         self._layers[op].update(outputs)
         self.executed[op] = None
 
@@ -204,7 +204,7 @@ class Solution(ChainMap, Plotter):
         It will update :attr:`executed` with the operation status and
         the :attr:`canceled` with the unsatisfiead ops downstream of `op`.
         """
-        assert not self.finished, f"Cannot reuse solution: {self}"
+        assert not self.finalized, f"Cannot reuse solution: {self}"
         self.executed[op] = ex
 
         dag = self.dag
@@ -221,10 +221,10 @@ class Solution(ChainMap, Plotter):
             )
         self.canceled.update(newly_canceled)
 
-    def finish(self):
+    def finalize(self):
         """invoked only once, after all ops have been executed"""
         # Invert solution so that last value wins
-        if not self.finished:
+        if not self.finalized:
             self.maps = self.maps[::-1]
             self.finised = True
 
@@ -753,7 +753,7 @@ class ExecutionPlan(
             try:
                 executor(solution)
             finally:
-                solution.finish()
+                solution.finalize()
 
                 ## Log cummulative operations elapsed time.
                 #
