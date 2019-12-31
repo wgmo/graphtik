@@ -488,7 +488,7 @@ class operation:
         If true, operation will be :term:`marshalled <marshalling>` while computed,        along with its `inputs` & `outputs`.
         (usefull when run in `parallel` with a :term:`process pool`).
     :param returns_dict:
-        if true, it means the `fn` returns a dictionary with all `provides`,
+        if true, it means the `fn` :term:`returns dictionary` with all `provides`,
         and no further processing is done on them
         (i.e. the returned output-values are not zipped with `provides`)
     :param node_props:

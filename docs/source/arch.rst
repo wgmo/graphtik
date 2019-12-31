@@ -203,6 +203,13 @@ Architecture
         All computed values are retained in it when no specific outputs requested,
         to :meth:`.NetworkOperation.compute()`, that is, no `evictions` happens.
 
+        A function may return `partial outputs`.
+
+    returns dictionary
+        When an operation is marked with this flag, the underlying function is not
+        expected to treturn a sequence but a dictionary; hence, no "zipping"
+        of outputs/provides takes place.
+
     operation
         Either the abstract notion of an action with specified `needs` and `provides`,
         or the concrete wraper :class:`.FunctionalOperation` for arbitrary functions
