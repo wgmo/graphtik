@@ -100,9 +100,11 @@ class FunctionalOperation(Operation):
     lambda).
 
     .. attribute:: provides
-        Names of output values this operation provides (including aliases).
+        Value names this operation provides (including aliases/sideffects).
     .. attribute:: real_provides
-        Names of output values the underlying function provides.
+        Value names the underlying function provides (without aliases, with(!) sideffects).
+
+        FIXME: `real_provides` not sure what it does with sideffects
 
     .. Tip::
         Use :class:`operation()` builder class to build instances of this class instead.
@@ -136,7 +138,7 @@ class FunctionalOperation(Operation):
             Names of input data objects this operation requires.
         :param provides:
             Names of the **real output values** the underlying function provides
-            (without `aliases`)
+            (without `aliases`, with(!) sideffects)
         :param aliases:
             an optional mapping of real `provides` to additional ones, togetherher
             comprising this operations :term:`provides`.
