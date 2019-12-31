@@ -14,6 +14,71 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+v5.0.0 (31 Dec 2019, @ankostis): Method-->Parrallel, all configs now per op flags; Screaming Solutions on fails/partials
+========================================================================================================================
++ BREAK(NETOP): ``compose(method="parallel") --> compose(parallel=None/False/True)``
+  and  DROP ``netop.set_execution_method(method)``; :term:`parallel` now also controlled
+  with the global :func:`.set_parallel_tasks()` :term:`configurations` function.
+
+  + feat(jetsam): report `task` executed in raised exceptions.
+
++ break(netop): rename ``netop.narrowed() --> withset()`` toi mimic ``Operation``
+  API.
+
++ break: rename flags:
+
+  -  ``reschedule --> rescheduleD``
+  - ``masrhal --> masrhalLED``.
+
++ break: rename global configs, as context-managers:
+
+  - ``marshal_parallel_tasks --> tasks_marshalled``
+  - ``endure_operations --> operations_endured``
+
++ FIX(net, plan,.TC): global skip :term:`evictions` flag were not fully obeyed
+  (was untested).
+
++ FIX(OP): revamped zipping of function `outputs` with expected `provides`,
+  for all combinations of rescheduled, ``NO_RESULT`` & :term:`returns dictionary`
+  flags.
+
++ configs:
+
+  + refact: extract configs in their own module.
+  + refact: make all global flags tri-state (``None, False, True``),
+    allowing to "force" operation flags when not `None`.
+    All default to ``None`` (false).
+
+
++ ENH(net, sol, logs): include a "solution-id" in revamped log messages,
+  to facilitate developers to discover issues when multiple `netops`
+  are running concurrently.
+  Heavily enhanced log messages make sense to the reader of all actions performed.
+
++ ENH(plot): set toolltips with ``repr(op)`` to view all operation flags.
+
++ FIX(TCs): close process-pools; now much more TCs for parallel combinations
+  of threaded, process-pool & masrshalled.
+
++ ENH(netop,net): possible to abort many netops at once, by resetting abort flag
+  on every call of :meth:`.NetworkOperation.compute()`
+  (instead of on the first stopped `netop`).
+
++ FEAT(SOL): :meth:`.scream_if_incomplete()` will raise the new
+  :class:`.IncompleteExecutionError` exception if failures/partial-outs
+  of endured/rescheduled operations prevented all operations to complete;
+  exception message details causal errors and conditions.
+
++ feat(build): +``all`` extras.
+
++ FAIL: x2 multi-threaded TCs fail spuriously  with "inverse dag edges":
+
+  + ``test_multithreading_plan_execution()``
+  + ``test_multi_threading_computes()``
+
+  both marked as ``xfail``.
+
+
 v4.4.1 (22 Dec 2019, @ankostis): bugfix debug print
 ===================================================
 + fix(net): had forgotten a debug-print on every operation call.
@@ -67,7 +132,7 @@ Details
   + Network:
 
     + feat: +marshal +_OpTask
-    + refact: plan._call_op --> _handle_op_task
+    + refact: plan._call_op --> _handle_task
     + enh: Make `abort run` variable a *shared-memory* ``Value``.
 
   + REFACT(OP,.TC): not a namedtuple, breaks pickling.
@@ -93,10 +158,10 @@ v4.3.0 (16 Dec 2019, @ankostis): Aliases
 
 v4.2.0 (16 Dec 2019, @ankostis): ENDURED Execution
 ==================================================
-+ FEAT(NET): when :func:`.set_endure_execution` configuration is set to true,
++ FEAT(NET): when :func:`.set_endure_operations` configuration is set to true,
   a :term:`netop` will keep on calculating solution, skipping any operations
   downstream from failed ones.  The :term:`solution` eventually collects all failures
-  in :attr:`.Solution.failures`.
+  in ``Solution.failures`` attribute.
 
 + ENH(DOC,plot): Links in Legend and :ref:`arch` Workflow SVGs now work,
   and delegate to *architecture* terms.
@@ -243,7 +308,7 @@ v3.0.0 (2 Dec 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
     in :class:`NetworkOperation` constructor.
 
   + ENH(net): public-size ``_prune_graph()`` --> :meth:`.Network.prune()``
-    which can be used to interogate `needs` & `provides` for a given graph.
+    which can be used to interrogate `needs` & `provides` for a given graph.
     It accepts `None` `inputs` & `outputs` to auto-derrive them.
 
 + FIX(SITE): autodocs `API` chapter were not generated in at all,
@@ -280,7 +345,7 @@ v2.2.0 (20 Nov 2019, @ankostis): enhance OPERATIONS & restruct their modules
   to be called by clients wishing to automate operation construction.
 + refact(op): replace ``**kwargs`` with named-args in class:`FunctionalOperation`,
   because it allowed too wide args, and offered no help to the user.
-+ REFACT(configs): privatize :data:`network._execution_configs`; expose more
++ REFACT(configs): privatize ``network._execution_configs``; expose more
   config-methods from base package.
 
 
@@ -380,7 +445,7 @@ v1.3.0 (Oct 2019, @ankostis): NEVER RELEASED: new DAG solver, better plotting & 
 
 Kept external API (hopefully) the same, but revamped pruning algorithm and
 refactored network compute/compile structure, so results may change; significantly
-enhanced plotting.  The only new feature actually is the :class:`sideffect`` modifier.
+enhanced plotting.  The only new feature actually is the :class:`.sideffect` modifier.
 
 Network:
 --------
