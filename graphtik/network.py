@@ -182,20 +182,22 @@ class Solution(ChainMap, Plotter):
             to_brake = [
                 (op, out) for out in missing_outs if not isinstance(out, sideffect)
             ]
-            dag.remove_edges_from(to_brake)
-            canceled = _unsatisfied_operations(dag, self)
-            # Minus executed, bc partial-out op might not have any provides left.
-            newly_canceled = iset(canceled) - self.canceled - self.executed
-            if newly_canceled and log.isEnabledFor(logging.INFO):
-                log.info(
-                    "... (%s) SKIPPING +%s ops%s due to partial outs%s of op(%s).",
-                    self.solid,
-                    len(newly_canceled),
-                    [n.name for n in newly_canceled],
-                    list(missing_outs),
-                    op.name,
-                )
-            self.canceled.update(newly_canceled)
+            if to_brake:
+                self.executed[op] = list(missing_outs)  # list checked by `scream_if_incomplete()`
+                dag.remove_edges_from(to_brake)
+                canceled = _unsatisfied_operations(dag, self)
+                # Minus executed, bc partial-out op might not have any provides left.
+                newly_canceled = iset(canceled) - self.canceled - self.executed
+                if newly_canceled and log.isEnabledFor(logging.INFO):
+                    log.info(
+                        "... (%s) SKIPPING +%s ops%s due to partial outs%s of op(%s).",
+                        self.solid,
+                        len(newly_canceled),
+                        [n.name for n in newly_canceled],
+                        list(missing_outs),
+                        op.name,
+                    )
+                self.canceled.update(newly_canceled)
 
     def operation_failed(self, op, ex):
         """
