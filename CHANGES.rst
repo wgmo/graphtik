@@ -14,6 +14,11 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+v5.1.0 (22 Jan 2020, @ankostis): accept named-tuples/objects `provides`
+=======================================================================
++ ENH(OP): flag `returns_dict` handles also *named-tuples* & *objects* (``__dict__``).
+
+
 v5.0.0 (31 Dec 2019, @ankostis): Method-->Parrallel, all configs now per op flags; Screaming Solutions on fails/partials
 ========================================================================================================================
 + BREAK(NETOP): ``compose(method="parallel") --> compose(parallel=None/False/True)``
