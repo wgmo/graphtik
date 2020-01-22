@@ -284,9 +284,15 @@ class FunctionalOperation(Operation):
 
         elif self.returns_dict:
 
-            if not isinstance(results, cabc.Mapping):
+            if hasattr(results, "_asdict"):  # named tuple
+                results = results._asdict()
+            elif isinstance(results, cabc.Mapping):
+                pass
+            elif hasattr(results, "__dict__"):  # regular object
+                results = vars(results)
+            else:
                 raise ValueError(
-                    "Expected results as mapping, "
+                    "Expected results as mapping, named_tuple, object, "
                     f"got {type(results).__name__!r}: {results}\n  {self}"
                 )
 

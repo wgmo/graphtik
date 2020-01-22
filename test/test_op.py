@@ -1,14 +1,17 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 
+from collections import OrderedDict, namedtuple
+from types import SimpleNamespace
+
 import dill
 import pytest
 
 from graphtik import NO_RESULT, compose, operation, optional, sideffect, vararg, varargs
 from graphtik.network import yield_ops
 from graphtik.op import (
-    Operation,
     FunctionalOperation,
+    Operation,
     as_renames,
     reparse_operation_data,
 )
@@ -104,14 +107,24 @@ def test_func_op_init(args, kw, exp):
         FunctionalOperation(str, "", *args, **kw)
 
 
-def test_returns_dict():
-    result = {"a": 1}
+@pytest.mark.parametrize(
+    "result, dictres",
+    [
+        ({"aa": 1, "b": 2}, ...),
+        (OrderedDict(aa=1, b=2), ...),
+        (namedtuple("T", "a, bb")(1, 2), {"a": 1, "bb": 2}),
+        (SimpleNamespace(a=1, bb=2), {"a": 1, "bb": 2}),
+    ],
+)
+def test_returns_dict(result, dictres):
+    if dictres is ...:
+        dictres = result
 
-    op = operation(lambda: result, provides="a", returns_dict=True)()
-    assert op.compute({}) == result
+    op = operation(lambda: result, provides=dictres.keys(), returns_dict=True)()
+    assert op.compute({}) == dictres
 
-    op = operation(lambda: 1, provides="a", returns_dict=False)()
-    assert op.compute({}) == result
+    op = operation(lambda: result, provides="a", returns_dict=False)()
+    assert op.compute({})["a"] == result
 
 
 @pytest.fixture(params=[None, ["a", "b"]])
@@ -154,7 +167,7 @@ def test_results_validation_bad_iterable(result, asked_outputs):
 @pytest.mark.parametrize("result", [None, 3.14, [], "foo", ["b", "c", "e"], {"a", "b"}])
 def test_dict_results_validation_BAD(result, asked_outputs):
     op = operation(lambda: result, provides=["a", "b"], returns_dict=True)()
-    with pytest.raises(ValueError, match="Expected results as mapping, got '"):
+    with pytest.raises(ValueError, match="Expected results as mapping,"):
         op.compute({}, outputs=asked_outputs)
 
 
