@@ -14,6 +14,7 @@ from multiprocessing import dummy as mp_dummy
 from multiprocessing import get_context
 from operator import add, floordiv, mul, sub
 from pprint import pprint
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -37,6 +38,7 @@ from graphtik import (
     vararg,
 )
 from graphtik.netop import NetworkOperation
+from graphtik.network import Solution
 from graphtik.op import Operation
 
 log = logging.getLogger(__name__)
@@ -115,6 +117,18 @@ def addall(*a, **kw):
 def abspow(a, p):
     c = abs(a) ** p
     return c
+
+
+def test_solution_finalized():
+    sol = Solution(MagicMock(), {})
+
+    sol.finalize()
+    with pytest.raises(AssertionError):
+        sol.operation_executed(MagicMock(), [])
+
+    sol.finalize()
+    with pytest.raises(AssertionError):
+        sol.operation_failed(MagicMock(), None)
 
 
 def test_smoke_test():

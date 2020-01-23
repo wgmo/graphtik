@@ -243,7 +243,7 @@ class Solution(ChainMap, Plotter):
         # Invert solution so that last value wins
         if not self.finalized:
             self.maps = self.maps[::-1]
-            self.finised = True
+            self.finalized = True
 
     def __delitem__(self, key):
         for d in self.maps:
