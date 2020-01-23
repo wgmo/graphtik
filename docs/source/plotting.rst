@@ -87,7 +87,7 @@ Graphs may become arbitrary deep.  Launching a debugger-session to inspect
 deeply nested stacks is notoriously hard
 
 As a workaround, when some operation fails, the original exception gets annotated
-with the folllowing properties, as a debug aid:
+with the following properties, as a debug aid:
 
 >>> from graphtik import compose, operation
 >>> from pprint import pprint
@@ -125,7 +125,7 @@ In interactive *REPL* console you may use this to get the last raised exception:
      sys.last_value.jetsam
 
 
-The following annotated attributes *might* have meaningfull value on an exception:
+The following annotated attributes *might* have meaningful value on an exception:
 
 ``network``
    the innermost network owning the failed operation/function
@@ -148,7 +148,7 @@ The following annotated attributes *might* have meaningfull value on an exceptio
     a subset of the above, and not always what has been declared in the operation.
 
 ``fn_results``
-    the raw results of the operation's fuction, if any
+    the raw results of the operation's function, if any
 
 ``op_results``
     the results, always a dictionary, as matched with operation's `provides`
@@ -157,12 +157,12 @@ The following annotated attributes *might* have meaningfull value on an exceptio
     an instance of :class:`.Solution`, contains `inputs` & `outputs` till the error happened;
     note that :attr:`.Solution.executed` contain the list of executed `operations` so far.
 
-Ofcourse you may use many of the above "jetsam" values when plotting.
+Of course you may use many of the above "jetsam" values when plotting.
 
 .. note::
    The :ref:`plotting` capabilities, along with the above annotation of exceptions
    with the internal state of plan/operation often renders a debugger session
-   unnecessary.  But since the state of the annotated values might be incomple,
+   unnecessary.  But since the state of the annotated values might be incomplete,
    you may not always avoid one.
 
 

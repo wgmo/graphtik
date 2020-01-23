@@ -15,8 +15,8 @@ with open("README.rst") as f:
 with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
-plot_reqs = ["matplotlib", "pydot"]  # to test plot  # to test plot
-test_reqs = plot_reqs + ["pytest", "pytest-cov", "pytest-sphinx", "dill"]
+plot_deps = ["matplotlib", "pydot"]  # to test plot  # to test plot
+test_deps = plot_deps + ["pytest", "pytest-cov", "pytest-sphinx", "dill"]
 
 setup(
     name="graphtik",
@@ -43,20 +43,20 @@ setup(
         "boltons",  # for IndexSet
     ],
     extras_require={
-        "plot": plot_reqs,
-        "test": test_reqs,
+        "plot": plot_deps,
+        "test": test_deps,
         # May help for pickling `parallel` tasks.
         # See :term:`marshalling` and :func:`set_marshal_tasks()` configuration.
         "dill": ["dill"],
-        "all": plot_reqs + test_reqs + ["sphinx"],
+        "all": plot_deps + test_deps + ["sphinx"],
     },
-    tests_require=test_reqs,
+    tests_require=test_deps,
     license="Apache-2.0",
     keywords=[
         "graph",
         "computation graph",
         "DAG",
-        "directed acyclical graph",
+        "directed acyclic graph",
         "executor",
         "scheduler",
         "etl",

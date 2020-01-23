@@ -60,7 +60,7 @@ def test_plotting_docstring():
 def test_plot_formats(pipeline, tmp_path):
     ## Generate all formats  (not needing to save files)
 
-    # run it here (and not in ficture) to ensure `last_plan` exists.
+    # run it here (and not in fixture) to ensure `last_plan` exists.
     inputs = {"a": 1, "b1": 2}
     outputs = ["asked", "b1"]
     solution = pipeline.compute(inputs, outputs)
@@ -110,7 +110,7 @@ def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
 
     solution = pipeline.compute(inputs, outputs)
 
-    # Plotting delegates to netwrok plan.
+    # Plotting delegates to network plan.
     netop_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))
     assert netop_dot
     assert netop_dot != base_dot
@@ -149,7 +149,7 @@ def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     raw_plan_dot = str(plan.plot(inputs=inputs, outputs=outputs))
     assert pipeline.name not in str(raw_plan_dot)
 
-    # Chek plan does not contain solution, unless given.
+    # Check plan does not contain solution, unless given.
     raw_sol_plan_dot = str(plan.plot(inputs=inputs, outputs=outputs, solution=solution))
     assert raw_sol_plan_dot != raw_plan_dot
 
@@ -158,7 +158,7 @@ def test_plot_bad_format(pipeline, tmp_path):
     with pytest.raises(ValueError, match="Unknown file format") as exinfo:
         pipeline.plot(filename="bad.format")
 
-    ## Check help msg lists all siupported formats
+    ## Check help msg lists all supported formats
     for ext in plot.supported_plot_formats():
         assert exinfo.match(ext)
 

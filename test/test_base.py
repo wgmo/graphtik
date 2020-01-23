@@ -23,7 +23,7 @@ def test_jetsam_bad_locals(locs, caplog):
             raise
 
     assert not hasattr(excinfo.value, "jetsam")
-    assert "Supressed error while annotating exception" not in caplog.text
+    assert "Suppressed error while annotating exception" not in caplog.text
 
 
 @pytest.mark.parametrize("keys", [{"k": None}, {"k": ()}, {"k": []}, {"k": [0]}])
@@ -36,7 +36,7 @@ def test_jetsam_bad_keys(keys, caplog):
             base.jetsam(ex, {}, **keys)
 
     assert not hasattr(excinfo.value, "jetsam")
-    assert "Supressed error while annotating exception" not in caplog.text
+    assert "Suppressed error while annotating exception" not in caplog.text
 
 
 @pytest.mark.parametrize("locs", [None, (), [], [0], "bad"])
@@ -50,7 +50,7 @@ def test_jetsam_bad_locals_given(locs, caplog):
             raise
 
     assert not hasattr(excinfo.value, "jetsam")
-    assert "Supressed error while annotating exception" not in caplog.text
+    assert "Suppressed error while annotating exception" not in caplog.text
 
 
 @pytest.mark.parametrize("annotation", [None, (), [], [0], "bad"])
@@ -66,7 +66,7 @@ def test_jetsam_bad_existing_annotation(annotation, caplog):
             raise
 
     assert excinfo.value.jetsam == {"a": None}
-    assert "Supressed error while annotating exception" not in caplog.text
+    assert "Suppressed error while annotating exception" not in caplog.text
 
 
 def test_jetsam_dummy_locals(caplog):
@@ -79,7 +79,7 @@ def test_jetsam_dummy_locals(caplog):
 
     assert isinstance(excinfo.value.jetsam, dict)
     assert excinfo.value.jetsam == {"a": 1, "bad": None}
-    assert "Supressed error" not in caplog.text
+    assert "Suppressed error" not in caplog.text
 
 
 def _scream(*args, **kwargs):
@@ -101,7 +101,7 @@ def test_jetsam_locals_simple(caplog):
     with pytest.raises(Exception, match="ABC") as excinfo:
         _jetsamed_fn()
     assert excinfo.value.jetsam == {"a": 1, "b": 2}
-    assert "Supressed error" not in caplog.text
+    assert "Suppressed error" not in caplog.text
 
 
 def test_jetsam_nested():
@@ -186,7 +186,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         (
             fnt.partial(
                 network.ExecutionPlan(*([None] * 6))._handle_task,
-                op=operation(_scream, name="auch")(),
+                op=operation(_scream, name="Ah!")(),
                 solution=Solution(MagicMock(), {}),
                 future=_OpTask(_ScreamingOperation(), {}, "solid"),
             ),

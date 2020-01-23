@@ -80,7 +80,7 @@ def _dot2svg(dot):
 
 
     .. TODO:
-        Render in jupyter cells fullly on client-side without SVG, using lib:
+        Render in jupyter cells fully on client-side without SVG, using lib:
         https://visjs.github.io/vis-network/docs/network/#importDot
         Or with plotly https://plot.ly/~empet/14007.embed
 
@@ -392,9 +392,9 @@ def legend(
     Generate a legend for all plots (see :meth:`.Plotter.plot()` for args)
 
     :param arch_url:
-        the url to the architecture section explaining *graphtik* glassary.
+        the url to the architecture section explaining *graphtik* glossary.
 
-    See :func:`render_pydot` for the rest argyments.
+    See :func:`render_pydot` for the rest arguments.
     """
 
     _monkey_patch_for_jupyter(pydot)
@@ -417,7 +417,7 @@ def legend(
                      tooltip="Either an operation or ean eviction-instruction."
                      URL="%(arch_url)s#term-execution-steps"];
         executed    [shape=oval style=filled fillcolor=wheat fontname=italic
-                     tooltip="Operation executed succesfully."
+                     tooltip="Operation executed successfully."
                      URL="%(arch_url)s#term-solution"];
         failed      [shape=oval style=filled fillcolor=LightCoral fontname=italic
                      tooltip="Failed operation - downstream ops will cancel."
@@ -426,7 +426,7 @@ def legend(
                      tooltip="Operation may fail / provide partial outputs so `net` must reschedule."
                      URL="%(arch_url)s#term-reschedulling"];
         canceled    [shape=oval style=filled fillcolor=Grey fontname=italic
-                     tooltip="Canceled operation due to failures or partial outputs upstreams."
+                     tooltip="Canceled operation due to failures or partial outputs upstream."
                      URL="%(arch_url)s#term-reschedule"];
         operation -> insteps -> executed -> failed -> rescheduled -> canceled [style=invis];
 
@@ -482,10 +482,10 @@ def legend(
     }
 
     dot = pydot.graph_from_dot_data(dot_text)[0]
-    # clus = pydot.Cluster("Graphtik legend", label="Graphtik legend")
-    # dot.add_subgraph(clus)
+    # cluster = pydot.Cluster("Graphtik legend", label="Graphtik legend")
+    # dot.add_subgraph(cluster)
 
     # nodes = dot.Node()
-    # clus.add_node("operation")
+    # cluster.add_node("operation")
 
     return render_pydot(dot, filename=filename, show=show)

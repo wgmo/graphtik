@@ -49,7 +49,7 @@ class IncompleteExecutionError(Exception):
     The exception contains 3 arguments:
 
     1. the causal errors and conditions (1st arg),
-    2. the list of collected exceptiond (2nd arg), and
+    2. the list of collected exceptions (2nd arg), and
     3. the solution instance (3rd argument), to interrogate for more.
     """
 
@@ -81,7 +81,7 @@ def _unsatisfied_operations(dag, inputs: Collection) -> List:
     """
     # To collect data that will be produced.
     ok_data = set(inputs)
-    # To colect the map of operations --> satisfied-needs.
+    # To collect the map of operations --> satisfied-needs.
     op_satisfaction = defaultdict(set)
     # To collect the operations to drop.
     unsatisfied = []
@@ -134,7 +134,7 @@ class Solution(ChainMap, Plotter):
         A sorted set of :term:`canceled operation`\\s due to upstream failures.
     .. attribute:: finalized
 
-        a flag denoting that this instance cannot acccept more results
+        a flag denoting that this instance cannot accept more results
         (after the :meth:`finalized` has been invoked)
     """
 
@@ -178,7 +178,7 @@ class Solution(ChainMap, Plotter):
 
         It will update :attr:`executed` with the operation status and
         if `outputs` were partials, it will update :attr:`canceled`
-        with the unsatisfiead ops downstream of `op`.
+        with the unsatisfied ops downstream of `op`.
 
         :param op:
             the operation that completed ok
@@ -198,7 +198,9 @@ class Solution(ChainMap, Plotter):
                 (op, out) for out in missing_outs if not isinstance(out, sideffect)
             ]
             if to_brake:
-                self.executed[op] = list(missing_outs)  # list checked by `scream_if_incomplete()`
+                self.executed[op] = list(
+                    missing_outs
+                )  # list checked by `scream_if_incomplete()`
                 dag.remove_edges_from(to_brake)
                 canceled = _unsatisfied_operations(dag, self)
                 # Minus executed, bc partial-out op might not have any provides left.
@@ -219,7 +221,7 @@ class Solution(ChainMap, Plotter):
         Invoked once per operation, with its results.
 
         It will update :attr:`executed` with the operation status and
-        the :attr:`canceled` with the unsatisfiead ops downstream of `op`.
+        the :attr:`canceled` with the unsatisfied ops downstream of `op`.
         """
         assert not self.finalized, f"Cannot reuse solution: {self}"
         self.executed[op] = ex
@@ -260,8 +262,8 @@ class Solution(ChainMap, Plotter):
         A "virtual" property to a dictionary with keys the names of values that
         exist more than once, and values, all those values in a list, ordered:
 
-        - before :meth:`finsihed()`, as computed;
-        - after :meth:`finsihed()`, in reverse.
+        - before :meth:`finished()`, as computed;
+        - after :meth:`finished()`, in reverse.
         """
         maps = self.maps
         dd = defaultdict(list)
@@ -279,8 +281,15 @@ class Solution(ChainMap, Plotter):
         incomplete = iset(chain(self.canceled, failures.keys()))
         if incomplete:
             incomplete = [op.name for op in incomplete]
-            partial_msgs = {f"\n  +--{op.name}: {pouts}" for op, pouts in self.executed.items() if pouts and isinstance(pouts, list)}
-            err_msgs = [f"\n  +--{op.name}: {type(ex).__name__}({ex})" for op, ex in failures.items()]
+            partial_msgs = {
+                f"\n  +--{op.name}: {pouts}"
+                for op, pouts in self.executed.items()
+                if pouts and isinstance(pouts, list)
+            }
+            err_msgs = [
+                f"\n  +--{op.name}: {type(ex).__name__}({ex})"
+                for op, ex in failures.items()
+            ]
             msg = (
                 f"Not completed x{len(incomplete)} operations {list(incomplete)}"
                 f" due to x{len(failures)} failures and x{len(partial_msgs)} partial-ops:"
@@ -360,7 +369,7 @@ class _OpTask:
     """
     Mimic :class:`concurrent.futures.Future` for :term:`sequential` execution.
 
-    This intermediate class is needed to solve pickiling issue with process executor.
+    This intermediate class is needed to solve pickling issue with process executor.
     """
 
     __slots__ = ("op", "sol", "result", "solid")
@@ -454,7 +463,7 @@ class ExecutionPlan(
 
         clusters = None
         if self.dag.nodes != self.net.graph.nodes:
-            clusters = {n: "after prunning" for n in self.dag.nodes}
+            clusters = {n: "after pruning" for n in self.dag.nodes}
         mykws = {
             "graph": self.net.graph,
             "steps": self.steps,
@@ -634,7 +643,7 @@ class ExecutionPlan(
             # the upnext list contains a list of operations for scheduling
             # in the current round of scheduling
             upnext = []
-            # TODO: optimization: start batches from previoues last op).
+            # TODO: optimization: start batches from previous last op).
             for node in self.steps:
                 ## Determines if a Operation is ready to be scheduled for execution
                 #  based on what has already been executed.
@@ -789,7 +798,7 @@ class ExecutionPlan(
             finally:
                 solution.finalize()
 
-                ## Log cummulative operations elapsed time.
+                ## Log cumulative operations elapsed time.
                 #
                 if log.isEnabledFor(logging.DEBUG):
                     elapsed = sum(solution.elapsed_ms.values())
@@ -969,7 +978,7 @@ class Network(Plotter):
         #
         #   inputs
         #       it is kept falsy, to disable the edge-breaking, so that
-        #       the asceding_from_outputs that follows can reach all input nodes;
+        #       the ascending_from_outputs that follows can reach all input nodes;
         #       including intermediate ones;
         #   satisfied_inputs
         #       it is filled with all possible input nodes, to trick `_unsatisfied_operations()`
@@ -1004,7 +1013,7 @@ class Network(Plotter):
 
         # Break the incoming edges to all given inputs.
         #
-        # Nodes producing any given intermediate inputs are unecessary
+        # Nodes producing any given intermediate inputs are unnecessary
         # (unless they are also used elsewhere).
         # To discover which ones to prune, we break their incoming edges
         # and they will drop out while collecting ancestors from the outputs.
@@ -1103,8 +1112,8 @@ class Network(Plotter):
 
                 # Add EVICT (1) for operation's needs.
                 #
-                # Broken links are irrelevant because they are preds of data (provides),
-                # but here we scan for preds of the operation (needs).
+                # Broken links are irrelevant bc they are predecessors of data (provides),
+                # but here we scan for predecessors of the operation (needs).
                 #
                 for need in pruned_dag.pred[node]:
                     # Do not evict asked outputs or sideffects.

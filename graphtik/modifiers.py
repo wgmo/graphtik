@@ -16,7 +16,7 @@ class optional(str):
     An ``operation`` will receive a value for an optional need only if if it is available
     in the graph at the time of its invocation.
     The ``operation``'s function should have a defaulted parameter with the same name
-    as the opetional, and the input value will be passed as a keyword argument,
+    as the optional, and the input value will be passed as a keyword argument,
     if it is available.
 
     Here is an example of an operation that uses an optional argument::

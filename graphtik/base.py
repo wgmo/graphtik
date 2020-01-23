@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 
 class Token(str):
     """Guarantee equality, not(!) identity, across processes."""
+
     __slots__ = ("hashid",)
 
     def __new__(cls, s):
@@ -110,14 +111,14 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         a mapping of destination-annotation-keys --> source-locals-keys;
         if a `source` is callable, the value to salvage is retrieved
         by calling ``value(locs)``.
-        They take precendance over`salvae_vars`.
+        They take precendance over`salvage_vars`.
 
     :raises:
         any exception raised by the wrapped function, annotated with values
-        assigned as atrributes on this context-manager
+        assigned as attributes on this context-manager
 
-    - Any attrributes attached on this manager are attached as a new dict on
-      the raised exception as new  ``jetsam`` attrribute with a dict as value.
+    - Any attributes attached on this manager are attached as a new dict on
+      the raised exception as new  ``jetsam`` attribute with a dict as value.
     - If the exception is already annotated, any new items are inserted,
       but existing ones are preserved.
 
@@ -184,22 +185,22 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
                 annotations.setdefault(dst_key, salvaged_value)
             except Exception as ex:
                 log.warning(
-                    "Supressed error while salvaging jetsam item (%r, %r): %r"
+                    "Suppressed error while salvaging jetsam item (%r, %r): %r"
                     % (dst_key, src, ex)
                 )
     except Exception as ex2:
-        log.warning("Supressed error while annotating exception: %r", ex2, exc_info=1)
+        log.warning("Suppressed error while annotating exception: %r", ex2, exc_info=1)
         raise ex2
 
 
-## Defined here, to avoid subclasses importig `plot` module.
+## Defined here, to avoid subclasses importing `plot` module.
 class Plotter(abc.ABC):
     """
     Classes wishing to plot their graphs should inherit this and ...
 
     implement property ``plot`` to return a "partial" callable that somehow
     ends up calling  :func:`.plot.render_pydot()` with the `graph` or any other
-    args binded appropriately.
+    args bound appropriately.
     The purpose is to avoid copying this function & documentation here around.
     """
 
@@ -235,9 +236,9 @@ class Plotter(abc.ABC):
         :param title:
             an optional string to display at the bottom of the graph
         :param node_props:
-            an optional nested dict of Grapvhiz attributes for certain nodes
+            an optional nested dict of Graphviz attributes for certain nodes
         :param edge_props:
-            an optional nested dict of Grapvhiz attributes for certain edges
+            an optional nested dict of Graphviz attributes for certain edges
         :param clusters:
             an optional mapping of nodes --> cluster-names, to group them
         :param jupyter_render:
@@ -325,7 +326,7 @@ class Plotter(abc.ABC):
         >>> solution = netop(**inputs)             # now plots will include the execution-plan
 
         >>> netop.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);           # doctest: +SKIP
-        >>> dot = netop.plot(solution=solution);   # just get the `pydoit.Dot` object, renderable in Jupyter
+        >>> dot = netop.plot(solution=solution);   # just get the `pydot.Dot` object, renderable in Jupyter
         >>> print(dot)
         digraph G {
             URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg";

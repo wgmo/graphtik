@@ -19,8 +19,8 @@ v5.1.0 (22 Jan 2020, @ankostis): accept named-tuples/objects `provides`
 + ENH(OP): flag `returns_dict` handles also *named-tuples* & *objects* (``__dict__``).
 
 
-v5.0.0 (31 Dec 2019, @ankostis): Method-->Parrallel, all configs now per op flags; Screaming Solutions on fails/partials
-========================================================================================================================
+v5.0.0 (31 Dec 2019, @ankostis): Method-->Parallel, all configs now per op flags; Screaming Solutions on fails/partials
+=======================================================================================================================
 + BREAK(NETOP): ``compose(method="parallel") --> compose(parallel=None/False/True)``
   and  DROP ``netop.set_execution_method(method)``; :term:`parallel` now also controlled
   with the global :func:`.set_parallel_tasks()` :term:`configurations` function.
@@ -33,7 +33,7 @@ v5.0.0 (31 Dec 2019, @ankostis): Method-->Parrallel, all configs now per op flag
 + break: rename flags:
 
   -  ``reschedule --> rescheduleD``
-  - ``masrhal --> masrhalLED``.
+  - ``marshal --> marshalLED``.
 
 + break: rename global configs, as context-managers:
 
@@ -63,7 +63,7 @@ v5.0.0 (31 Dec 2019, @ankostis): Method-->Parrallel, all configs now per op flag
 + ENH(plot): set toolltips with ``repr(op)`` to view all operation flags.
 
 + FIX(TCs): close process-pools; now much more TCs for parallel combinations
-  of threaded, process-pool & masrshalled.
+  of threaded, process-pool & marshalled.
 
 + ENH(netop,net): possible to abort many netops at once, by resetting abort flag
   on every call of :meth:`.NetworkOperation.compute()`
@@ -102,7 +102,7 @@ v4.4.0 (21 Dec 2019, @ankostis): RESCHEDULE for PARTIAL Outputs, on a per op bas
 - [x] keep order of outputs in Solution even for parallels.
 - [x] keep solution layers ordered also for parallel.
 - [x] require user to create & enter pools.
-- [x] FIX pickling THREAD POOL -->Proccess.
+- [x] FIX pickling THREAD POOL -->Process.
 
 Details
 -------
@@ -127,12 +127,12 @@ Details
     - CONS: cannot review network, must review plan of (new) `netop.compile()`.
 
   + drop(netop): `inputs` args in `narrowed()` didn't make much sense,
-    leftover from "unvarying netops";  but existi ni `netop.compile()`.
+    leftover from "unvarying netops";  but exist ni `netop.compile()`.
 
   + refact(netop): move net-assembly from compose() --> NetOp cstor;
     now reschedule/endured/merge/method args in cstor.
 
-+ NET,OP,TCs: FIX PARALLEL POOL CONCURRNECY
++ NET,OP,TCs: FIX PARALLEL POOL CONCURRENCY
 
   + Network:
 
@@ -150,7 +150,7 @@ Details
     + many uses of exemethod.
 
 + FIX(build): PyPi README check did not detect forbidden ``raw`` directives,
-  and travis auto-depoyments were failing.
+  and travis auto-deployments were failing.
 
 + doc(arch): more terms.
 
@@ -174,7 +174,7 @@ v4.2.0 (16 Dec 2019, @ankostis): ENDURED Execution
 + ENH(plot): mark :term:`overwrites`, *failed* & *canceled* in ``repr()``
   (see :term:`endurance`).
 
-+ refact(conf): fully rename confguration opetion ``skip_evictions``.
++ refact(conf): fully rename configuration operation ``skip_evictions``.
 
 + REFACT(jetsam): raise after jetsam in situ, better for Readers & Linters.
 
@@ -200,7 +200,7 @@ v4.1.0 (13  Dec 2019, @ankostis): ChainMap Solution for Rewrites, stable TOPOLOG
   + drop(netop): `overwrites_collector` parameter; now in :meth:`.Solution.overwrites()`.
   + ENH(plot): ``Solution`` is also a :class:`.Plotter`;  e.g. use ``sol.plot(...)```.
 
-+ DROP(plot): `executed` arg from plotting; now embeded in `solution`.
++ DROP(plot): `executed` arg from plotting; now embedded in `solution`.
 
 + ENH(PLOT.jupyter,doc): allow to set jupyter graph-styling selectively;
   fix instructions for jupyter cell-resizing.
@@ -248,7 +248,7 @@ v4.0.0 (11 Dec 2019, @ankostis): NESTED merge, revert v3.x Unvarying, immutable 
 
 + refact(net): consider as netop `needs` also intermediate data nodes.
 
-+ FEAT(:gg:`1`, net, netop): support prunning based on arbitrary operation attributes
++ FEAT(:gg:`1`, net, netop): support pruning based on arbitrary operation attributes
   (e.g. assign "colors" to nodes and solve a subset each time).
 
 + enh(netop): ``repr()`` now counts number of contained operations.
@@ -256,7 +256,7 @@ v4.0.0 (11 Dec 2019, @ankostis): NESTED merge, revert v3.x Unvarying, immutable 
 + refact(netop): rename ``netop.narrow() --> narrowed()``
 
 + drop(netop): don't topologically-sort sub-networks before merging them;
-  might change some results, but gives controll back to the user to define nets.
+  might change some results, but gives control back to the user to define nets.
 
 
 v3.1.0 (6 Dec 2019, @ankostis): cooler ``prune()``
@@ -286,7 +286,7 @@ v3.0.0 (2 Dec 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
   + UNVARYING NetOperations:
 
     + BREAK: calling method :meth:`.NetworkOperation.compute()` with a single argument
-      is now *UNVARYING*, meaning that all `needs` are demaned, and hence,
+      is now *UNVARYING*, meaning that all `needs` are demanded, and hence,
       all `provides` are produced, unless the ``recompile`` flag is true or ``outputs`` asked.
 
     + BREAK: net-operations behave like regular operations when nested inside another netop,
@@ -314,7 +314,7 @@ v3.0.0 (2 Dec 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
 
   + ENH(net): public-size ``_prune_graph()`` --> :meth:`.Network.prune()``
     which can be used to interrogate `needs` & `provides` for a given graph.
-    It accepts `None` `inputs` & `outputs` to auto-derrive them.
+    It accepts `None` `inputs` & `outputs` to auto-derive them.
 
 + FIX(SITE): autodocs `API` chapter were not generated in at all,
   due to import errors, fixed by using `autodoc_mock_imports
@@ -368,7 +368,7 @@ v2.1.0 (20 Oct 2019, @ankostis): DROP BW-compatible, Restruct modules/API, Plan 
 =================================================================================================
 The first non pre-release for 2.x train.
 
-+ BRAKE API:  DROP Operation's ``params`` - use funtools.partial() instead.
++ BRAKE API:  DROP Operation's ``params`` - use functools.partial() instead.
 
 + BRAKE API: DROP Backward-Compatible ``Data`` & ``Operation`` classes,
 
@@ -380,12 +380,12 @@ The first non pre-release for 2.x train.
   :meth:`.operation.withset()`.
 
 + REFACT: renamed internal package `functional --> nodes` and moved classes around,
-  to break cycles easier, (``base`` works as suppposed to), not to import early  everything,
+  to break cycles easier, (``base`` works as supposed to), not to import early  everything,
   but to fail plot early if ``pydot`` dependency missing.
 
 + REFACT: move PLAN and ``compute()`` up, from ``Network --> NetworkOperation``.
 
-+ ENH(NET): new PLAN BULDING algorithm produces PERFECT EVICTIONS,
++ ENH(NET): new PLAN BUILDING algorithm produces PERFECT EVICTIONS,
   that is, it gradually eliminates from the solution all non-asked outputs.
 
   + enh: pruning now cleans isolated data.
@@ -411,7 +411,7 @@ Network
 + FIX: multithreaded operations were failing due to shared
   :attr:`ExecutionPlan.executed`.
 
-+ FIX: prunning sometimes were inserting plan string in DAG.
++ FIX: pruning sometimes were inserting plan string in DAG.
   (not ``_DataNode``).
 
 + ENH: heavily reinforced exception annotations ("jetsam"):
@@ -422,7 +422,7 @@ Network
   - enh: more data in a dictionary
   - TCs: Add thorough TCs (8f3ec3a & b8063e5).
 
-+ REFACT: rename `Delete`-->`Evict`, removed `Placeholder` from nadanodes, privatize node-classes.
++ REFACT: rename `Delete`-->`Evict`, removed `Placeholder` from data nodes, privatize node-classes.
 
 + ENH: collect "jetsam" on errors and annotate exceptions with them.
 
@@ -459,7 +459,7 @@ Network:
   to fix bad pruning described in :gh:`24` & :gh:`25`
 
   Pruning now works by breaking incoming provide-links to any given
-  intermedediate inputs dropping operations with partial inputs or without outputs.
+  intermediate inputs dropping operations with partial inputs or without outputs.
 
   The end result is that operations in the graph that do not have all inputs satisfied,
   they are skipped (in v1.2.4 they crashed).
@@ -473,9 +473,9 @@ Network:
   compilation results (the old ``steps`` list, plus input/output names).
 
   Moved also the check for when to evict a value, from running the execution-plan,
-  to whenbuilding it; thus, execute methods don't need outputs anymore.
+  to when building it; thus, execute methods don't need outputs anymore.
 
-+ ENH(:gh:`26`): "Pin* input values that may be overriten by calculated ones.
++ ENH(:gh:`26`): "Pin* input values that may be overwritten by calculated ones.
 
   This required the introduction of the new :class:`_PinInstruction` in
   the execution plan.
@@ -490,7 +490,7 @@ Network:
 
 + enh: Mark outputs produced by :class:`NetworkOperation`'s needs as ``optional``.
   TODO: subgraph network-operations would not be fully functional until
-  *"optional outpus"* are dealt with (see :gh:`22`-2.5).
+  *"optional outputs"* are dealt with (see :gh:`22`-2.5).
 
 + enh: Annotate operation exceptions with ``ExecutionPlan`` to aid debug sessions,
 
@@ -511,7 +511,7 @@ Plotting:
     - solution values (just if they are present)
     - "optional" needs & broken links during pruning
 
-+ REFACT: Move all API doc on plotting in a single module, splitted in 2 phases,
++ REFACT: Move all API doc on plotting in a single module, split in 2 phases,
   build DOT & render DOT
 
 + FIX(:gh:`13`): bring plot writing into files up-to-date from PY2; do not create plot-file
@@ -533,10 +533,10 @@ Testing & other code:
   in v1.2.4.
 
 + FIX: ``operation.__repr__()`` was crashing when not all arguments
-  had been set - a condition frequtnly met during debugging session or failed
+  had been set - a condition frequently met during debugging session or failed
   TCs (inspired by @syamajala's 309338340).
 
-+ enh: Sped up parallel/multihtread TCs by reducing delays & repetitions.
++ enh: Sped up parallel/multithread TCs by reducing delays & repetitions.
 
   .. tip::
     You need ``pytest -m slow`` to run those slow tests.

@@ -282,7 +282,7 @@ def test_netop_merge_node_props():
     ],
 )
 def test_as_renames(inp, exp):
-    as_renames((1, 2), "talias")
+    as_renames((1, 2), "alias")
 
 
 @pytest.mark.parametrize(

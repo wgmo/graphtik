@@ -11,7 +11,7 @@ Architecture
     COMPUTE
     computation
         |v410-flowchart|
-        The definition & execution of networked operation is splitted in 1+2 phases:
+        The definition & execution of networked operation is split in 1+2 phases:
 
         - `COMPOSITION`
         - `COMPILATION`
@@ -56,7 +56,7 @@ Architecture
     compile
     COMPILATION
         The *phase* where the :class:`.Network` creates a new `execution plan`
-        by `pruning` all `graph` nodes into a subgraph `dag`, and  derriving
+        by `pruning` all `graph` nodes into a subgraph `dag`, and  deriving
         the `execution steps`.
 
     execute
@@ -109,7 +109,7 @@ Architecture
 
     configurations
         The functions controlling `compile` & `execution` globally  are defined
-        in :mod:`.config` module;  they undelying global data are stored in
+        in :mod:`.config` module;  they underlying global data are stored in
         :class:`contextvars.ContextVar` instances, to allow for nested control.
 
         All *boolean* configuration flags are **tri-state** (``None, False, True``),
@@ -125,7 +125,7 @@ Architecture
         :meth:`.Network._append_operation()` by Network constructor.
 
         This graph is then `prune`\d to extract the `dag`, and the `execution steps`
-        are calculated, all ingridents for a new :class:`ExecutionPlan`.
+        are calculated, all ingredients for a new :class:`ExecutionPlan`.
 
     dag
     execution dag
@@ -135,7 +135,7 @@ Architecture
         - the :attr:`.ExecutionPlan.dag`,  in the `execution plan`, which contains
           the `prune`\d  nodes, used to decide the `execution steps`;
         - the :attr:`.Solution.dag` in the `solution`, which derives the
-          `canceled operation`\s due to `reschedule`\d/failed operations upstreams.
+          `canceled operation`\s due to `reschedule`\d/failed operations upstream.
 
     steps
     execution steps
@@ -171,7 +171,7 @@ Architecture
             we would use (possibly *overwritten* and thus changing)) intermediate ones.
 
             But at the end we want to affect the calculation results by adding
-            operations into some *netop* - furthermore, it wouldn't be very usefull
+            operations into some *netop* - furthermore, it wouldn't be very useful
             to get back the given inputs in case of `overwrites`.
 
     overwrites
@@ -209,12 +209,12 @@ Architecture
 
     returns dictionary
         When an operation is marked with this flag, the underlying function is not
-        expected to treturn a sequence but a dictionary; hence, no "zipping"
+        expected to return a sequence but a dictionary; hence, no "zipping"
         of outputs/provides takes place.
 
     operation
         Either the abstract notion of an action with specified `needs` and `provides`,
-        or the concrete wraper :class:`.FunctionalOperation` for arbitrary functions
+        or the concrete wrapper :class:`.FunctionalOperation` for arbitrary functions
         (any :class:`callable`).
 
     netop
@@ -250,7 +250,7 @@ Architecture
 
         - they have `needs` that do not correspond to any of the given `inputs` or
           the intermediately `compute`\d `outputs` of the `solution`;
-        - all threir `provides` are NOT needed by any other operation, nor are asked
+        - all their `provides` are NOT needed by any other operation, nor are asked
           as *outputs*.
 
     reschedule
@@ -267,7 +267,7 @@ Architecture
         - `endurance` is enabled, either globally (in the `configurations`), or
           for a specific *operation*.
 
-        the *solution* must then *reschedule* the remaining operations downstreams,
+        the *solution* must then *reschedule* the remaining operations downstream,
         and possibly *cancel* some of those ( assigned in :attr:`.Solution.canceled`).
 
     endurance
@@ -289,7 +289,7 @@ Architecture
         it halts the execution of all currently or future `plan`\s.
 
         It is reset automatically on every call of :meth:`.NetworkOperation.compute()`
-        (after a succesfull intermediate :term:`compilation`), or manually,
+        (after a successful intermediate :term:`compilation`), or manually,
         by calling :func:`.reset_abort()`.
 
 

@@ -252,7 +252,7 @@ class NetworkOperation(Operation, Plotter):
         self, inputs=None, outputs=UNSET, predicate: NodePredicate = UNSET
     ) -> ExecutionPlan:
         """
-        Produce a :term:`plan` for the given args or `outputs`/`predicate` narrrowed earlier.
+        Produce a :term:`plan` for the given args or `outputs`/`predicate` narrowed earlier.
 
         :param named_inputs:
             a string or a list of strings that should be fed to the `needs` of all operations.
@@ -299,7 +299,7 @@ class NetworkOperation(Operation, Plotter):
         Compile a plan & :term:`execute` the graph, sequentially or parallel.
 
         .. Attention::
-            If intermediate :term:`compilation` is sucessfull, the "global
+            If intermediate :term:`compilation` is successful, the "global
             :term:`abort run` flag is reset before the :term:`execution` starts.
 
         :param named_inputs:

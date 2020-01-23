@@ -55,7 +55,7 @@ def reparse_operation_data(name, needs, provides):
     Validate & reparse operation data as lists.
 
     As a separate function to be reused by client code
-    when building operations and detect errors aearly.
+    when building operations and detect errors early.
     """
 
     if not isinstance(name, cabc.Hashable):

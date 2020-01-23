@@ -77,7 +77,7 @@ def exemethod(request):
     with tasks_marshalled(marshal):
         if parallel:
             if proc_pool:
-                if os.name == "posix":  # Aalthough it is the default ...
+                if os.name == "posix":  # Allthough it is the default ...
                     # NOTE: "spawn" DEADLOCKS!.
                     pool = get_context("fork").Pool(nsharks)
                 else:
@@ -208,7 +208,7 @@ def test_smoke_test():
 
 
 def test_network_plan_execute():
-    def powers_in_trange(a, exponent):
+    def powers_in_range(a, exponent):
         outputs = []
         for y in range(1, exponent + 1):
             p = math.pow(a, y)
@@ -223,7 +223,7 @@ def test_network_plan_execute():
         name="pow",
         needs=["sum_ab", "exponent"],
         provides=["sum_ab_p1", "sum_ab_p2", "sum_ab_p3"],
-    )(powers_in_trange)
+    )(powers_in_range)
     sum_op2 = operation(
         name="sum2", provides=["p1_plus_p2"], needs=["sum_ab_p1", "sum_ab_p2"]
     )(add)
@@ -515,22 +515,22 @@ def test_pruning_not_overrides_given_intermediate(exemethod):
     # Test #25: v1.2.4 overwrites intermediate data when no output asked
     pipeline = compose(
         "pipeline",
-        operation(name="not run", needs=["a"], provides=["overidden"])(scream),
-        operation(name="op", needs=["overidden", "c"], provides=["asked"])(add),
+        operation(name="not run", needs=["a"], provides=["overridden"])(scream),
+        operation(name="op", needs=["overridden", "c"], provides=["asked"])(add),
         parallel=exemethod,
     )
 
-    inputs = {"a": 5, "overidden": 1, "c": 2}
-    exp = {"a": 5, "overidden": 1, "c": 2, "asked": 3}
+    inputs = {"a": 5, "overridden": 1, "c": 2}
+    exp = {"a": 5, "overridden": 1, "c": 2, "asked": 3}
     # v1.2.4.ok
     assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
     # FAILs
-    # - on v1.2.4 with (overidden, asked): = (5, 7) instead of (1, 3)
-    # - on #18(unsatisfied) + #23(ordered-sets) with (overidden, asked) = (5, 7) instead of (1, 3)
+    # - on v1.2.4 with (overridden, asked): = (5, 7) instead of (1, 3)
+    # - on #18(unsatisfied) + #23(ordered-sets) with (overridden, asked) = (5, 7) instead of (1, 3)
     # FIXED on #26
     assert pipeline(**inputs) == exp
 
-    ## Test OVERWITES
+    ## Test OVERWRITES
     #
     solution = pipeline.compute(inputs, ["asked"])
     assert solution == filtdict(exp, "asked")
@@ -546,26 +546,26 @@ def test_pruning_multiouts_not_override_intermediates1(exemethod):
     # must run for its other outputs (outputs asked or not)
     pipeline = compose(
         "graph",
-        operation(name="must run", needs=["a"], provides=["overidden", "calced"])(
+        operation(name="must run", needs=["a"], provides=["overridden", "calced"])(
             lambda x: (x, 2 * x)
         ),
-        operation(name="add", needs=["overidden", "calced"], provides=["asked"])(add),
+        operation(name="add", needs=["overridden", "calced"], provides=["asked"])(add),
         parallel=exemethod,
     )
 
-    inp1 = {"a": 5, "overidden": 1}
-    inp2 = {"a": 5, "overidden": 1, "c": 2}
-    exp = {"a": 5, "overidden": 5, "calced": 10, "asked": 11}
+    inp1 = {"a": 5, "overridden": 1}
+    inp2 = {"a": 5, "overridden": 1, "c": 2}
+    exp = {"a": 5, "overridden": 5, "calced": 10, "asked": 11}
     exp2 = filtdict(exp, "asked")
 
     # FAILs
-    # - on v1.2.4 with (overidden, asked) = (5, 15) instead of (1, 11)
+    # - on v1.2.4 with (overridden, asked) = (5, 15) instead of (1, 11)
     # - on #18(unsatisfied) + #23(ordered-sets) like v1.2.4.
     # FIXED on #26
-    # - on v4.0.0 (overidden, asked) := (5, 11)
+    # - on v4.0.0 (overridden, asked) := (5, 11)
     solution = pipeline.compute(inp1)
     assert solution == exp
-    assert solution.overwrites == {"overidden": [5, 1]}
+    assert solution.overwrites == {"overridden": [5, 1]}
 
     # FAILs
     # - on v1.2.4 with KeyError: 'e',
@@ -575,11 +575,11 @@ def test_pruning_multiouts_not_override_intermediates1(exemethod):
     assert solution == exp2
     assert solution.overwrites == {}
 
-    ## Test OVERWITES
+    ## Test OVERWRITES
     #
     solution = pipeline.compute(inp1)
     assert solution == exp
-    assert solution.overwrites == {"overidden": [5, 1]}
+    assert solution.overwrites == {"overridden": [5, 1]}
 
     # Check plotting Overwrites.
     assert "SkyBlue" in str(solution.plot())
@@ -603,21 +603,21 @@ def test_pruning_multiouts_not_override_intermediates2(exemethod):
     # eg https://travis-ci.org/ankostis/graphtik/jobs/594813119
     pipeline = compose(
         "pipeline",
-        operation(name="must run", needs=["a"], provides=["overidden", "e"])(
+        operation(name="must run", needs=["a"], provides=["overridden", "e"])(
             lambda x: (x, 2 * x)
         ),
-        operation(name="op1", needs=["overidden", "c"], provides=["d"])(add),
+        operation(name="op1", needs=["overridden", "c"], provides=["d"])(add),
         operation(name="op2", needs=["d", "e"], provides=["asked"])(mul),
         parallel=exemethod,
     )
 
-    inputs = {"a": 5, "overidden": 1, "c": 2}
-    exp = {"a": 5, "overidden": 5, "c": 2, "d": 3, "e": 10, "asked": 30}
+    inputs = {"a": 5, "overridden": 1, "c": 2}
+    exp = {"a": 5, "overridden": 5, "c": 2, "d": 3, "e": 10, "asked": 30}
     # FAILs
-    # - on v1.2.4 with (overidden, asked) = (5, 70) instead of (1, 30)
+    # - on v1.2.4 with (overridden, asked) = (5, 70) instead of (1, 30)
     # - on #18(unsatisfied) + #23(ordered-sets) like v1.2.4.
     # FIXED on #26
-    # - on v4.0.0 (overidden, asked) := (5, 30)
+    # - on v4.0.0 (overridden, asked) := (5, 30)
     assert pipeline(**inputs) == exp
     # FAILs
     # - on v1.2.4 with KeyError: 'e',
@@ -625,11 +625,11 @@ def test_pruning_multiouts_not_override_intermediates2(exemethod):
     assert pipeline.compute(inputs, "asked") == filtdict(exp, "asked")
     # FIXED on #26
 
-    ## Test OVERWITES
+    ## Test OVERWRITES
     #
     solution = pipeline.compute(inputs)
     assert solution == exp
-    assert solution.overwrites == {"overidden": [5, 1]}
+    assert solution.overwrites == {"overridden": [5, 1]}
     # No overwrites when evicted.
     #
     solution = pipeline.compute(inputs, "asked")
@@ -637,9 +637,9 @@ def test_pruning_multiouts_not_override_intermediates2(exemethod):
     assert solution.overwrites == {}
     # ... but overrites collected if asked.
     #
-    solution = pipeline.compute(inputs, ["asked", "overidden"])
-    assert solution == filtdict(exp, "asked", "overidden")
-    assert solution.overwrites == {"overidden": [5, 1]}
+    solution = pipeline.compute(inputs, ["asked", "overridden"])
+    assert solution == filtdict(exp, "asked", "overridden")
+    assert solution.overwrites == {"overridden": [5, 1]}
 
 
 def test_pruning_with_given_intermediate_and_asked_out(exemethod):
@@ -648,7 +648,7 @@ def test_pruning_with_given_intermediate_and_asked_out(exemethod):
     pipeline = compose(
         "pipeline",
         operation(name="unjustly pruned", needs=["given-1"], provides=["a"])(identity),
-        operation(name="shortcuted", needs=["a", "b"], provides=["given-2"])(add),
+        operation(name="shortcut-ed", needs=["a", "b"], provides=["given-2"])(add),
         operation(name="good_op", needs=["a", "given-2"], provides=["asked"])(add),
         parallel=exemethod,
     )
@@ -664,7 +664,7 @@ def test_pruning_with_given_intermediate_and_asked_out(exemethod):
     # FIXED on #18+#26 (new dag solver).
     assert pipeline.compute(inps, "asked") == filtdict(exp, "asked")
 
-    ## Test OVERWITES
+    ## Test OVERWRITES
     #
     solution = pipeline.compute(inps)
     assert solution == exp
@@ -810,13 +810,11 @@ def test_narrow_and_optionality(reverse):
     )
     op2 = operation(name="op2", needs=["a", optional("bb")], provides="sum2")(addall)
     ops = [op1, op2]
-    provs = "'sum1', 'sum2'"
+    provides = "'sum1', 'sum2'"
     if reverse:
         ops = list(reversed(ops))
-        provs = "'sum2', 'sum1'"
-    netop_str = (
-        f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provs}], x2 ops"
-    )
+        provides = "'sum2', 'sum1'"
+    netop_str = f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provides}], x2 ops"
 
     netop = compose("t", *ops)
     assert repr(netop).startswith(netop_str)
@@ -828,7 +826,7 @@ def test_narrow_and_optionality(reverse):
     netop = compose("t", *ops)
     assert repr(netop).startswith(netop_str)
     assert repr(netop.compile("a")).startswith(
-        f"ExecutionPlan(needs=['a'], provides=[{provs}], x2 steps:"
+        f"ExecutionPlan(needs=['a'], provides=[{provides}], x2 steps:"
     )
     #
     netop = compose("t", *ops)
@@ -1001,7 +999,7 @@ def test_sideffect_NO_RESULT(caplog):
     assert op in sol.executed
 
     ## If NO_RESULT were not translated,
-    #  a warning of unkonwn out might have emerged.
+    #  a warning of unknown out might have emerged.
     caplog.clear()
     netop = compose("t", operation(lambda: 1, provides=sfx)())
     netop.compute({}, outputs=sfx)
@@ -1059,7 +1057,7 @@ def test_optional_per_function_with_same_output(exemethod):
 
 def test_evicted_optional():
     # Test that _EvictInstructions included for optionals do not raise
-    # exceptions when the corresponding input is not prodided.
+    # exceptions when the corresponding input is not provided.
 
     # Function to add two values plus an optional third value.
     def addplusplus(a, b, c=0):
@@ -1222,7 +1220,7 @@ def test_rescheduling_NO_RESULT(exemethod):
         assert sol.scream_if_incomplete()
 
 
-@pytest.mark.xfail(reason="Spurious copied-reversed gaphs, with dubious cause....")
+@pytest.mark.xfail(reason="Spurious copied-reversed graphs, with dubious cause....")
 def test_multithreading_plan_execution():
     # Compose the mul, sub, and abspow operations into a computation graph.
     # From Huygn's test-code given in yahoo/graphkit#31
@@ -1299,7 +1297,7 @@ def test_parallel_execution(exemethod):
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(reason="Spurious copied-reversed gaphs, with dubious cause....")
+@pytest.mark.xfail(reason="Spurious copied-reversed graphs, with dubious cause....")
 def test_multi_threading_computes():
     import random
 

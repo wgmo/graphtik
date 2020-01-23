@@ -3,7 +3,7 @@ Operations
 
 At a high level, an operation is a node in a computation graph.
 Graphtik uses an :class:`.Operation` class to abstractly represent these computations.
-The class specifies the *requirments* for a function to participate
+The class specifies the *requirements* for a function to participate
 in a computation graph; those are its input-data **needs**, and the output-data
 it **provides**.
 
@@ -82,7 +82,7 @@ Let's look again at the operations from the script in :ref:`quick-start`, for ex
    ... )
 
 .. Tip::
-   Notice the use of :func:`functools.partial()` to set parameter ``p`` to a contant value.
+   Notice the use of :func:`functools.partial()` to set parameter ``p`` to a constant value.
 
 The ``needs`` and ``provides`` arguments to the operations in this script define
 a computation graph that looks like this (where the oval are *operations*,
