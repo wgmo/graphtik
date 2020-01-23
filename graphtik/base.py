@@ -14,7 +14,11 @@ log = logging.getLogger(__name__)
 
 
 class Token(str):
+    """Guarantee equality, not(!) identity, across processes."""
     __slots__ = ("hashid",)
+
+    def __new__(cls, s):
+        return super().__new__(cls, f"<{s}>")
 
     def __init__(self, *args):
         self.hashid = random.randint(-(2 ** 32), 2 ** 32 - 1)
@@ -38,12 +42,11 @@ class Token(str):
         return self
 
     def __bool__(self):
+        """Always `True`, even if empty string."""
         return True
 
-    def __str__(self):
-        return "<%s>" % super().__str__()
-
     def __repr__(self):
+        """Avoid 'ticks' around repr."""
         return self.__str__()
 
 
