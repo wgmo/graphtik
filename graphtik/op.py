@@ -393,11 +393,13 @@ class FunctionalOperation(Operation):
                         n
                     ]  # Key-error here means `inputs` < compulsory `needs`.
                     for n in self.needs
-                    if not isinstance(n, (optional, sideffect))
+                    if not isinstance(n, (optional, vararg, varargs, sideffect))
                 ]
             except KeyError:
                 compulsory = iset(
-                    n for n in self.needs if not isinstance(n, (optional, sideffect))
+                    n
+                    for n in self.needs
+                    if not isinstance(n, (optional, vararg, varargs, sideffect))
                 )
                 raise ValueError(
                     f"Missing compulsory needs{list(compulsory)}!\n  inputs: {list(named_inputs)}\n  {self}"
@@ -420,9 +422,7 @@ class FunctionalOperation(Operation):
             optionals = {
                 n: named_inputs[n]
                 for n in self.needs
-                if isinstance(n, optional)
-                and not isinstance(n, (vararg, varargs))
-                and n in named_inputs
+                if isinstance(n, optional) and n in named_inputs
             }
 
             results_fn = self.fn(*args, **optionals)

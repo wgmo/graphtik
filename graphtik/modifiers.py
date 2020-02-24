@@ -53,7 +53,7 @@ class optional(str):
         return "optional('%s')" % self
 
 
-class vararg(optional):
+class vararg(str):
     """
     Like :class:`optional` but feeds as ONE OF the ``*args`` into the function (instead of ``**kwargs``).
 
@@ -94,7 +94,7 @@ class vararg(optional):
         return "vararg('%s')" % self
 
 
-class varargs(optional):
+class varargs(str):
     """
     An optional like :class:`vararg` feeds as MANY ``*args`` into the function (instead of ``**kwargs``).
     """

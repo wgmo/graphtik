@@ -26,7 +26,7 @@ from .config import (
     is_skip_evictions,
     is_solid_true,
 )
-from .modifiers import optional, sideffect
+from .modifiers import optional, sideffect, vararg, varargs
 from .op import Operation
 
 log = logging.getLogger(__name__)
@@ -95,7 +95,11 @@ def _unsatisfied_operations(dag, inputs: Collection) -> List:
             else:
                 # It's ok not to dig into edge-data("optional") here,
                 # we care about all needs, including broken ones.
-                real_needs = set(n for n in node.needs if not isinstance(n, optional))
+                real_needs = set(
+                    n
+                    for n in node.needs
+                    if not isinstance(n, (optional, vararg, varargs))
+                )
                 if real_needs.issubset(op_satisfaction[node]):
                     # We have a satisfied operation; mark its output-data
                     # as ok.
@@ -903,7 +907,7 @@ class Network(Plotter):
         # add nodes and edges to graph describing the data needs for this layer
         for n in operation.needs:
             kw = {}
-            if isinstance(n, optional):
+            if isinstance(n, (optional, vararg, varargs)):
                 kw["optional"] = True
             if isinstance(n, sideffect):
                 kw["sideffect"] = True
