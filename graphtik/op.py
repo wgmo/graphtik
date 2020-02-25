@@ -437,7 +437,7 @@ class FunctionalOperation(Operation):
             # Find any optional inputs in named_inputs.  Get only the ones that
             # are present there, no extra `None`s.
             optionals = {
-                n: named_inputs[n]
+                n if n.fn_arg is None else n.fn_arg: named_inputs[n]
                 for n in self.needs
                 if isinstance(n, optional) and n in named_inputs
             }

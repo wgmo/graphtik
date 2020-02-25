@@ -16,38 +16,70 @@ class optional(str):
     received only if present in the `inputs` (when operation is invocated).
     The value of an optional is passed as a keyword argument to the underlying function.
 
+    :param fn_arg:
+        The arg-name this `optional` named-input corresponds to.
+
+        .. Note::
+            This mapping is needed only for `optionals` since other arguments
+            are passed by-position, not by-name.
+
+
     **Example**:
 
         >>> from graphtik import operation, compose, optional
 
-        >>> def myadd(a, b, c=0):
-        ...    return a + b + c
+        >>> def myadd(a, b=0):
+        ...    return a + b
 
-    Annotate ``c`` as optional argument (and notice it's default value ``0``)::
+    Annotate ``b`` as optional argument (and notice it's default value ``0``)::
 
         >>> graph = compose('mygraph',
-        ...     operation(name='myadd', needs=['a', 'b', optional('c')], provides='sum')(myadd)
+        ...     operation(name='myadd',
+        ...               needs=["a", optional("b")],
+        ...               provides="sum")(myadd)
         ... )
         >>> graph
         NetworkOperation('mygraph',
-                         needs=['a', 'b', optional('c')],
+                         needs=['a', optional('b')],
                          provides=['sum'],
                          x1 ops:
         ...
 
     The graph works both with and without ``c`` provided in the inputs:
 
-        >>> graph(a=5, b=2, c=4)['sum']
-        11
-        >>> graph(a=5, b=2)
-        {'a': 5, 'b': 2, 'sum': 7}
+        >>> graph(a=5, b=4)['sum']
+        9
+        >>> graph(a=5)
+        {'a': 5, 'sum': 5}
 
+    In case the name of the function arguments is different from the name in the
+    `inputs` (or just because the name in the inputs is not a valid argument-name),
+    you may *map* it with the 2nd argument of :class:`optional`:
+
+        >>> graph = compose('mygraph',
+        ...     operation(name='myadd',
+        ...               needs=['a', optional("quasi-real", "b")],
+        ...               provides="sum")(myadd)
+        ... )
+        >>> graph
+        NetworkOperation('mygraph', needs=['a', optional('quasi-real')], provides=['sum'], x1 ops:
+          +--FunctionalOperation(name='myadd', needs=['a', optional('quasi-real'-->'b')], provides=['sum'], fn='myadd'))
+        >>> graph.compute({"a": 5, "quasi-real": 4})['sum']
+        9
     """
 
-    __slots__ = ()  # avoid __dict__ on instances
+    __slots__ = ("fn_arg",)  # avoid __dict__ on instances
+
+    fn_arg: str
+
+    def __new__(cls, inp_key: str, fn_arg: str = None) -> "optional":
+        obj = str.__new__(cls, inp_key)
+        obj.fn_arg = fn_arg
+        return obj
 
     def __repr__(self):
-        return "optional('%s')" % self
+        inner = self if self.fn_arg is None else f"{self}'-->'{self.fn_arg}"
+        return f"optional('{inner}')"
 
 
 class vararg(str):
