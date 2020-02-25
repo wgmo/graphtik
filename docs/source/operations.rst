@@ -160,24 +160,8 @@ by creating an operation "builder pattern"::
    call once more.
 
 
-Modifiers on ``operation`` inputs and outputs
----------------------------------------------
-
-Certain modifiers are available to apply to input or output values in ``needs`` and ``provides``,
-for example, to designate optional inputs, or "ghost" sideffects inputs & outputs.
-These modifiers are available in the ``graphtik.modifiers`` module:
-
-Optionals
-^^^^^^^^^
-.. autoclass:: graphtik.modifiers.optional
-
-Varargs
-^^^^^^^
-.. autoclass:: graphtik.modifiers.vararg
-.. autoclass:: graphtik.modifiers.varargs
-
-Read also the example test-case in: :file:`test/test_op.py:test_varargs()`
-
-Sideffects
-^^^^^^^^^^
-.. autoclass:: graphtik.modifiers.sideffect
+Modifiers on `operation` `needs` and `provides`
+-----------------------------------------------
+.. automodule:: graphtik.modifiers
+   :members:
+   :noindex:

@@ -1,32 +1,29 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-This sub-module contains input/output modifiers that can be applied to
-arguments to ``needs`` and ``provides`` to let Graphtik know it should treat
-them differently.
+:term:`Modifiers` change the behavior of specific `needs` or `provides`.
+
+The `needs` and `provides` annotated with *modifiers* designate, for instance,
+:term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
 """
 import re
 
 
 class optional(str):
     """
-    An optional need signifies that the function's argument may not receive a value.
+    Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
-    Only input values in ``needs`` may be designated as optional using this modifier.
-    An ``operation`` will receive a value for an optional need only if if it is available
-    in the graph at the time of its invocation.
-    The ``operation``'s function should have a defaulted parameter with the same name
-    as the optional, and the input value will be passed as a keyword argument,
-    if it is available.
+    received only if present in the `inputs` (when operation is invocated).
+    The value of an optional is passed as a keyword argument to the underlying function.
 
-    Here is an example of an operation that uses an optional argument::
+    **Example**:
 
         >>> from graphtik import operation, compose, optional
 
         >>> def myadd(a, b, c=0):
         ...    return a + b + c
 
-    Designate c as an optional argument::
+    Annotate ``c`` as optional argument (and notice it's default value ``0``)::
 
         >>> graph = compose('mygraph',
         ...     operation(name='myadd', needs=['a', 'b', optional('c')], provides='sum')(myadd)
@@ -38,7 +35,7 @@ class optional(str):
                          x1 ops:
         ...
 
-    The graph works with and without `c` provided as input::
+    The graph works both with and without ``c`` provided in the inputs:
 
         >>> graph(a=5, b=2, c=4)['sum']
         11
@@ -55,20 +52,28 @@ class optional(str):
 
 class vararg(str):
     """
-    Like :class:`optional` but feeds as ONE OF the ``*args`` into the function (instead of ``**kwargs``).
+    Annotate :term:`optionals` `needs` to  be fed as op-function's ``*args`` when present in inputs.
 
-    For instance::
+    .. seealso::
+        Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
+        in the full sources of the project.
+
+    **Example**:
 
         >>> from graphtik import operation, compose, vararg
 
         >>> def addall(a, *b):
         ...    return a + sum(b)
 
-    Designate `b` & `c` as an `vararg` arguments::
+    Designate ``b`` & ``c`` as an `vararg` arguments:
 
-        >>> graph = compose('mygraph',
-        ...     operation(name='addall', needs=['a', vararg('b'), vararg('c')],
-        ...     provides='sum')(addall)
+        >>> graph = compose(
+        ...     'mygraph',
+        ...     operation(
+        ...               name='addall',
+        ...               needs=['a', vararg('b'), vararg('c')],
+        ...               provides='sum'
+        ...     )(addall)
         ... )
         >>> graph
         NetworkOperation('mygraph',
@@ -77,7 +82,7 @@ class vararg(str):
                          x1 ops:
           +--FunctionalOperation(name='addall', needs=['a', vararg('b'), vararg('c')], provides=['sum'], fn='addall'))
 
-    The graph works with and without any of `b` and `c` inputs::
+    The graph works with and without any of ``b`` or ``c`` inputs:
 
         >>> graph(a=5, b=2, c=4)['sum']
         11
@@ -96,7 +101,42 @@ class vararg(str):
 
 class varargs(str):
     """
-    An optional like :class:`vararg` feeds as MANY ``*args`` into the function (instead of ``**kwargs``).
+    Like :class:`vararg`, naming an :term:`optional <optionals>` *iterable* value in the inputs.
+
+    .. seealso::
+        Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
+        in the full sources of the project.
+
+    **Example**:
+
+        >>> from graphtik import operation, compose, vararg
+
+        >>> def enlist(a, *b):
+        ...    return [a] + list(b)
+
+        >>> graph = compose('mygraph',
+        ...     operation(name='enlist', needs=['a', varargs('b')],
+        ...     provides='sum')(enlist)
+        ... )
+        >>> graph
+        NetworkOperation('mygraph',
+                         needs=['a', optional('b')],
+                         provides=['sum'],
+                         x1 ops:
+          +--FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist'))
+
+    The graph works with or without `b` in the inputs:
+
+        >>> graph(a=5, b=[2, 20])['sum']
+        [5, 2, 20]
+        >>> graph(a=5)
+        {'a': 5, 'sum': [5]}
+        >>> graph(a=5, b=0xBAD)
+        Traceback (most recent call last):
+        ...
+        TypeError: 'int' object is not iterable
+
+
     """
 
     __slots__ = ()  # avoid __dict__ on instances
@@ -107,23 +147,24 @@ class varargs(str):
 
 class sideffect(str):
     """
-    A sideffect data-dependency participates in the graph but never given/asked in functions.
+    :term:`sideffects` dependencies participates in the graph but not exchanged with functions.
 
-    Both inputs & outputs in ``needs`` & ``provides`` may be designated as *sideffects*
-    using this modifier.  *Sideffects* work as usual while solving the graph but
-    they do not interact with the ``operation``'s function;  specifically:
+    Both `needs` & `provides` may be designated as *sideffects* using this modifier.
+    They work as usual while solving the graph (:term:`compilation`) but
+    they do not interact with the `operation`'s function;  specifically:
 
+    - input sideffects must exist in the :term:`inputs` for an operation to kick-in;
     - input sideffects are NOT fed into the function;
-    - output sideffects are NOT expected from the function.
-
-    .. info:
-        an ``operation`` with just a single *sideffect* output return no value at all,
-        but it would still be called for its side-effect only.
+    - output sideffects are NOT expected from the function;
+    - output sideffects are stored in the :term:`solution`.
 
     Their purpose is to describe operations that modify the internal state of
     some of their arguments ("side-effects").
-    A typical use case is to signify columns required to produce new ones in
-    pandas dataframes::
+
+    **Example**:
+
+    A typical use-case is to signify columns required to produce new ones in
+    pandas dataframes:
 
 
         >>> from graphtik import operation, compose, sideffect
@@ -132,7 +173,7 @@ class sideffect(str):
         >>> def addcolumns(df):
         ...    df['sum'] = df['a'] + df['b']
 
-    Designate `a`, `b` & `sum` column names as an sideffect arguments::
+    Designate ``a``, ``b`` & ``sum`` column names as an sideffect arguments:
 
         >>> graph = compose('mygraph',
         ...     operation(
@@ -151,15 +192,15 @@ class sideffect(str):
         0	5	2
         1	0	1
 
-    We didn't get the ``sum`` column because the `b` sideffect was unsatisfied.
-    We have to add its key to the inputs (with _any_ value)::
+    We didn't get the ``sum`` column because the ``b`` sideffect was unsatisfied.
+    We have to add its key to the inputs (with *any* value):
 
         >>> graph({'df': df, sideffect("df.b"): 0})['df']   # doctest: +SKIP
         	a	b	sum
         0	5	2	7
         1	0	1	1
 
-    Note that regular data in *needs* and *provides* do not match same-named *sideffects*.
+    Note that regular data in `needs` and `provides` do not match same-named `sideffects`.
     That is, in the following operation, the ``prices`` input is different from
     the ``sideffect(prices)`` output:
 
@@ -174,14 +215,14 @@ class sideffect(str):
                   provides=['sideffect(price)'], fn='upd_prices')
 
     .. note::
-        An ``operation`` with *sideffects* outputs only, have functions that return
+        An `operation` with *sideffects* outputs only, have functions that return
         no value at all (like the one above).  Such operation would still be called for
-        their side-effects.
+        their side-effects, if requested in `outputs`.
 
     .. tip::
         You may associate sideffects with other data to convey their relationships,
         simply by including their names in the string - in the end, it's just a string -
-        but no enforcement will happen from *graphtik*.
+        but no enforcement will happen from *graphtik*, like:
 
         >>> sideffect("price[sales_df]")
         'sideffect(price[sales_df])'

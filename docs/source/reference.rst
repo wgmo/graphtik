@@ -6,6 +6,7 @@ API Reference
 
      graphtik
      graphtik.op
+     graphtik.modifiers
      graphtik.netop
      graphtik.network
      graphtik.plot
@@ -18,6 +19,12 @@ Module: `op`
 .. automodule:: graphtik.op
      :members: Operation, reparse_operation_data
      :undoc-members:
+
+Module: `modifiers`
+====================
+
+.. automodule:: graphtik.modifiers
+     :members:
 
 Module: `netop`
 ====================

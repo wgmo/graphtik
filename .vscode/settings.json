@@ -1,4 +1,5 @@
 {
+    "python.pythonPath": ".venv/bin/python",
     "python.formatting.provider": "black",
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
@@ -6,9 +7,7 @@
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
-    "editor.formatOnPaste": true,
     "editor.formatOnSaveTimeout": 1500,
-    "python.pythonPath": "venv-py38/bin/python",
     "cSpell.words": [
         "Anagnostopoulos",
         "Arel",
@@ -94,6 +93,7 @@
         "pumpikano",
         "pydot",
         "pygraphkit",
+        "pylint",
         "pyplot",
         "pytest",
         "rebranded",
@@ -116,6 +116,7 @@
         "todos",
         "topo",
         "tristates",
+        "unsubscriptable",
         "upnext",
         "vals",
         "vararg",

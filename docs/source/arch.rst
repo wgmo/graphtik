@@ -193,19 +193,29 @@ Architecture
         across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     inputs
-        a dictionary of named input values given to a single `operation`, or to
-        a `netop`, fed into :meth:`.Operation.compute()` method.
+        The named input values that are fed into an `operation` (or `netop`)
+        through :meth:`.Operation.compute()` method according to its `needs`.
+
+        These values are either:
+
+        - given by the user to the outer `netop`, at the start of a `computation`, or
+        - derived from `solution` using *needs* as keys, during intermediate `execution`.
 
     outputs
-        A dictionary of computed values returned by a single `operation` or a `netop`
-        when method :meth:`.Operation.compute()` is called,
-        or the actual (*partial* or complete) `provides` returned by
-        some :class:`FunctionalOperation`.
+        The dictionary of computed values returned by an `operation` (or a `netop`)
+        matching its `provides`, when method :meth:`.Operation.compute()` is called.
 
-        All computed values are retained in it when no specific outputs requested,
-        to :meth:`.NetworkOperation.compute()`, that is, no `evictions` happens.
+        Those values are either:
 
-        A function may return `partial outputs`.
+        - retained in the `solution`, internally during `execution`, keyed by
+          the respective *provide*, or
+        - returned to user after the outer *netop* has finished `computation`.
+
+        When no specific outputs requested from a *netop*, the :meth:`.NetworkOperation.compute()`
+        method returns all intermediate `inputs` along with the *outputs*, that is,
+        no `evictions` happens.
+
+        An *operation* may return `partial outputs`.
 
     returns dictionary
         When an operation is marked with this flag, the underlying function is not
@@ -222,18 +232,30 @@ Architecture
         The :class:`.NetworkOperation` class holding a `network` of `operation`\s.
 
     needs
-        A list of names of the compulsory/optional values or `sideffects` an operation's
-        underlying callable requires to execute.
+        A list of names of the compulsory/`optionals` values or `sideffects` an `operation`'s
+        underlying callable requires to exist in the `inputs` during `execution`.
 
     provides
-        A list of names of the values produced when the `operation`'s
-        underlying callable executes.
+        A list of names for the values produced when the `operation`'s underlying callable
+        executes, to be stored into the `solution` during `execution`.
+
+    modifiers
+        Annotations on specific arguments of `needs` and/or `provides` such as
+        `optionals` & `sideffects` (see :mod:`graphtik.modifiers` module).
+
+    optionals
+        `Needs` corresponding either:
+
+        - to function arguments-with-defaults (annotated with :class:`.optional`), or
+        - to ``*args`` (annotated with :class:`.vararg` & :class:`.varargs`),
+
+        that do not hinder execution of the `operation` if absent from `inputs`.
 
     sideffects
         Fictive `needs` or `provides` not consumed/produced by the underlying function
         of an `operation`, annotated with :class:`.sideffect`.
-        A *sideffect* participates in the solution of the graph but is never
-        given/asked to/from functions.
+        A *sideffect* participates in the `compilation` of the graph, and is updated
+        into the `solution`, but is never given/asked to/from functions.
 
     prune
     pruning
