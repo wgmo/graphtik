@@ -5,13 +5,23 @@
 import abc
 import itertools as itt
 import logging
+import textwrap
 from collections import abc as cabc
 from collections import namedtuple
-from typing import Callable, Mapping, Tuple, Union
+from typing import Any, Callable, List, Mapping, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
-from .base import NO_RESULT, UNSET, Items, Plotter, aslist, astuple, jetsam
+from .base import (
+    NO_RESULT,
+    UNSET,
+    Items,
+    MultiValueError,
+    Plotter,
+    aslist,
+    astuple,
+    jetsam,
+)
 from .config import is_reschedule_operations, is_solid_true
 from .modifiers import optional, sideffect, vararg, varargs
 
@@ -267,6 +277,37 @@ class FunctionalOperation(Operation):
 
         return FunctionalOperation(**kw2)
 
+    def _prepare_args_error(
+        self,
+        exceptions: List[Tuple[Any, Exception]],
+        missing: List,
+        varargs_bad: List,
+        named_inputs: Mapping,
+    ) -> ValueError:
+        errors = [
+            f"Need({n}) failed due to: {type(nex).__name__}({nex})"
+            for n, nex in enumerate(exceptions, 1)
+        ]
+        ner = len(exceptions) + 1
+
+        if missing:
+            errors.append(f"{ner}. Missing compulsory needs{list(missing)}!")
+            ner += 1
+        if varargs_bad:
+            errors.append(
+                f"{ner}. Expected needs{list(varargs_bad)} to be non-str iterables!"
+            )
+        inputs = (
+            dict(named_inputs)
+            if log.isEnabledFor(logging.DEBUG)
+            else list(named_inputs)
+        )
+        errors.append(f"+++inputs: {inputs}")
+        errors.append(f"+++{self}")
+
+        msg = textwrap.indent("\n".join(errors), " " * 4)
+        raise MultiValueError(f"Failed preparing needs: \n{msg}", *exceptions)
+
     def _zip_results_with_provides(self, results, fn_expected: iset) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
         rescheduled = is_solid_true(is_reschedule_operations(), self.rescheduled)
@@ -384,65 +425,59 @@ class FunctionalOperation(Operation):
 
     def compute(self, named_inputs, outputs=None) -> dict:
         try:
-            try:
-                args = [
-                    ## Network expected to ensure all compulsory inputs exist,
-                    #  so no special handling for key errors here.
-                    #
-                    named_inputs[
-                        n
-                    ]  # Key-error here means `inputs` < compulsory `needs`.
-                    for n in self.needs
-                    if not isinstance(n, (optional, vararg, varargs, sideffect))
-                ]
-            except KeyError:
-                compulsory = iset(
-                    n
-                    for n in self.needs
-                    if not isinstance(n, (optional, vararg, varargs, sideffect))
-                )
-                raise ValueError(
-                    f"Missing compulsory needs{list(compulsory)}!"
-                    f"\n  inputs: {list(named_inputs)}\n  {self}"
-                ) from None
+            positional, vararg_vals = [], []
+            optionals = {}
+            errors, missing, varargs_bad = [], [], []
+            for n in self.needs:
+                try:
+                    if n not in named_inputs:
+                        if not isinstance(n, (optional, vararg, varargs, sideffect)):
+                            # It means `inputs` < compulsory `needs`.
+                            # Compilation should have ensured all compulsories existed,
+                            # but ..?
+                            ##
+                            missing.append(n)
+                        continue
 
-            args.extend(
-                named_inputs[n]
-                for n in self.needs
-                if isinstance(n, vararg) and n in named_inputs
-            )
+                    ## TODO: augment modifiers with "retrievers" from `inputs`.
+                    inp_value = named_inputs[n]
 
-            varargs_vals = [
-                n for n in self.needs if isinstance(n, varargs) and n in named_inputs
-            ]
-            try:
-                if any(isinstance(named_inputs[n], str) for n in varargs_vals):
-                    raise TypeError()
+                    if isinstance(n, optional):
+                        optionals[n if n.fn_arg is None else n.fn_arg] = inp_value
 
-                args.extend(nn for n in varargs_vals for nn in named_inputs[n])
-            except TypeError:
-                non_iterables = [
-                    n
-                    for n in varargs_vals
-                    if (
-                        isinstance(named_inputs[n], str)
-                        or not isinstance(named_inputs[n], cabc.Iterable)
+                    elif isinstance(n, vararg):
+                        vararg_vals.append(inp_value)
+
+                    elif isinstance(n, varargs):
+                        if isinstance(inp_value, str) or not isinstance(
+                            inp_value, cabc.Iterable
+                        ):
+                            varargs_bad.append(n)
+                        else:
+                            vararg_vals.extend(i for i in inp_value)
+
+                    elif isinstance(n, sideffect):
+                        pass  # ignored as function argument.
+
+                    else:
+                        positional.append(named_inputs[n])
+
+                except Exception as nex:
+                    log.debug(
+                        "Cannot prepare op(%s) need(%s) due to: %s",
+                        self.name,
+                        n,
+                        nex,
+                        exc_info=nex,
                     )
-                ]
-                raise ValueError(
-                    f"Expected needs{list(non_iterables)} to be non-str iterables!"
-                    f"\n  inputs: {dict(named_inputs)}\n  {self}"
-                ) from None
+                    errors.append((n, nex))
 
-            # Find any optional inputs in named_inputs.  Get only the ones that
-            # are present there, no extra `None`s.
-            optionals = {
-                n if n.fn_arg is None else n.fn_arg: named_inputs[n]
-                for n in self.needs
-                if isinstance(n, optional) and n in named_inputs
-            }
+            if errors or missing or varargs_bad:
+                raise self._prepare_args_error(
+                    errors, missing, varargs_bad, named_inputs
+                )
 
-            results_fn = self.fn(*args, **optionals)
+            results_fn = self.fn(*positional, *vararg_vals, **optionals)
 
             # TODO: rename op jetsam (real_)provides --> fn_expected
             provides = iset(
@@ -469,7 +504,8 @@ class FunctionalOperation(Operation):
                 "results_op",
                 operation="self",
                 args=lambda locs: {
-                    "args": locs.get("args"),
+                    "positional": locs.get("positional"),
+                    "varargs": locs.get("vararg_vals"),
                     "kwargs": locs.get("optionals"),
                 },
             )

@@ -13,6 +13,12 @@ Items = Union[Collection, str, None]
 log = logging.getLogger(__name__)
 
 
+class MultiValueError(ValueError):
+    def __str__(self):
+        """Assuming it has been called with ``MultiValueError(msg, ex1, ...) #"""
+        return str(self.args[0])  # pylint: disable=unsubscriptable-object
+
+
 class Token(str):
     """Guarantee equality, not(!) identity, across processes."""
 

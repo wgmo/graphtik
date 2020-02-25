@@ -166,9 +166,10 @@ class varargs(str):
         >>> graph(a=5, b=0xBAD)
         Traceback (most recent call last):
         ...
-        ValueError: Expected needs[varargs('b')] to be non-str iterables!
-          inputs: {'a': 5, 'b': 2989}
-          FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
+        graphtik.base.MultiValueError: Failed preparing needs:
+            1. Expected needs[varargs('b')] to be non-str iterables!
+            +++inputs: {'a': 5, 'b': 2989}
+            +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
     .. Attention::
         To avoid user mistakes, it does not accept strings (though iterables):
@@ -176,9 +177,10 @@ class varargs(str):
         >>> graph(a=5, b="mistake")
         Traceback (most recent call last):
         ...
-        ValueError: Expected needs[varargs('b')] to be non-str iterables!
-          inputs: {'a': 5, 'b': 'mistake'}
-          FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
+        graphtik.base.MultiValueError: Failed preparing needs:
+            1. Expected needs[varargs('b')] to be non-str iterables!
+            +++inputs: {'a': 5, 'b': 'mistake'}
+            +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
     """
 
