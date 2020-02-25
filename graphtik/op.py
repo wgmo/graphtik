@@ -402,7 +402,8 @@ class FunctionalOperation(Operation):
                     if not isinstance(n, (optional, vararg, varargs, sideffect))
                 )
                 raise ValueError(
-                    f"Missing compulsory needs{list(compulsory)}!\n  inputs: {list(named_inputs)}\n  {self}"
+                    f"Missing compulsory needs{list(compulsory)}!"
+                    f"\n  inputs: {list(named_inputs)}\n  {self}"
                 ) from None
 
             args.extend(
@@ -410,12 +411,28 @@ class FunctionalOperation(Operation):
                 for n in self.needs
                 if isinstance(n, vararg) and n in named_inputs
             )
-            args.extend(
-                nn
-                for n in self.needs
-                if isinstance(n, varargs) and n in named_inputs
-                for nn in named_inputs[n]
-            )
+
+            varargs_vals = [
+                n for n in self.needs if isinstance(n, varargs) and n in named_inputs
+            ]
+            try:
+                if any(isinstance(named_inputs[n], str) for n in varargs_vals):
+                    raise TypeError()
+
+                args.extend(nn for n in varargs_vals for nn in named_inputs[n])
+            except TypeError:
+                non_iterables = [
+                    n
+                    for n in varargs_vals
+                    if (
+                        isinstance(named_inputs[n], str)
+                        or not isinstance(named_inputs[n], cabc.Iterable)
+                    )
+                ]
+                raise ValueError(
+                    f"Expected needs{list(non_iterables)} to be non-str iterables!"
+                    f"\n  inputs: {dict(named_inputs)}\n  {self}"
+                ) from None
 
             # Find any optional inputs in named_inputs.  Get only the ones that
             # are present there, no extra `None`s.

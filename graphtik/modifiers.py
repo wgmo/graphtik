@@ -134,8 +134,19 @@ class varargs(str):
         >>> graph(a=5, b=0xBAD)
         Traceback (most recent call last):
         ...
-        TypeError: 'int' object is not iterable
+        ValueError: Expected needs[varargs('b')] to be non-str iterables!
+          inputs: {'a': 5, 'b': 2989}
+          FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
+    .. Attention::
+        To avoid user mistakes, it does not accept strings (though iterables):
+
+        >>> graph(a=5, b="mistake")
+        Traceback (most recent call last):
+        ...
+        ValueError: Expected needs[varargs('b')] to be non-str iterables!
+          inputs: {'a': 5, 'b': 'mistake'}
+          FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
     """
 
