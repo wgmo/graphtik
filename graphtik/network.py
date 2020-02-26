@@ -606,7 +606,7 @@ class ExecutionPlan(
             loglevel = logging.WARNING if is_endured else logging.DEBUG
             log.log(
                 loglevel,
-                "... (%s) %s op(%r) FAILED in %0.3fms, due to: %s(%s)",
+                "... (%s) %s op(%s) FAILED in %0.3fms, due to: %s(%s)",
                 solution.solid,
                 "*Enduring* " if is_endured else "",
                 op.name,
@@ -898,25 +898,31 @@ class Network(Plotter):
         - Invoked during constructor only (immutability).
         - Identities are based on the name of the operation, the names of the operation's needs,
           and the names of the data it provides.
+        - Adds needs, operation & provides, in that order.
 
         :param graph:
             the `networkx` graph to append to
         :param operation:
             operation instance to append
         """
-        # add nodes and edges to graph describing the data needs for this layer
+        ## Needs
+        #
+        needs = []
+        needs_edges = []
         for n in operation.needs:
-            kw = {}
+            nkw, ekw = {}, {}
             if isinstance(n, (optional, vararg, varargs)):
-                kw["optional"] = True
+                ekw["optional"] = True
             if isinstance(n, sideffect):
-                kw["sideffect"] = True
-                graph.add_node(_DataNode(n), sideffect=True)
-            graph.add_edge(_DataNode(n), operation, **kw)
-
+                ekw["sideffect"] = nkw["sideffect"] = True
+            needs.append((_DataNode(n), nkw))
+            needs_edges.append((_DataNode(n), operation, ekw))
+        graph.add_nodes_from(needs)
         graph.add_node(operation, **operation.node_props)
+        graph.add_edges_from(needs_edges)
 
-        # add nodes and edges to graph describing what this layer provides
+        ## Provides
+        #
         for n in operation.provides:
             kw = {}
             if isinstance(n, sideffect):
