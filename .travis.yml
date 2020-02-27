@@ -21,7 +21,7 @@ script:
   # Run doctests in latest Python; certainly not < PY3.6 due to unstable dicts.
   # Also give `-m 'slow or not slow'` since `not slow` adopted in `setup.cfg`.
   - |
-    if [[ "$TRAVIS_PYTHON_VERSION" = '3.7' ]]; then
+    if [[ "$TRAVIS_PYTHON_VERSION" = '3.8' ]]; then
       pytest --cov=graphtik -m 'slow or not slow' --log-level=DEBUG -v
     else
       # Undo configs in setup.cfg
@@ -39,6 +39,6 @@ deploy:
     repo: pygraphkit/graphtik
     branch: publish
     tags: true
-    python: 3.7
+    python: 3.8
 after_success:
   - codecov
