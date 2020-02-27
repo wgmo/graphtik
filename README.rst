@@ -22,7 +22,9 @@ It can be used as is to build machine learning pipelines for data science projec
 It should be extendable to act as the core for a custom ETL engine or
 a workflow-processor for interdependent files and processes.
 
-*Graphtik* sprang from `Graphkit`_ to experiment with Python 3.6+ features.
+.. Note::
+    *Graphtik* sprang from `Graphkit`_ (summer 2019, v1.2.2) to experiment with
+    Python 3.6+ features, but has diverged significantly with enhancements ever since.
 
 
 Quick start
