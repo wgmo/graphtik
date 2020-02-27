@@ -14,6 +14,22 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+v5.2.0 (27 Feb 2020, @ankostis): Map `needs` inputs --> args, SPELLCHECK
+========================================================================
++ FEAT(modifiers): :term:`optionals` and new modifier :class:`.arg` can now fetch values
+  from :term:`inputs` into differently-named arguments of operation functions.
+
+  + refact: decouple `varargs` from `optional` modifiers hierarchy.
+
++ REFACT(OP): preparation of NEEDS --> function-args happens *once*  for each
+  argument, allowing to report all errors at once.
++ feat(base): +MultiValueError exception class.
++ DOC(modifiers,arch): modifiers were not included in "API reference", nor
+  in the glossary sections.
++ FIX: spell-check everything, and add all custom words in the *VSCode* settings file
+  :file:`.vscode.settings.json`.
+
+
 v5.1.0 (22 Jan 2020, @ankostis): accept named-tuples/objects `provides`
 =======================================================================
 + ENH(OP): flag `returns_dict` handles also *named-tuples* & *objects* (``__dict__``).
