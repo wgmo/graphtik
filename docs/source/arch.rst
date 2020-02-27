@@ -211,8 +211,8 @@ Architecture
           the respective *provide*, or
         - returned to user after the outer *netop* has finished `computation`.
 
-        When no specific outputs requested from a *netop*, the :meth:`.NetworkOperation.compute()`
-        method returns all intermediate `inputs` along with the *outputs*, that is,
+        When no specific outputs requested from a *netop*, :meth:`.NetworkOperation.compute()`
+        returns all intermediate `inputs` along with the *outputs*, that is,
         no `evictions` happens.
 
         An *operation* may return `partial outputs`.
@@ -225,19 +225,37 @@ Architecture
     operation
         Either the abstract notion of an action with specified `needs` and `provides`,
         or the concrete wrapper :class:`.FunctionalOperation` for arbitrary functions
-        (any :class:`callable`).
+        (any :class:`callable`), that feeds on `inputs` and update `outputs`,
+        from/to `solution`, or given-by/returned-to the user by a `netop`.
+
+        The distinction between *needs*/*provides* and *inputs*/*outputs* is akin to
+        function *parameters* and *arguments* during define-time and run-time.
 
     netop
     network operation
         The :class:`.NetworkOperation` class holding a `network` of `operation`\s.
 
     needs
-        A list of names of the compulsory/`optionals` values or `sideffects` an `operation`'s
-        underlying callable requires to exist in the `inputs` during `execution`.
+        A list of (positionally ordered) names of the data needed by an `operation`
+        to receive as `inputs`, roughly corresponding to the arguments of
+        the underlying callable.  The corresponding data-values will be extracted
+        from `solution` (or given by the user) when :meth:`.Operation.compute()`
+        is called during `execution`.
+
+        `Modifiers` may annotate certain names as `optionals`, `sideffects`,
+        or map them to differently named function arguments.
+
+        The `graph` is laid out by matching the *needs* & `provides` of all *operations*.
 
     provides
-        A list of names for the values produced when the `operation`'s underlying callable
-        executes, to be stored into the `solution` during `execution`.
+        A list of names to be zipped with the data-values produced when the `operation`'s
+        underlying callable executes.  The resulting `outputs` dictionary will be
+        stored into the `solution` or returned to the user after :meth:`.Operation.compute()`
+        is called during `execution`.
+
+        `Modifiers` may annotate certain names as `sideffects`.
+
+        The `graph` is laid out by matching the `needs` & *provides* of all *operations*.
 
     modifiers
         Annotations on specific arguments of `needs` and/or `provides` such as

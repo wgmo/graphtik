@@ -109,9 +109,9 @@ class FunctionalOperation(Operation):
     An :term:`operation` performing a callable (ie a function, a method, a
     lambda).
 
-    .. attribute:: provides
+    :param provides:
         Value names this operation provides (including aliases/sideffects).
-    .. attribute:: real_provides
+    :param real_provides:
         Value names the underlying function provides (without aliases, with(!) sideffects).
 
         FIXME: `real_provides` not sure what it does with sideffects
@@ -140,6 +140,8 @@ class FunctionalOperation(Operation):
     ):
         """
         Build a new operation out of some function and its requirements.
+
+        See :class:`.operation` for the full documentation of parameters.
 
         :param name:
             a name for the operation (e.g. `'conv1'`, `'sum'`, etc..);
@@ -526,13 +528,19 @@ class operation:
     :param str name:
         The name of the operation in the computation graph.
     :param needs:
-        Names of input data objects this operation requires.  These should
-        correspond to the ``args`` of ``fn``.
+        The list of (positionally ordered) names of the data needed by the `operation`
+        to receive as :term:`inputs`, roughly corresponding to the arguments of
+        the underlying `fn`.
+
+        See also :term:`needs` & :term:`modifiers`.
     :param provides:
-        Names of output data objects this operation provides.
+        Names of output data this operation provides, which must correspond
+        to the returned values of the `fn`.
         If more than one given, those must be returned in an iterable,
-        unless `returns_dict` is true, in which case a dictionary with as many
-        elements must be returned
+        unless `returns_dict` is true, in which case a dictionary with (at least)
+        as many elements must be returned.
+
+        See also :term:`provides` & :term:`modifiers`.
     :param aliases:
         an optional mapping of `provides` to additional ones
     :param rescheduled:
