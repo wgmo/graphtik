@@ -9,22 +9,69 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 import re
 
 
-class optional(str):
+class arg(str):
+    """
+    Annotate a :term:`needs` to map from its name in the `inputs` to a different argument-name.
+
+    :param fn_arg:
+        The argument-name corresponding to this named-input.
+
+        .. Note::
+            This extra mapping argument is needed either for `optionals` or
+            for functions with keywords-only arguments (like ``def func(*, foo, bar): ...``),
+            since `inputs`` are normally fed into functions by-position, not by-name.
+
+    **Example:**
+
+    In case the name of the function arguments is different from the name in the
+    `inputs` (or just because the name in the `inputs` is not a valid argument-name),
+    you may *map* it with the 2nd argument of :class:`.arg` (or :class:`.optional`):
+
+        >>> from graphtik import operation, compose, arg
+
+        >>> def myadd(a, *, b):
+        ...    return a + b
+
+        >>> graph = compose('mygraph',
+        ...     operation(name='myadd',
+        ...               needs=['a', arg("name-in-inputs", "b")],
+        ...               provides="sum")(myadd)
+        ... )
+        >>> graph
+        NetworkOperation('mygraph', needs=['a', 'name-in-inputs'], provides=['sum'], x1 ops:
+          +--FunctionalOperation(name='myadd',
+                                 needs=['a',
+                                 arg('name-in-inputs'-->'b')],
+                                 provides=['sum'],
+                                 fn='myadd'))
+        >>> graph.compute({"a": 5, "name-in-inputs": 4})['sum']
+        9
+
+    """
+
+    __slots__ = ("fn_arg",)  # avoid __dict__ on instances
+
+    fn_arg: str
+
+    def __new__(cls, inp_key: str, fn_arg: str = None) -> "optional":
+        obj = str.__new__(cls, inp_key)
+        obj.fn_arg = fn_arg
+        return obj
+
+    def __repr__(self):
+        inner = self if self.fn_arg is None else f"{self}'-->'{self.fn_arg}"
+        return f"arg('{inner}')"
+
+
+class optional(arg):
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
     received only if present in the `inputs` (when operation is invocated).
     The value of an optional is passed as a keyword argument to the underlying function.
 
-    :param fn_arg:
-        The arg-name this `optional` named-input corresponds to.
 
-        .. Note::
-            This mapping is needed only for `optionals` since other arguments
-            are passed by-position, not by-name.
-
-
-    **Example**:
+    **Example:**
 
         >>> from graphtik import operation, compose, optional
 
@@ -52,30 +99,7 @@ class optional(str):
         >>> graph(a=5)
         {'a': 5, 'sum': 5}
 
-    In case the name of the function arguments is different from the name in the
-    `inputs` (or just because the name in the inputs is not a valid argument-name),
-    you may *map* it with the 2nd argument of :class:`optional`:
-
-        >>> graph = compose('mygraph',
-        ...     operation(name='myadd',
-        ...               needs=['a', optional("quasi-real", "b")],
-        ...               provides="sum")(myadd)
-        ... )
-        >>> graph
-        NetworkOperation('mygraph', needs=['a', optional('quasi-real')], provides=['sum'], x1 ops:
-          +--FunctionalOperation(name='myadd', needs=['a', optional('quasi-real'-->'b')], provides=['sum'], fn='myadd'))
-        >>> graph.compute({"a": 5, "quasi-real": 4})['sum']
-        9
     """
-
-    __slots__ = ("fn_arg",)  # avoid __dict__ on instances
-
-    fn_arg: str
-
-    def __new__(cls, inp_key: str, fn_arg: str = None) -> "optional":
-        obj = str.__new__(cls, inp_key)
-        obj.fn_arg = fn_arg
-        return obj
 
     def __repr__(self):
         inner = self if self.fn_arg is None else f"{self}'-->'{self.fn_arg}"
@@ -90,7 +114,7 @@ class vararg(str):
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
         in the full sources of the project.
 
-    **Example**:
+    **Example:**
 
         >>> from graphtik import operation, compose, vararg
 
@@ -139,7 +163,7 @@ class varargs(str):
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
         in the full sources of the project.
 
-    **Example**:
+    **Example:**
 
         >>> from graphtik import operation, compose, vararg
 
@@ -206,7 +230,7 @@ class sideffect(str):
     Their purpose is to describe operations that modify the internal state of
     some of their arguments ("side-effects").
 
-    **Example**:
+    **Example:**
 
     A typical use-case is to signify columns required to produce new ones in
     pandas dataframes:

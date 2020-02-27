@@ -23,7 +23,7 @@ from .base import (
     jetsam,
 )
 from .config import is_reschedule_operations, is_solid_true
-from .modifiers import optional, sideffect, vararg, varargs
+from .modifiers import arg, optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
 
@@ -426,7 +426,7 @@ class FunctionalOperation(Operation):
     def compute(self, named_inputs, outputs=None) -> dict:
         try:
             positional, vararg_vals = [], []
-            optionals = {}
+            kwargs = {}
             errors, missing, varargs_bad = [], [], []
             for n in self.needs:
                 try:
@@ -442,8 +442,8 @@ class FunctionalOperation(Operation):
                     ## TODO: augment modifiers with "retrievers" from `inputs`.
                     inp_value = named_inputs[n]
 
-                    if isinstance(n, optional):
-                        optionals[n if n.fn_arg is None else n.fn_arg] = inp_value
+                    if isinstance(n, arg):  # includes `optionals`
+                        kwargs[n if n.fn_arg is None else n.fn_arg] = inp_value
 
                     elif isinstance(n, vararg):
                         vararg_vals.append(inp_value)
@@ -477,7 +477,7 @@ class FunctionalOperation(Operation):
                     errors, missing, varargs_bad, named_inputs
                 )
 
-            results_fn = self.fn(*positional, *vararg_vals, **optionals)
+            results_fn = self.fn(*positional, *vararg_vals, **kwargs)
 
             # TODO: rename op jetsam (real_)provides --> fn_expected
             provides = iset(
@@ -506,7 +506,7 @@ class FunctionalOperation(Operation):
                 args=lambda locs: {
                     "positional": locs.get("positional"),
                     "varargs": locs.get("vararg_vals"),
-                    "kwargs": locs.get("optionals"),
+                    "kwargs": locs.get("kwargs"),
                 },
             )
             raise
