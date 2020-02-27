@@ -17,7 +17,7 @@ Module: `op`
 ====================
 
 .. automodule:: graphtik.op
-     :members: Operation, reparse_operation_data
+     :members:
      :undoc-members:
 
 Module: `modifiers`

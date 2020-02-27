@@ -23,6 +23,7 @@ use the ``operation`` builder class:
 .. autoclass:: graphtik.operation
    :members:  withset, __call__
    :special-members:
+   :noindex:
 
 Operations are just functions
 ------------------------------
