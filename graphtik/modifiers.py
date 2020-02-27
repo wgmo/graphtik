@@ -99,6 +99,18 @@ class optional(arg):
         >>> graph(a=5)
         {'a': 5, 'sum': 5}
 
+    Like :class:`.arg` you may map input-name to a different function-argument:
+
+        >>> graph = compose('mygraph',
+        ...     operation(name='myadd',
+        ...               needs=['a', optional("quasi-real", "b")],
+        ...               provides="sum")(myadd)
+        ... )
+        >>> graph
+        NetworkOperation('mygraph', needs=['a', optional('quasi-real')], provides=['sum'], x1 ops:
+          +--FunctionalOperation(name='myadd', needs=['a', optional('quasi-real'-->'b')], provides=['sum'], fn='myadd'))
+        >>> graph.compute({"a": 5, "quasi-real": 4})['sum']
+        9
     """
 
     def __repr__(self):
