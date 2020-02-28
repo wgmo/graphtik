@@ -14,6 +14,14 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+v5.2.1 (28 Feb 2020, @ankostis): fix plan cache on skip-evictions, PY3.8 TCs, docs
+==================================================================================
++ FIX(net): Execution-plans were cached also the transient :func:`.is_skip_evictions()`
+  :term:`configurations` (instead of just whether no-outputs were asked).
++ doc(readme): explain "fork" status in the opening.
++ ENH(travis): run full tests from Python-3.7--> Python-3.8.
+
+
 v5.2.0 (27 Feb 2020, @ankostis): Map `needs` inputs --> args, SPELLCHECK
 ========================================================================
 + FEAT(modifiers): :term:`optionals` and new modifier :class:`.arg` can now fetch values
