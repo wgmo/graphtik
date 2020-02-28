@@ -431,7 +431,7 @@ def _do_task(task):
 
 
 class ExecutionPlan(
-    namedtuple("ExecPlan", "net needs provides dag steps evict"), Plotter
+    namedtuple("ExecPlan", "net needs provides dag steps asked_outs"), Plotter
 ):
     """
     A pre-compiled list of operation steps that can :term:`execute` for the given inputs/outputs.
@@ -457,9 +457,10 @@ class ExecutionPlan(
         The tuple of operation-nodes & *instructions* needed to evaluate
         the given inputs & asked outputs, free memory and avoid overwritting
         any given intermediate inputs.
-    .. attribute:: evict
+    .. attribute:: asked_outs
 
-        when false, keep all inputs & outputs, and skip prefect-evictions check.
+        When true, :term:`evictions` may kick in (unless disabled by :term:`configurations`),
+        otherwise, *evictions* (along with prefect-evictions check) are skipped.
     """
 
     def _build_pydot(self, **kws):
@@ -779,11 +780,12 @@ class ExecutionPlan(
             # If certain outputs asked, put relevant-only inputs in solution,
             # otherwise, keep'em all.
             #
+            evict = self.asked_outs and not is_skip_evictions()
             # Note: clone and keep original `inputs` in the 1st chained-map.
             solution = Solution(
                 self,
                 {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
-                if self.evict
+                if evict
                 else named_inputs,
             )
 
@@ -792,7 +794,7 @@ class ExecutionPlan(
                 solution.solid,
                 name,
                 ", in parallel" if in_parallel else "",
-                ", evicting" if self.evict else "",
+                ", evicting" if evict else "",
                 list(solution),
                 self,
             )
@@ -816,7 +818,7 @@ class ExecutionPlan(
             # Validate eviction was perfect
             #
             assert (
-                not self.evict
+                not evict
                 # It is a proper subset when not all outputs calculated.
                 or set(solution).issubset(self.provides)
             ), f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
@@ -1234,7 +1236,7 @@ class Network(Plotter):
                 provides,
                 pruned_dag,
                 tuple(steps),
-                evict=not (is_skip_evictions() or outputs is None),
+                asked_outs=outputs is not None,
             )
 
             self._cached_plans[cache_key] = plan
