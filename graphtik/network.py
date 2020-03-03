@@ -833,7 +833,10 @@ class ExecutionPlan(
                 not evict
                 # It is a proper subset when not all outputs calculated.
                 or set(solution).issubset(self.provides)
-            ), f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
+            ), (
+                f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
+                ' \n Did you bypass "impossible-outputs" validation?'
+            )
 
             return solution
         except Exception as ex:
@@ -1087,6 +1090,9 @@ class Network(Plotter):
             outputs = iset(
                 n for n in self.provides if n not in inputs and n in pruned_dag
             )
+        else:
+            # filter-out from new `provides` if pruned.
+            outputs = iset(n for n in outputs if n in pruned_dag)
 
         assert inputs is not None or isinstance(inputs, abc.Collection)
         assert outputs is not None or isinstance(outputs, abc.Collection)
