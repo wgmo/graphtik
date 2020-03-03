@@ -511,6 +511,23 @@ def test_pruning_raises_for_bad_output(samplenet):
     assert exinfo.match("sum4")
 
 
+def test_impossible_outputs():
+    netop = compose(
+        "test_net",
+        operation(name="op1", needs=["a"], provides="aa")(identity),
+        operation(name="op2", needs=["aa", "bb"], provides="aabb")(identity),
+    )
+    with pytest.raises(ValueError) as exinfo:
+        netop.plot("t.pdf")
+        netop.compute({"a": 1,}, ["aabb"])
+    assert exinfo.match("Impossible outputs")
+
+    with pytest.raises(ValueError) as exinfo:
+        netop.plot("t.pdf")
+        netop.compute({"a": 1,}, ["aa", "aabb"])
+    assert exinfo.match("Impossible outputs")
+
+
 def test_pruning_not_overrides_given_intermediate(exemethod):
     # Test #25: v1.2.4 overwrites intermediate data when no output asked
     pipeline = compose(
