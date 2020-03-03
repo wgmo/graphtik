@@ -768,7 +768,7 @@ class ExecutionPlan(
 
             ## Choose a method of execution
             #
-            in_parallel = is_parallel_tasks or any(
+            in_parallel = is_parallel_tasks() or any(
                 op.parallel for op in yield_ops(self.steps)
             )
             executor = (
