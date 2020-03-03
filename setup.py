@@ -17,6 +17,7 @@ with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
 
 plot_deps = ["matplotlib", "pydot"]  # to test plot  # to test plot
 test_deps = plot_deps + ["pytest", "pytest-cov", "pytest-sphinx", "dill"]
+dev_deps = test_deps + ["sphinx", "black", "pylint", "mypy"]
 
 setup(
     name="graphtik",
@@ -48,7 +49,7 @@ setup(
         # May help for pickling `parallel` tasks.
         # See :term:`marshalling` and :func:`set_marshal_tasks()` configuration.
         "dill": ["dill"],
-        "all": plot_deps + test_deps + ["sphinx"],
+        "all": dev_deps,
     },
     tests_require=test_deps,
     license="Apache-2.0",
