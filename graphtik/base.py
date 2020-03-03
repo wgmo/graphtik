@@ -335,7 +335,6 @@ class Plotter(abc.ABC):
         >>> dot = netop.plot(solution=solution);   # just get the `pydot.Dot` object, renderable in Jupyter
         >>> print(dot)
         digraph G {
-            URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg";
             fontname=italic;
             label=netop;
             a [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];

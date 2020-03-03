@@ -197,12 +197,7 @@ def build_pydot(
             a = a.name
         return quote_dot_kws(a)
 
-    dot = pydot.Dot(
-        graph_type="digraph",
-        label=quote_dot_kws(title),
-        fontname="italic",
-        URL=legend_url or None,
-    )
+    dot = pydot.Dot(graph_type="digraph", label=quote_dot_kws(title), fontname="italic")
 
     # draw nodes
     for nx_node in graph.nodes:
@@ -311,6 +306,17 @@ def build_pydot(
                 splines=True,
             )
             dot.add_edge(edge)
+
+    if legend_url:
+        dot.add_node(
+            pydot.Node(
+                name="legend",
+                shape="component",
+                style="filled",
+                fill_color="yellow",
+                URL=legend_url,
+            )
+        )
 
     return dot
 
