@@ -1,6 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """ Plotting of graphtik graphs."""
+import html
 import inspect
 import io
 import json
@@ -138,6 +139,32 @@ def _report_unmatched_user_props(user_props, kind):
         log.warning("Unmatched `%s_props`:\n  +--%s", kind, unmatched)
 
 
+def quote_dot_word(word: Any):
+    """
+    Workaround *pydot* parsing of node-id & labels by encoding as HTML.
+
+    - `pydot` library does not quote DOT-keywords anywhere (pydot#111).
+    - Char ``:`` denote port/compass-points and break IDs (pydot#224).
+    - Non-strings are not quoted_if_necessary by pydot.
+
+    .. Attention::
+        It does not correctly handle ``ID:port:compass-point`` format.
+
+    See https://www.graphviz.org/doc/info/lang.html)
+    """
+    if word is None:
+        return word
+    word = str(word)
+    if not word:
+        return word
+
+    if word[0] != "<" or word[-1] != ">":
+        word = f"<{html.escape(word)}>"
+    word = word.replace(":", "&#58;")
+
+    return word
+
+
 def build_pydot(
     graph,
     steps=None,
@@ -189,15 +216,14 @@ def build_pydot(
         for cluster in new_clusters.values():
             dot.add_subgraph(cluster)
 
-    def quote_dot_kws(word):
-        return "'%s'" % word if word in pydot.dot_keywords else word
-
     def get_node_name(a):
         if isinstance(a, Operation):
             a = a.name
-        return quote_dot_kws(a)
+        return quote_dot_word(a)
 
-    dot = pydot.Dot(graph_type="digraph", label=quote_dot_kws(title), fontname="italic")
+    dot = pydot.Dot(
+        graph_type="digraph", label=quote_dot_word(title), fontname="italic"
+    )
 
     # draw nodes
     for nx_node in graph.nodes:
@@ -226,7 +252,7 @@ def build_pydot(
                 ## NOTE: SVG tooltips not working without URL:
                 #  https://gitlab.com/graphviz/graphviz/issues/1425
                 kw["tooltip"] = str(solution.get(nx_node))
-            node = pydot.Node(name=quote_dot_kws(nx_node), shape=shape, **kw)
+            node = pydot.Node(name=quote_dot_word(nx_node), shape=shape, **kw,)
         else:  # Operation
             kw = {"fontname": "italic", "tooltip": str(nx_node)}
 
@@ -245,8 +271,9 @@ def build_pydot(
                 kw["URL"] = f"file://{inspect.getfile(nx_node.fn)}"
             except Exception as ex:
                 log.debug("Ignoring error while inspecting file of %s: %s", nx_node, ex)
+
             node = pydot.Node(
-                name=quote_dot_kws(nx_node.name),
+                name=quote_dot_word(nx_node.name),
                 shape="oval",
                 ## NOTE: Jupyter lab is blocking local-urls (e.g. on SVGs).
                 **kw,

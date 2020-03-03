@@ -4,6 +4,7 @@
 import abc
 import sys
 from operator import add
+from textwrap import dedent
 
 import pytest
 
@@ -216,3 +217,32 @@ def test_link_to_legend(pipeline):
     dot = str(pipeline.plot(legend_url=url))
     assert build_pydot.__defaults__[-1] not in dot
     assert url in dot
+
+
+def test_node_quoting():
+    dot_str = str(
+        compose(
+            "graph",
+            operation(
+                name="node", needs=["edge", "digraph: strict"], provides=["<graph>"]
+            )(add),
+        ).plot()
+    )
+    print(dot_str)
+    exp = dedent(
+        """\
+        digraph G {
+        fontname=italic;
+        label=<graph>;
+        <edge> [shape=invhouse];
+        <digraph&#58; strict> [shape=invhouse];
+        <node> [fontname=italic, shape=oval, tooltip="FunctionalOperation(name='node', needs=['edge', 'digraph: strict'], provides=['<graph>'], fn='add')"];
+        <graph> [shape=house];
+        <edge> -> <node>  [splines=ortho];
+        <digraph&#58; strict> -> <node>  [splines=ortho];
+        <node> -> <graph>  [splines=ortho];
+        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fill_color=yellow, shape=component, style=filled];
+        }
+        """
+    )
+    assert dot_str == exp

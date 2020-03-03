@@ -336,8 +336,8 @@ class Plotter(abc.ABC):
         >>> print(dot)
         digraph G {
             fontname=italic;
-            label=netop;
-            a [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
+            label=<netop>;
+            <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
         ...
 
         """
