@@ -4,7 +4,8 @@ Graphtik Changelog
 
 TODOs
 %%%%%
-See :gg:`1`.
++ See :gg:`1`.
+
 
 GitHub Releases
 %%%%%%%%%%%%%%%
@@ -13,6 +14,20 @@ https://github.com/pygraphkit/graphtik/releases
 
 Changelog
 %%%%%%%%%
+
+v5.3.0 (03 Mar 2020, @ankostis): stuck in PARALLEL, fix Impossible Outs, plot quoting, legend node
+==================================================================================================
++ FIX(NET): PARALLEL was ALWAYS enabled.
++ FIX(PLOT): workaround `pydot` parsing of node-ID & labels (see `pydot#111
+  <https://github.com/pydot/pydot/issues/111>`_ about DOT-keywords & `pydot#224
+  <https://github.com/pydot/pydot/issues/224>`_ about colons ``:``) by converting
+  IDs to HTML-strings;
+  additionally, this project did not follow `Graphviz` grammatical-rules for IDs.
++ FIX(NET): impossible outs (outputs that cannot be produced from given inputs)
+  were not raised!
++ enh(plot): clicking the background of a diagram would link to the legend url,
+  which was annoying; replaced with a separate "legend" node.
+
 
 v5.2.1 (28 Feb 2020, @ankostis): fix plan cache on skip-evictions, PY3.8 TCs, docs
 ==================================================================================
