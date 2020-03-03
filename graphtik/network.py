@@ -29,9 +29,16 @@ from .config import (
 from .modifiers import optional, sideffect, vararg, varargs
 from .op import Operation
 
+NodePredicate = Callable[[Any, Mapping], bool]
+
+#: If this logger is *eventually* DEBUG-enabled,
+#: the string-representation of network-objects (network, plan, solution)
+#: is augmented wit children's details.
 log = logging.getLogger(__name__)
 
-NodePredicate = Callable[[Any, Mapping], bool]
+
+def _isDebugLogging():
+    return log.isEnabledFor(logging.DEBUG)
 
 
 class AbortedException(Exception):
@@ -173,6 +180,7 @@ class Solution(ChainMap, Plotter):
         # assert next(iter(dag.edges))[0] == next(iter(plan.dag.edges))[0]:
 
     def __repr__(self):
+        # TODO: augment Solution.__repr__() when DEBUG-log enabled.
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
         return f"{{{items}}}"
 
@@ -483,7 +491,11 @@ class ExecutionPlan(
     def __repr__(self):
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
-        steps = "".join(f"\n  +--{s}" for s in self.steps)
+        steps = (
+            "".join(f"\n  +--{s}" for s in self.steps)
+            if _isDebugLogging()
+            else ", ".join(str(getattr(s, "name", s)) for s in self.steps)
+        )
         return f"ExecutionPlan(needs={needs}, provides={provides}, x{len(self.steps)} steps:{steps})"
 
     def validate(self, inputs: Items, outputs: Items):
@@ -677,7 +689,7 @@ class ExecutionPlan(
                             )
                         )
                     ):
-                        if log.isEnabledFor(logging.DEBUG):
+                        if _isDebugLogging():
                             log.debug(
                                 "... (%s) evicting '%s' from solution%s.",
                                 solution.solid,
@@ -690,7 +702,7 @@ class ExecutionPlan(
             if not upnext:
                 break
 
-            if log.isEnabledFor(logging.DEBUG):
+            if _isDebugLogging():
                 log.debug(
                     "+++ (%s) Parallel batch%s on solution%s.",
                     solution.solid,
@@ -806,7 +818,7 @@ class ExecutionPlan(
 
                 ## Log cumulative operations elapsed time.
                 #
-                if log.isEnabledFor(logging.DEBUG):
+                if _isDebugLogging():
                     elapsed = sum(solution.elapsed_ms.values())
                     log.debug(
                         "=== (%s) Completed netop(%s) in %0.3fms.",
@@ -881,8 +893,13 @@ class Network(Plotter):
         self._cached_plans = {}
 
     def __repr__(self):
-        steps = [f"\n  +--{s}" for s in self.graph.nodes]
-        return f"Network({''.join(steps)})"
+        ops = list(yield_ops(self.graph.nodes))
+        steps = (
+            [f"\n  +--{s}" for s in self.graph.nodes]
+            if _isDebugLogging()
+            else ", ".join(n.name for n in ops)
+        )
+        return f"Network(x{len(self.graph.nodes)} nodes, x{len(ops)} ops: {''.join(steps)})"
 
     def _build_pydot(self, **kws):
         from .plot import build_pydot

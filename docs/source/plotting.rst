@@ -86,7 +86,14 @@ Errors & debugging
 Graphs may become arbitrary deep.  Launching a debugger-session to inspect
 deeply nested stacks is notoriously hard
 
-As a workaround, when some operation fails, the original exception gets annotated
+As a workaround, you may increase the logging verbosity.
+
+.. tip::
+   The various :mod:`.network` objects print augmented string-representations
+   when :data:`graphtik.network.log` :class:`~logging.Logger` is *eventually*
+   DEBUG-enabled.
+
+Additionally, when some operation fails, the original exception gets annotated
 with the following properties, as a debug aid:
 
 >>> from graphtik import compose, operation
@@ -103,7 +110,7 @@ with the following properties, as a debug aid:
 ...     pprint(ex.jetsam)
 {'aliases': None,
  'args': {'kwargs': {}, 'positional': [None], 'varargs': []},
- 'network': Network(
+ 'network': Network(x3 nodes, x1 ops:
     +--a
     +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')
     +--foo),
