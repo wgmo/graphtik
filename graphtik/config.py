@@ -176,5 +176,5 @@ Enable/disable globally :term:`rescheduling` for operations returning only *part
 ."""
 
 
-def is_solid_true(*tristates, default=False):
+def is_solid_true(*tristates, default=False): 
     return first(tristates, default=default, key=lambda i: i is not None)
