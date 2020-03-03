@@ -33,7 +33,7 @@ NodePredicate = Callable[[Any, Mapping], bool]
 
 #: If this logger is *eventually* DEBUG-enabled,
 #: the string-representation of network-objects (network, plan, solution)
-#: is augmented wit children's details.
+#: is augmented with children's details.
 log = logging.getLogger(__name__)
 
 

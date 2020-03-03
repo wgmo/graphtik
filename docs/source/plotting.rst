@@ -171,9 +171,3 @@ Of course you may use many of the above "jetsam" values when plotting.
    with the internal state of plan/operation often renders a debugger session
    unnecessary.  But since the state of the annotated values might be incomplete,
    you may not always avoid one.
-
-
-Execution internals
--------------------
-.. automodule:: graphtik.network
-   :noindex:
