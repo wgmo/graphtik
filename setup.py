@@ -22,7 +22,7 @@ dev_deps = test_deps + ["sphinx", "black", "pylint", "mypy"]
 setup(
     name="graphtik",
     version=version,
-    description="Lightweight computation graphs for Python",
+    description="A lightweight Python-3.6+ lib for solving & executing graphs of functions",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Kostis Anagnostopoulos, Huy Nguyen, Arel Cordero, Pierre Garrigues, Rob Hess, "
