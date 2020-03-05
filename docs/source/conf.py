@@ -51,6 +51,10 @@ extensions = [
     "sphinx.ext.intersphinx",
 ]
 
+## Prevent Sphinx from doctesting python-modules doctests,
+# they will be checked separately with *pytest*.
+doctest_test_doctest_blocks = ""
+
 extlinks = {
     "gh": ("https://github.com/yahoo/graphkit/issues/%s", "yahoo#"),
     "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#"),
