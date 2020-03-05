@@ -65,6 +65,8 @@ try:
 except Exception:
     git_commit = None
 
+github_slug = "pygraphkit/graphtik"
+
 
 def linkcode_resolve(domain, info):
     """Produce URLs to GitHub sources, for ``sphinx.ext.linkcode``"""
@@ -77,23 +79,38 @@ def linkcode_resolve(domain, info):
     item = importlib.import_module(modname)
     filename = modname.replace(".", "/")
     if git_commit:
-        uri = f"https://github.com/pygraphkit/graphtik/blob/{git_commit}/{filename}.py"
+        uri = f"https://github.com/{github_slug}/blob/{git_commit}/{filename}.py"
     else:
-        uri = f"https://github.com/pygraphkit/graphtik/blob/master/{filename}.py"
+        uri = f"https://github.com/{github_slug}/blob/master/{filename}.py"
 
-    itemname = info["fullname"]
-    try:
-        for child in itemname.split("."):
-            item = getattr(item, child, None)
-            if not item:
-                break
-        if item:
-            lineno = inspect.getsourcelines(item)
-            uri = f"{uri}#L{lineno[1]}"
-    except Exception as ex:
-        log.warning(
-            "Cannot link to sources for %s:%s due to: %s", modname, itemname, ex
-        )
+    ## Get the lineno from the last valid object
+    # that has one.
+    #
+    item_name = info["fullname"]
+    step_names = item_name.split(".")
+    steps = []
+    for name in step_names:
+        child = getattr(item, name, None)
+        if not child:
+            break
+        item = child
+        steps.append((name, item))
+    for name, item in reversed(steps):
+        try:
+            source, lineno = inspect.getsourcelines(item)
+            end_lineno = lineno + len(source) - 1
+            uri = f"{uri}#L{lineno}-L{end_lineno}"
+            break
+        except TypeError as ex:
+            assert "module, class, method, function," in str(ex), ex
+        except Exception as ex:
+            log.warning(
+                "Ignoring error while linking sources of '%s:%s': %s(%s)",
+                modname,
+                item_name,
+                type(ex).__name__,
+                ex,
+            )
 
     return uri
 
