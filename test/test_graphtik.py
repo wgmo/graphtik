@@ -520,12 +520,12 @@ def test_impossible_outputs():
     with pytest.raises(ValueError) as exinfo:
         netop.plot("t.pdf")
         netop.compute({"a": 1,}, ["aabb"])
-    assert exinfo.match("Impossible outputs")
+    assert exinfo.match("Unreachable outputs")
 
     with pytest.raises(ValueError) as exinfo:
         netop.plot("t.pdf")
         netop.compute({"a": 1,}, ["aa", "aabb"])
-    assert exinfo.match("Impossible outputs")
+    assert exinfo.match("Unreachable outputs")
 
 
 def test_pruning_not_overrides_given_intermediate(exemethod):

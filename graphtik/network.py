@@ -513,7 +513,7 @@ class ExecutionPlan(
 
             - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
 
-                *Impossible outputs...*
+                *Unreachable outputs...*
 
         """
         if not self.dag:
@@ -535,7 +535,8 @@ class ExecutionPlan(
             )
             if unknown:
                 raise ValueError(
-                    f"Impossible outputs: {list(unknown)}\n for graph: {self}\n  {self}"
+                    f"Unreachable outputs {list(unknown)}\n  for given inputs {list(unknown)}"
+                    f"\n for graph: {self}\n  {self}"
                 )
 
     def _check_if_aborted(self, solution):
@@ -773,7 +774,7 @@ class ExecutionPlan(
 
             - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
 
-                *Impossible outputs...*
+                *Unreachable outputs...*
         """
         try:
             self.validate(named_inputs, outputs)
@@ -1227,7 +1228,7 @@ class Network(Plotter):
 
             - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
 
-                *Impossible outputs...*
+                *Unreachable outputs...*
         """
         ## Make a stable cache-key.
         #

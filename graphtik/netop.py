@@ -282,7 +282,7 @@ class NetworkOperation(Operation, Plotter):
 
             - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
 
-                *Impossible outputs...*
+                *Unreachable outputs...*
         """
         outputs = self.outputs if outputs == UNSET else outputs
         predicate = self.predicate if predicate == UNSET else predicate
@@ -328,7 +328,7 @@ class NetworkOperation(Operation, Plotter):
 
             - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
 
-                *Impossible outputs...*
+                *Unreachable outputs...*
 
         See also :meth:`.Operation.compute()`.
         """
