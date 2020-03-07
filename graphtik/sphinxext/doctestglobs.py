@@ -151,28 +151,29 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
 
         # run the tests
         for code in group.tests:
+            py_code = code[0]
             if len(code) == 1:
                 # ordinary doctests (code/output interleaved)
                 try:
                     test = extdoctest.parser.get_doctest(
-                        code[0].code,
+                        py_code.code,
                         {},
                         group.name,  # type: ignore
-                        code[0].filename,
-                        code[0].lineno,
+                        py_code.filename,
+                        py_code.lineno,
                     )
                 except Exception:
                     log.warning(
                         __("ignoring invalid doctest code: %r"),
-                        code[0].code,
-                        location=(code[0].filename, code[0].lineno),
+                        py_code.code,
+                        location=(py_code.filename, py_code.lineno),
                     )
                     continue
                 if not test.examples:
                     continue
                 for example in test.examples:
                     # apply directive's comparison options
-                    new_opt = code[0].options.copy()
+                    new_opt = py_code.options.copy()
                     new_opt.update(example.options)
                     example.options = new_opt
                 self.type = "single"  # as for ordinary doctests
@@ -189,14 +190,14 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
                 else:
                     exc_msg = None
                 example = doctest.Example(
-                    code[0].code,
+                    py_code.code,
                     output,
                     exc_msg=exc_msg,
-                    lineno=code[0].lineno,
+                    lineno=py_code.lineno,
                     options=options,
                 )
                 test = doctest.DocTest(
-                    [example], {}, group.name, code[0].filename, code[0].lineno, None
+                    [example], {}, group.name, py_code.filename, py_code.lineno, None
                 )
                 self.type = "exec"  # multiple statements again
             # DocTest.__init__ copies the globs namespace, which we don't want
