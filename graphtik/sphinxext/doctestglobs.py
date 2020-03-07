@@ -14,25 +14,29 @@ from sphinx.locale import _, __
 from sphinx.util import logging
 
 
+log = logging.getLogger(__name__)
+
+
 class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
     """Patched to retrieve *plottables* from globals of executed doctests. """
 
     name = "graphtik_plots"
     epilog = None
 
-    def test_doc(self, docname: str, doctree: Node) -> None:
-        groups = {}  # type: Dict[str, TestGroup]
+    def test_doc(self, docname: str, doctree: nodes.Node) -> None:
+        groups: Dict[str, extdoctest.TestGroup] = {}
         add_to_all_groups = []
-        self.setup_runner = SphinxDocTestRunner(verbose=False, optionflags=self.opt)
-        self.test_runner = SphinxDocTestRunner(verbose=False, optionflags=self.opt)
-        self.cleanup_runner = SphinxDocTestRunner(verbose=False, optionflags=self.opt)
+        TestRunner = extdoctest.SphinxDocTestRunner
+        self.setup_runner = TestRunner(verbose=False, optionflags=self.opt)
+        self.test_runner = TestRunner(verbose=False, optionflags=self.opt)
+        self.cleanup_runner = TestRunner(verbose=False, optionflags=self.opt)
 
         self.test_runner._fakeout = self.setup_runner._fakeout  # type: ignore
         self.cleanup_runner._fakeout = self.setup_runner._fakeout  # type: ignore
 
         if self.config.doctest_test_doctest_blocks:
 
-            def condition(node: Node) -> bool:
+            def condition(node: nodes.Node) -> bool:
                 return (
                     isinstance(node, (nodes.literal_block, nodes.comment))
                     and "testnodetype" in node
@@ -40,7 +44,7 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
 
         else:
 
-            def condition(node: Node) -> bool:
+            def condition(node: nodes.Node) -> bool:
                 return (
                     isinstance(node, (nodes.literal_block, nodes.comment))
                     and "testnodetype" in node
@@ -54,13 +58,13 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
             filename = self.get_filename_for_node(node, docname)
             line_number = self.get_line_number(node)
             if not source:
-                logger.warning(
+                log.warning(
                     __("no code/output in %s block at %s:%s"),
                     node.get("testnodetype", "doctest"),
                     filename,
                     line_number,
                 )
-            code = TestCode(
+            code = extdoctest.TestCode(
                 source,
                 type=node.get("testnodetype", "doctest"),
                 filename=filename,
@@ -73,19 +77,19 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
                 continue
             for groupname in node_groups:
                 if groupname not in groups:
-                    groups[groupname] = TestGroup(groupname)
+                    groups[groupname] = extdoctest.TestGroup(groupname)
                 groups[groupname].add_code(code)
         for code in add_to_all_groups:
             for group in groups.values():
                 group.add_code(code)
         if self.config.doctest_global_setup:
-            code = TestCode(
+            code = extdoctest.TestCode(
                 self.config.doctest_global_setup, "testsetup", filename=None, lineno=0
             )
             for group in groups.values():
                 group.add_code(code, prepend=True)
         if self.config.doctest_global_cleanup:
-            code = TestCode(
+            code = extdoctest.TestCode(
                 self.config.doctest_global_cleanup,
                 "testcleanup",
                 filename=None,
@@ -112,12 +116,11 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
             self.cleanup_failures += res_f
             self.cleanup_tries += res_t
 
-    def test_group(self, group: TestGroup) -> None:
+    def test_group(self, group: extdoctest.TestGroup) -> None:
         ns = {}  # type: Dict
 
-        def run_setup_cleanup(
-            runner: Any, testcodes: List[TestCode], what: Any
-        ) -> bool:
+        def run_setup_cleanup(runner, testcodes, what):
+            # type: (Any, List[TestCode], Any) -> bool
             examples = []
             for testcode in testcodes:
                 example = doctest.Example(testcode.code, "", lineno=testcode.lineno)
@@ -151,11 +154,15 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
             if len(code) == 1:
                 # ordinary doctests (code/output interleaved)
                 try:
-                    test = parser.get_doctest(
-                        code[0].code, {}, group.name, code[0].filename, code[0].lineno
+                    test = extdoctest.parser.get_doctest(
+                        code[0].code,
+                        {},
+                        group.name,  # type: ignore
+                        code[0].filename,
+                        code[0].lineno,
                     )
                 except Exception:
-                    logger.warning(
+                    log.warning(
                         __("ignoring invalid doctest code: %r"),
                         code[0].code,
                         location=(code[0].filename, code[0].lineno),
@@ -176,7 +183,7 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
                 # disable <BLANKLINE> processing as it is not needed
                 options[doctest.DONT_ACCEPT_BLANKLINE] = True
                 # find out if we're testing an exception
-                m = parser._EXCEPTION_RE.match(output)  # type: ignore
+                m = extdoctest.parser._EXCEPTION_RE.match(output)  # type: ignore
                 if m:
                     exc_msg = m.group("msg")
                 else:
