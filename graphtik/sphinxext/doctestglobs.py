@@ -20,6 +20,7 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
 
     name = "graphtik_plots"
     epilog = None
+    run_empty_code = False
 
     def test_doc(self, docname: str, doctree: nodes.Node) -> None:
         """
@@ -61,7 +62,7 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
             source = node["test"] if "test" in node else node.astext()
             filename = self.get_filename_for_node(node, docname)
             line_number = self.get_line_number(node)
-            if not source:
+            if not source and not self.run_empty_code:
                 log.warning(
                     __("no code/output in %s block"),
                     node.get("testnodetype", "doctest"),
@@ -176,8 +177,11 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
                         location=(py_code.filename, py_code.lineno),
                     )
                     continue
-                if not test.examples:
+
+                # HACK: allow collecting vars even if code empty..
+                if not test.examples and not self.run_empty_code:
                     continue
+
                 for example in test.examples:
                     # apply directive's comparison options
                     new_opt = py_code.options.copy()
