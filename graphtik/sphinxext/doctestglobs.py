@@ -59,10 +59,9 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
             line_number = self.get_line_number(node)
             if not source:
                 log.warning(
-                    __("no code/output in %s block at %s:%s"),
+                    __("no code/output in %s block"),
                     node.get("testnodetype", "doctest"),
-                    filename,
-                    line_number,
+                    location=(filename, line_number),
                 )
             code = extdoctest.TestCode(
                 source,
