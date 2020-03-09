@@ -8,6 +8,7 @@ import json
 import logging
 import os
 from typing import Any, Callable, List, Mapping, Tuple, Union
+from urllib.parse import urlencode
 
 import pydot
 
@@ -268,7 +269,10 @@ def build_pydot(
                 kw["style"] = "filled"
                 kw["fillcolor"] = cancel_color
             try:
-                kw["URL"] = f"file://{inspect.getfile(nx_node.fn)}"
+
+                filename = urlencode(inspect.getfile(nx_node.fn))
+
+                kw["URL"] = f"file://{filename}"
             except Exception as ex:
                 log.debug("Ignoring error while inspecting file of %s: %s", nx_node, ex)
 
