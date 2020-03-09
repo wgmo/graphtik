@@ -41,11 +41,13 @@
         "exemethod",
         "exinfo",
         "filtdict",
+        "fname",
         "fpath",
         "graphkit",
         "graphop",
         "graphtik",
         "graphtik's",
+        "graphvar",
         "graphviz",
         "hnguyen",
         "hpgl",
@@ -54,6 +56,7 @@
         "imap",
         "imread",
         "imshow",
+        "inodes",
         "inps",
         "invis",
         "iset",
@@ -70,6 +73,7 @@
         "myadd",
         "mygraph",
         "mykws",
+        "mypkg",
         "mypow",
         "netop",
         "netops",
@@ -125,5 +129,6 @@
         "xfail",
         "xlib",
         "zoomable"
-    ]
+    ],
+    "cSpell.enabled": false
 }

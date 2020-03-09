@@ -115,6 +115,7 @@ Run the graph and request all of the outputs::
 
 .. _Graphkit: https://github.com/yahoo/graphkit
 .. _`Graphviz`: https://graphviz.org
+.. _`pydot`: https://github.com/pydot/pydot
 
 .. |travis-status| image:: https://img.shields.io/travis/pygraphkit/graphtik
     :alt: Travis continuous integration testing ok? (Linux)

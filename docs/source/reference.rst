@@ -12,6 +12,7 @@ API Reference
      graphtik.plot
      graphtik.config
      graphtik.base
+     graphtik.sphinxext
 
 Module: `op`
 ====================
@@ -61,3 +62,9 @@ Module: `base`
 .. automodule:: graphtik.base
      :members:
      :undoc-members:
+
+Module: `sphinxext`
+==============================
+
+.. automodule:: graphtik.sphinxext
+     :members:

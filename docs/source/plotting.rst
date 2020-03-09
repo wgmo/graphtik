@@ -78,6 +78,134 @@ If you want all details, plot the solution::
    Check :data:`.default_jupyter_render` for defaults.
 
 
+Sphinx-generated sites
+^^^^^^^^^^^^^^^^^^^^^^
+
+You may use the :rst:dir:`graphtik` directive from :mod:`.sphinxext` module
+to embed graph-plots into your generated site.
+
+.. rst:directive::  graphtik
+
+   Embeds :ref:`graphtik plots <plotting>` from doctest code into a sphinx site.
+
+    It supports:
+
+    - all configurations from :mod:`sphinx.ext.doctest` sphinx-extension.
+    - all options from `'doctest' directive
+      <https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html#directive-doctest>`_,
+    - the typical options for images:
+
+      - **height**
+      - **width**
+      - **scale**
+      - **align**
+      - **class**
+      - **name**
+
+    - and the following new options:
+
+      .. rst:directive:option:: graphvar: (string, optional) varname
+          :type: str
+
+          the variable name containing what to render, which it can be:
+
+          - an instance of :class:`.Plotter` (such as :class:`.NetworkOperation`,
+            :class:`.Network`, :class:`.ExecutionPlan` or :class:`.Solution`);
+
+          - an already plotted ``pydot.Dot`` instance, ie, the result of a :meth:`.plot()` call
+            (see `pydot <https://github.com/pydot/pydot>`_ project).
+
+          If missing, it renders the last variable in the doctest code assigned with
+          the above types.
+
+      .. rst:directive:option:: graph-format: png | svg | svgz | pdf | `None`
+          :type: choice, default: None
+
+          if `None`, format decided according to active builder, roughly:
+              - "html"-like: svg
+              - "latex": pdf
+
+          Note that SVGs support zooming, and that PNGs suport image maps for
+          linkable areas.
+
+      .. rst:directive:option:: caption: figure's caption
+          :type: str
+
+          If given, it is used instead of rendered object's string representation.
+
+
+.. rst:directive::  graphtik-output
+
+   Like :rst:dir:`graphtik`, but applied for doctest's :rst:dir:`testoutput` blocks.
+
+
+Examples
+~~~~~~~~
+The following directive renders a diagram of its doctest code, beneath it:
+
+.. code-block:: rst
+
+   .. graphtik::
+      :graphvar:
+
+      >>> from graphtik import compose, operation
+      >>> addmul = compose(
+      ...       "addmul",
+      ...       operation(name="add", needs=["a", "b"], provides="ab")(lambda a, b: a + b),
+      ...       operation(name="add", needs=["ab", "c"], provides="ab x c")(lambda a, b: a * b),
+      ... )
+
+.. graphtik::
+   :graphvar: addmul
+   :hide:
+
+   >>> from graphtik import compose, operation
+
+   >>> addmul = compose(
+   ...    "addmul",
+   ...    operation(name="add", needs=["a", "b"], provides="ab")(lambda a, b: a + b),
+   ...    operation(name="add", needs=["ab", "c"], provides="ab x c")(lambda a, b: a * b),
+   ... )
+
+.. hint::
+   In this case, the ``:graphvar:`` parameter is not really needed, since
+   the code contains just one variable assignment receiving a subclass
+   of :class:`.Plotter` or :class:`pydot.Dot` instance.
+
+
+Configurations
+~~~~~~~~~~~~~~
+.. confval:: graphtik_default_graph_format
+
+   - type: ``Union[str, None]``
+   - default: None
+
+   The file extension of the generated plot images (without the leading dot `.``),
+   used  when no ``:graph-format:`` is given in a :rst:dir:`graphtik` or
+   :rst:dir:`graphtik-output` directive.
+
+   If it `None`, the format is chosen from :confval:`graphtik_graph_formats_by_builder`
+   configuration.
+
+.. confval:: graphtik_graph_formats_by_builder
+
+   - type: ``Map[str, str]``
+   - default: check the sources
+
+   a dictionary defining which plot image formats to choose, depending on the active builder.
+
+   - Keys are regexes matching the name of the active builder;
+   - values are strings from the supported formats for `pydot`_ library,
+     e.g. ``png`` (see :func:`.supported_plot_formats()`).
+
+   If a builder does not match to any key, and no format given in the directive,
+   no graphtik plot is rendered; so by default, it only generates plots for html & latex.
+
+.. Warning::
+   Don't disable doctesting of *literal-blocks*, that is,
+   don't reset the :confval:`doctest_test_doctest_blocks` configuration value,
+   or it will hinder your  capability to render ``:graphvar:`` from such code.
+
 .. _debugging:
 
 Errors & debugging

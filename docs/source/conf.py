@@ -49,11 +49,13 @@ extensions = [
     "sphinx.ext.imgmath",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
+    # "sphinx.ext.doctest",  # doctests maintained by pytest
+    "graphtik.sphinxext",
 ]
 
 ## Prevent Sphinx from doctesting python-modules doctests,
 # they will be checked separately with *pytest*.
-doctest_test_doctest_blocks = ""
+# doctest_test_doctest_blocks = ""
 
 extlinks = {
     "gh": ("https://github.com/yahoo/graphkit/issues/%s", "yahoo#"),
@@ -370,9 +372,19 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    "python": ("http://docs.python.org/3.8", None),
+    "python": ("https://docs.python.org/3.8/", None),
     "networkx": ("https://networkx.github.io/documentation/latest/", None),
     "boltons": ("https://boltons.readthedocs.io/en/latest/", None),
     "dill": ("https://dill.readthedocs.io/en/latest/", None),
+    "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
 }
-autodoc_mock_imports = ["boltons", "networkx", "pydot"]
+
+
+def setup(app):
+    # for documenting the configurations of the new `graphtik` directive.
+    app.add_object_type(
+        "confval",
+        "confval",
+        objname="configuration value",
+        indextemplate="pair: %s; configuration value",
+    )
