@@ -35,7 +35,7 @@ a workflow-processor for interdependent files and processes.
    arch
    reference
    Changes <changes>
-
+   genindex
 
 .. _quick-start:
 
