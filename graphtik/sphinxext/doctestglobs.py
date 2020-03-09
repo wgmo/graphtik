@@ -1,11 +1,10 @@
 # Copyright 2020-2020, Kostis Anagnostopoulos;
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""Patched doctest builder to picks plottables from doctest-runner's globals."""
+"""Patched doctest builder to expose doctest-runner's globals."""
 import doctest
 from doctest import DocTest, DocTestParser, DocTestRunner
-from typing import List, Union
+from typing import Dict, List
 
-import pydot
 import sphinx
 from docutils import nodes
 from sphinx.application import Sphinx
@@ -13,17 +12,22 @@ from sphinx.ext import doctest as extdoctest
 from sphinx.locale import _, __
 from sphinx.util import logging
 
-
 log = logging.getLogger(__name__)
 
 
 class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
-    """Patched to retrieve *plottables* from globals of executed doctests. """
+    """Patched to expose *globals* from executed doctests. """
 
     name = "graphtik_plots"
     epilog = None
 
     def test_doc(self, docname: str, doctree: nodes.Node) -> None:
+        """
+        HACK: Method overridden to annotate all TestCode instances with their nodes,
+
+        so as to store back on them the value of `:graphvar:` in the doctest-runner globals,
+        after they have been executed.
+        """
         groups: Dict[str, extdoctest.TestGroup] = {}
         add_to_all_groups = []
         TestRunner = extdoctest.SphinxDocTestRunner
@@ -70,6 +74,10 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
                 lineno=line_number,
                 options=node.get("options"),
             )
+            # HACK: annotate the TestCode with the node
+            # to store back plottable from doctest-runner globals.
+            code.node = node
+
             node_groups = node.get("groups", ["default"])
             if "*" in node_groups:
                 add_to_all_groups.append(code)
@@ -204,5 +212,12 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
             # also don't clear the globs namespace after running the doctest
             self.test_runner.run(test, out=self._warn_out, clear_globs=False)
 
+            ## HACK: collect plottable from doctest-runner globals.
+            self._globals_updated(py_code, ns)
+
         # run the cleanup
         run_setup_cleanup(self.cleanup_runner, group.cleanup, "cleanup")
+
+    def _globals_updated(self, code: extdoctest.TestCode, globs: dict):
+        """Called after each test-code has executed."""
+        pass
