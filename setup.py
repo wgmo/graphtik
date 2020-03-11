@@ -15,9 +15,17 @@ with open("README.rst") as f:
 with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
-plot_deps = ["matplotlib", "pydot"]  # to test plot  # to test plot
-test_deps = plot_deps + ["pytest", "pytest-cov", "pytest-sphinx", "dill"]
-dev_deps = test_deps + ["sphinx", "black", "pylint", "mypy"]
+plot_deps = ["pydot"]
+matplot_deps = plot_deps + ["matplotlib"]
+sphinx_deps = plot_deps + [
+    "sphinx >=2",
+    "html5lib",
+    "importlib_resources; python_version<'3.7'",
+]
+test_deps = (
+    matplot_deps + sphinx_deps + ["pytest", "pytest-cov", "pytest-sphinx", "dill"]
+)
+dev_deps = test_deps + ["black", "pylint", "mypy"]
 
 setup(
     name="graphtik",
@@ -44,7 +52,10 @@ setup(
         "boltons",  # for IndexSet
     ],
     extras_require={
+        ## NOTE: update also "extras" in README/quick-start section .
         "plot": plot_deps,
+        "matplot": matplot_deps,
+        "sphinx": sphinx_deps,
         "test": test_deps,
         # May help for pickling `parallel` tasks.
         # See :term:`marshalling` and :func:`set_marshal_tasks()` configuration.

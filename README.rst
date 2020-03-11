@@ -36,10 +36,26 @@ Here’s how to install:
 
    pip install graphtik
 
-OR with dependencies for plotting support (and you need to install
-`Graphviz`_ suite separately, with your OS tools)::
+OR with various "extras" dependencies, such as, for plotting::
 
    pip install graphtik[plot]
+
+. Tip::
+    Supported extras:
+
+    **plot**
+        for plotting with `Graphviz`_,
+    **matplot**
+        for plotting in *maplotlib* windows
+    **sphinx**
+        for embedding plots in *sphinx*\-generated sites,
+    **test**
+        for running *pytest*\s,
+    **dill**
+        may help for pickling `parallel` tasks - see `marshalling` term
+        and ``set_marshal_tasks()`` configuration.
+    **all**
+        all of the above, plus development libraries, eg *black* formatter.
 
 Here’s a Python script with an example Graphtik computation graph that
 produces multiple outputs (``a * b``, ``a - a * b``, and
