@@ -14,26 +14,29 @@ __author__ = "hnguyen, ankostis"
 from .base import NO_RESULT
 from .config import (
     abort_run,
-    operations_endured,
+    debug,
+    evictions_skipped,
     execution_pool,
     get_execution_pool,
     is_abort,
+    is_debug,
     is_endure_operations,
     is_marshal_tasks,
     is_parallel_tasks,
     is_reschedule_operations,
     is_skip_evictions,
-    tasks_marshalled,
-    tasks_in_parallel,
+    operations_endured,
     operations_reschedullled,
     reset_abort,
+    set_debug,
     set_endure_operations,
     set_execution_pool,
     set_marshal_tasks,
     set_parallel_tasks,
     set_reschedule_operations,
     set_skip_evictions,
-    evictions_skipped,
+    tasks_in_parallel,
+    tasks_marshalled,
 )
 from .modifiers import *  # noqa, on purpose to include any new modifiers
 from .netop import compose

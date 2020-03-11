@@ -238,12 +238,14 @@ Errors & debugging
 Graphs may become arbitrary deep.  Launching a debugger-session to inspect
 deeply nested stacks is notoriously hard
 
-As a workaround, you may increase the logging verbosity.
+As an aid, you may either increase the logging verbosity, enable the :func:`.set_debug()`
+:term:`configurations` function, or both.
 
-.. tip::
-   The various :mod:`.network` objects print augmented string-representations
-   when :data:`graphtik.network.log` :class:`~logging.Logger` is *eventually*
-   DEBUG-enabled.
+.. Tip::
+   The various :mod:`.network` objects & exceptions print augmented string-representations
+   when :func:`.debug` flag is enabled.  Actually you may wrap the code you are
+   interested in with this flag as "context-manager", to get augmented print-outs
+   for selected code-paths only.
 
 Additionally, when some operation fails, the original exception gets annotated
 with the following properties, as a debug aid:
@@ -262,14 +264,10 @@ with the following properties, as a debug aid:
 ...     pprint(ex.jetsam)
 {'aliases': None,
  'args': {'kwargs': {}, 'positional': [None], 'varargs': []},
- 'network': Network(x3 nodes, x1 ops:
-    +--a
-    +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')
-    +--foo),
+ 'network': Network(x3 nodes, x1 ops: screamer),
  'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream'),
  'outputs': None,
- 'plan': ExecutionPlan(needs=['a'], provides=['foo'], x1 steps:
-  +--FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream')),
+ 'plan': ExecutionPlan(needs=['a'], provides=['foo'], x1 steps: screamer),
  'provides': None,
  'results_fn': None,
  'results_op': None,

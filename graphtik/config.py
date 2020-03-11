@@ -10,6 +10,7 @@ from typing import Optional
 
 from boltons.iterutils import first
 
+_debug: ContextVar[Optional[bool]] = ContextVar("debug", default=False)
 _abort: ContextVar[Optional[bool]] = ContextVar(
     "abort", default=Value(ctypes.c_bool, lock=False)
 )
@@ -43,6 +44,23 @@ def _tristate_armed(context_var: ContextVar, enabled):
         yield
     finally:
         context_var.reset(resetter)
+
+
+debug = partial(_tristate_armed, _debug)
+"""Like :meth:`set_debug()` as a context-manager to reset old value. """
+is_debug = partial(_getter, _debug)
+"""see :meth:`set_debug()`"""
+set_debug = partial(_tristate_set, _debug)
+"""
+When true, string-representation of network objects and errors become more detailed.
+
+Note that enabling this flag is different from enabling logging in DEBUG,
+since it affects all code (eg interactive printing in debugger session,
+exceptions, doctests), not just debug statements (also affected by this flag).
+
+:return:
+    a "reset" token (see :meth:`.ContextVar.set`)
+"""
 
 
 def abort_run():
@@ -176,5 +194,5 @@ Enable/disable globally :term:`rescheduling` for operations returning only *part
 ."""
 
 
-def is_solid_true(*tristates, default=False): 
+def is_solid_true(*tristates, default=False):
     return first(tristates, default=default, key=lambda i: i is not None)

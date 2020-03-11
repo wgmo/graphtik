@@ -1,20 +1,18 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 
+import logging
 from collections import OrderedDict, namedtuple
 from types import SimpleNamespace
 
 import dill
 import pytest
 
-from graphtik import NO_RESULT, compose, operation, optional, sideffect, vararg, varargs
+from graphtik import (NO_RESULT, compose, operation, optional, sideffect,
+                      vararg, varargs)
 from graphtik.network import yield_ops
-from graphtik.op import (
-    FunctionalOperation,
-    Operation,
-    as_renames,
-    reparse_operation_data,
-)
+from graphtik.op import (FunctionalOperation, Operation, as_renames,
+                         reparse_operation_data)
 
 
 @pytest.fixture(params=[None, ["some"]])
@@ -336,6 +334,7 @@ def test_reschedule_unknown_dict_outs(caplog):
     op = operation(
         lambda: {"b": "B"}, name="t", provides=["a"], rescheduled=1, returns_dict=1
     )()
+    caplog.set_level(logging.INFO)
     op.compute({})
     assert "contained +1 unknown provides['b']" in caplog.text
 

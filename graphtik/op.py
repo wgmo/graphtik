@@ -22,7 +22,7 @@ from .base import (
     astuple,
     jetsam,
 )
-from .config import is_reschedule_operations, is_solid_true
+from .config import is_debug, is_reschedule_operations, is_solid_true
 from .modifiers import arg, optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
@@ -297,11 +297,7 @@ class FunctionalOperation(Operation):
             errors.append(
                 f"{ner}. Expected needs{list(varargs_bad)} to be non-str iterables!"
             )
-        inputs = (
-            dict(named_inputs)
-            if log.isEnabledFor(logging.DEBUG)
-            else list(named_inputs)
-        )
+        inputs = dict(named_inputs) if is_debug() else list(named_inputs)
         errors.append(f"+++inputs: {inputs}")
         errors.append(f"+++{self}")
 

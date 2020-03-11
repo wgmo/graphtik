@@ -27,7 +27,7 @@ class arg(str):
     `inputs` (or just because the name in the `inputs` is not a valid argument-name),
     you may *map* it with the 2nd argument of :class:`.arg` (or :class:`.optional`):
 
-        >>> from graphtik import operation, compose, arg
+        >>> from graphtik import operation, compose, arg, debug
 
         >>> def myadd(a, *, b):
         ...    return a + b
@@ -37,7 +37,8 @@ class arg(str):
         ...               needs=['a', arg("name-in-inputs", "b")],
         ...               provides="sum")(myadd)
         ... )
-        >>> graph
+        >>> with debug(True):
+        ...     graph
         NetworkOperation('mygraph', needs=['a', 'name-in-inputs'], provides=['sum'], x1 ops:
           +--FunctionalOperation(name='myadd',
                                  needs=['a',
@@ -101,12 +102,15 @@ class optional(arg):
 
     Like :class:`.arg` you may map input-name to a different function-argument:
 
+        >>> from graphtik import debug
+
         >>> graph = compose('mygraph',
         ...     operation(name='myadd',
         ...               needs=['a', optional("quasi-real", "b")],
         ...               provides="sum")(myadd)
         ... )
-        >>> graph
+        >>> with debug(True):
+        ...     graph
         NetworkOperation('mygraph', needs=['a', optional('quasi-real')], provides=['sum'], x1 ops:
           +--FunctionalOperation(name='myadd', needs=['a', optional('quasi-real'-->'b')], provides=['sum'], fn='myadd'))
         >>> graph.compute({"a": 5, "quasi-real": 4})['sum']
@@ -128,7 +132,7 @@ class vararg(str):
 
     **Example:**
 
-        >>> from graphtik import operation, compose, vararg
+        >>> from graphtik import operation, compose, vararg, debug
 
         >>> def addall(a, *b):
         ...    return a + sum(b)
@@ -143,7 +147,8 @@ class vararg(str):
         ...               provides='sum'
         ...     )(addall)
         ... )
-        >>> graph
+        >>> with debug(True):
+        ...     graph
         NetworkOperation('mygraph',
                          needs=['a', optional('b'), optional('c')],
                          provides=['sum'],
@@ -190,8 +195,7 @@ class varargs(str):
         NetworkOperation('mygraph',
                          needs=['a', optional('b')],
                          provides=['sum'],
-                         x1 ops:
-          +--FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist'))
+                         x1 ops: enlist)
 
     The graph works with or without `b` in the inputs:
 
@@ -204,7 +208,7 @@ class varargs(str):
         ...
         graphtik.base.MultiValueError: Failed preparing needs:
             1. Expected needs[varargs('b')] to be non-str iterables!
-            +++inputs: {'a': 5, 'b': 2989}
+            +++inputs: ['a', 'b']
             +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
     .. Attention::
@@ -215,7 +219,7 @@ class varargs(str):
         ...
         graphtik.base.MultiValueError: Failed preparing needs:
             1. Expected needs[varargs('b')] to be non-str iterables!
-            +++inputs: {'a': 5, 'b': 'mistake'}
+            +++inputs: ['a', 'b']
             +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
     """
@@ -264,8 +268,7 @@ class sideffect(str):
         ... )
         >>> graph
         NetworkOperation('mygraph', needs=['df', 'sideffect(df.b)'],
-                         provides=['sideffect(df.sum)'], x1 ops:
-          +--FunctionalOperation(name='addcolumns', needs=['df', 'sideffect(df.b)'], provides=['sideffect(df.sum)'], fn='addcolumns'))
+                         provides=['sideffect(df.sum)'], x1 ops: addcolumns)
 
         >>> df = pd.DataFrame({'a': [5, 0], 'b': [2, 1]})   # doctest: +SKIP
         >>> graph({'df': df})['df']                         # doctest: +SKIP

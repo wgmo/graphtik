@@ -10,8 +10,8 @@ from typing import Any, Callable, Mapping
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Items, Plotter, UNSET, aslist, astuple, jetsam
-from .config import reset_abort
+from .base import UNSET, Items, Plotter, aslist, astuple, jetsam
+from .config import is_debug, reset_abort
 from .modifiers import optional, sideffect
 from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
 from .op import FunctionalOperation, Operation, reparse_operation_data
@@ -154,8 +154,12 @@ class NetworkOperation(Operation, Plotter):
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
         ops = list(yield_ops(self.net.graph))
-        steps = "".join(f"\n  +--{s}" for s in ops)
-        return f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{len(ops)} ops:{steps})"
+        steps = (
+            "".join(f"\n  +--{s}" for s in ops)
+            if is_debug()
+            else ", ".join(s.name for s in ops)
+        )
+        return f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{len(ops)} ops: {steps})"
 
     def withset(
         self,

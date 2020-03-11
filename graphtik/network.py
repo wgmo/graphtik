@@ -19,6 +19,7 @@ from .base import UNSET, Items, Plotter, aslist, astuple, jetsam
 from .config import (
     get_execution_pool,
     is_abort,
+    is_debug,
     is_endure_operations,
     is_marshal_tasks,
     is_parallel_tasks,
@@ -180,9 +181,11 @@ class Solution(ChainMap, Plotter):
         # assert next(iter(dag.edges))[0] == next(iter(plan.dag.edges))[0]:
 
     def __repr__(self):
-        # TODO: augment Solution.__repr__() when DEBUG-log enabled.
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
-        return f"{{{items}}}"
+        if is_debug():
+            return self.debugstr()
+        else:
+            return f"{{{items}}}"
 
     def debugstr(self):
         # TODO: augment Solution.__repr__() when DEBUG-log enabled.
@@ -499,10 +502,10 @@ class ExecutionPlan(
         provides = aslist(self.provides, "provides")
         steps = (
             "".join(f"\n  +--{s}" for s in self.steps)
-            if _isDebugLogging()
+            if is_debug()
             else ", ".join(str(getattr(s, "name", s)) for s in self.steps)
         )
-        return f"ExecutionPlan(needs={needs}, provides={provides}, x{len(self.steps)} steps:{steps})"
+        return f"ExecutionPlan(needs={needs}, provides={provides}, x{len(self.steps)} steps: {steps})"
 
     def validate(self, inputs: Items, outputs: Items):
         """
@@ -906,7 +909,7 @@ class Network(Plotter):
         ops = list(yield_ops(self.graph.nodes))
         steps = (
             [f"\n  +--{s}" for s in self.graph.nodes]
-            if _isDebugLogging()
+            if is_debug()
             else ", ".join(n.name for n in ops)
         )
         return f"Network(x{len(self.graph.nodes)} nodes, x{len(ops)} ops: {''.join(steps)})"
