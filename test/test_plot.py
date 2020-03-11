@@ -137,10 +137,10 @@ def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     sol_plan_dot = str(
         pipeline.last_plan.plot(inputs=inputs, outputs=outputs, solution=solution)
     )
-    head1 = "digraph plan-x9-nodes {"
+    head1 = "digraph plan_x9_nodes {"
     assert sol_plan_dot.startswith(head1)
     sol_dot = str(solution.plot(inputs=inputs, outputs=outputs))
-    head2 = "digraph solution-x9-nodes {"
+    head2 = "digraph solution_x9_nodes {"
     assert sol_dot.startswith(head2)
     assert sol_plan_dot[len(head1) :] == sol_dot[len(head2) :]
 

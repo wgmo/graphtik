@@ -58,3 +58,15 @@
 .. graphtik::
     :graphvar: netop1
     :skipif: True
+
+
+
+7. Same name, different graph
+=============================
+.. graphtik::
+
+    >>> netop5 = compose(
+    ...     "test_netop1",
+    ...     operation(name="op1", needs="a", provides="aa")(lambda a: a),
+    ...     operation(name="op2", needs=["aa", "b"], provides="res")(lambda x, y: [x, y]),
+    ... )

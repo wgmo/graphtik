@@ -1,3 +1,5 @@
+# Copyright 2020, Kostis Anagnostopoulos.
+# Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """A builder that Render graphtik plots from doctest-runner's globals."""
 from hashlib import sha1
 from pathlib import Path
@@ -12,9 +14,8 @@ from sphinx.locale import _, __
 from sphinx.util import logging
 
 from ..base import Plotter
-from . import graphtik_node, dynaimage
-from . import doctestglobs
-
+from ..network import Solution
+from . import doctestglobs, dynaimage, graphtik_node
 
 Plottable = Union[None, Plotter, pydot.Dot]
 
@@ -41,13 +42,19 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
                 globs, node["graphvar"], (code.filename, code.lineno)
             )
             if plottable:
-                if not isinstance(plottable, pydot.Dot):
-                    plottable = plottable.plot()
-                rel_img_path = self._render_dot_image(
-                    node["img_format"], plottable, node
+                dot: pydot.Dot = plottable if isinstance(
+                    plottable, pydot.Dot
+                ) else plottable.plot()
+                img_format = node["img_format"]
+                rel_img_path = self._render_dot_image(img_format, dot, node)
+                dot_str = (
+                    f"{plottable.debugstr()}"
+                    if isinstance(plottable, Solution)
+                    else plottable
                 )
-                dot_str = str(plottable)
-                self._upd_image_node(node, rel_img_path, dot_str=dot_str)
+                self._upd_image_node(
+                    node, rel_img_path, dot_str=str(dot_str), cmap_id=dot.get_name()
+                )
 
     def _is_plottable(self, value):
         return isinstance(value, (Plotter, pydot.Dot))
@@ -110,7 +117,6 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         """
         Ensure png(+usemap)|svg|svgz|pdf file exist, and return its path.
         """
-
         ## Derrive image-filename from graph contents.
         #
         hasher = sha1()
@@ -135,7 +141,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         return rel_fpath
 
     def _upd_image_node(
-        self, node: graphtik_node, rel_img_path: Path, dot_str: str,
+        self, node: graphtik_node, rel_img_path: Path, dot_str: str, cmap_id: str
     ):
         img_format: str = node["img_format"]
         assert img_format, (img_format, node)
@@ -144,7 +150,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         if img_format == "png":
             image_node.tag = "img"
             image_node["src"] = str(rel_img_path)
-            image_node["usemap"] = "#G"
+            image_node["usemap"] = f"#{cmap_id}"
             # HACK: graphtik-node not given to html-visitor.
             image_node.cmap = getattr(node, "cmap", "")
         else:

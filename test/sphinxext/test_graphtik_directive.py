@@ -45,7 +45,7 @@ def img_format(request):
 
 @pytest.mark.sphinx(buildername="html", testroot="graphtik-directive")
 @pytest.mark.test_params(shared_result="test_count_image_files")
-def test_count_image_files(make_app, app_params, img_format, cached_etree_parse):
+def test_html(make_app, app_params, img_format, cached_etree_parse):
     fname = "index.html"
     args, kwargs = app_params
     app = make_app(
@@ -54,7 +54,8 @@ def test_count_image_files(make_app, app_params, img_format, cached_etree_parse)
         freshenv=True,
         **kwargs,
     )
-    print(app.outdir / fname)
+    fname = app.outdir / fname
+    print(fname)
 
     ## Clean outdir from previou build to enact re-build.
     #
@@ -73,7 +74,7 @@ def test_count_image_files(make_app, app_params, img_format, cached_etree_parse)
         img_format = "svg"
 
     image_files = image_dir.listdir()
-    n_expected = 4
+    n_expected = 5
     if img_format == "png":
         # x2 files for image-maps file.
         tag = "img"
@@ -85,10 +86,7 @@ def test_count_image_files(make_app, app_params, img_format, cached_etree_parse)
     assert all(f.endswith(img_format) for f in image_files), image_files
     assert len(image_files) == n_expected, image_files
 
-    etree = cached_etree_parse(app.outdir / fname)
-    check_xpath(
-        etree, fname, f".//{tag}", attr_check(uri_attr, f"\\.{img_format}$", count=5),
-    )
+    etree = cached_etree_parse(fname)
     check_xpath(
         etree,
         fname,
@@ -96,10 +94,14 @@ def test_count_image_files(make_app, app_params, img_format, cached_etree_parse)
         attr_check(
             "alt",
             "test_netop1",
-            "test_netop2",
+            r"'aa': \[1, 2\]",
             "test_netop3",
             "test_netop4",
             "test_netop1",
+            "test_netop1",  # different graph!
         ),
     )
-    check_xpath(etree, fname, ".//*[@class='caption']", "")
+    check_xpath(
+        etree, fname, f".//{tag}", attr_check(uri_attr,),
+    )
+    check_xpath(etree, fname, ".//*[@class='caption']/*", "Solved")

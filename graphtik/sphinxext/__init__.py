@@ -59,10 +59,10 @@ def _html_visit_dynaimage(self: HTMLTranslator, node: dynaimage):
 
     atts = dict(node.attlist())
 
-    self.body.append(self.emptytag(node, tag, "", **atts))
-    self.body.append(f"</{tag}>")
-    self.body.append("\n")
-    self.body.append(getattr(node, "cmap", ""))
+    self.body.extend([self.emptytag(node, tag, "", **atts), f"</{tag}>"])
+    cmap = getattr(node, "cmap", "")
+    if cmap:
+        self.body.append(cmap)
 
     raise nodes.SkipNode
 

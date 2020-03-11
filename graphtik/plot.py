@@ -179,13 +179,12 @@ def as_identifier(s):
     - HTML rule from https://stackoverflow.com/a/79022/548792
     - Graphviz rules: https://www.graphviz.org/doc/info/lang.html
     """
+    s = s.strip()
     # Remove invalid characters
-    s = re.sub("[^0-9a-zA-Z_-]", "-", s)
-
+    s = re.sub("[^0-9a-zA-Z_]", "_", s)
     # Remove leading characters until we find a letter
     # (HTML-IDs cannot start with underscore)
-    s = re.sub("^[^a-zA-Z_]+", "", s)
-
+    s = re.sub("^[^a-zA-Z]+", "", s)
     if s in pydot.dot_keywords:
         s = f"{s}_"
 

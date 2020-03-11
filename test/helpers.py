@@ -1,5 +1,6 @@
 import re
 from itertools import chain, cycle
+from pathlib import Path
 from typing import Union
 
 import pytest
@@ -35,11 +36,13 @@ def attr_check(attr, *regex, count: Union[int, None, bool] = None):
             n = len(nodes)
             assert len(nodes) == count, f"expected {count} but found {n} nodes: {nodes}"
 
-        for i, (node, rex) in enumerate(zip(nodes, cycle(rexes))):
+        for i, (node, rex, rex_pat) in enumerate(
+            zip(nodes, cycle(rexes), cycle(regex))
+        ):
             txt = node.get(attr)
             assert rex.search(
                 txt
-            ), f"num0-{i} regex({regex}) missmatched {node.tag}@%{attr}: {txt}"
+            ), f"no0({i}) regex({rex_pat}) missmatched {node.tag}@%{attr}: {txt}"
 
     return checker
 
@@ -80,9 +83,8 @@ def check_xpath(etree, fname, path, check, be_found=True):
             if all(not rex.search(get_text(node)) for node in nodes):
                 return
 
-        assert False, "%r not found in any node matching " "path %s in %s: %r" % (
-            check,
-            path,
-            fname,
-            [node.text for node in nodes],
+        msg = "didn't match any" if be_found else "matched at least one"
+        assert False, (
+            f"{Path(fname).absolute()}:\n  {check!r} {msg} node at path {path!r}: "
+            f"{[node.text for node in nodes]}"
         )
