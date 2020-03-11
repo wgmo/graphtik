@@ -7,9 +7,11 @@ import io
 import json
 import logging
 import os
+import re
 from typing import Any, Callable, List, Mapping, Tuple, Union
 from urllib.parse import urlencode
 
+import networkx
 import pydot
 
 log = logging.getLogger(__name__)
@@ -166,8 +168,33 @@ def quote_dot_word(word: Any):
     return word
 
 
+def as_identifier(s):
+    """
+    Convert string into a valid ID, both for html & graphviz.
+
+    It must not rely on Graphviz's HTML-like string,
+    because it would not be a valid HTML-ID.
+
+    - Adapted from https://stackoverflow.com/a/3303361/548792,
+    - HTML rule from https://stackoverflow.com/a/79022/548792
+    - Graphviz rules: https://www.graphviz.org/doc/info/lang.html
+    """
+    # Remove invalid characters
+    s = re.sub("[^0-9a-zA-Z_-]", "-", s)
+
+    # Remove leading characters until we find a letter
+    # (HTML-IDs cannot start with underscore)
+    s = re.sub("^[^a-zA-Z_]+", "", s)
+
+    if s in pydot.dot_keywords:
+        s = f"{s}_"
+
+    return s
+
+
 def build_pydot(
-    graph,
+    graph: networkx.Graph,
+    name=None,
     steps=None,
     inputs=None,
     outputs=None,
@@ -225,6 +252,8 @@ def build_pydot(
     dot = pydot.Dot(
         graph_type="digraph", label=quote_dot_word(title), fontname="italic"
     )
+    if name:
+        dot.set_name(as_identifier(name))
 
     # draw nodes
     for nx_node in graph.nodes:

@@ -184,6 +184,10 @@ class Solution(ChainMap, Plotter):
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
         return f"{{{items}}}"
 
+    def debugstr(self):
+        # TODO: augment Solution.__repr__() when DEBUG-log enabled.
+        return f"{type(self).__name__}({dict(self)}, {self.plan})"
+
     def operation_executed(self, op, outputs):
         """
         Invoked once per operation, with its results.
@@ -311,6 +315,7 @@ class Solution(ChainMap, Plotter):
 
     def _build_pydot(self, **kws):
         """delegate to network"""
+        kws.setdefault("name", f"solution-x{len(self.plan.net.graph.nodes)}-nodes")
         kws.setdefault("solution", self)
         plotter = self.plan
         return plotter._build_pydot(**kws)
@@ -479,6 +484,7 @@ class ExecutionPlan(
             clusters = {n: "after pruning" for n in self.dag.nodes}
         mykws = {
             "graph": self.net.graph,
+            "name": f"plan-x{len(self.net.graph.nodes)}-nodes",
             "steps": self.steps,
             "inputs": self.needs,
             "outputs": self.provides,
@@ -909,6 +915,7 @@ class Network(Plotter):
         from .plot import build_pydot
 
         kws.setdefault("graph", self.graph)
+        kws.setdefault("name", f"network-x{len(self.graph.nodes)}-nodes")
         kws.setdefault("inputs", self.needs)
         kws.setdefault("outputs", self.provides)
 

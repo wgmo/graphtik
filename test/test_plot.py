@@ -137,7 +137,12 @@ def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     sol_plan_dot = str(
         pipeline.last_plan.plot(inputs=inputs, outputs=outputs, solution=solution)
     )
-    assert str(solution.plot(inputs=inputs, outputs=outputs)) == sol_plan_dot
+    head1 = "digraph plan-x9-nodes {"
+    assert sol_plan_dot.startswith(head1)
+    sol_dot = str(solution.plot(inputs=inputs, outputs=outputs))
+    head2 = "digraph solution-x9-nodes {"
+    assert sol_dot.startswith(head2)
+    assert sol_plan_dot[len(head1) :] == sol_dot[len(head2) :]
 
     plan = pipeline.last_plan
     pipeline.last_plan = None
@@ -231,7 +236,7 @@ def test_node_quoting():
     print(dot_str)
     exp = dedent(
         """\
-        digraph G {
+        digraph graph_ {
         fontname=italic;
         label=<graph>;
         <edge> [shape=invhouse];

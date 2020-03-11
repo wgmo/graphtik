@@ -4,7 +4,6 @@
 
 import abc
 import logging
-import random
 from collections import defaultdict
 from typing import Any, Collection, List, Mapping, Union
 
@@ -28,6 +27,8 @@ class Token(str):
         return super().__new__(cls, f"<{s}>")
 
     def __init__(self, *args):
+        import random
+
         self.hashid = random.randint(-(2 ** 32), 2 ** 32 - 1)
 
     def __eq__(self, other):
@@ -239,6 +240,9 @@ class Plotter(abc.ABC):
             It extracts more infos from a :class:`.Solution` instance, such as,
             if `solution` has an ``executed`` attribute, operations contained in it
             are  drawn as "filled".
+        :param name:
+            if given, dot-lang graph would not be named "G"; necessary to be unique
+            when referring to generated CMAPs.
         :param title:
             an optional string to display at the bottom of the graph
         :param node_props:
@@ -334,7 +338,7 @@ class Plotter(abc.ABC):
         >>> netop.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);           # doctest: +SKIP
         >>> dot = netop.plot(solution=solution);   # just get the `pydot.Dot` object, renderable in Jupyter
         >>> print(dot)
-        digraph G {
+        digraph netop {
             fontname=italic;
             label=<netop>;
             <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
