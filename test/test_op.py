@@ -46,6 +46,10 @@ def test_repr_returns_dict():
         str(operation(lambda: None, returns_dict=True)())
         == "FunctionalOperation(name='None', needs=[], provides=[], fn{}='<lambda>')"
     )
+    assert (
+        str(operation(lambda: None, name="myname")())
+        == "FunctionalOperation(name='myname', needs=[], provides=[], fn='<lambda>')"
+    )
 
 
 @pytest.mark.parametrize(

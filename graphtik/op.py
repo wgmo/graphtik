@@ -29,9 +29,7 @@ log = logging.getLogger(__name__)
 
 
 def _dict_without(kw, *todel):
-    for i in todel:
-        del kw[i]
-    return kw
+    return {k: v for k, v in kw.items() if k not in todel}
 
 
 def as_renames(i, argname):
@@ -606,7 +604,10 @@ class operation:
         returns_dict=None,
         node_props: Mapping = None,
     ):
-        vars(self).update(_dict_without(locals(), "self"))
+        kw = _dict_without(locals(), "self")
+        vars(self).update(kw)
+        # To check `fn` callable.
+        self.withset(**kw)
 
     def withset(
         self,
@@ -625,6 +626,11 @@ class operation:
     ) -> "operation":
         """See :class:`operation` for arguments here."""
         if fn is not None:
+            if not callable(fn):
+                raise ValueError(
+                    f"`fn` arg must be callable, was {type(fn).__name__}!"
+                    f"\n  did you mean? operation(name={fn}, ..."
+                )
             self.fn = fn
         if name is not None:
             self.name = name
