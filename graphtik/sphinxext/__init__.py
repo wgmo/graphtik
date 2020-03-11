@@ -11,13 +11,12 @@ from typing import List, Union
 import sphinx
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
-from docutils.parsers.rst.roles import set_classes
+from docutils.parsers.rst import roles as rst_roles
 from sphinx.application import Sphinx
 from sphinx.config import Config
 from sphinx.ext import doctest as extdoctest
 from sphinx.locale import _, __
 from sphinx.util import logging
-from sphinx.util.nodes import set_source_info
 from sphinx.writers.html import HTMLTranslator
 
 from .. import __version__
@@ -26,13 +25,40 @@ log = logging.getLogger(__name__)
 
 
 class graphtik_node(nodes.General, nodes.Element):
-    pass
+    """Non-writtable node wrapping (literal-block + figure(dynaimage)) nodes.
+
+    The figure gets the :name: & :align: options, the contained dynaimage gets
+    the :height", :width:, :scale:, :classes: options.
+    """
 
 
 def _ignore_node_but_process_children(
     self: HTMLTranslator, node: graphtik_node
 ) -> None:
     raise nodes.SkipDeparture
+
+
+class dynaimage(nodes.General, nodes.Inline, nodes.Element):
+    """Writes a tag in `tag` attr (``<img>`` for PNGs, ``<object>`` for SVGs/PDFs). """
+
+
+def _html_visit_dynaimage(self: HTMLTranslator, node: dynaimage):
+    # See sphinx/writers/html5:visit_image()
+    tag = getattr(node, "tag", None)
+    if not tag:
+        # Probably couldn't find :graphvar: in doctest globals.
+        raise nodes.SkipNode
+
+    assert tag in ["img", "object"], (tag, node)
+
+    atts = dict(node.attlist())
+
+    self.body.append(self.emptytag(node, tag, "", **atts))
+    self.body.append(f"</{tag}>")
+    self.body.append("\n")
+    self.body.append(getattr(node, "cmap", ""))
+
+    raise nodes.SkipNode
 
 
 _image_formats = ("png", "svg", "svgz", "pdf", None)
@@ -45,14 +71,27 @@ def _valid_format_option(argument: str) -> Union[str, None]:
     return directives.choice(argument, _image_formats)
 
 
-_doctest_options = extdoctest.DoctestDirective.option_spec
-img_options = {
-    k: v for k, v in directives.images.Image.option_spec.items() if k not in ("target",)
-}
 _graphtik_options = {
     "caption": directives.unchanged,
     "graph-format": _valid_format_option,
     "graphvar": directives.unchanged_required,
+}
+_doctest_options = extdoctest.DoctestDirective.option_spec
+_img_options = {
+    k: v
+    for k, v in directives.images.Image.option_spec.items()
+    if k not in ("name", "align", "target")
+}
+_fig_options = {
+    k: v
+    for k, v in directives.images.Figure.option_spec.items()
+    if k in ("name", "figclass", "align", "figwidth")
+}
+_option_spec = {
+    **_doctest_options,
+    **_img_options,
+    **_fig_options,
+    **_graphtik_options,
 }
 
 
@@ -75,26 +114,40 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
 
         self.name = self._con_name
         try:
-            original_node = super().run()[0]
+            original_nodes = super().run()
         finally:
             self.name = self._real_name
 
+        location = self.state_machine.get_source_and_line(self.lineno)
+
         img_format = self._decide_img_format(options)
-        self.info("decided `grap-format` %r" % img_format)
+        log.debug(
+            "decided `graph-format`: %r", img_format, location=location,
+        )
         if not img_format:
             # Bail out, probably unknown builder.
-            return [original_node]
+            return original_nodes
 
-        ## Copied from docutils.parsers.rst.images.Image(Directive)
-        set_classes(options)
+        node = graphtik_node(graphvar=options.get("graphvar"), img_format=img_format)
+        node.source, node.line = location
+        node += original_nodes
 
-        img_attrs = {k: v for k, v in options.items() if k in img_options}
+        figure = nodes.figure()
+        figure.source, figure.line = location
+        self.add_name(figure)
+        align = options.get("align")
+        if align:
+            align = f"align-{align}"
+            figure["classes"].append(align)
+        figure["classes"] += options.get("figclass", "").split()
+        node += figure
 
-        node = graphtik_node(
-            graphvar=options.get("graphvar"), img_format=img_format, **img_attrs
-        )
-        self.add_name(node)
-        node += original_node
+        img_attrs = {k: v for k, v in options.items() if k in _img_options}
+        # TODO: emulate sphinx-processing for image width & height attrs.
+        image = dynaimage(**img_attrs)
+        dynaimage.source, dynaimage.line = location
+        image["classes"] += options.get("class", "").split()
+        figure += image
 
         ## See sphinx.ext.graphviz:figure_wrapper(),
         #  and <sphinx.git>/tests/roots/test-add_enumerable_node/enumerable_node.py:MyFigure
@@ -103,8 +156,8 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         if caption:
             inodes, messages = self.state.inline_text(caption, self.lineno)
             caption_node = nodes.caption(caption, "", *inodes)
-            caption_node.extend(messages)
-            set_source_info(self, caption_node)
+            self.set_source_info(caption_node)
+            caption_node += messages
             node += caption_node
 
         return [node]
@@ -134,11 +187,7 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
 class GraphtikDoctestDirective(_GraphtikTestDirective):
     """Embeds plots from doctest code (see :rst:dir:`graphtik`). """
 
-    option_spec = {
-        **_doctest_options,
-        **img_options,
-        **_graphtik_options,
-    }
+    option_spec = _option_spec
     _real_name = "graphkit"
     _con_name = "doctest"
 
@@ -146,11 +195,7 @@ class GraphtikDoctestDirective(_GraphtikTestDirective):
 class GraphtikTestoutputDirective(_GraphtikTestDirective):
     """Like :rst:dir:`graphtik` directive, but  emulates doctest :rst:dir:`testoutput` blocks. """
 
-    option_spec = {
-        **_doctest_options,
-        **img_options,
-        **_graphtik_options,
-    }
+    option_spec = _option_spec
     _real_name = "graphtik-output"
     _con_name = "testoutput"
 
@@ -218,6 +263,8 @@ def setup(app: Sphinx):
     app.add_config_value("graphtik_plot_keywords", {}, "html", [cabc.Mapping])
 
     app.add_node(graphtik_node, html=(_ignore_node_but_process_children, None))
+    # TODO: implement visitor to support LaTex.
+    app.add_node(dynaimage, html=(_html_visit_dynaimage, None))
     app.add_directive("graphtik", GraphtikDoctestDirective)
     app.add_directive("graphtik-output", GraphtikTestoutputDirective)
     app.connect("config-inited", _validate_and_apply_configs)

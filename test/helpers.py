@@ -1,5 +1,6 @@
 import re
 from itertools import chain, cycle
+from typing import Union
 
 import pytest
 
@@ -13,12 +14,24 @@ def flat_dict(d):
     )
 
 
-def attr_check(attr, *regex, count=None):
+def attr_check(attr, *regex, count: Union[int, None, bool] = None):
+    """
+    Asserts captured nodes have `attr` satisfying `regex` one by one (in a cycle).
+
+    :param count:
+        The number-of-nodes expected.
+        If ``True``, this number becomes the number-of-`regex`;
+        if none, no count check happens.
+    """
 
     rexes = [re.compile(r) for r in regex]
 
     def checker(nodes):
+        nonlocal count
+
         if count is not None:
+            if count is True:
+                count = len(rexes)
             n = len(nodes)
             assert len(nodes) == count, f"expected {count} but found {n} nodes: {nodes}"
 

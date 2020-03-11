@@ -86,53 +86,77 @@ to embed graph-plots into your generated site.
 
 .. rst:directive::  graphtik
 
-   Embeds :ref:`graphtik plots <plotting>` from doctest code into a sphinx site.
+   Renders a figure with a :ref:`graphtik plots <plotting>` from doctest code.
 
-    It supports:
+   It supports:
 
-    - all configurations from :mod:`sphinx.ext.doctest` sphinx-extension.
-    - all options from `'doctest' directive
-      <https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html#directive-doctest>`_,
-    - the typical options for images:
+   - all configurations from :mod:`sphinx.ext.doctest` sphinx-extension.
+
+   - all options from `'doctest' directive
+     <https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html#directive-doctest>`_,
+
+      - **hide**
+      - **options**
+      - **pyversion**
+      - **skipif**
+
+   - these options from :rst:dir:`image` directive, except ``target``
+     (plot elements may already link to URLs):
 
       - **height**
       - **width**
       - **scale**
-      - **align**
       - **class**
+      - **alt**
+
+   - these options from :rst:dir:`figure` directive:
+
       - **name**
+      - **align**
+      - **figwidth**
+      - **figclass**
 
-    - and the following new options:
+   - and the following new options:
 
-      .. rst:directive:option:: graphvar: (string, optional) varname
-          :type: str
+      - **graphvar**
+      - **graph-format**
+      - **caption**
 
-          the variable name containing what to render, which it can be:
+   Specifically the "interesting" options are these:
 
-          - an instance of :class:`.Plotter` (such as :class:`.NetworkOperation`,
-            :class:`.Network`, :class:`.ExecutionPlan` or :class:`.Solution`);
+   .. rst:directive:option:: graphvar: (string, optional) varname
+         :type: str
 
-          - an already plotted ``pydot.Dot`` instance, ie, the result of a :meth:`.plot()` call
-            (see `pydot <https://github.com/pydot/pydot>`_ project).
+         the variable name containing what to render, which it can be:
 
-          If missing, it renders the last variable in the doctest code assigned with
-          the above types.
+         - an instance of :class:`.Plotter` (such as :class:`.NetworkOperation`,
+           :class:`.Network`, :class:`.ExecutionPlan` or :class:`.Solution`);
 
-      .. rst:directive:option:: graph-format: png | svg | svgz | pdf | `None`
-          :type: choice, default: None
+         - an already plotted ``pydot.Dot`` instance, ie, the result of a :meth:`.plot()` call
+           (see `pydot <https://github.com/pydot/pydot>`_ project).
 
-          if `None`, format decided according to active builder, roughly:
-              - "html"-like: svg
-              - "latex": pdf
+         If missing, it renders the last variable in the doctest code assigned with
+         the above types.
 
-          Note that SVGs support zooming, and that PNGs suport image maps for
-          linkable areas.
+   .. rst:directive:option:: graph-format: png | svg | svgz | pdf | `None`
+         :type: choice, default: None
 
-      .. rst:directive:option:: caption: figure's caption
-          :type: str
+         if `None`, format decided according to active builder, roughly:
+            - "html"-like: svg
+            - "latex": pdf
 
-          If given, it is used instead of rendered object's string representation.
+         Note that SVGs support zooming, tooltips & URL links, while PNGs suport
+         image maps for linkable areas.
 
+   .. rst:directive:option:: caption: figure's caption
+         :type: str
+
+         If given, it is used instead of rendered object's string representation.
+
+   .. rst:directive:option:: alt
+      :type: str
+
+      If not given, derived from string representation of the :term:`netop`.
 
 .. rst:directive::  graphtik-output
 

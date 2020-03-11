@@ -12,13 +12,19 @@ from sphinx.locale import _, __
 from sphinx.util import logging
 
 from ..base import Plotter
-from . import graphtik_node, img_options
+from . import graphtik_node, dynaimage
 from . import doctestglobs
 
 
 Plottable = Union[None, Plotter, pydot.Dot]
 
 log = logging.getLogger(__name__)
+
+_image_mimetypes = {
+    "svg": "image/svg+xml",
+    "svgz": "image/svg+xml",
+    "pdf": "image/x+pdf",
+}
 
 
 class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
@@ -28,25 +34,26 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
 
     def _globals_updated(self, code: extdoctest.TestCode, globs: dict):
         """Collect plottable from doctest-runner globals and render graphtik plot. """
-        node: nodes.Element = code.node.parent
+        node: nodes.Node = code.node.parent
+
         if isinstance(node, graphtik_node):
             plottable = self._retrieve_graphvar_plottable(
-                globs, node["graphvar"], code.filename, code.lineno
+                globs, node["graphvar"], (code.filename, code.lineno)
             )
             if plottable:
                 if not isinstance(plottable, pydot.Dot):
                     plottable = plottable.plot()
-                rel_img_path = self._render_dot_image(node, plottable)
+                rel_img_path = self._render_dot_image(
+                    node["img_format"], plottable, node
+                )
                 dot_str = str(plottable)
-                node += self._make_image_node(node, rel_img_path, dot_str=dot_str)
-
-                node.replace_self(node.children)
+                self._upd_image_node(node, rel_img_path, dot_str=dot_str)
 
     def _is_plottable(self, value):
         return isinstance(value, (Plotter, pydot.Dot))
 
     def _retrieve_graphvar_plottable(
-        self, globs: dict, graphvar, filename, line_number,
+        self, globs: dict, graphvar, location,
     ) -> Plottable:
         plottable: Plottable = None
 
@@ -62,14 +69,14 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
                         ),
                         var,
                         i,
-                        location=(filename, line_number),
+                        location=location,
                     )
                     plottable = value
                     break
             else:
                 log.error(
                     __("could not find any plottable in doctest globals"),
-                    location=(filename, line_number),
+                    location=location,
                 )
 
         else:
@@ -84,7 +91,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
                         ),
                         graphvar,
                         type(value).__name__,
-                        location=(filename, line_number),
+                        location=location,
                     )
                 else:
                     plottable = value
@@ -92,17 +99,17 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
                 log.warning(
                     __("could not find graphvar %r in doctest globals"),
                     graphvar,
-                    location=(filename, line_number),
+                    location=location,
                 )
 
         return plottable
 
-    def _render_dot_image(self, node: nodes.Node, dot: pydot.Dot) -> Path:
+    def _render_dot_image(
+        self, img_format, dot: pydot.Dot, node: graphtik_node
+    ) -> Path:
         """
         Ensure png(+usemap)|svg|svgz|pdf file exist, and return its path.
         """
-
-        img_format = node["img_format"]
 
         ## Derrive image-filename from graph contents.
         #
@@ -116,15 +123,10 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         #
         if not abs_fpath.is_file():
             abs_fpath.parent.mkdir(parents=True, exist_ok=True)
-            # active builder (not me...).
-            builder_name = self.app.builder.name
-            if builder_name == "latex":
-                dot.write(abs_fpath, format="pdf")
-            else:  # "html" in builder_name:
-                dot.write(abs_fpath, format=img_format)
-
-                if img_format == "png":
-                    dot.write(abs_fpath.with_suffix(".cmap"), format="cmapx")
+            dot.write(abs_fpath, format=img_format)
+            if img_format == "png":
+                cmap = dot.create(format="cmapx", encoding="utf-8").decode("utf-8")
+                node.cmap = cmap
 
         ## XXX: used to work till active-builder attributes were transfered to self.
         # rel_fpath = Path(self.imgpath, fname)
@@ -132,47 +134,27 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
 
         return rel_fpath
 
-    def _make_image_node(
-        self, node: nodes.Element, rel_img_path: Path, dot_str: str, **img_kw,
-    ) -> nodes.image:
-        img_kw.update((k, node[k]) for k in img_options if k != "align" and k in node)
-        img_format = node["img_format"]
+    def _upd_image_node(
+        self, node: graphtik_node, rel_img_path: Path, dot_str: str,
+    ):
+        img_format: str = node["img_format"]
+        assert img_format, (img_format, node)
 
-        if 1 or img_format == "png":
-            img_node = nodes.image(
-                uri=str(rel_img_path),
-                alt=dot_str,
-                title=dot_str,
-                candidates={},
-                **img_kw,
-            )
-            img_node["usemap"] = rel_img_path.with_suffix(".cmap")
+        image_node: dynaimage = first(node.traverse(dynaimage))
+        if img_format == "png":
+            image_node.tag = "img"
+            image_node["src"] = str(rel_img_path)
+            image_node["usemap"] = "#G"
+            # HACK: graphtik-node not given to html-visitor.
+            image_node.cmap = getattr(node, "cmap", "")
         else:
-            img_node = nodes.graphtik_svg(
-                data=str(rel_img_path),
-                alt=dot_str,
-                title=dot_str,
-                candidates={},
-                **img_kw,
-            )
-            img_node["usemap"] = rel_img_path.with_suffix(".cmap")
+            image_node.tag = "object"
+            # TODO: make sphinx-SVGs zoomable.
+            image_node["data"] = str(rel_img_path)
+            image_node["type"] = _image_mimetypes[img_format]
 
-        # Wrap image-node in a figure-node.
-        #
-        # TODO: support RST standard figure-options (figwidth, figclass)
-        figure_node = nodes.figure()
-        if "align" in node:
-            figure_node["align"] = node["align"]
-        # TODO: make sphinx-SVGs zoomable.
-        figure_node += img_node
-        ## Use caption-node, if prepared by directive.
-        #
-        caption_node = first(node.traverse(nodes.caption))
-        if caption_node:
-            caption_node.parent.remove(caption_node)
-            figure_node += caption_node
-
-        return figure_node
+        if "alt" not in image_node:
+            image_node["alt"] = dot_str
 
 
 _graphtik_builder = None
