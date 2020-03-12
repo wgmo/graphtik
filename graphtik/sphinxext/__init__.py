@@ -2,7 +2,6 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """Extends Sphinx with :rst:dir:`graphtik` directive rendering plots from doctest code."""
 import collections.abc as cabc
-import importlib.resources as pkg_resources
 import re
 from pathlib import Path
 from shutil import copyfileobj
@@ -20,6 +19,13 @@ from sphinx.util import logging
 from sphinx.writers.html import HTMLTranslator
 
 from .. import __version__
+
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    # Use backported to PY<3.7 `importlib_resources` lib.
+    import importlib_resources as pkg_resources
+
 
 log = logging.getLogger(__name__)
 

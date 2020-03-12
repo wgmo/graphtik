@@ -53,9 +53,9 @@ extensions = [
     "graphtik.sphinxext",
 ]
 
-## Prevent Sphinx from doctesting python-modules doctests,
-# they will be checked separately with *pytest*.
-# doctest_test_doctest_blocks = ""
+## Don't prevent Sphinx from doctesting python-modules doctests,
+# they are needed by graphtik extension.
+## doctest_test_doctest_blocks = ""
 
 extlinks = {
     "gh": ("https://github.com/yahoo/graphkit/issues/%s", "yahoo#"),
