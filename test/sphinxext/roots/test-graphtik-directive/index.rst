@@ -70,3 +70,36 @@
     ...     operation(name="op1", needs="a", provides="aa")(lambda a: a),
     ...     operation(name="op2", needs=["aa", "b"], provides="res")(lambda x, y: [x, y]),
     ... )
+
+
+8. Multiple plottables with prexistent
+======================================
+Check order of doctest-globals even if item pre-exists:
+
+.. graphtik::
+
+    >>> from graphtik import compose, operation
+    >>> netop1 = compose(
+    ...     "test_netop1",
+    ...     operation(name="op1", needs=["a", "b"], provides="aa")(lambda a, b: [a, b])
+    ... )
+    >>> netop2 = compose(
+    ...     "test_netop2",
+    ...     operation(name="op1", needs=["a", "b"], provides="aa")(lambda a, b: [a, b])
+    ... )
+
+
+9. Multiple plottables ignoring 1st
+===================================
+.. graphtik::
+
+    >>> from graphtik import compose, operation
+    >>> netop1 = compose(
+    ...     "test_netopA",
+    ...     operation(name="op1", needs=["A", "b"], provides="aa")(lambda a, b: [a, b])
+    ... )
+
+    >>> netop2 = compose(
+    ...     "test_netopB",
+    ...     operation(name="op1", needs=["a", "B"], provides="aa")(lambda a, b: [a, b])
+    ... )

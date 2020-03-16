@@ -1,6 +1,7 @@
 # Copyright 2020, Kostis Anagnostopoulos.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """A builder that Render graphtik plots from doctest-runner's globals."""
+from collections import OrderedDict
 from hashlib import sha1
 from pathlib import Path
 from typing import Union
@@ -28,10 +29,19 @@ _image_mimetypes = {
 }
 
 
+class HistoricDict(OrderedDict):
+    def __setitem__(self, k, v):
+        super().__setitem__(k, v)
+        self.move_to_end(k)
+
+
 class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
     """Retrieve *plottable* from doctests globals and render them. """
 
     run_empty_code = True
+
+    def _make_group_globals(self, group: extdoctest.TestGroup):
+        return HistoricDict()
 
     def _globals_updated(self, code: extdoctest.TestCode, globs: dict):
         """Collect plottable from doctest-runner globals and render graphtik plot. """

@@ -74,7 +74,7 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
         img_format = "svg"
 
     image_files = image_dir.listdir()
-    n_expected = 5
+    n_expected = 7
     if img_format == "png":
         # x2 files for image-maps file.
         tag = "img"
@@ -99,9 +99,10 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
             "test_netop4",
             "test_netop1",
             "test_netop1",  # different graph!
+            "test_netop2",  # only the last of the 2 graphs
+            "test_netopB",  # only the last of the 2 graphs
+            count=True,
         ),
     )
-    check_xpath(
-        etree, fname, f".//{tag}", attr_check(uri_attr,),
-    )
+    check_xpath(etree, fname, f".//{tag}", attr_check(uri_attr,))
     check_xpath(etree, fname, ".//*[@class='caption']/*", "Solved")
