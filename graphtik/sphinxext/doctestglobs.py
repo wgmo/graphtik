@@ -3,7 +3,7 @@
 """Patched doctest builder to expose doctest-runner's globals."""
 import doctest
 from doctest import DocTest, DocTestParser, DocTestRunner
-from typing import Dict, List
+from typing import Dict, List, Mapping
 
 import sphinx
 from docutils import nodes
@@ -124,8 +124,11 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
             self.cleanup_failures += res_f
             self.cleanup_tries += res_t
 
+    def _make_group_globals(self, group: dict):
+        return {}
+
     def test_group(self, group: extdoctest.TestGroup) -> None:
-        ns = {}  # type: Dict
+        ns: Mapping = self._make_group_globals(group)
 
         def run_setup_cleanup(runner, testcodes, what):
             # type: (Any, List[TestCode], Any) -> bool
