@@ -173,16 +173,15 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
             image_node["alt"] = dot_str
 
 
-_graphtik_builder = None
-
-
 def get_graphtik_builder(app: Sphinx) -> GraphtikPlotsBuilder:
     """Initialize a singleton patched doctest-builder"""
-    global _graphtik_builder
-    if _graphtik_builder is None:
-        _graphtik_builder = GraphtikPlotsBuilder(app)
-        _graphtik_builder.set_environment(app.env)
-        _graphtik_builder.imgpath = app.builder.imgpath
-        _graphtik_builder.imagedir = app.builder.imagedir
-        _graphtik_builder.init()
-    return _graphtik_builder
+    builder = getattr(app, "graphtik_builder", None)
+    if builder is None:
+        builder = GraphtikPlotsBuilder(app)
+        builder.set_environment(app.env)
+        builder.imgpath = app.builder.imgpath
+        builder.imagedir = app.builder.imagedir
+        builder.init()
+        app.graphtik_builder = builder
+
+    return builder
