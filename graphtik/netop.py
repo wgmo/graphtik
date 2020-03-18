@@ -284,7 +284,7 @@ class NetworkOperation(Operation, Plotter):
 
                 *Plan needs more inputs...*
 
-            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+            - If net cannot produce asked `outputs`, with msg:
 
                 *Unreachable outputs...*
         """
@@ -330,7 +330,7 @@ class NetworkOperation(Operation, Plotter):
 
                 *Plan needs more inputs...*
 
-            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+            - If net cannot produce asked `outputs`, with msg:
 
                 *Unreachable outputs...*
 

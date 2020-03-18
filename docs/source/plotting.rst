@@ -90,7 +90,8 @@ to embed graph-plots into your generated site.
 
    It supports:
 
-   - all configurations from :mod:`sphinx.ext.doctest` sphinx-extension.
+   - all configurations from :mod:`sphinx.ext.doctest` sphinx-extension, plus
+     those described below, in :ref:`graphtik-directive-configs`.
 
    - all options from `'doctest' directive
      <https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html#directive-doctest>`_,
@@ -213,8 +214,14 @@ The following directive renders a diagram of its doctest code, beneath it:
       .. graphtik::
 
 
+.. _graphtik-directive-configs:
+
 Configurations
 ~~~~~~~~~~~~~~
+.. Note:
+   - All configurations from `'doctest' directive
+     <https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html#directive-doctest>`_ apply.
+
 .. confval:: graphtik_default_graph_format
 
    - type: ``Union[str, None]``

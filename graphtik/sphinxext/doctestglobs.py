@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
-    """Patched to expose *globals* from executed doctests. """
+    """Patched to expose *globals* from executed doctests (even empty ones). """
 
     name = "graphtik_plots"
     epilog = None

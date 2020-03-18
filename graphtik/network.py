@@ -44,7 +44,7 @@ def _isDebugLogging():
 
 class AbortedException(Exception):
     """
-    Raised from Network when :func:`abort_run()` is called, and contains the solution ...
+    Raised from Network when :func:`.abort_run()` is called, and contains the solution ...
 
     with any values populated so far.
     """
@@ -281,8 +281,8 @@ class Solution(ChainMap, Plotter):
         A "virtual" property to a dictionary with keys the names of values that
         exist more than once, and values, all those values in a list, ordered:
 
-        - before :meth:`finished()`, as computed;
-        - after :meth:`finished()`, in reverse.
+        - before :meth:`finalized()`, as computed;
+        - after :meth:`finalized()`, in reverse.
         """
         maps = self.maps
         dd = defaultdict(list)
@@ -461,10 +461,10 @@ class ExecutionPlan(
         The parent :class:`Network`
     .. attribute:: needs
 
-        An :class:`iset` with the input names needed to exist in order to produce all `provides`.
+        An :class:`.IndexedSet` with the input names needed to exist in order to produce all `provides`.
     .. attribute:: provides
 
-        An :class:`iset` with the outputs names produces when all `inputs` are given.
+        An :class:`.IndexedSet` with the outputs names produces when all `inputs` are given.
     .. attribute:: dag
 
         The regular (not broken) *pruned* subgraph of net-graph.
@@ -520,7 +520,7 @@ class ExecutionPlan(
 
                 *Plan needs more inputs...*
 
-            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+            - If net cannot produce asked `outputs`, with msg:
 
                 *Unreachable outputs...*
 
@@ -781,7 +781,7 @@ class ExecutionPlan(
 
                 *Plan needs more inputs...*
 
-            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+            - If net cannot produce asked `outputs`, with msg:
 
                 *Unreachable outputs...*
         """
@@ -1236,7 +1236,7 @@ class Network(Plotter):
 
                 *Plan needs more inputs...*
 
-            - If `outputs` asked cannot be produced by the :attr:`dag`, with msg:
+            - If net cannot produce asked `outputs`, with msg:
 
                 *Unreachable outputs...*
         """

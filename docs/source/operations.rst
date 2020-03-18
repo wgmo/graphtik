@@ -7,7 +7,7 @@ The class specifies the *requirements* for a function to participate
 in a computation graph; those are its input-data **needs**, and the output-data
 it **provides**.
 
-The :class:`FunctionalOperation` provides a lightweight wrapper
+The :class:`.FunctionalOperation` provides a lightweight wrapper
 around an arbitrary function to define those specifications.
 
 .. autoclass:: graphtik.op.FunctionalOperation

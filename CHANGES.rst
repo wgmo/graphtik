@@ -148,7 +148,7 @@ Details
 + FIX(NET): keep Solution's insertion order also for PARALLEL executions.
 
 + FEAT(NET, OP): :term:`reschedule`\d operations with partial outputs;
-  they must have :attr:`FunctionalOperation.reschedule` set to true,
+  they must have :attr:`.FunctionalOperation.reschedule` set to true,
   or else they will fail.
 
 + FEAT(OP, netop): specify :term:`endurance`/`reschedule` on a per operation basis,
@@ -448,7 +448,7 @@ Continuation of :gh:`30` as :gh:`31`, containing review-fixes in huyng/graphkit#
 Network
 -------
 + FIX: multithreaded operations were failing due to shared
-  :attr:`ExecutionPlan.executed`.
+  :attr:`.ExecutionPlan.executed`.
 
 + FIX: pruning sometimes were inserting plan string in DAG.
   (not ``_DataNode``).
@@ -516,7 +516,7 @@ Network:
 
 + ENH(:gh:`26`): "Pin* input values that may be overwritten by calculated ones.
 
-  This required the introduction of the new :class:`_PinInstruction` in
+  This required the introduction of the new :class:`._PinInstruction` in
   the execution plan.
 
 + FIX(:gh:`23`, :gh:`22`-2.4.3): Keep consistent order of ``networkx.DiGraph``
@@ -527,7 +527,7 @@ Network:
   <https://travis-ci.org/yahoo/graphkit/builds/594729787>`_, caused by
   unstable dicts, and the use of subgraphs.
 
-+ enh: Mark outputs produced by :class:`NetworkOperation`'s needs as ``optional``.
++ enh: Mark outputs produced by :class:`.NetworkOperation`'s needs as ``optional``.
   TODO: subgraph network-operations would not be fully functional until
   *"optional outputs"* are dealt with (see :gh:`22`-2.5).
 

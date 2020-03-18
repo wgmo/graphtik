@@ -394,7 +394,7 @@ def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str 
     :param str filename:
         Write diagram into a file.
         Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
-        call :func:`plot.supported_plot_formats()` for more.
+        call :func:`.supported_plot_formats()` for more.
     :param show:
         If it evaluates to true, opens the  diagram in a  matplotlib window.
         If it equals `-1`, it returns the image but does not open the Window.
@@ -459,7 +459,7 @@ def legend(
     :param arch_url:
         the url to the architecture section explaining *graphtik* glossary.
 
-    See :func:`render_pydot` for the rest arguments.
+    See :func:`.render_pydot` for the rest arguments.
     """
 
     _monkey_patch_for_jupyter(pydot)

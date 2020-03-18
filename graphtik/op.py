@@ -262,7 +262,7 @@ class FunctionalOperation(Operation):
         Make a clone with the some values replaced.
 
         .. ATTENTION::
-            Using :meth:`namedtuple._replace()` would not pass through cstor,
+            Using :meth:`.namedtuple._replace()` would not pass through cstor,
             so would not get a nested `name` with `parents`, not arguments validation.
         """
         # fn = kw["fn"] if "fn" in kw else self.fn
@@ -515,8 +515,8 @@ class operation:
     """
     A builder for graph-operations wrapping functions.
 
-    :param function fn:
-        The function used by this operation.  This does not need to be
+    :param fn:
+        The callable underlying this operation.  This does not need to be
         specified when the operation object is instantiated and can instead
         be set via ``__call__`` later.
     :param str name:
@@ -558,7 +558,7 @@ class operation:
         added as-is into NetworkX graph
 
     :return:
-        when called, it returns a :class:`FunctionalOperation`
+        when called, it returns a :class:`.FunctionalOperation`
 
     **Example:**
 
@@ -680,7 +680,7 @@ class operation:
                 return a + b
             operator(name='myadd1', needs=['a', 'b'], provides=['c'])(myadd)
 
-        :param function fn:
+        :param fn:
             The function to be used by this ``operation``.
 
         :return:

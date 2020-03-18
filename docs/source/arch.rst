@@ -48,7 +48,7 @@ Architecture
         corresponding `network`\s.
 
         .. Tip::
-            - Use :class:`~.graphtik.operation()` builder class to construct
+            - Use :class:`.operation` builder class to construct
               :class:`.FunctionalOperation` instances.
             - Use :func:`~.graphtik.compose()` factory to prepare the `net` internally,
               and build :class:`.NetworkOperation` instances.
@@ -69,7 +69,7 @@ Architecture
         Currently there are 2 ways to execute:
 
         - *sequential*
-        - *parallel*, with a :class:`multiprocessing.ProcessPool`
+        - *parallel*, with a :class:`multiprocessing.pool.ProcessPool`
 
         Plans may abort their execution by setting the `abort run` global flag.
 
@@ -86,7 +86,7 @@ Architecture
         certainly not when `marshalling` is enabled.
 
     process pool
-        When the :meth:`multiprocessing.Pool` class is used for `parallel` execution,
+        When the :class:`multiprocessing.pool.Pool` class is used for `parallel` execution,
         the `task`\s  must be communicated to/from the worker process, which requires
         `pickling <https://docs.python.org/library/pickle.html>`_, and that may fail.
         With pickling failures you may try `marshalling` with *dill* library,
@@ -96,7 +96,7 @@ Architecture
         certainly not when `marshalling` is enabled.
 
     thread pool
-        When the :func:`multiprocessing.dummy.Pool` class for `parallel` execution,
+        When the :func:`multiprocessing.dummy.Pool` class is used for `parallel` execution,
         the `task`\s are run *in process*, so no `marshalling` is needed.
 
     marshalling
@@ -118,14 +118,14 @@ Architecture
 
     graph
     network graph
-        The :attr:`.Network.graph` (currently a DAG) contains all :class:`FunctionalOperation`
-        and :class:`_DataNode` nodes of some `netop`.
+        The :attr:`.Network.graph` (currently a DAG) contains all :class:`.FunctionalOperation`
+        and :class:`._DataNode` nodes of some `netop`.
 
         They are layed out and connected by repeated calls of
         :meth:`.Network._append_operation()` by Network constructor.
 
         This graph is then `prune`\d to extract the `dag`, and the `execution steps`
-        are calculated, all ingredients for a new :class:`ExecutionPlan`.
+        are calculated, all ingredients for a new :class:`.ExecutionPlan`.
 
     dag
     execution dag
@@ -139,7 +139,7 @@ Architecture
 
     steps
     execution steps
-        The :attr:`ExecutionPlan.steps` contains a list of the operation-nodes only
+        The :attr:`.ExecutionPlan.steps` contains a list of the operation-nodes only
         from the `dag`, topologically sorted, and interspersed with
         *instruction steps* needed to `compute` the asked `outputs` from the given `inputs`.
 
@@ -149,7 +149,7 @@ Architecture
         The only *instruction* step is for performing `evictions`.
 
     evictions
-        The :class:`_EvictInstruction` `steps` erase items from
+        The :class:`._EvictInstruction` `steps` erase items from
         `solution` as soon as they are not needed further down the dag,
         to reduce memory footprint while computing.
 
@@ -176,7 +176,7 @@ Architecture
 
     overwrites
         Values in the `solution` that have been written by more than one `operation`\s,
-        accessed by :attr:`Solution.overwrites`:
+        accessed by :attr:`.Solution.overwrites`:
 
     net
     network
@@ -301,7 +301,7 @@ Architecture
         The partial `pruning` of the `solution`'s dag during `execution`.
         It happens when any of these 2 conditions apply:
 
-        - an `operation` is marked with the :attr:`FunctionalOperation.rescheduled`
+        - an `operation` is marked with the :attr:`.FunctionalOperation.rescheduled`
           attribute, which means that its underlying *callable* may produce
           only a subset of its `provides` (*partial outputs*);
         - `endurance` is enabled, either globally (in the `configurations`), or
