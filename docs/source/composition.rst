@@ -35,8 +35,6 @@ The example script from :ref:`quick-start` illustrates this well:
 The call here to ``compose()`` yields a runnable computation graph that looks like this
 (where the circles are operations, squares are data, and octagons are parameters):
 
-.. graphtik::
-
    >>> # Compose the mul, sub, and abspow operations into a computation graph.
    >>> graphop = compose("graphop",
    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
@@ -45,6 +43,11 @@ The call here to ``compose()`` yields a runnable computation graph that looks li
    ...    (partial(abspow, p=3))
    ... )
 
+This yields a graph which looks like this (see :ref:`plotting`):
+
+.. graphtik::
+
+   >>> graphop.plot('calc_power.svg')  # doctest: +SKIP
 
 .. _graph-computations:
 
@@ -54,24 +57,35 @@ Running a computation graph
 The graph composed in the example above in :ref:`simple-graph-composition` can be run
 by simply calling it with a dictionary argument whose keys correspond to the names of inputs
 to the graph and whose values are the corresponding input values.
-For example, if ``graph`` is as defined above, we can run it like this::
+For example, if ``graph`` is as defined above, we can run it like this:
 
-   # Run the graph and request all of the outputs.
+   >>> # Run the graph and request all of the outputs.
    >>> out = graphop(a=2, b=5)
    >>> out
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
+
+You may plot the solution:
+
+.. graphtik::
+   :caption: the solution of the graph
+   :graphvar: out
+
+   >>> out.plot('a_solution.svg')  # doctest: +SKIP
+
 
 Producing a subset of outputs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default, calling a graph-operation on a set of inputs will yield all of that graph's outputs.
 You can use the ``outputs`` parameter to request only a subset.
-For example, if ``graphop`` is as above::
+For example, if ``graphop`` is as above:
 
-   # Run the graph-operation and request a subset of the outputs.
+   >>> # Run the graph-operation and request a subset of the outputs.
    >>> out = graphop.compute({'a': 2, 'b': 5}, outputs="a_minus_ab")
    >>> out
    {'a_minus_ab': -8}
+
+.. graphtik::
 
 When using ``outputs`` to request only a subset of a graph's outputs, Graphtik executes
 only the ``operation`` nodes in the graph that are on a path from the inputs to the requested outputs.
@@ -80,16 +94,28 @@ For example, the ``abspow1`` operation will not be executed here.
 Short-circuiting a graph computation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can short-circuit a graph computation, making certain inputs unnecessary, by providing a value in the graph that is further downstream in the graph than those inputs.  For example, in the graph-operation we've been working with, you could provide the value of ``a_minus_ab`` to make the inputs ``a`` and ``b`` unnecessary::
+You can short-circuit a graph computation, making certain inputs unnecessary,
+by providing a value in the graph that is further downstream in the graph than those inputs.
+For example, in the graph-operation we've been working with, you could provide
+the value of ``a_minus_ab`` to make the inputs ``a`` and ``b`` unnecessary:
 
-   # Run the graph-operation and request a subset of the outputs.
+   >>> # Run the graph-operation and request a subset of the outputs.
    >>> out = graphop(a_minus_ab=-8)
    >>> out
    {'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
-When you do this, any ``operation`` nodes that are not on a path from the downstream input to the requested outputs (i.e. predecessors of the downstream input) are not computed.  For example, the ``mul1`` and ``sub1`` operations are not executed here.
+.. graphtik::
 
-This can be useful if you have a graph-operation that accepts alternative forms of the same input.  For example, if your graph-operation requires a ``PIL.Image`` as input, you could allow your graph to be run in an API server by adding an earlier ``operation`` that accepts as input a string of raw image data and converts that data into the needed ``PIL.Image``.  Then, you can either provide the raw image data string as input, or you can provide the ``PIL.Image`` if you have it and skip providing the image data string.
+When you do this, any ``operation`` nodes that are not on a path from the downstream input
+to the requested outputs (i.e. predecessors of the downstream input) are not computed.
+For example, the ``mul1`` and ``sub1`` operations are not executed here.
+
+This can be useful if you have a graph-operation that accepts alternative forms of the same input.
+For example, if your graph-operation requires a ``PIL.Image`` as input, you could
+allow your graph to be run in an API server by adding an earlier ``operation``
+that accepts as input a string of raw image data and converts that data into the needed ``PIL.Image``.
+Then, you can either provide the raw image data string as input, or you can provide
+the ``PIL.Image`` if you have it and skip providing the image data string.
 
 Adding on to an existing computation graph
 ------------------------------------------
@@ -105,14 +131,14 @@ to create a new graph:
    ...    operation(name="sub2", needs=["a_minus_ab", "c"], provides="a_minus_ab_minus_c")(sub)
    ... )
 
-   >>> # Run the graph and print the output.
+.. graphtik::
+
+Run the graph and print the output:
+
    >>> sol = bigger_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["a_minus_ab_minus_c"])
    >>> sol
    {'a_minus_ab_minus_c': -13}
 
-This yields a graph which looks like this (see :ref:`plotting`):
-
-   >>> bigger_graph.plot('bigger_example_graph.svg', solution=sol)  # doctest: +SKIP
 
 .. graphtik::
 
@@ -135,6 +161,11 @@ For example, let's say we have ``graphop``, as in the examples above, along with
    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
    ...    operation(name="mul2", needs=["c", "ab"], provides=["cab"])(mul)
    ... )
+   >>> another_graph
+   NetworkOperation('another_graph', needs=['a', 'b', 'c', 'ab'], provides=['ab', 'cab'], x2 ops: mul1, mul2)
+
+.. graphtik::
+   :graphvar: another_graph
 
 We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``mul1`` operation:
 
@@ -143,10 +174,7 @@ We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``m
    NetworkOperation('merged_graph',
                     needs=['a', 'b', 'ab', 'a_minus_ab', 'c'],
                     provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'],
-                    x4 ops:
-   ...
-
-This ``merged_graph`` will look like this:
+                    x4 ops:  mul1, sub1, abspow1, mul2)
 
 .. graphtik::
 
