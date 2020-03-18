@@ -562,7 +562,7 @@ class operation:
 
     **Example:**
 
-    This is an example of its use, based on the "builder pattern"::
+    This is an example of its use, based on the "builder pattern":
 
         >>> from graphtik import operation
 
@@ -573,7 +573,7 @@ class operation:
         operation(name='add_op', needs=['a', 'b'], provides=['SUM'], fn='sum')
 
     You may keep calling ``withset()`` till you invoke a final ``__call__()``
-    on the builder;  then you get the actual :class:`.FunctionalOperation` instance::
+    on the builder;  then you get the actual :class:`.FunctionalOperation` instance:
 
         >>> # Create `Operation` and overwrite function at the last moment.
         >>> opb(sum)

@@ -43,6 +43,11 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
     def _make_group_globals(self, group: extdoctest.TestGroup):
         return HistoricDict()
 
+    def _warn_out(self, text: str) -> None:
+        """Silence warnings since urelated to building site. """
+        log.info(f"WARN-like: {text}", nonl=True)
+        self.outfile.write(text)
+
     def _globals_updated(self, code: extdoctest.TestCode, globs: dict):
         """Collect plottable from doctest-runner globals and render graphtik plot. """
         node: nodes.Node = code.node.parent

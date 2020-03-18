@@ -196,6 +196,22 @@ The following directive renders a diagram of its doctest code, beneath it:
    the code contains just one variable assignment receiving a subclass
    of :class:`.Plotter` or :class:`pydot.Dot` instance.
 
+   Additionally, the doctest code producing the *plottable* does not have to be contained
+   in the *graphtik* directive.
+
+   So the above could have been written simply like this:
+
+   .. code-block:: rst
+
+      >>> from graphtik import compose, operation
+      >>> addmul = compose(
+      ...       "addmul",
+      ...       operation(name="add", needs=["a", "b"], provides="ab")(lambda a, b: a + b),
+      ...       operation(name="add", needs=["ab", "c"], provides="ab x c")(lambda a, b: a * b),
+      ... )
+
+      .. graphtik::
+
 
 Configurations
 ~~~~~~~~~~~~~~
@@ -205,10 +221,10 @@ Configurations
    - default: None
 
    The file extension of the generated plot images (without the leading dot `.``),
-   used  when no ``:graph-format:`` is given in a :rst:dir:`graphtik` or
+   used  when no ``:graph-format:`` option is given in a :rst:dir:`graphtik` or
    :rst:dir:`graphtik-output` directive.
 
-   If it `None`, the format is chosen from :confval:`graphtik_graph_formats_by_builder`
+   If `None`, the format is chosen from :confval:`graphtik_graph_formats_by_builder`
    configuration.
 
 .. confval:: graphtik_graph_formats_by_builder

@@ -20,16 +20,22 @@ Simple composition of operations
 
 The simplest use case for ``compose`` is assembling a collection of individual operations
 into a runnable computation graph.
-The example script from :ref:`quick-start` illustrates this well::
+The example script from :ref:`quick-start` illustrates this well:
 
    >>> from operator import mul, sub
    >>> from functools import partial
    >>> from graphtik import compose, operation
 
-   >>> # Computes |a|^p.
    >>> def abspow(a, p):
+   ...    """Computes |a|^p. """
    ...    c = abs(a) ** p
    ...    return c
+
+
+The call here to ``compose()`` yields a runnable computation graph that looks like this
+(where the circles are operations, squares are data, and octagons are parameters):
+
+.. graphtik::
 
    >>> # Compose the mul, sub, and abspow operations into a computation graph.
    >>> graphop = compose("graphop",
@@ -38,11 +44,6 @@ The example script from :ref:`quick-start` illustrates this well::
    ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
    ...    (partial(abspow, p=3))
    ... )
-
-The call here to ``compose()`` yields a runnable computation graph that looks like this
-(where the circles are operations, squares are data, and octagons are parameters):
-
-.. image:: images/barebone_3ops.svg
 
 
 .. _graph-computations:
@@ -95,7 +96,8 @@ Adding on to an existing computation graph
 
 Sometimes you will have an existing computation graph to which you want to add operations.
 This is simple, since ``compose`` can compose whole graphs along with individual ``operation`` instances.
-For example, if we have ``graph`` as above, we can add another operation to it to create a new graph::
+For example, if we have ``graph`` as above, we can add another operation to it
+to create a new graph:
 
    >>> # Add another subtraction operation to the graph.
    >>> bigger_graph = compose("bigger_graph",
@@ -108,11 +110,11 @@ For example, if we have ``graph`` as above, we can add another operation to it t
    >>> sol
    {'a_minus_ab_minus_c': -13}
 
-This yields a graph which looks like this (see :ref:`plotting`)::
+This yields a graph which looks like this (see :ref:`plotting`):
 
    >>> bigger_graph.plot('bigger_example_graph.svg', solution=sol)  # doctest: +SKIP
 
-.. image:: images/bigger_example_graph.svg
+.. graphtik::
 
 
 
@@ -123,7 +125,10 @@ Sometimes you will have two computation graphs---perhaps ones that share operati
 
    combined_graph = compose("combined_graph", graph1, graph2)
 
-However, if you want to combine graphs that share operations and don't want to pay the price of running redundant computations, you can set the ``merge`` parameter of ``compose()`` to ``True``.  This will consolidate redundant ``operation`` nodes (based on ``name``) into a single node.  For example, let's say we have ``graphop``, as in the examples above, along with this graph::
+However, if you want to combine graphs that share operations and don't want to pay the price
+of running redundant computations, you can set the ``merge`` parameter of ``compose()`` to ``True``.
+This will consolidate redundant ``operation`` nodes (based on ``name``) into a single node.
+For example, let's say we have ``graphop``, as in the examples above, along with this graph:
 
    >>> # This graph shares the "mul1" operation with graph.
    >>> another_graph = compose("another_graph",
@@ -131,7 +136,7 @@ However, if you want to combine graphs that share operations and don't want to p
    ...    operation(name="mul2", needs=["c", "ab"], provides=["cab"])(mul)
    ... )
 
-We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``mul1`` operation::
+We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``mul1`` operation:
 
    >>> merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
    >>> print(merged_graph)
@@ -143,9 +148,9 @@ We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``m
 
 This ``merged_graph`` will look like this:
 
-.. image:: images/example_merged_graph.svg
+.. graphtik::
 
-As always, we can run computations with this graph by simply calling it::
+As always, we can run computations with this graph by simply calling it:
 
    >>> merged_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["cab"])
    {'cab': 50}

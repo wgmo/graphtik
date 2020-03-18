@@ -30,7 +30,7 @@ Operations are just functions
 
 At the heart of each ``operation`` is just a function, any arbitrary function.
 Indeed, you can instantiate an ``operation`` with a function and then call it
-just like the original function, e.g.::
+just like the original function, e.g.:
 
    >>> from operator import add
    >>> from graphtik import operation
@@ -63,7 +63,8 @@ to the ``operation`` constructor.  Specifically:
 When many operations are composed into a computation graph (see :ref:`graph-composition` for more on that),
 Graphtik matches up the values in their ``needs`` and ``provides`` to form the edges of that graph.
 
-Let's look again at the operations from the script in :ref:`quick-start`, for example::
+Let's look again at the operations from the script in :ref:`quick-start`,
+for example:
 
    >>> from operator import mul, sub
    >>> from functools import partial
@@ -89,7 +90,7 @@ The ``needs`` and ``provides`` arguments to the operations in this script define
 a computation graph that looks like this (where the oval are *operations*,
 squares/houses are *data*):
 
-.. image:: images/barebone_3ops.svg
+.. graphtik::
 
 .. Tip::
   See :ref:`plotting` on how to make diagrams like this.
@@ -103,7 +104,10 @@ There are several ways to instantiate an ``operation``, each of which might be m
 Decorator specification
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-If you are defining your computation graph and the functions that comprise it all in the same script, the decorator specification of ``operation`` instances might be particularly useful, as it allows you to assign computation graph structure to functions as they are defined.  Here's an example::
+If you are defining your computation graph and the functions that comprise it all in the same script,
+the decorator specification of ``operation`` instances might be particularly useful,
+as it allows you to assign computation graph structure to functions as they are defined.
+Here's an example:
 
    >>> from graphtik import operation, compose
 
@@ -113,10 +117,15 @@ If you are defining your computation graph and the functions that comprise it al
 
    >>> graphop = compose('foo_graph', foo)
 
+.. graphtik::
+
+
 Functional specification
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-If the functions underlying your computation graph operations are defined elsewhere than the script in which your graph itself is defined (e.g. they are defined in another module, or they are system functions), you can use the functional specification of ``operation`` instances::
+If the functions underlying your computation graph operations are defined elsewhere
+than the script in which your graph itself is defined (e.g. they are defined in another module,
+or they are system functions), you can use the functional specification of ``operation`` instances:
 
    >>> from operator import add, mul
    >>> from graphtik import operation, compose
@@ -126,8 +135,11 @@ If the functions underlying your computation graph operations are defined elsewh
 
    >>> graphop = compose('add_mul_graph', add_op, mul_op)
 
+.. graphtik::
+
+
 The functional specification is also useful if you want to create multiple ``operation``
-instances from the same function, perhaps with different parameter values, e.g.::
+instances from the same function, perhaps with different parameter values, e.g.:
 
    >>> from functools import partial
 
@@ -140,7 +152,7 @@ instances from the same function, perhaps with different parameter values, e.g.:
    >>> graphop = compose('two_pows_graph', pow_op1, pow_op2)
 
 A slightly different approach can be used here to accomplish the same effect
-by creating an operation "builder pattern"::
+by creating an operation "builder pattern":
 
    >>> def mypow(a, p=2):
    ...    return a ** p

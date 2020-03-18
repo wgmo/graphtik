@@ -79,7 +79,7 @@ class optional(arg):
         >>> def myadd(a, b=0):
         ...    return a + b
 
-    Annotate ``b`` as optional argument (and notice it's default value ``0``)::
+    Annotate ``b`` as optional argument (and notice it's default value ``0``):
 
         >>> graph = compose('mygraph',
         ...     operation(name='myadd',
@@ -90,8 +90,7 @@ class optional(arg):
         NetworkOperation('mygraph',
                          needs=['a', optional('b')],
                          provides=['sum'],
-                         x1 ops:
-        ...
+                         x1 ops: myadd)
 
     The graph works both with and without ``c`` provided in the inputs:
 
@@ -182,7 +181,7 @@ class varargs(str):
 
     **Example:**
 
-        >>> from graphtik import operation, compose, vararg
+        >>> from graphtik import operation, compose, varargs
 
         >>> def enlist(a, *b):
         ...    return [a] + list(b)
