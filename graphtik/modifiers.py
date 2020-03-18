@@ -92,6 +92,8 @@ class optional(arg):
                          provides=['sum'],
                          x1 ops: myadd)
 
+    .. graphtik::
+
     The graph works both with and without ``c`` provided in the inputs:
 
         >>> graph(a=5, b=4)['sum']
@@ -154,6 +156,8 @@ class vararg(str):
                          x1 ops:
           +--FunctionalOperation(name='addall', needs=['a', vararg('b'), vararg('c')], provides=['sum'], fn='addall'))
 
+    .. graphtik::
+
     The graph works with and without any of ``b`` or ``c`` inputs:
 
         >>> graph(a=5, b=2, c=4)['sum']
@@ -195,6 +199,8 @@ class varargs(str):
                          needs=['a', optional('b')],
                          provides=['sum'],
                          x1 ops: enlist)
+
+    .. graphtik::
 
     The graph works with or without `b` in the inputs:
 
@@ -268,6 +274,8 @@ class sideffect(str):
         >>> graph
         NetworkOperation('mygraph', needs=['df', 'sideffect(df.b)'],
                          provides=['sideffect(df.sum)'], x1 ops: addcolumns)
+
+    .. graphtik::
 
         >>> df = pd.DataFrame({'a': [5, 0], 'b': [2, 1]})   # doctest: +SKIP
         >>> graph({'df': df})['df']                         # doctest: +SKIP
