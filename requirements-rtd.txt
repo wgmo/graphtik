@@ -1,1 +1,4 @@
-sphinx>=2.4.3
+boltons
+networkx
+pydot
+sphinx >=2
