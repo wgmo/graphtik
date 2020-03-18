@@ -111,12 +111,11 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         """Con :class:`.TestDirective` it's some subclass, and append custom options in return node."""
         options = self.options
 
-        ## Allow empty directives,
-        #  just to print any graphvar in globals.
+        ## Empty directive would add an empty literal line.
+        #  (common, just to print a graphvar global from a previous doctest)
         #
-        # if not "\n".join(self.content).strip():
-        #     # Add dummy code before kicking the doctest directive.
-        #     self.content = ["pass"]
+        if not "\n".join(self.content).strip():
+            options["hide"] = True
 
         self.name = self._con_name
         try:
