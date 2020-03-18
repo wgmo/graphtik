@@ -19,11 +19,12 @@ plot_deps = ["pydot"]
 matplot_deps = plot_deps + ["matplotlib"]
 sphinx_deps = plot_deps + [
     "sphinx >=2",
-    "html5lib",
     "importlib_resources; python_version<'3.7'",
 ]
 test_deps = (
-    matplot_deps + sphinx_deps + ["pytest", "pytest-cov", "pytest-sphinx", "dill"]
+    matplot_deps
+    + sphinx_deps
+    + ["pytest", "pytest-cov", "pytest-sphinx", "dill", "html5lib"]
 )
 dev_deps = test_deps + ["black", "pylint", "mypy"]
 
