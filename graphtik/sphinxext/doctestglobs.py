@@ -173,10 +173,11 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
                         py_code.filename,
                         py_code.lineno,
                     )
-                except Exception:
+                except Exception as ex:
                     log.warning(
-                        __("ignoring invalid doctest code: %r"),
+                        __("ignoring invalid doctest code: %r\n due to: %s"),
                         py_code.code,
+                        ex,
                         location=(py_code.filename, py_code.lineno),
                     )
                     continue
