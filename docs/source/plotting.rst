@@ -81,8 +81,14 @@ If you want all details, plot the solution::
 Sphinx-generated sites
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You may use the :rst:dir:`graphtik` directive from :mod:`.sphinxext` module
-to embed graph-plots into your generated site.
+You may enable the ``graphtik.sphinxext`` extension and then use the :rst:dir:`graphtik`
+directive from :mod:`.sphinxext` module to embed graph-plots into your generated site.
+
+.. Attention::
+   This extenion forces the :confval:`trim_doctest_flags` configuration to ``False``
+   (default is ``True``), whic means that in the rendered site,
+   options-in-comments like ``# doctest: +SKIP`` and ``<BLACKLINE>`` artifacts
+   will be visible.
 
 .. rst:directive::  graphtik
 

@@ -277,6 +277,9 @@ def setup(app: Sphinx):
     app.connect("build-finished", _copy_graphtik_static_assets)
     app.add_css_file(_css_fname)
 
+    # Permanently set this, or else, e.g. +SKIP will not work!
+    app.config.trim_doctest_flags = False
+
     return {
         "version": __version__,
         "parallel_read_safe": True,
