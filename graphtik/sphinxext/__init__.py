@@ -207,13 +207,9 @@ class GraphtikTestoutputDirective(_GraphtikTestDirective):
 
 def _should_work(app: Sphinx):
     """Avoid event-callbacks if not producing HTML/Latex."""
-    return isinstance(
-        app.builder,
-        (
-            sphinx.builders.html.StandaloneHTMLBuilder,
-            sphinx.builders.latex.LaTeXBuilder,
-        ),
-    )
+    builder_name = app.builder.name
+    builder_name_regexes = app.config.graphtik_graph_formats_by_builder.keys()
+    return any(re.search(regex, builder_name) for regex in builder_name_regexes)
 
 
 def _run_doctests_on_graphtik_document(app: Sphinx, doctree: nodes.Node, docname: str):
@@ -257,7 +253,7 @@ def setup(app: Sphinx):
 
     app.add_config_value(
         "graphtik_graph_formats_by_builder",
-        {"html": "svg", "latex": "pdf"},
+        {"html": "svg", "readthedocs": "svg", "latex": "pdf"},
         "html",
         [cabc.Mapping],
     )
