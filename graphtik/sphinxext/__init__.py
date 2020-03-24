@@ -17,6 +17,7 @@ from sphinx.ext import doctest as extdoctest
 from sphinx.locale import _, __
 from sphinx.util import logging
 from sphinx.writers.html import HTMLTranslator
+from sphinx.writers.latex import LaTeXTranslator
 
 from .. import __version__
 
@@ -63,6 +64,39 @@ def _html_visit_dynaimage(self: HTMLTranslator, node: dynaimage):
     cmap = getattr(node, "cmap", "")
     if cmap:
         self.body.append(cmap)
+
+    raise nodes.SkipNode
+
+
+def _latex_visit_dynaimage(self: LaTeXTranslator, node: dynaimage) -> None:
+    if not getattr(node, "tag", None):
+        # Probably couldn't find :graphvar: in doctest globals.
+        raise nodes.SkipNode
+
+    pnode: nodes.figure = node.parent
+
+    is_inline = self.is_inline(node)
+
+    if not is_inline:
+        pre = ""
+        post = ""
+        if "align" in pnode:
+            if "left" in pnode["align"]:
+                pre = "{"
+                post = r"\hspace*{\fill}}"
+            elif "right" in pnode["align"]:
+                pre = r"{\hspace*{\fill}"
+                post = "}"
+            elif "center" in pnode["align"]:
+                pre = r"{\hfill"
+                post = r"\hspace*{\fill}}"
+        self.body.append("\n%s" % pre)
+
+    fname = node.get("data", node.get("src"))
+    self.body.append(r"\sphinxincludegraphics[]{%s}" % fname)
+
+    if not is_inline:
+        self.body.append("%s\n" % post)
 
     raise nodes.SkipNode
 
@@ -236,7 +270,9 @@ def _copy_graphtik_static_assets(app: Sphinx, exc: Exception) -> None:
     """Callback of `build-finished`` event. """
     if not exc and _should_work(app):
         dst = Path(app.outdir, "_static", _css_fname)
-        if not dst.exists():
+        ## Builder `latex` does not have _static folder.
+        #
+        if not dst.exists() and dst.parent.exists():
             _stage_my_pkg_resource(_css_fname, dst)
 
 
@@ -263,9 +299,21 @@ def setup(app: Sphinx):
     # TODO: impl sphinx-config --> plot keywords
     app.add_config_value("graphtik_plot_keywords", {}, "html", [cabc.Mapping])
 
-    app.add_node(graphtik_node, html=(_ignore_node_but_process_children, None))
-    # TODO: implement visitor to support LaTex.
-    app.add_node(dynaimage, html=(_html_visit_dynaimage, None))
+    app.add_node(
+        graphtik_node,
+        **dict.fromkeys(
+            "html latex text man texinfo".split(),
+            (_ignore_node_but_process_children, None),
+        ),
+    )
+    app.add_node(
+        dynaimage,
+        html=(_html_visit_dynaimage, None),
+        latex=(_latex_visit_dynaimage, None),
+        **dict.fromkeys(
+            "text man texinfo".split(), (_ignore_node_but_process_children, None)
+        ),
+    )
     app.add_directive("graphtik", GraphtikDoctestDirective)
     app.add_directive("graphtik-output", GraphtikTestoutputDirective)
     app.connect("config-inited", _validate_and_apply_configs)
