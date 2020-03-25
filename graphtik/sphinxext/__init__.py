@@ -5,7 +5,7 @@ import collections.abc as cabc
 import re
 from pathlib import Path
 from shutil import copyfileobj
-from typing import List, Union
+from typing import List, Union, cast
 
 import sphinx
 from docutils import nodes
@@ -13,8 +13,11 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst import roles as rst_roles
 from sphinx.application import Sphinx
 from sphinx.config import Config
+from sphinx.domains import Domain, Index, ObjType
+from sphinx.domains.std import StandardDomain
 from sphinx.ext import doctest as extdoctest
 from sphinx.locale import _, __
+from sphinx.roles import XRefRole
 from sphinx.util import logging
 from sphinx.writers.html import HTMLTranslator
 from sphinx.writers.latex import LaTeXTranslator
@@ -27,7 +30,8 @@ except ImportError:
     # Use backported to PY<3.7 `importlib_resources` lib.
     import importlib_resources as pkg_resources
 
-
+obj_name = "graphtik diagram"
+role_name = "graphtik"
 log = logging.getLogger(__name__)
 
 
@@ -136,10 +140,24 @@ _option_spec = {
 
 
 class _GraphtikTestDirective(extdoctest.TestDirective):
-    """A doctest-derrived directive embedding graphtik plots into a sphinx site."""
+    """
+    A doctest-derrived directive embedding graphtik plots into a sphinx site.
+
+    Nodes::
+
+        graphtik:               ignored, just to kick-in processing
+            doctest-node:       original nodes, literal or doctest
+            figure
+                target:         if :name: present
+                dynaimage:      rendered as <img> or <object>
+                caption:        if :caption: present
+
+    """
 
     _real_name: str
     _con_name: str
+    #: Adapted from: :meth:`sphinx.registry.SphinxComponentRegistry.add_crossref_type()`
+    indextemplate = f"pair: %s; {obj_name}"
 
     def run(self) -> List[nodes.Node]:
         """Con :class:`.TestDirective` it's some subclass, and append custom options in return node."""
@@ -173,7 +191,6 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
 
         figure = nodes.figure()
         figure.source, figure.line = location
-        self.add_name(figure)
         align = options.get("align")
         if align:
             align = f"align-{align}"
@@ -198,6 +215,20 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
             self.set_source_info(caption_node)
             caption_node += messages
             node += caption_node
+
+        ## Prepare target,
+        #
+        if "name" in options:
+            ##  adapted from: self.add_name()
+            #
+            name = nodes.fully_normalize_name(options.pop("name"))
+            targetname = f"graphtik-{name}"
+            figure["names"].append(targetname)
+            self.state.document.note_explicit_target(figure, figure)
+            ## adapted from: sphinx.domains.std.Target directive.
+            #
+            std = cast(StandardDomain, self.env.get_domain("std"))
+            std.add_object("graphtik", name, self.env.docname, targetname)
 
         return [node]
 
@@ -314,8 +345,21 @@ def setup(app: Sphinx):
             "text man texinfo".split(), (_ignore_node_but_process_children, None)
         ),
     )
-    app.add_directive("graphtik", GraphtikDoctestDirective)
-    app.add_directive("graphtik-output", GraphtikTestoutputDirective)
+
+    ## Support cross-referencing graphs by their :name: option.
+    #  Addapted from `sphinx.registry.SphinxComponentRegistry.add_crossref_type()``
+    #  to keep our directives.
+    #
+    app.add_role_to_domain("std", role_name, XRefRole())
+    obj_type = ObjType(obj_name, role_name)
+    object_types = app.registry.domain_object_types.setdefault("std", {})
+    for dir_name, directive in (
+        ("graphtik", GraphtikDoctestDirective),
+        ("graphtik-output", GraphtikTestoutputDirective),
+    ):
+        app.add_directive(dir_name, directive)
+        object_types[dir_name] = obj_type
+
     app.connect("config-inited", _validate_and_apply_configs)
     app.connect("doctree-resolved", _run_doctests_on_graphtik_document)
     app.connect("build-finished", _copy_graphtik_static_assets)

@@ -170,6 +170,14 @@ directive from :mod:`.sphinxext` module to embed graph-plots into your generated
    Like :rst:dir:`graphtik`, but applied for doctest's :rst:dir:`testoutput` blocks.
 
 
+You may reference plotted graphs with the new *interpreted text role*, below,
+using the value of the ``:name:`` option:
+
+.. code-block:: rst
+
+   :graphtik:`some-name`
+
+
 Examples
 ~~~~~~~~
 The following directive renders a diagram of its doctest code, beneath it:
@@ -177,7 +185,8 @@ The following directive renders a diagram of its doctest code, beneath it:
 .. code-block:: rst
 
    .. graphtik::
-      :graphvar:
+      :graphvar: addmul
+      :name: addmul-anchor
 
       >>> from graphtik import compose, operation
       >>> addmul = compose(
@@ -188,6 +197,7 @@ The following directive renders a diagram of its doctest code, beneath it:
 
 .. graphtik::
    :graphvar: addmul
+   :name: addmul-anchor
    :hide:
 
    >>> from graphtik import compose, operation
@@ -197,6 +207,12 @@ The following directive renders a diagram of its doctest code, beneath it:
    ...    operation(name="add", needs=["a", "b"], provides="ab")(lambda a, b: a + b),
    ...    operation(name="add", needs=["ab", "c"], provides="ab x c")(lambda a, b: a * b),
    ... )
+
+which you may :graphtik:`reference <addmul-anchor>` with this syntax:
+
+.. code-block:: rst
+
+   :graphtik:`reference <addmul-anchor>`
 
 .. hint::
    In this case, the ``:graphvar:`` parameter is not really needed, since
