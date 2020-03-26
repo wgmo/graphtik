@@ -106,3 +106,29 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
     )
     check_xpath(etree, fname, f".//{tag}", attr_check(uri_attr,))
     check_xpath(etree, fname, ".//*[@class='caption']/*", "Solved")
+
+
+def _count_nodes(count):
+    def checker(nodes):
+        assert len(nodes) == count
+
+    return checker
+
+
+@pytest.mark.sphinx(buildername="html", testroot="graphtik-directive")
+@pytest.mark.test_params(shared_result="default_format")
+def test_zoomable_svg(app, cached_etree_parse):
+    app.build()
+    fname = "index.html"
+    print(app.outdir / fname)
+
+    etree = cached_etree_parse(app.outdir / fname)
+    check_xpath(
+        etree,
+        fname,
+        f".//object[@class='graphtik-zoomable-svg']",
+        _count_nodes(7),  # -1 zoomable false
+    )
+    check_xpath(
+        etree, fname, f".//object[@data-svg-zoom-opts]", _count_nodes(1),
+    )

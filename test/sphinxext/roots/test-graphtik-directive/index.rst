@@ -51,6 +51,7 @@
 .. graphtik::
     :graphvar: netop1
     :hide:
+    :zoomable: false
 
 
 6. Nothing for :skipif:
@@ -64,6 +65,7 @@
 7. Same name, different graph
 =============================
 .. graphtik::
+    :zoomable:
 
     >>> netop5 = compose(
     ...     "test_netop1",
@@ -77,6 +79,7 @@
 Check order of doctest-globals even if item pre-exists:
 
 .. graphtik::
+    :zoomable-opts: {}
 
     >>> from graphtik import compose, operation
     >>> netop1 = compose(

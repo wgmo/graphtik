@@ -132,7 +132,7 @@ directive from :mod:`.sphinxext` module to embed graph-plots into your generated
    Specifically the "interesting" options are these:
 
    .. rst:directive:option:: graphvar: (string, optional) varname
-         :type: str
+         :type: `str`
 
          the variable name containing what to render, which it can be:
 
@@ -146,7 +146,7 @@ directive from :mod:`.sphinxext` module to embed graph-plots into your generated
          the above types.
 
    .. rst:directive:option:: graph-format: png | svg | svgz | pdf | `None`
-         :type: choice, default: None
+         :type: choice, default: `None`
 
          if `None`, format decided according to active builder, roughly:
             - "html"-like: svg
@@ -155,13 +155,27 @@ directive from :mod:`.sphinxext` module to embed graph-plots into your generated
          Note that SVGs support zooming, tooltips & URL links, while PNGs suport
          image maps for linkable areas.
 
+   .. rst:directive:option:: zoomable: <empty>, (true, 1, yes, on) | (false, 0, no, off)
+         :type: `bool`
+
+         Enable/disable interactive pan+zoom of SVGs;
+         if missing/empty, :confval:`graphtik_zoomable` assumed.
+
+   .. rst:directive:option:: zoomable-opts: <empty>, (true, 1, yes, on) | (false, 0, no, off)
+         :type: `str`
+
+         A JS-object with `the options <https://github.com/ariutta/svg-pan-zoom#how-to-use>`_
+         for the interactive zoom+pan pf SVGs.
+         If missing, :confval:`graphtik_zoomable_options` assumed.
+         Specify ``{}`` explicitetly to force library's default options.
+
    .. rst:directive:option:: caption: figure's caption
-         :type: str
+         :type: `str`
 
          If given, it is used instead of rendered object's string representation.
 
    .. rst:directive:option:: alt
-      :type: str
+      :type: `str`
 
       If not given, derived from string representation of the :term:`netop`.
 
@@ -246,7 +260,7 @@ Configurations
 
 .. confval:: graphtik_default_graph_format
 
-   - type: ``Union[str, None]``
+   - type: `Union[str, None]`
    - default: None
 
    The file extension of the generated plot images (without the leading dot `.``),
@@ -258,7 +272,7 @@ Configurations
 
 .. confval:: graphtik_graph_formats_by_builder
 
-   - type: ``Map[str, str]``
+   - type: `Map[str, str]`
    - default: check the sources
 
    a dictionary defining which plot image formats to choose, depending on the active builder.
@@ -269,6 +283,26 @@ Configurations
 
    If a builder does not match to any key, and no format given in the directive,
    no graphtik plot is rendered; so by default, it only generates plots for html & latex.
+
+.. confval:: graphtik_zoomable_svg
+
+   - type: `bool`
+   - default: ``True``
+
+   Whether to render SVGs with the `zoom-and-pan javascript lbrary
+   <https://github.com/ariutta/svg-pan-zoom>`_, unless the ``:zoomable:``
+   directive-option is given (and not empty).
+
+.. confval:: graphtik_zoomable_options
+
+   - type: `str`
+   - default: ``{controlIconsEnabled: true, zoomScaleSensitivity: 0.4, fit: true}``
+
+   A JS-object with `the options <https://github.com/ariutta/svg-pan-zoom#how-to-use>`_
+   for the interactive zoom+pan pf SVGs, when the ``:zoomable-opts:`` directive option
+   is missing.
+   If empty, ``{}`` assumed (library's default options).
+
 
 .. Warning::
    Don't disable doctesting of *literal-blocks*, that is,

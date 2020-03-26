@@ -53,18 +53,65 @@ class dynaimage(nodes.General, nodes.Inline, nodes.Element):
     """Writes a tag in `tag` attr (``<img>`` for PNGs, ``<object>`` for SVGs/PDFs). """
 
 
+def _zoomable_activation_js_code(default_zoom_opts: str) -> str:
+    if not default_zoom_opts:
+        default_zoom_opts = "{}"
+
+    return f"""
+    $(function() {{
+        var default_opts = {default_zoom_opts};
+        for (const svg_el of $( ".graphtik-zoomable-svg" )) {{
+            var zoom_opts = ("svgZoomOpts" in svg_el.dataset?
+                                svg_el.dataset.svgZoomOpts:
+                                default_opts);
+            svg_el.addEventListener("load", function() {{
+                svgPanZoom(svg_el, zoom_opts);
+            }});
+        }};
+    }});
+    """
+
+
+def _enact_zoomable_svg(self: HTMLTranslator, node: dynaimage, tag: str):
+    """ Make SVGs zoomable if enabled by option/config.
+
+    :param node:
+        Assign a special *class* for the zoom js-code to select by it.
+
+    NOTE: does not work locally with chrome: ariutta/svg-pan-zoom#326
+    """
+    if tag == "object" and "graphtik-zoomable-svg" in node["classes"]:
+        ## # Setup pan+zoom JS-code only once.
+        #
+        if not hasattr(self.builder, "svg_zoomer_doc_scripts"):
+            self.builder.add_js_file(
+                "https://ariutta.github.io/svg-pan-zoom/dist/svg-pan-zoom.min.js"
+            )
+            self.builder.add_js_file(
+                None,
+                type="text/javascript",
+                body=_zoomable_activation_js_code(
+                    self.config.graphtik_zoomable_options
+                ),
+            )
+
+            # Mark actions above as preformed only once.
+            self.builder.svg_zoomer_doc_scripts = True
+
+
 def _html_visit_dynaimage(self: HTMLTranslator, node: dynaimage):
     # See sphinx/writers/html5:visit_image()
     tag = getattr(node, "tag", None)
     if not tag:
         # Probably couldn't find :graphvar: in doctest globals.
         raise nodes.SkipNode
-
     assert tag in ["img", "object"], (tag, node)
 
-    atts = dict(node.attlist())
+    _enact_zoomable_svg(self, node, tag)
 
+    atts = {k: v for k, v in node.attlist() if k not in nodes.Element.known_attributes}
     self.body.extend([self.emptytag(node, tag, "", **atts), f"</{tag}>"])
+
     cmap = getattr(node, "cmap", "")
     if cmap:
         self.body.append(cmap)
@@ -115,10 +162,29 @@ def _valid_format_option(argument: str) -> Union[str, None]:
     return directives.choice(argument, _image_formats)
 
 
+def _tristate_bool_option(val: str) -> Union[None, bool]:
+    """
+    A parsing function for a tri-state boolean option.
+
+    :raise ValueError:
+        if not one of: `None`, true, 1, yes, on, false, 0, no, off
+    """
+    val = val and val.strip().lower()
+    if not val:
+        return None
+    if val in "true 1 yes on".split():
+        return True
+    if val in "false 0 no off".split():
+        return False
+    raise ValueError(f"invalid boolean {val!r} supplied")
+
+
 _graphtik_options = {
     "caption": directives.unchanged,
     "graph-format": _valid_format_option,
     "graphvar": directives.unchanged_required,
+    "zoomable": _tristate_bool_option,
+    "zoomable-opts": directives.unchanged,
 }
 _doctest_options = extdoctest.DoctestDirective.option_spec
 _img_options = {
@@ -195,7 +261,7 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         if align:
             align = f"align-{align}"
             figure["classes"].append(align)
-        figure["classes"] += options.get("figclass", "").split()
+        figure["classes"].extend(options.get("figclass", "").split())
         node += figure
 
         img_attrs = {k: v for k, v in options.items() if k in _img_options}
@@ -203,6 +269,19 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         image = dynaimage(**img_attrs)
         image.source, dynaimage.line = location
         image["classes"].extend(options.get("class", "").split())
+        #  TODO: TCs for zooamble-SVGs options & configs.
+        if "svg" in img_format:
+            zoomable = options.get("zoomable")
+            if zoomable is None:
+                zoomable = self.config.graphtik_zoomable
+                if zoomable:
+                    image["classes"].append("graphtik-zoomable-svg")
+        ## Assign a special *dataset* html-attribute
+        #  with the content of a respective option.
+        #
+        zoomable_options = options.get("zoomable-opts")
+        if zoomable_options:
+            image["data-svg-zoom-opts"] = zoomable_options
         figure += image
 
         ## See sphinx.ext.graphviz:figure_wrapper(),
@@ -329,6 +408,13 @@ def setup(app: Sphinx):
     app.add_config_value("graphtik_configurations", {}, "html", [cabc.Mapping])
     # TODO: impl sphinx-config --> plot keywords
     app.add_config_value("graphtik_plot_keywords", {}, "html", [cabc.Mapping])
+    app.add_config_value("graphtik_zoomable", True, "html", [bool])
+    app.add_config_value(
+        "graphtik_zoomable_options",
+        "{controlIconsEnabled: true, zoomScaleSensitivity: 0.4, fit: true}",
+        "html",
+        [str],
+    )
 
     app.add_node(
         graphtik_node,
