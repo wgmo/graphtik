@@ -101,11 +101,11 @@ def _dot2svg(dot):
                     {element_styles}
                 }}
             </style>
-            <script src="http://ariutta.github.io/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
+            <script src="https://ariutta.github.io/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
             <script type="text/javascript">
                 var scriptTag = document.scripts[document.scripts.length - 1];
                 var parentTag = scriptTag.parentNode;
-                svg_el = parentTag.querySelector(".svg_container svg");
+                var svg_el = parentTag.querySelector(".svg_container svg");
                 svgPanZoom(svg_el, {pan_zoom_json});
             </script>
             {svg_txt}
