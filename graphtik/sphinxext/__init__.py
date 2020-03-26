@@ -201,8 +201,8 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         img_attrs = {k: v for k, v in options.items() if k in _img_options}
         # TODO: emulate sphinx-processing for image width & height attrs.
         image = dynaimage(**img_attrs)
-        dynaimage.source, dynaimage.line = location
-        image["classes"] += options.get("class", "").split()
+        image.source, dynaimage.line = location
+        image["classes"].extend(options.get("class", "").split())
         figure += image
 
         ## See sphinx.ext.graphviz:figure_wrapper(),
