@@ -26,6 +26,7 @@ import subprocess as sbp
 import sys
 
 import packaging.version
+from sphinx.application import Sphinx
 
 log = logging.getLogger(__name__)
 
@@ -384,7 +385,7 @@ intersphinx_mapping = {
 }
 
 
-def setup(app):
+def setup(app: Sphinx):
     # for documenting the configurations of the new `graphtik` directive.
     app.add_object_type(
         "confval",
