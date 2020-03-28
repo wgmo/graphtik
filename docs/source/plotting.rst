@@ -293,6 +293,9 @@ Configurations
    <https://github.com/ariutta/svg-pan-zoom>`_, unless the ``:zoomable:``
    directive-option is given (and not empty).
 
+   .. Attention::
+      Pan_zoom does not work for Chrome locally - serve the result HTML files from a server.
+
 .. confval:: graphtik_zoomable_options
 
    - type: `str`
