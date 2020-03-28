@@ -44,8 +44,8 @@ def test_repr_smoke(opname, opneeds, opprovides):
 
 def test_repr_returns_dict():
     assert (
-        str(operation(lambda: None, returns_dict=True)())
-        == "FunctionalOperation(name='None', needs=[], provides=[], fn{}='<lambda>')"
+        str(operation(lambda: None, name="", returns_dict=True)())
+        == "FunctionalOperation(name='', needs=[], provides=[], fn{}='<lambda>')"
     )
     assert (
         str(operation(lambda: None, name="myname")())

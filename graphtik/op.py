@@ -191,6 +191,8 @@ class FunctionalOperation(Operation):
             )
 
         ## Overwrite reparsed op-data.
+        if name is None:
+            name = str(fn)
         name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
         name, needs, real_provides = reparse_operation_data(name, needs, provides)
 
