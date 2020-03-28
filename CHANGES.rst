@@ -15,7 +15,36 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
-v5.3.0 (03 Mar 2020, @ankostis): stuck in PARALLEL, fix Impossible Outs, plot quoting, legend node
+v5.3.0 (28 Mar 2020, @ankostis): Sphinx plots, fail-early on bad op
+===================================================================
++ FEAT(PLOT,SITE): Sphinx extension for plotting graph-diagrams as zoomable SVGs (default),
+  PNGs (with link maps), PDFs, etc.
+
+  + replace pre-plotted diagrams with dynamic ones.
+
+  + deps: sphinx >=2; split (optional) matplolib dependencies from graphviz.
+
+  + test: install and use Sphinx's harness for testing site features & extensions.
+
++ ENH(op): fail early if 1st argument of `operation` is not a callable.
+
++ enh(plot): possible to control the name of the graph, in the result DOT-language
+  (it was stuck to ``'G'`` before).
+
++ upd(conf): detailed object representations are enabled by new configuration
+  ``debug`` flag (instead of piggybacking on ``logger.DEBUG``).
+
++ enh(site):
+
+  + links-to-sources resolution function was discarding parent object
+    if it could not locate the exact position in the sources;
+
+  + TC: launch site building in pytest interpeter, to control visibility of logs & stdout;
+
+  + add index pages, linked from TOCs.
+
+
+v5.2.2 (03 Mar 2020, @ankostis): stuck in PARALLEL, fix Impossible Outs, plot quoting, legend node
 ==================================================================================================
 + FIX(NET): PARALLEL was ALWAYS enabled.
 + FIX(PLOT): workaround `pydot` parsing of node-ID & labels (see `pydot#111
