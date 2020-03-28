@@ -8,11 +8,14 @@ from types import SimpleNamespace
 import dill
 import pytest
 
-from graphtik import (NO_RESULT, compose, operation, optional, sideffect,
-                      vararg, varargs)
+from graphtik import NO_RESULT, compose, operation, optional, sideffect, vararg, varargs
 from graphtik.network import yield_ops
-from graphtik.op import (FunctionalOperation, Operation, as_renames,
-                         reparse_operation_data)
+from graphtik.op import (
+    FunctionalOperation,
+    Operation,
+    as_renames,
+    reparse_operation_data,
+)
 
 
 @pytest.fixture(params=[None, ["some"]])
