@@ -3,8 +3,6 @@
 """Extends Sphinx with :rst:dir:`graphtik` directive rendering plots from doctest code."""
 import collections.abc as cabc
 import re
-from pathlib import Path
-from shutil import copyfileobj
 from typing import List, Union, cast
 
 import sphinx
@@ -23,12 +21,6 @@ from sphinx.writers.html import HTMLTranslator
 from sphinx.writers.latex import LaTeXTranslator
 
 from .. import __version__
-
-try:
-    import importlib.resources as pkg_resources
-except ImportError:
-    # Use backported to PY<3.7 `importlib_resources` lib.
-    import importlib_resources as pkg_resources
 
 obj_name = "graphtik diagram"
 role_name = "graphtik"
@@ -367,26 +359,6 @@ def _run_doctests_on_graphtik_document(app: Sphinx, doctree: nodes.Node, docname
         graphtik_builder.test_doc(docname, doctree)
 
 
-def _stage_my_pkg_resource(inp_fname, out_fpath):
-    with pkg_resources.open_binary(__package__, inp_fname) as inp, open(
-        out_fpath, "wb"
-    ) as out:
-        copyfileobj(inp, out)
-
-
-_css_fname = "graphtik.css"
-
-
-def _copy_graphtik_static_assets(app: Sphinx, exc: Exception) -> None:
-    """Callback of `build-finished`` event. """
-    if not exc and _should_work(app):
-        dst = Path(app.outdir, "_static", _css_fname)
-        ## Builder `latex` does not have _static folder.
-        #
-        if not dst.exists() and dst.parent.exists():
-            _stage_my_pkg_resource(_css_fname, dst)
-
-
 def _validate_and_apply_configs(app: Sphinx, config: Config):
     """Callback of `config-inited`` event. """
     config.graphtik_default_graph_format is None or _valid_format_option(
@@ -449,8 +421,6 @@ def setup(app: Sphinx):
 
     app.connect("config-inited", _validate_and_apply_configs)
     app.connect("doctree-resolved", _run_doctests_on_graphtik_document)
-    app.connect("build-finished", _copy_graphtik_static_assets)
-    app.add_css_file(_css_fname)
 
     # Permanently set this, or else, e.g. +SKIP will not work!
     app.config.trim_doctest_flags = False

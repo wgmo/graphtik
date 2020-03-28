@@ -17,10 +17,7 @@ with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
 
 plot_deps = ["pydot"]
 matplot_deps = plot_deps + ["matplotlib"]
-sphinx_deps = plot_deps + [
-    "sphinx >=2",
-    "importlib_resources; python_version<'3.7'",
-]
+sphinx_deps = plot_deps + ["sphinx >=2"]
 test_deps = (
     matplot_deps
     + sphinx_deps
