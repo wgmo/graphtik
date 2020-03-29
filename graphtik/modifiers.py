@@ -217,7 +217,7 @@ class varargs(str):
             +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
     .. Attention::
-        To avoid user mistakes, it does not accept strings (though iterables):
+        To avoid user mistakes, *varargs* does not accept strings (though iterables):
 
         >>> graph(a=5, b="mistake")
         Traceback (most recent call last):

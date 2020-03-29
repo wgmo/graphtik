@@ -69,45 +69,57 @@ out of 2 inputs `a` and `b`:
    >>> from functools import partial
    >>> from graphtik import compose, operation
 
-   # Computes |a|^p.
-   >>> def abspow(a, p):
+   >>> def abspow(a, p):   # Computes |a|^p.
    ...    c = abs(a) ** p
    ...    return c
 
-Compose the ``mul``, ``sub``, and ``abspow`` functions into a computation graph::
+Compose the ``mul``, ``sub``, and ``abspow`` functions into a computation graph:
 
    >>> graphop = compose("graphop",
-   ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-   ...    operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
+   ...    operation(needs=["a", "b"], provides=["ab"])(mul),
+   ...    operation(sub, needs=["a", "ab"], provides=["a_minus_ab"])(),
    ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
    ...    (partial(abspow, p=3))
    ... )
+   >>> graphop
+   NetworkOperation('graphop', needs=['a', 'b', 'ab', 'a_minus_ab'],
+                     provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed'],
+                     x3 ops: <built-in function mul>, <built-in function sub>, abspow1)
 
-Run the graph-operation and request all of the outputs::
+You may plot the function graph in a file like this
+(if in *jupyter*, no need to specify the file):
 
-   >>> graphop(**{'a': 2, 'b': 5})
+   >>> graphop.plot('graphop.svg')      # doctest: +SKIP
+
+.. graphtik::
+
+As you can see, any function can be used as an operation in Graphtik,
+even ones imported from system modules.
+
+Run the graph-operation and request all of the outputs:
+
+   >>> sol = graphop(**{'a': 2, 'b': 5})
+   >>> sol
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
-Run the graph-operation and request a subset of the outputs::
+.. graphtik::
+
+Run the graph-operation and request a subset of the outputs:
 
    >>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
    >>> solution
    {'a_minus_ab': -8}
 
-... and plot the results (if in *jupyter*, no need to create the file)::
+Solutions are plottable as well:
 
-    >>> solution.plot('graphop.svg')      # doctest: +SKIP
+   >>> solution.plot('solution.svg')      # doctest: +SKIP
 
-|sample-sol|
-|plot-legend|
+.. graphtik::
 
-As you can see, any function can be used as an operation in Graphtik,
-even ones imported from system modules!
+... where the leged is: |plot-legend|
 
 .. |sample-plot| raw:: html
     :file:  images/barebone_2ops.svg
-.. |sample-sol| raw:: html
-    :file:  images/executed_3ops.svg
 .. |plot-legend| raw:: html
     :file:  images/GraphtikLegend.svg
 .. include:: ../../README.rst
