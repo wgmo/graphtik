@@ -21,7 +21,14 @@ sphinx_deps = plot_deps + ["sphinx >=2"]
 test_deps = (
     matplot_deps
     + sphinx_deps
-    + ["pytest", "pytest-cov", "pytest-sphinx", "dill", "html5lib"]
+    + [
+        "pytest",
+        "pytest-cov",
+        "pytest-sphinx",
+        "dill",
+        "html5lib",  # for sphinxext TCs
+        "readme-renderer",  # for PyPi landing-page
+    ]
 )
 dev_deps = test_deps + ["black", "pylint", "mypy"]
 

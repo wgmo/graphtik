@@ -60,13 +60,9 @@ OR with various "extras" dependencies, such as, for plotting::
 Let's build a *graphtik* computation graph that produces x3 outputs
 out of 2 inputs `a` and `b`:
 
-.. math::
-
-   a \\times b
-
-   a - a \\times b
-
-   |a - a \\times b| ^ 3
+- `a x b`
+- `a - a x b`
+- `|a - a x b| ^ 3`
 
 ..
 
