@@ -65,26 +65,27 @@ out of 2 inputs `a` and `b`:
 
 ..
 
-   >>> from operator import mul, sub
-   >>> from functools import partial
    >>> from graphtik import compose, operation
+   >>> from operator import mul, sub
 
-   >>> def abspow(a, p):   # Computes |a|^p.
-   ...    c = abs(a) ** p
-   ...    return c
+   >>> @operation(name="abs qubed",
+   ...            needs=["a_minus_ab"],
+   ...            provides=["abs_a_minus_ab_cubed"])
+   ... def abs_qubed(a):
+   ...    return abs(a) ** 3
 
-Compose the ``mul``, ``sub``, and ``abspow`` functions into a computation graph:
+Compose the ``abspow`` function along with ``mul`` & ``sub``  built-ins
+into a computation graph:
 
    >>> graphop = compose("graphop",
    ...    operation(needs=["a", "b"], provides=["ab"])(mul),
    ...    operation(sub, needs=["a", "ab"], provides=["a_minus_ab"])(),
-   ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
-   ...    (partial(abspow, p=3))
+   ...    abs_qubed,
    ... )
    >>> graphop
    NetworkOperation('graphop', needs=['a', 'b', 'ab', 'a_minus_ab'],
                      provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed'],
-                     x3 ops: <built-in function mul>, <built-in function sub>, abspow1)
+                     x3 ops: <built-in function mul>, <built-in function sub>, abs qubed)
 
 You may plot the function graph in a file like this
 (if in *jupyter*, no need to specify the file):

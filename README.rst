@@ -66,40 +66,42 @@ out of 2 inputs `a` and `b`:
 
 ..
 
-   >>> from operator import mul, sub
-   >>> from functools import partial
-   >>> from graphtik import compose, operation
+>>> from graphtik import compose, operation
+>>> from operator import mul, sub
 
-   >>> # Computes |a|^p.
-   >>> def abspow(a, p):
-   ...     c = abs(a) ** p
-   ...     return c
+>>> @operation(name="abs qubed",
+...            needs=["a_minus_ab"],
+...            provides=["abs_a_minus_ab_cubed"])
+... def abs_qubed(a):
+...     return abs(a) ** 3
 
-Compose the ``mul``, ``sub``, and ``abspow`` functions into a computation graph::
+Compose the ``abspow`` function along the ``mul`` & ``sub``  built-ins
+into a computation graph:
 
-   >>> graphop = compose(
-   ...     "graphop",
-   ...     operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-   ...     operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
-   ...     operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
-   ...     (partial(abspow, p=3))
-   ... )
+>>> graphop = compose("graphop",
+...     operation(needs=["a", "b"], provides=["ab"])(mul),
+...     operation(needs=["a", "ab"], provides=["a_minus_ab"])(sub),
+...     abs_qubed,
+... )
+>>> graphop
+NetworkOperation('graphop', needs=['a', 'b', 'ab', 'a_minus_ab'],
+                    provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed'],
+                    x3 ops: <built-in function mul>, <built-in function sub>, abs qubed)
 
+Run the graph and request all of the outputs:
 
-Run the graph and request all of the outputs::
+>>> graphop(a=2, b=5)
+{'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
-   >>> graphop(a=2, b=5)
-   {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
+... or request a subset of outputs:
 
-... or request a subset of outputs::
+>>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+>>> solution
+{'a_minus_ab': -8}
 
-   >>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
-   >>> solution
-   {'a_minus_ab': -8}
+... and plot the results (if in *jupyter*, no need to create the file):
 
-... and plot the results (if in *jupyter*, no need to create the file)::
-
-    >>> solution.plot('graphop.svg')    # doctest: +SKIP
+>>> solution.plot('graphop.svg')    # doctest: +SKIP
 
 |sample-sol|
 |plot-legend|
