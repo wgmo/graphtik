@@ -15,6 +15,12 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+v5.4.0 (29 Mar 2020, @ankostis): auto-name ops, dogfood quickstart
+==================================================================
++ enh(op): use func_name if none given.
++ DOC(quickstart): dynamic plots with sphinxext.
+
+
 v5.3.0 (28 Mar 2020, @ankostis): Sphinx plots, fail-early on bad op
 ===================================================================
 + FEAT(PLOT,SITE): Sphinx extension for plotting graph-diagrams as zoomable SVGs (default),
