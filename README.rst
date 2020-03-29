@@ -57,9 +57,18 @@ OR with various "extras" dependencies, such as, for plotting::
     **all**
         all of the above, plus development libraries, eg *black* formatter.
 
-Here’s a Python script with an example Graphtik computation graph that
-produces multiple outputs (``a * b``, ``a - a * b``, and
-``abs(a - a * b) ** 3``)::
+Let's build a *graphtik* computation graph that produces x3 outputs
+out of 2 inputs `a` and `b`:
+
+.. math::
+
+   a \\times b
+
+   a - a \\times b
+
+   |a - a \\times b| ^ 3
+
+..
 
    >>> from operator import mul, sub
    >>> from functools import partial

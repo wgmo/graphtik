@@ -49,7 +49,6 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
     "sphinx.ext.linkcode",
-    "sphinx.ext.imgmath",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     # "sphinx.ext.doctest",  # doctests maintained by pytest
