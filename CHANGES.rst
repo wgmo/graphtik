@@ -272,7 +272,7 @@ v4.1.0 (13  Dec 2019, @ankostis): ChainMap Solution for Rewrites, stable TOPOLOG
 
   + drop(net): ``_PinInstruction`` class is not needed.
   + drop(netop): `overwrites_collector` parameter; now in :meth:`.Solution.overwrites()`.
-  + ENH(plot): ``Solution`` is also a :class:`.Plotter`;  e.g. use ``sol.plot(...)```.
+  + ENH(plot): ``Solution`` is also a :class:`.Plottable`;  e.g. use ``sol.plot(...)```.
 
 + DROP(plot): `executed` arg from plotting; now embedded in `solution`.
 

@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 #: A nested dictionary controlling the rendering of graph-plots in Jupyter cells,
 #:
-#: as those returned from :meth:`.Plotter.plot()` (currently as SVGs).
+#: as those returned from :meth:`.Plottable.plot()` (currently as SVGs).
 #: Either modify it in place, or pass another one in the respective methods.
 #:
 #: The following keys are supported.
@@ -207,7 +207,7 @@ def build_pydot(
     """
     Build a *Graphviz* out of a Network graph/steps/inputs/outputs and return it.
 
-    See :meth:`.Plotter.plot()` for the arguments, sample code, and
+    See :meth:`.Plottable.plot()` for the arguments, sample code, and
     the legend of the plots.
     """
     from .op import Operation
@@ -411,7 +411,7 @@ def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str 
     :return:
         the matplotlib image if ``show=-1``, or the `dot`.
 
-    See :meth:`.Plotter.plot()` for sample code.
+    See :meth:`.Plottable.plot()` for sample code.
     """
     # Save plot
     #
@@ -454,7 +454,7 @@ def legend(
     arch_url="https://graphtik.readthedocs.io/en/latest/arch.html",
 ):
     """
-    Generate a legend for all plots (see :meth:`.Plotter.plot()` for args)
+    Generate a legend for all plots (see :meth:`.Plottable.plot()` for args)
 
     :param arch_url:
         the url to the architecture section explaining *graphtik* glossary.

@@ -10,7 +10,7 @@ from typing import Any, Callable, Mapping
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import UNSET, Items, Plotter, aslist, astuple, jetsam
+from .base import UNSET, Items, Plottable, aslist, astuple, jetsam
 from .config import is_debug, reset_abort
 from .modifiers import optional, sideffect
 from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
@@ -89,7 +89,7 @@ def _make_network(
     return net
 
 
-class NetworkOperation(Operation, Plotter):
+class NetworkOperation(Operation, Plottable):
     """
     An operation that can :term:`compute` a network-graph of operations.
 

@@ -201,7 +201,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
 
 
 ## Defined here, to avoid subclasses importing `plot` module.
-class Plotter(abc.ABC):
+class Plottable(abc.ABC):
     """
     Classes wishing to plot their graphs should inherit this and ...
 
@@ -274,7 +274,7 @@ class Plotter(abc.ABC):
 
                 Check :data:`.default_jupyter_render` for defaults.
 
-        Note that the `graph` argument is absent - Each Plotter provides
+        Note that the `graph` argument is absent - Each Plottable provides
         its own graph internally;  use directly :func:`.render_pydot()` to provide
         a different graph.
 

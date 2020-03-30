@@ -14,11 +14,11 @@ from sphinx.ext import doctest as extdoctest
 from sphinx.locale import _, __
 from sphinx.util import logging
 
-from ..base import Plotter
+from ..base import Plottable
 from ..network import Solution
 from . import doctestglobs, dynaimage, graphtik_node
 
-Plottable = Union[None, Plotter, pydot.Dot]
+PlottableType = Union[None, Plottable, pydot.Dot]
 
 log = logging.getLogger(__name__)
 
@@ -72,12 +72,12 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
                 )
 
     def _is_plottable(self, value):
-        return isinstance(value, (Plotter, pydot.Dot))
+        return isinstance(value, (Plottable, pydot.Dot))
 
     def _retrieve_graphvar_plottable(
         self, globs: dict, graphvar, location,
-    ) -> Plottable:
-        plottable: Plottable = None
+    ) -> PlottableType:
+        plottable: PlottableType = None
 
         if graphvar is None:
             ## Pick last plottable from globals.

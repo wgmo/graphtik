@@ -17,7 +17,7 @@ from .base import (
     UNSET,
     Items,
     MultiValueError,
-    Plotter,
+    Plottable,
     aslist,
     astuple,
     jetsam,

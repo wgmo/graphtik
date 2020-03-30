@@ -15,7 +15,7 @@ from typing import Any, Callable, Collection, List, Mapping, Optional, Tuple, Un
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import UNSET, Items, Plotter, aslist, astuple, jetsam
+from .base import UNSET, Items, Plottable, aslist, astuple, jetsam
 from .config import (
     get_execution_pool,
     is_abort,
@@ -126,7 +126,7 @@ def _unsatisfied_operations(dag, inputs: Collection) -> List:
     return unsatisfied
 
 
-class Solution(ChainMap, Plotter):
+class Solution(ChainMap, Plottable):
     """
     Collects outputs from operations, preserving :term:`overwrites`.
 
@@ -447,7 +447,7 @@ def _do_task(task):
 
 
 class ExecutionPlan(
-    namedtuple("ExecPlan", "net needs provides dag steps asked_outs"), Plotter
+    namedtuple("ExecPlan", "net needs provides dag steps asked_outs"), Plottable
 ):
     """
     A pre-compiled list of operation steps that can :term:`execute` for the given inputs/outputs.
@@ -854,7 +854,7 @@ class ExecutionPlan(
             raise
 
 
-class Network(Plotter):
+class Network(Plottable):
     """
     A graph of operations that can :term:`compile` an execution plan.
 
