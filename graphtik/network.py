@@ -180,6 +180,17 @@ class Solution(ChainMap, Plottable):
         self.dag = plan.dag.copy()
         # assert next(iter(dag.edges))[0] == next(iter(plan.dag.edges))[0]:
 
+    def __copy__(self):
+        clone = type(self)(self.plan, {})
+        props = (
+            "maps executed canceled finalized elapsed_ms solid _layers"
+            " is_endurance is_reschedule is_parallel is_marshal dag"
+        ).split()
+        for p in props:
+            setattr(clone, p, getattr(self, p))
+
+        return clone
+
     def __repr__(self):
         items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
         if is_debug():
