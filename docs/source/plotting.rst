@@ -60,14 +60,14 @@ If you want all details, plot the solution::
    solution.net.plot(...)
 
 .. Note::
-   For plots, `Graphviz <https://graphviz.org>`_ program must be in your PATH,
+   For plots, `Graphviz`_ program must be in your PATH,
    and ``pydot`` & ``matplotlib`` python packages installed.
    You may install both when installing ``graphtik`` with its ``plot`` extras::
 
       pip install graphtik[plot]
 
 .. Tip::
-   The `pydot.Dot <https://pypi.org/project/pydot/>`_ instances returned by
+   The |pydot.Dot|_ instances returned by
    :meth:`.Plottable.plot()` are rendered directly in *Jupyter/IPython* notebooks
    as SVG images.
 
@@ -139,8 +139,7 @@ directive from :mod:`.sphinxext` module to embed graph-plots into your generated
          - an instance of :class:`.Plottable` (such as :class:`.NetworkOperation`,
            :class:`.Network`, :class:`.ExecutionPlan` or :class:`.Solution`);
 
-         - an already plotted ``pydot.Dot`` instance, ie, the result of a :meth:`.plot()` call
-           (see `pydot <https://github.com/pydot/pydot>`_ project).
+         - an already plotted |pydot.Dot|_ instance, ie, the result of a :meth:`.plot()` call
 
          If missing, it renders the last variable in the doctest code assigned with
          the above types.
@@ -231,7 +230,7 @@ which you may :graphtik:`reference <addmul-anchor>` with this syntax:
 .. hint::
    In this case, the ``:graphvar:`` parameter is not really needed, since
    the code contains just one variable assignment receiving a subclass
-   of :class:`.Plottable` or :class:`pydot.Dot` instance.
+   of :class:`.Plottable` or |pydot.Dot|_ instance.
 
    Additionally, the doctest code producing the *plottable* does not have to be contained
    in the *graphtik* directive.

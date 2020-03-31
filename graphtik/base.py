@@ -259,12 +259,12 @@ class Plottable(abc.ABC):
             a URL to the *graphtik* legend; if it evaluates to false, none is added.
 
         :return:
-            a `pydot.Dot <https://pypi.org/project/pydot/>`_ instance
+            a |pydot.Dot|_ instance
             (for for API reference visit:
             https://pydotplus.readthedocs.io/reference.html#pydotplus.graphviz.Dot)
 
             .. Tip::
-                The :class:`pydot.Dot` instance returned is rendered directly
+                The |pydot.Dot|_ instance returned is rendered directly
                 in *Jupyter/IPython* notebooks as SVG images.
 
                 You may increase the height of the SVG cell output with

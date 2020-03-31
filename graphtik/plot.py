@@ -205,7 +205,9 @@ def build_pydot(
     legend_url="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg",
 ) -> pydot.Dot:
     """
-    Build a *Graphviz* out of a Network graph/steps/inputs/outputs and return it.
+    Build a |pydot.Dot|_ out of a Network graph/steps/inputs/outputs and return it
+
+    to be fed into `Graphviz`_ to render.
 
     See :meth:`.Plottable.plot()` for the arguments, sample code, and
     the legend of the plots.
@@ -387,10 +389,10 @@ def supported_plot_formats() -> List[str]:
 
 def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str = None):
     """
-    Plot a *Graphviz* dot in a matplotlib, in file or return it for Jupyter.
+    Render a |pydot.Dot|_ instance with `Graphviz`_ in a file/matplotlib or return it for Jupyter.
 
     :param dot:
-        the pre-built *Graphviz* :class:`pydot.Dot` instance
+        the pre-built |pydot.Dot|_ instance
     :param str filename:
         Write diagram into a file.
         Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
@@ -409,7 +411,8 @@ def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str 
             netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
 
     :return:
-        the matplotlib image if ``show=-1``, or the `dot`.
+        the matplotlib image if ``show=-1``, or the given `dot` annotated with any
+        jupyter-rendering configurations given in `jupyter_render` parameter.
 
     See :meth:`.Plottable.plot()` for sample code.
     """

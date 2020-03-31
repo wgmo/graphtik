@@ -46,8 +46,8 @@ Here's how to install::
 
    pip install graphtik
 
-OR with dependencies for plotting support (and you need to install `Graphviz
-<https://graphviz.org>`_ program separately with your OS tools)::
+OR with dependencies for plotting support (and you need to install `Graphviz`_ program
+separately with your OS tools)::
 
    pip install graphtik[plot]
 
