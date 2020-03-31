@@ -121,6 +121,14 @@ def linkcode_resolve(domain, info):
     return uri
 
 
+rst_epilog = """
+.. _Graphkit: https://github.com/yahoo/graphkit
+.. _Graphviz: https://graphviz.org
+.. _pydot: https://github.com/pydot/pydot
+.. |pydot.Dot| replace:: ``pydot.Dot``
+.. _pydot.Dot: https://github.com/pydot/pydot
+"""
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 

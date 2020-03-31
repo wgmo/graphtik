@@ -118,11 +118,10 @@ Run the graph and request all of the outputs:
     :alt: graphtik legend
     :align: middle
 
-.. _substs:
 
 .. _Graphkit: https://github.com/yahoo/graphkit
-.. _`Graphviz`: https://graphviz.org
-.. _`pydot`: https://github.com/pydot/pydot
+.. _Graphviz: https://graphviz.org
+.. _badges_substs:
 
 .. |travis-status| image:: https://img.shields.io/travis/pygraphkit/graphtik
     :alt: Travis continuous integration testing ok? (Linux)

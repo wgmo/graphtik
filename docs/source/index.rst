@@ -124,4 +124,4 @@ Solutions are plottable as well:
 .. |plot-legend| raw:: html
     :file:  images/GraphtikLegend.svg
 .. include:: ../../README.rst
-    :start-after: _substs:
+    :start-after: _badges_substs:
