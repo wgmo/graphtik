@@ -202,6 +202,7 @@ def build_pydot(
     node_props=None,
     edge_props=None,
     clusters=None,
+    splines="ortho",
     legend_url="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg",
 ) -> pydot.Dot:
     """
@@ -251,7 +252,10 @@ def build_pydot(
         return quote_dot_word(a)
 
     dot = pydot.Dot(
-        graph_type="digraph", label=quote_dot_word(title), fontname="italic"
+        graph_type="digraph",
+        label=quote_dot_word(title),
+        fontname="italic",
+        splines="ortho",
     )
     if name:
         dot.set_name(as_identifier(name))
@@ -337,8 +341,7 @@ def build_pydot(
             if solution and dst not in solution and dst not in steps:
                 kw["color"] = broken_color
 
-        # `splines=ortho` not working :-()
-        edge = pydot.Edge(src=src_name, dst=dst_name, splines="ortho", **kw)
+        edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
 
         _apply_user_props(edge, edge_props, key=(src, dst))
 

@@ -313,7 +313,7 @@ Architecture
     endurance
         Keep executing as many `operation`\s as possible, even if some of them fail.
         Endurance for an operation  is enabled if :func:`.set_endure_operations()`
-        is true globally in the `configurations` or if :attr:`.FunctionalOperation.endurance`
+        is true globally in the `configurations` or if :attr:`.FunctionalOperation.endured`
         is true.
 
         You may interrogate :attr:`.Solution.executed` to discover the status

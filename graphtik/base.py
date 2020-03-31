@@ -251,6 +251,10 @@ class Plottable(abc.ABC):
             an optional nested dict of Graphviz attributes for certain edges
         :param clusters:
             an optional mapping of nodes --> cluster-names, to group them
+        :param splines:
+            Whether to plot `curved/polyline edges
+            <https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:splines>`_
+            [default: "ortho"]
         :param jupyter_render:
             a nested dictionary controlling the rendering of graph-plots in Jupyter cells,
             if `None`, defaults to :data:`jupyter_render` (you may modify it in place
@@ -341,6 +345,7 @@ class Plottable(abc.ABC):
         digraph netop {
             fontname=italic;
             label=<netop>;
+            splines=ortho;
             <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
         ...
 

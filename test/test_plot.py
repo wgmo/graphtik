@@ -239,13 +239,14 @@ def test_node_quoting():
         digraph graph_ {
         fontname=italic;
         label=<graph>;
+        splines=ortho;
         <edge> [shape=invhouse];
         <digraph&#58; strict> [shape=invhouse];
         <node> [fontname=italic, shape=oval, tooltip="FunctionalOperation(name='node', needs=['edge', 'digraph: strict'], provides=['<graph>'], fn='add')"];
         <graph> [shape=house];
-        <edge> -> <node>  [splines=ortho];
-        <digraph&#58; strict> -> <node>  [splines=ortho];
-        <node> -> <graph>  [splines=ortho];
+        <edge> -> <node>;
+        <digraph&#58; strict> -> <node>;
+        <node> -> <graph>;
         legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fill_color=yellow, shape=component, style=filled];
         }
         """
