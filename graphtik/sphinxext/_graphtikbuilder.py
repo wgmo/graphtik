@@ -36,7 +36,7 @@ class HistoricDict(OrderedDict):
 
 
 class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
-    """Retrieve *plottable* from doctests globals and render them. """
+    """Retrieve a :term:`plottable` from doctests globals and render them. """
 
     run_empty_code = True
 

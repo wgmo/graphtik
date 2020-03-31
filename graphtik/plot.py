@@ -389,7 +389,7 @@ def supported_plot_formats() -> List[str]:
 
 def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str = None):
     """
-    Render a |pydot.Dot|_ instance with `Graphviz`_ in a file/matplotlib or return it for Jupyter.
+    Render a |pydot.Dot|_ instance with `Graphviz`_ in a file and/or in a matplotlib window.
 
     :param dot:
         the pre-built |pydot.Dot|_ instance

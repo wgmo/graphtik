@@ -332,6 +332,16 @@ Architecture
         (after a successful intermediate :term:`compilation`), or manually,
         by calling :func:`.reset_abort()`.
 
+    plottable
+        Objects that can plot their graph network, such as those inheriting :class:`.Plottable`,
+        (:class:`.NetworkOperation`, :class:`.Network`, :class:`.ExecutionPlan`m :class:`.Solution`)
+        or a |pydot.Dot|_ instance (the result of the :meth:`Plottable.plot()` method).
+
+        Such objects may render as SVG in *Jupter notebooks* (through their ``plot()`` method)
+        and can render in a Sphinx site with with the :rst:dir:`graphtik` *RsT directive*.
+        You may control the rendered image as explained in the *tip*  of
+        the :ref:`plotting` section.
+
 
 .. default-role:: obj
 .. |v410-flowchart| raw:: html

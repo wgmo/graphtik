@@ -8,7 +8,7 @@ Plotting
 --------
 
 For :ref:`debugging` it is necessary to visualize the graph-operation.
-You may plot the original plot and annotate on top the *execution plan* and
+You may plot any :term:`plottable` and annotate on top the *execution plan* and
 solution of the last computation, calling methods with arguments like this::
 
    netop.plot(show=True)              # open a matplotlib window
@@ -232,8 +232,8 @@ which you may :graphtik:`reference <addmul-anchor>` with this syntax:
    the code contains just one variable assignment receiving a subclass
    of :class:`.Plottable` or |pydot.Dot|_ instance.
 
-   Additionally, the doctest code producing the *plottable* does not have to be contained
-   in the *graphtik* directive.
+   Additionally, the doctest code producing the :term:`plottable`\s does not have
+   to be contained in the *graphtik* directive as a whole.
 
    So the above could have been written simply like this:
 

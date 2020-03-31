@@ -111,7 +111,7 @@ Run the graph-operation and request a subset of the outputs:
    >>> solution
    {'a_minus_ab': -8}
 
-Solutions are plottable as well:
+Solutions are :term:`plottable` as well:
 
    >>> solution.plot('solution.svg')      # doctest: +SKIP
 
