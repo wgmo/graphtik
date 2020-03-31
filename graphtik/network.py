@@ -128,7 +128,7 @@ def _unsatisfied_operations(dag, inputs: Collection) -> List:
 
 class Solution(ChainMap, Plottable):
     """
-    Collects outputs from operations, preserving :term:`overwrites`.
+    A chain-map collecting :term:`solution` outputs and execution state (eg :term:`overwrites`)
 
     .. attribute:: plan
 

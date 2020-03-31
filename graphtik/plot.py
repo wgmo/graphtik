@@ -255,7 +255,7 @@ def build_pydot(
         graph_type="digraph",
         label=quote_dot_word(title),
         fontname="italic",
-        splines="ortho",
+        splines=splines,
     )
     if name:
         dot.set_name(as_identifier(name))
