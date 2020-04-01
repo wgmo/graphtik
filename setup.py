@@ -18,17 +18,19 @@ with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
 plot_deps = ["pydot"]
 matplot_deps = plot_deps + ["matplotlib"]
 sphinx_deps = plot_deps + ["sphinx >=2"]
-test_deps = (
-    matplot_deps
-    + sphinx_deps
-    + [
-        "pytest",
-        "pytest-cov",
-        "pytest-sphinx",
-        "dill",
-        "html5lib",  # for sphinxext TCs
-        "readme-renderer",  # for PyPi landing-page
-    ]
+test_deps = list(
+    set(
+        matplot_deps
+        + sphinx_deps
+        + [
+            "pytest",
+            "pytest-cov",
+            "pytest-sphinx",
+            "dill",
+            "html5lib",  # for sphinxext TCs
+            "readme-renderer",  # for PyPi landing-page
+        ]
+    )
 )
 dev_deps = test_deps + ["black", "pylint", "mypy"]
 
@@ -66,6 +68,7 @@ setup(
         # See :term:`marshalling` and :func:`set_marshal_tasks()` configuration.
         "dill": ["dill"],
         "all": dev_deps,
+        "dev": dev_deps,
     },
     tests_require=test_deps,
     license="Apache-2.0",

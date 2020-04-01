@@ -56,6 +56,8 @@ OR with various "extras" dependencies, such as, for plotting::
         and ``set_marshal_tasks()`` configuration.
     **all**
         all of the above, plus development libraries, eg *black* formatter.
+    **dev**
+        like *all*
 
 Let's build a *graphtik* computation graph that produces x3 outputs
 out of 2 inputs `a` and `b`:
