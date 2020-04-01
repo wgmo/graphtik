@@ -15,6 +15,20 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+v5.5.0 (1 Apr 2020, @ankostis): ortho plots
+===========================================
+Should have been a major bump due to breaking rename of ``Plotter`` class,
+but...no clients yet.
+
++ ENH(plot): plot edges in grapos with `Graphviz`_ ``splines=ortho``.
++ REFACT(plot): rename base class from ``Plotter --> Plottable``;
++ enh(build): add ``[dev]`` distribution extras as an alias to ``[all]``.
+  doc: refered to the new name from a new term in glossary.
++ enh(site): put RST substitutions in :confval:`rst_epilog` configuration
+  (instead of importing them from README's tails).
++ doc(quickstart): exemplify ``@operation`` as a decorator.
+
+
 v5.4.0 (29 Mar 2020, @ankostis): auto-name ops, dogfood quickstart
 ==================================================================
 + enh(op): use func_name if none given.
