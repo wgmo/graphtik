@@ -117,11 +117,15 @@ Solutions are :term:`plottable` as well:
 
 .. graphtik::
 
-... where the leged is: |plot-legend|
+... where the (interactive) legend is this:
+
+.. graphtik::
+   :width: 100%
+
+   >>> from graphtik.plot import legend
+   >>> l = legend()
 
 .. |sample-plot| raw:: html
     :file:  images/barebone_2ops.svg
-.. |plot-legend| raw:: html
-    :file:  images/GraphtikLegend.svg
 .. include:: ../../README.rst
     :start-after: _badges_substs:
