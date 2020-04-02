@@ -81,8 +81,10 @@ If you want all details, plot the solution::
 Sphinx-generated sites
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You may enable the ``graphtik.sphinxext`` extension and then use the :rst:dir:`graphtik`
-directive from :mod:`.sphinxext` module to embed graph-plots into your generated site.
+If you append the :mod:`graphtik.sphinxext` extension in you :file:`docs/conf.py` file
+and then use the :rst:dir:`graphtik` or :rst:dir:`graphtik-output` directives
+to embed graph-plots into your generated site;  you may refer to those plotted graphs
+with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
 
 .. Attention::
    This extenion forces the :confval:`trim_doctest_flags` configuration to ``False``
@@ -180,16 +182,15 @@ directive from :mod:`.sphinxext` module to embed graph-plots into your generated
 
 .. rst:directive::  graphtik-output
 
-   Like :rst:dir:`graphtik`, but applied for doctest's :rst:dir:`testoutput` blocks.
+   Like :rst:dir:`graphtik`, but works like doctest's :rst:dir:`testoutput` directive.
 
 
-You may reference plotted graphs with the new *interpreted text role*, below,
-using the value of the ``:name:`` option:
+.. rst:role:: graphtik
 
-.. code-block:: rst
+   An interpreted text role to refer to graphs plotted by :rst:dir:`graphtik` or
+   :rst:dir:`graphtik-output` directives by their ``:name:``  option.
 
-   :graphtik:`some-name`
-
+.. _sphinxext-examples:
 
 Examples
 ~~~~~~~~
@@ -199,33 +200,31 @@ The following directive renders a diagram of its doctest code, beneath it:
 
    .. graphtik::
       :graphvar: addmul
-      :name: addmul-anchor
+      :name: addmul-operation
 
       >>> from graphtik import compose, operation
       >>> addmul = compose(
       ...       "addmul",
-      ...       operation(name="add", needs=["a", "b"], provides="ab")(lambda a, b: a + b),
-      ...       operation(name="add", needs=["ab", "c"], provides="ab x c")(lambda a, b: a * b),
+      ...       operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
       ... )
 
 .. graphtik::
    :graphvar: addmul
-   :name: addmul-anchor
+   :name: addmul-operation
    :hide:
 
    >>> from graphtik import compose, operation
 
    >>> addmul = compose(
    ...    "addmul",
-   ...    operation(name="add", needs=["a", "b"], provides="ab")(lambda a, b: a + b),
-   ...    operation(name="add", needs=["ab", "c"], provides="ab x c")(lambda a, b: a * b),
+   ...    operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
    ... )
 
-which you may :graphtik:`reference <addmul-anchor>` with this syntax:
+which you may :graphtik:`reference <addmul-operation>` with this syntax:
 
 .. code-block:: rst
 
-   :graphtik:`reference <addmul-anchor>`
+   you may :graphtik:`reference <addmul-operation>` with ...
 
 .. hint::
    In this case, the ``:graphvar:`` parameter is not really needed, since
@@ -235,18 +234,18 @@ which you may :graphtik:`reference <addmul-anchor>` with this syntax:
    Additionally, the doctest code producing the :term:`plottable`\s does not have
    to be contained in the *graphtik* directive as a whole.
 
-   So the above could have been written simply like this:
+   So the above could have been simply written like this:
 
    .. code-block:: rst
 
       >>> from graphtik import compose, operation
       >>> addmul = compose(
       ...       "addmul",
-      ...       operation(name="add", needs=["a", "b"], provides="ab")(lambda a, b: a + b),
-      ...       operation(name="add", needs=["ab", "c"], provides="ab x c")(lambda a, b: a * b),
+      ...       operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
       ... )
 
       .. graphtik::
+         :name: addmul-operation
 
 
 .. _graphtik-directive-configs:
