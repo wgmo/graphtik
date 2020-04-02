@@ -52,13 +52,15 @@ class AbortedException(Exception):
 
 class IncompleteExecutionError(Exception):
     """
-    Raised by :meth:`.scream_if_incomplete()` when `netop` operations were canceled/failed.
+    Error report when any `netop` operations were canceled/failed.
 
     The exception contains 3 arguments:
 
     1. the causal errors and conditions (1st arg),
     2. the list of collected exceptions (2nd arg), and
     3. the solution instance (3rd argument), to interrogate for more.
+
+    Returned by :meth:`.check_if_incomplete()` or raised by :meth:`.scream_if_incomplete()`.
     """
 
     def __str__(self):
@@ -303,8 +305,8 @@ class Solution(ChainMap, Plottable):
 
         return {k: v for k, v in dd.items() if len(v) > 1}
 
-    def scream_if_incomplete(self):
-        """Raise a :class:`IncompleteExecutionError` when `netop` operations failed/canceled. """
+    def check_if_incomplete(self) -> Optional[IncompleteExecutionError]:
+        """Return a :class:`IncompleteExecutionError` if `netop` operations failed/canceled. """
         failures = {
             op: ex for op, ex in self.executed.items() if isinstance(ex, Exception)
         }
@@ -325,7 +327,13 @@ class Solution(ChainMap, Plottable):
                 f" due to x{len(failures)} failures and x{len(partial_msgs)} partial-ops:"
                 f"{''.join(err_msgs)}{''.join(partial_msgs)}"
             )
-            raise IncompleteExecutionError(msg, self)
+            return IncompleteExecutionError(msg, self)
+
+    def scream_if_incomplete(self):
+        """Raise a :class:`IncompleteExecutionError` if `netop` operations failed/canceled. """
+        ex = self.check_if_incomplete()
+        if ex:
+            raise ex
 
     def _build_pydot(self, **kws):
         """delegate to network"""

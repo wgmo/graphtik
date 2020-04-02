@@ -1176,6 +1176,7 @@ def test_execution_endurance(exemethod, endurance, endured):
         assert sol.is_failed(scream1) and sol.is_failed(scream2)
         assert "Must not have run!" in str(sol.executed[scream1])
         assert sol == {"a+b": 3, "a+2b": 5, **inp}
+        assert "x2 failures" in str(sol.check_if_incomplete())
         with pytest.raises(IncompleteExecutionError, match="x2 failures"):
             assert sol.scream_if_incomplete()
 
@@ -1219,6 +1220,7 @@ def test_rescheduling(exemethod, resched, rescheduled):
     dot = str(sol.plot())
     assert "Grey" in dot  # Canceled
     assert "penwidth=4" in dot  # Rescheduled
+    assert "x2 partial-ops" in str(sol.check_if_incomplete())
     with pytest.raises(IncompleteExecutionError, match="x2 partial-ops"):
         assert sol.scream_if_incomplete()
 
@@ -1233,6 +1235,7 @@ def test_rescheduling_NO_RESULT(exemethod):
     sol = op()
     assert canc in sol.canceled
     assert partial in sol.executed
+    assert "x1 partial-ops" in str(sol.check_if_incomplete())
     with pytest.raises(IncompleteExecutionError, match="x1 partial-ops"):
         assert sol.scream_if_incomplete()
 

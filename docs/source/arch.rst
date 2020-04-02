@@ -317,7 +317,8 @@ Architecture
         is true.
 
         You may interrogate :attr:`.Solution.executed` to discover the status
-        of each executed operations or call :meth:`.scream_if_incomplete()`.
+        of each executed operations or call one of :meth:`.check_if_incomplete()`
+        or :meth:`.scream_if_incomplete()`.
 
     predicate
     node predicate
