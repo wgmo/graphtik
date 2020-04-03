@@ -15,15 +15,22 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+v5.6.0 (?? Apr 2020, @ankostis):
+=================================
++ feat(sol): + :meth:`.Solution.check_if_incomplete()` just to get multi-errors
+  (not raise them)
++ doc: integrate spellchecking of VSCode IDE & `sphinxcontrib.spelling`.
+
+
 v5.5.0 (1 Apr 2020, @ankostis): ortho plots
 ===========================================
 Should have been a major bump due to breaking rename of ``Plotter`` class,
 but...no clients yet.
 
-+ ENH(plot): plot edges in grapos with `Graphviz`_ ``splines=ortho``.
++ ENH(plot): plot edges in graphs with `Graphviz`_ ``splines=ortho``.
 + REFACT(plot): rename base class from ``Plotter --> Plottable``;
 + enh(build): add ``[dev]`` distribution extras as an alias to ``[all]``.
-  doc: refered to the new name from a new term in glossary.
+  doc: referred to the new name from a new term in glossary.
 + enh(site): put RST substitutions in :confval:`rst_epilog` configuration
   (instead of importing them from README's tails).
 + doc(quickstart): exemplify ``@operation`` as a decorator.
@@ -59,7 +66,7 @@ v5.3.0 (28 Mar 2020, @ankostis): Sphinx plots, fail-early on bad op
   + links-to-sources resolution function was discarding parent object
     if it could not locate the exact position in the sources;
 
-  + TC: launch site building in pytest interpeter, to control visibility of logs & stdout;
+  + TC: launch site building in pytest interpreter, to control visibility of logs & stdout;
 
   + add index pages, linked from TOCs.
 

@@ -87,8 +87,8 @@ to embed graph-plots into your generated site;  you may refer to those plotted g
 with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
 
 .. Attention::
-   This extenion forces the :confval:`trim_doctest_flags` configuration to ``False``
-   (default is ``True``), whic means that in the rendered site,
+   This extension forces the :confval:`trim_doctest_flags` configuration to ``False``
+   (default is ``True``), which means that in the rendered site,
    options-in-comments like ``# doctest: +SKIP`` and ``<BLACKLINE>`` artifacts
    will be visible.
 
@@ -153,7 +153,7 @@ with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
             - "html"-like: svg
             - "latex": pdf
 
-         Note that SVGs support zooming, tooltips & URL links, while PNGs suport
+         Note that SVGs support zooming, tooltips & URL links, while PNGs support
          image maps for linkable areas.
 
    .. rst:directive:option:: zoomable: <empty>, (true, 1, yes, on) | (false, 0, no, off)
@@ -168,7 +168,7 @@ with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
          A JS-object with `the options <https://github.com/ariutta/svg-pan-zoom#how-to-use>`_
          for the interactive zoom+pan pf SVGs.
          If missing, :confval:`graphtik_zoomable_options` assumed.
-         Specify ``{}`` explicitetly to force library's default options.
+         Specify ``{}`` explicitly to force library's default options.
 
    .. rst:directive:option:: caption: figure's caption
          :type: `str`
@@ -287,7 +287,7 @@ Configurations
    - type: `bool`
    - default: ``True``
 
-   Whether to render SVGs with the `zoom-and-pan javascript lbrary
+   Whether to render SVGs with the `zoom-and-pan javascript library
    <https://github.com/ariutta/svg-pan-zoom>`_, unless the ``:zoomable:``
    directive-option is given (and not empty).
 

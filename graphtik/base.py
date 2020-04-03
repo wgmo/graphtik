@@ -118,7 +118,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         a mapping of destination-annotation-keys --> source-locals-keys;
         if a `source` is callable, the value to salvage is retrieved
         by calling ``value(locs)``.
-        They take precendance over`salvage_vars`.
+        They take precedence over`salvage_vars`.
 
     :raises:
         any exception raised by the wrapped function, annotated with values

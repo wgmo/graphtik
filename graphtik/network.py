@@ -490,7 +490,7 @@ class ExecutionPlan(
     .. attribute:: steps
 
         The tuple of operation-nodes & *instructions* needed to evaluate
-        the given inputs & asked outputs, free memory and avoid overwritting
+        the given inputs & asked outputs, free memory and avoid overwriting
         any given intermediate inputs.
     .. attribute:: asked_outs
 
@@ -779,7 +779,7 @@ class ExecutionPlan(
     def execute(self, named_inputs, outputs=None, *, name="") -> Solution:
         """
         :param named_inputs:
-            A maping of names --> values that must contain at least
+            A mapping of names --> values that must contain at least
             the compulsory inputs that were specified when the plan was built
             (but cannot enforce that!).
             Cloned, not modified.
@@ -921,7 +921,7 @@ class Network(Plottable):
         self.needs, self.provides = collect_requirements(self.graph)
 
         #: Speed up :meth:`compile()` call and avoid a multithreading issue(?)
-        #: that is occuring when accessing the dag in networkx.
+        #: that is occurring when accessing the dag in networkx.
         self._cached_plans = {}
 
     def __repr__(self):
@@ -1136,7 +1136,7 @@ class Network(Plottable):
         Create the list of operation-nodes & *instructions* evaluating all
 
         operations & instructions needed a) to free memory and b) avoid
-        overwritting given intermediate inputs.
+        overwriting given intermediate inputs.
 
         :param pruned_dag:
             The original dag, pruned; not broken.

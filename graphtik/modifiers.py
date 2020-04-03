@@ -68,7 +68,7 @@ class optional(arg):
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
-    received only if present in the `inputs` (when operation is invocated).
+    received only if present in the `inputs` (when operation is invoked).
     The value of an optional is passed as a keyword argument to the underlying function.
 
 

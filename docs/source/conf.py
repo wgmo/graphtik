@@ -158,8 +158,8 @@ except FileNotFoundError:
 version = f"src: {version}"
 
 try:
-    gitver = sbp.check_output("git describe --always".split(), universal_newlines=True)
-    version = f"{version}, git: {gitver}"
+    git_ver = sbp.check_output("git describe --always".split(), universal_newlines=True)
+    version = f"{version}, git: {git_ver}"
 except Exception:
     pass
 

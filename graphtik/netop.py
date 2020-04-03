@@ -307,7 +307,7 @@ class NetworkOperation(Operation, Plottable):
             :term:`abort run` flag is reset before the :term:`execution` starts.
 
         :param named_inputs:
-            A maping of names --> values that will be fed to the `needs` of all operations.
+            A mapping of names --> values that will be fed to the `needs` of all operations.
             Cloned, not modified.
         :param outputs:
             A string or a list of strings with all data asked to compute.

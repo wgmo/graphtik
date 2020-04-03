@@ -150,7 +150,7 @@ class FunctionalOperation(Operation):
             Names of the **real output values** the underlying function provides
             (without `aliases`, with(!) sideffects)
         :param aliases:
-            an optional mapping of real `provides` to additional ones, togetherher
+            an optional mapping of real `provides` to additional ones, together
             comprising this operations :term:`provides`.
         :param parents:
             a tuple wth the names of the parents, prefixing `name`,
