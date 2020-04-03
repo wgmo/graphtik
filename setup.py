@@ -17,7 +17,7 @@ with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
 
 plot_deps = ["pydot"]
 matplot_deps = plot_deps + ["matplotlib"]
-sphinx_deps = plot_deps + ["sphinx >=2"]
+sphinx_deps = plot_deps + ["sphinx >=2", "sphinxcontrib-spelling"]
 test_deps = list(
     set(
         matplot_deps
