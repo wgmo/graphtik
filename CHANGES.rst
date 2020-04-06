@@ -15,6 +15,11 @@ https://github.com/pygraphkit/graphtik/releases
 Changelog
 %%%%%%%%%
 
+
+v5.7.0 (6 Apr 2020, @ankostis): FIX +SphinxExt in Wheel
+=======================================================
+
+
 v5.6.0 (6 Apr 2020, @ankostis): +check_if_incomplete
 =====================================================
 + feat(sol): + :meth:`.Solution.check_if_incomplete()` just to get multi-errors
