@@ -4,7 +4,7 @@
 import io
 import os
 import re
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 with open("README.rst") as f:
@@ -50,7 +50,7 @@ setup(
         "Sources": "https://github.com/pygraphkit/graphtik",
         "Bug Tracker": "https://github.com/pygraphkit/graphtik/issues",
     },
-    packages=["graphtik"],
+    packages=find_packages(exclude=["test"]),
     python_requires=">=3.6",
     install_requires=[
         "contextvars; python_version < '3.7'",
