@@ -58,7 +58,14 @@ def _zoomable_activation_js_code(default_zoom_opts: str) -> str:
                                 default_opts);
             svg_el.addEventListener("load", function() {{
                 // Still fails for Chrome localy :-()
-                svgPanZoom(svg_el, zoom_opts);
+                var panZoom = svgPanZoom(svg_el, zoom_opts);
+
+                // Container follows window size.
+                $(window).resize(function(){{
+                    panZoom.resize();
+                    panZoom.fit();
+                    panZoom.center();
+                }});
             }});
         }};
     }});
