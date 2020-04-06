@@ -86,6 +86,13 @@ and then use the :rst:dir:`graphtik` or :rst:dir:`graphtik-output` directives
 to embed graph-plots into your generated site;  you may refer to those plotted graphs
 with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
 
+.. hint::
+   Note that sphinx is not doctesting the actual python modules, unless the plotting code
+   has ended up, somehow, in the site (e.g. through some autodoc directive).
+   Contrary to `pytest` and `doctest` standard module, the module's globals are not imported,
+   so you may need to do it in the doctest-setup `sphinx#6590
+   <https://github.com/sphinx-doc/sphinx/issues/6590#issuecomment-554697671>`_.
+
 .. Attention::
    This extension forces the :confval:`trim_doctest_flags` configuration to ``False``
    (default is ``True``), which means that in the rendered site,
