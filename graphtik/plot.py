@@ -40,7 +40,7 @@ log = logging.getLogger(__name__)
 #: :param svg_container_styles:
 #:     like `svg_element_styles`, if `None`, defaults to empty string (also maps supported).
 default_jupyter_render = {
-    "svg_pan_zoom_json": "{controlIconsEnabled: true, zoomScaleSensitivity: 0.4, fit: true}",
+    "svg_pan_zoom_json": "{controlIconsEnabled: true, fit: true}",
     "svg_element_styles": "width: 100%; height: 300px;",
     "svg_container_styles": "",
 }

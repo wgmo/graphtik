@@ -384,7 +384,7 @@ def setup(app: Sphinx):
     app.add_config_value("graphtik_zoomable", True, "html", [bool])
     app.add_config_value(
         "graphtik_zoomable_options",
-        "{controlIconsEnabled: true, zoomScaleSensitivity: 0.4, fit: true}",
+        "{controlIconsEnabled: true, fit: true}",
         "html",
         [str],
     )
