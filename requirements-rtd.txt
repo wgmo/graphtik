@@ -1,4 +1,5 @@
 boltons
 networkx
 pydot
+sphinxcontrib-spelling
 sphinx >=2
