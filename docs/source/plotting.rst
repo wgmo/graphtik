@@ -80,15 +80,17 @@ If you want all details, plot the solution::
 
 Sphinx-generated sites
 ^^^^^^^^^^^^^^^^^^^^^^
-This library offers a Sphinx extension to render :term:`plottable`\s in sites.
+This library contains a new Sphinx extension (adapted from the :mod:`sphinx.ext.doctest`)
+that can render :term:`plottable`\s in sites from python code in "doctests".
 
-Append module :mod:`graphtik.sphinxext` as a string in you :file:`docs/conf.py`
-: ``extensions`` list, and then use the :rst:dir:`graphtik` or :rst:dir:`graphtik-output`
-directives to embed graph-plots into a site;  you may refer to those plotted graphs
-with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
+To enabled it, append module :mod:`graphtik.sphinxext` as a string in you :file:`docs/conf.py`
+: ``extensions`` list, and then intersperse the :rst:dir:`graphtik` or :rst:dir:`graphtik-output`
+directives with regular doctest-code to embed graph-plots into the site;  you may
+refer to those plotted graphs with the :rst:role:`graphtik` role referring to
+their `:name:` option(see :ref:`sphinxext-examples` below).
 
 .. hint::
-   Note that sphinx is not doctesting the actual python modules, unless the plotting code
+   Note that Sphinx is not doctesting the actual python modules, unless the plotting code
    has ended up, somehow, in the site (e.g. through some autodoc directive).
    Contrary to `pytest` and `doctest` standard module, the module's globals are not imported,
    so you may need to do it in the doctest-setup `sphinx#6590
@@ -100,6 +102,9 @@ with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
    options-in-comments like ``# doctest: +SKIP`` and ``<BLACKLINE>`` artifacts
    will be visible.
 
+
+Directives
+~~~~~~~~~~
 .. rst:directive::  graphtik
 
    Renders a figure with a :ref:`graphtik plots <plotting>` from doctest code.
@@ -205,63 +210,6 @@ with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
    An interpreted text role to refer to graphs plotted by :rst:dir:`graphtik` or
    :rst:dir:`graphtik-output` directives by their ``:name:``  option.
 
-.. _sphinxext-examples:
-
-Examples
-~~~~~~~~
-The following directive renders a diagram of its doctest code, beneath it:
-
-.. code-block:: rst
-
-   .. graphtik::
-      :graphvar: addmul
-      :name: addmul-operation
-
-      >>> from graphtik import compose, operation
-      >>> addmul = compose(
-      ...       "addmul",
-      ...       operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
-      ... )
-
-.. graphtik::
-   :graphvar: addmul
-   :name: addmul-operation
-   :hide:
-
-   >>> from graphtik import compose, operation
-
-   >>> addmul = compose(
-   ...    "addmul",
-   ...    operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
-   ... )
-
-which you may :graphtik:`reference <addmul-operation>` with this syntax:
-
-.. code-block:: rst
-
-   you may :graphtik:`reference <addmul-operation>` with ...
-
-.. hint::
-   In this case, the ``:graphvar:`` parameter is not really needed, since
-   the code contains just one variable assignment receiving a subclass
-   of :class:`.Plottable` or |pydot.Dot|_ instance.
-
-   Additionally, the doctest code producing the :term:`plottable`\s does not have
-   to be contained in the *graphtik* directive as a whole.
-
-   So the above could have been simply written like this:
-
-   .. code-block:: rst
-
-      >>> from graphtik import compose, operation
-      >>> addmul = compose(
-      ...       "addmul",
-      ...       operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
-      ... )
-
-      .. graphtik::
-         :name: addmul-operation
-
 
 .. _graphtik-directive-configs:
 
@@ -337,6 +285,64 @@ Configurations
    Don't disable doctesting of *literal-blocks*, that is,
    don't reset the :confval:`doctest_test_doctest_blocks` configuration value,
    or it will hinder your  capability to render ``:graphvar:`` from such code.
+
+.. _sphinxext-examples:
+
+Examples
+~~~~~~~~
+The following directive renders a diagram of its doctest code, beneath it:
+
+.. code-block:: rst
+
+   .. graphtik::
+      :graphvar: addmul
+      :name: addmul-operation
+
+      >>> from graphtik import compose, operation
+      >>> addmul = compose(
+      ...       "addmul",
+      ...       operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
+      ... )
+
+.. graphtik::
+   :graphvar: addmul
+   :name: addmul-operation
+   :hide:
+
+   >>> from graphtik import compose, operation
+
+   >>> addmul = compose(
+   ...    "addmul",
+   ...    operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
+   ... )
+
+which you may :graphtik:`reference <addmul-operation>` with this syntax:
+
+.. code-block:: rst
+
+   you may :graphtik:`reference <addmul-operation>` with ...
+
+.. hint::
+   In this case, the ``:graphvar:`` parameter is not really needed, since
+   the code contains just one variable assignment receiving a subclass
+   of :class:`.Plottable` or |pydot.Dot|_ instance.
+
+   Additionally, the doctest code producing the :term:`plottable`\s does not have
+   to be contained in the *graphtik* directive as a whole.
+
+   So the above could have been simply written like this:
+
+   .. code-block:: rst
+
+      >>> from graphtik import compose, operation
+      >>> addmul = compose(
+      ...       "addmul",
+      ...       operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
+      ... )
+
+      .. graphtik::
+         :name: addmul-operation
+
 
 .. _debugging:
 

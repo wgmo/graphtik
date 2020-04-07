@@ -26,7 +26,7 @@ a workflow-processor for interdependent files and processes.
 *Graphtik* sprang from `Graphkit`_ to experiment with Python 3.6+ features.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
    :numbered: 1
 
    operations
