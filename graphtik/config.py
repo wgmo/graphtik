@@ -6,9 +6,12 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import partial
 from multiprocessing import Value
-from typing import Optional
+from typing import Callable, Optional
 
+import networkx as nx
 from boltons.iterutils import first
+
+from .base import PlotContext, default_plot_annotator
 
 
 _debug: ContextVar[Optional[bool]] = ContextVar("debug", default=False)
@@ -26,6 +29,11 @@ _endure_operations: ContextVar[Optional[bool]] = ContextVar(
 )
 _reschedule_operations: ContextVar[Optional[bool]] = ContextVar(
     "reschedule_operations", default=None
+)
+
+NxNetAnnotatorType = Optional[Callable[[nx.DiGraph, PlotContext], None]]
+_plot_annotator: NxNetAnnotatorType = ContextVar(
+    "plot_annotator", default=default_plot_annotator
 )
 
 
@@ -194,6 +202,30 @@ Enable/disable globally :term:`rescheduling` for operations returning only *part
     a "reset" token (see :meth:`.ContextVar.set`)
 
 ."""
+
+
+@contextmanager
+def plot_annotator(annotator: NxNetAnnotatorType):
+    """Like :func:`set_plot_annotator()` as a context-manager to reset old value. """
+    resetter = _plot_annotator.set(annotator)
+    try:
+        yield
+    finally:
+        _plot_annotator.set(resetter)
+
+
+def set_plot_annotator(annotator: NxNetAnnotatorType):
+    """
+    Pass :class:`nx.DiGraph` to be plotted through this callable
+
+    to prepare e.g. code/doc links/tooltips).
+    """
+    return _plot_annotator.set(annotator)
+
+
+def get_plot_annotator() -> NxNetAnnotatorType:
+    """Get the :class:`nx.DiGraph` plot annotator."""
+    return _plot_annotator.get()
 
 
 def is_solid_true(*tristates, default=False):

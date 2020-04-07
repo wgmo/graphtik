@@ -24,6 +24,7 @@ import os
 import re
 import subprocess as sbp
 import sys
+from functools import partial
 
 import packaging.version
 from enchant.tokenize import (
@@ -34,6 +35,9 @@ from enchant.tokenize import (
     unit_tokenize,
 )
 from sphinx.application import Sphinx
+
+from graphtik.config import set_plot_annotator
+from graphtik.base import default_plot_annotator
 
 log = logging.getLogger(__name__)
 
@@ -75,6 +79,11 @@ extlinks = {
     "gh": ("https://github.com/yahoo/graphkit/issues/%s", "yahoo#"),
     "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#"),
 }
+
+## Plot graphs with links to docs & tooltips with sources.
+set_plot_annotator(
+    partial(default_plot_annotator, url_fmt="../reference.html#%s", link_target="_top")
+)
 
 try:
     git_commit = sbp.check_output("git rev-parse HEAD".split()).strip().decode()

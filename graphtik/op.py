@@ -174,7 +174,9 @@ class FunctionalOperation(Operation):
             and no further processing is done on them
             (i.e. the returned output-values are not zipped with `provides`)
         :param node_props:
-            added as-is into NetworkX graph
+            Added as-is into NetworkX graph, and you may filter operations by
+            :meth:`.NetworkOperation.withset()`.
+            Also plot-rendering affected if they match `Graphviz` properties.
         """
         super().__init__()
         node_props = node_props = node_props if node_props else {}
@@ -557,7 +559,9 @@ class operation:
         and no further processing is done on them
         (i.e. the returned output-values are not zipped with `provides`)
     :param node_props:
-        added as-is into NetworkX graph
+        Added as-is into NetworkX graph, and you may filter operations by
+        :meth:`.NetworkOperation.withset()`.
+        Also plot-rendering affected if they match `Graphviz` properties.
 
     :return:
         when called, it returns a :class:`.FunctionalOperation`

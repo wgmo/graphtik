@@ -4,8 +4,10 @@
 
 import abc
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from typing import Any, Collection, List, Mapping, Union
+
+import networkx as nx
 
 Items = Union[Collection, str, None]
 
@@ -365,3 +367,73 @@ class Plottable(abc.ABC):
     @abc.abstractmethod
     def _build_pydot(self, **kws):
         pass
+
+
+PlotContext = namedtuple("PlotContext", "steps, inputs, outputs, solution, clusters")
+"""All the args of a :meth:`.Plottable.plot()` call (the `ctxt`). """
+
+
+def default_plot_annotator(
+    nx_net: nx.DiGraph,
+    ctxt: "PlotContext",
+    url_fmt: str = None,
+    link_target: str = None,
+) -> None:
+    """
+    Annotate DiGraph to be plotted with doc URLs, and code & solution tooltips.
+
+    :param url_fmt:
+        a ``%s``-format string accepting the function-path used to form the final URL
+        of the node; if it evaluates to false (default), no URL added.
+    :param link_target:
+        if given, adds a graphviz target attribute to control where to open
+        the url (e.g. ``_blank`` or ``_top``)
+
+    Override it with :func:`.config.nx_network_annotator` or
+    :func:`.config.set_nx_network_annotator`.
+
+    .. Note::
+        - SVG tooltips may not work without URL on PDFs:
+          https://gitlab.com/graphviz/graphviz/issues/1425
+
+        - Browsers & Jupyter lab are blocking local-urls (e.g. on SVGs),
+          see tip in :term:`plottable`.
+    """
+    import inspect
+    import html
+    from .op import Operation
+
+    for nx_node, node_attrs in nx_net.nodes.data():
+        tooltip = None
+        if isinstance(nx_node, Operation):
+            if url_fmt and "URL" not in node_attrs:
+                try:
+                    fn_name = nx_node.fn.__name__
+                    module_name = inspect.getmodule(nx_node.fn).__name__
+                    fn_path = f"{module_name}.{fn_name}"
+
+                    url = html.escape(url_fmt % fn_path)
+                    node_attrs["URL"] = url
+                    if link_target:
+                        node_attrs["target"] = link_target
+                except Exception as ex:
+                    log.debug(
+                        "Ignoring error while building doc-URL for %s: %s", nx_node, ex,
+                    )
+
+            if "tooltip" not in node_attrs:
+                try:
+                    tooltip = inspect.getsource(nx_node.fn)
+                except Exception as ex:
+                    log.debug(
+                        "Ignoring error while building source-tooltip of %s: %s",
+                        nx_node,
+                        ex,
+                    )
+                    tooltip = str(nx_node)
+                node_attrs["tooltip"] = html.escape(tooltip)
+        else:  # DATA node
+            if ctxt.solution is not None and "tooltip" not in node_attrs:
+                val = ctxt.solution.get(nx_node)
+                tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
+                node_attrs["tooltip"] = html.escape(tooltip)

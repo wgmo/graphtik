@@ -416,8 +416,9 @@ def compose(
         mark all contained `operations` to be :term:`marshalled <marshalling>`
         (usefull when run in `parallel` with a :term:`process pool`).
     :param node_props:
-        added as-is into NetworkX graph, to provide for filtering
+        Added as-is into NetworkX graph, to provide for filtering
         by :meth:`.NetworkOperation.withset()`.
+        Also plot-rendering affected if they match `Graphviz` properties.
 
     :return:
         Returns a special type of operation class, which represents an

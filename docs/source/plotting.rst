@@ -276,15 +276,20 @@ Configurations
 .. confval:: graphtik_plot_keywords
 
    - type: `dict`
-   - default: ``{"title": None}``
+   - default: ``{}``
 
    Arguments or :func:`.build_pydot()` to apply when rendering plottables.
-   By default it suppresses the grafting the title of a netop in the images,
-   to allow for using the `:name:` option of :rst:dir:`graphtik` directive.
 
 
 Other customizations
 ~~~~~~~~~~~~~~~~~~~~
+:func:`.plot_annotator`
+   A :term:`graphtik configuration <configurations>` to be overridden with a function
+   that annotates nodes to be plotted;  e.g. have nodes link back to the sphinx site.
+
+   This project does it in its own :file:`docs/source/conf.py` sphinx file.
+   In particular, it configures the base-url of the :func:`.default_plot_annotator()`.
+
 :confval:`doctest_test_doctest_blocks`
    Don't disable doctesting of *literal-blocks*, that is,
    don't reset the :confval:`doctest_test_doctest_blocks` configuration value,
