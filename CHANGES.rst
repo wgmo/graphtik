@@ -16,6 +16,20 @@ Changelog
 %%%%%%%%%
 
 
+v5.7.1 (7 Apr 2020, @ankostis): Plot job, fix RTD deps
+======================================================
++ ENH(PLOT): Operation tooltips now show function sources.
++ FIX(site):  RTD failing since 5.6.0 due to `sphinxcontrib-spelling` extension
+  not included n its requirements.
++ FEAT(sphinxext): add :confval:`graphtik_plot_keywords` sphinx-configuration
+  with a default value that suppresses grafting the title of a netop in the images,
+  to avoid duplication when :rst:dir:`graphtik:name: <graphtik>` option is given.
++ enh(plot): URL/tooltips are now overridable with node_props
++ enh(sphinxext): permalink plottables with `:name:` option.
++ enh(plot): pan-zoom follows parent container block, on window resize;
+  reduce zoom mouse speed.
+
+
 v5.7.0 (6 Apr 2020, @ankostis): FIX +SphinxExt in Wheel
 =======================================================
 

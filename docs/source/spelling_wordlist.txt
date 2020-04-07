@@ -26,6 +26,7 @@ confval
 conv
 cordero
 cstor
+ctxt
 dataframes
 datanodes
 dcore
@@ -44,6 +45,7 @@ figwidth
 filtdict
 fname
 fpath
+functools
 garrigues
 genindex
 graphkit
@@ -73,9 +75,11 @@ jetsamed
 jupy
 jupyter
 kwargs
+maplotlib
 marshalled
 marshalling
 matplolib
+matplot
 mpimg
 msgs
 multithread
@@ -104,12 +108,14 @@ opsattrs
 optionalize
 ortho
 outp
+overridable
 overwriting
 pdfs
 pdot
 pext
 plotly
 plottable
+plottables
 pngs
 pumpikano
 pydot
@@ -129,6 +135,7 @@ resched
 rescheduler
 restruct
 robwhess
+sdist
 sideffect
 sideffects
 sidefx
@@ -164,4 +171,3 @@ writtable
 xfail
 xlib
 zoomable
-functools
