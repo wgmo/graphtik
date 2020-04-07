@@ -408,11 +408,14 @@ def _get_node_url(nx_node) -> Union[str, None]:
     """
     if isinstance(nx_node, Operation):
         try:
-            filename = inspect.getfile(nx_node.fn)
+            ref_page = "../reference.html"
+            fn_name = nx_node.fn.__name__
+            module_name = inspect.getmodule(nx_node.fn).__name__
+            fn_path = f"{module_name}.{fn_name}"
             ## TODO: node URL for docs(sphinx.ext.viewcode) / source(sphinx.ext.linkcode+conf.py)
             ## NOTE: Browsers & Jupyter lab are blocking local-urls (e.g. on SVGs)
             #       try: python -m http.server 8080 --directory build/sphinx/html/
-            return html.escape(f"file://{filename}")
+            return html.escape(f"{ref_page}#{fn_path}")
         except Exception as ex:
             log.debug("Ignoring error while inspecting file of %s: %s", nx_node, ex)
 
