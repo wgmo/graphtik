@@ -46,6 +46,7 @@ The call here to ``compose()`` yields a runnable computation graph that looks li
 This yields a graph which looks like this (see :ref:`plotting`):
 
 .. graphtik::
+   :name: graphop
 
    >>> graphop.plot('calc_power.svg')  # doctest: +SKIP
 
@@ -147,7 +148,12 @@ Run the graph and print the output:
 More complicated composition: merging computation graphs
 ----------------------------------------------------------
 
-Sometimes you will have two computation graphs---perhaps ones that share operations---you want to combine into one.  In the simple case, where the graphs don't share operations or where you don't care whether a duplicated operation is run multiple (redundant) times, you can just do something like this::
+Sometimes you will have two computation graphs---perhaps ones that share operations---you want to combine into one.
+In the simple case, where the graphs don't share operations or where you don't care
+whether a duplicated operation is run multiple (redundant) times,
+you can just do something like this:
+
+.. code-block::
 
    combined_graph = compose("combined_graph", graph1, graph2)
 
@@ -165,16 +171,20 @@ For example, let's say we have ``graphop``, as in the examples above, along with
    NetworkOperation('another_graph', needs=['a', 'b', 'c', 'ab'], provides=['ab', 'cab'], x2 ops: mul1, mul2)
 
 .. graphtik::
-   :graphvar: another_graph
+   :name: another_graph
 
-We can merge ``graphop`` and ``another_graph`` like so, avoiding a redundant ``mul1`` operation:
+We can merge :graphtik:`graphop` and :graphtik:`another_graph` like so, avoiding a redundant ``mul1`` operation:
 
-   >>> merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
-   >>> print(merged_graph)
-   NetworkOperation('merged_graph',
-                    needs=['a', 'b', 'ab', 'a_minus_ab', 'c'],
-                    provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'],
-                    x4 ops:  mul1, sub1, abspow1, mul2)
+.. Note::
+
+   The *names* of the graphs must differ.
+
+>>> merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
+>>> print(merged_graph)
+NetworkOperation('merged_graph',
+                  needs=['a', 'b', 'ab', 'a_minus_ab', 'c'],
+                  provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'],
+                  x4 ops:  mul1, sub1, abspow1, mul2)
 
 .. graphtik::
 
