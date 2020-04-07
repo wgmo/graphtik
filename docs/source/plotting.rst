@@ -103,12 +103,6 @@ their `:name:` option(see :ref:`sphinxext-examples` below).
    so you may need to do it in the doctest-setup `sphinx#6590
    <https://github.com/sphinx-doc/sphinx/issues/6590#issuecomment-554697671>`_.
 
-.. Attention::
-   This extension forces the :confval:`trim_doctest_flags` configuration to ``False``
-   (default is ``True``), which means that in the rendered site,
-   options-in-comments like ``# doctest: +SKIP`` and ``<BLACKLINE>`` artifacts
-   will be visible.
-
 
 Directives
 ~~~~~~~~~~
@@ -288,10 +282,19 @@ Configurations
    By default it suppresses the grafting the title of a netop in the images,
    to allow for using the `:name:` option of :rst:dir:`graphtik` directive.
 
-.. Warning::
+
+Other customizations
+~~~~~~~~~~~~~~~~~~~~
+:confval:`doctest_test_doctest_blocks`
    Don't disable doctesting of *literal-blocks*, that is,
    don't reset the :confval:`doctest_test_doctest_blocks` configuration value,
    or it will hinder your  capability to render ``:graphvar:`` from such code.
+
+.. Attention::
+   This extension forces the :confval:`trim_doctest_flags` configuration to ``False``
+   (default is ``True``), which means that in the rendered site,
+   options-in-comments like ``# doctest: +SKIP`` and ``<BLACKLINE>`` artifacts
+   will be visible.
 
 .. _sphinxext-examples:
 
