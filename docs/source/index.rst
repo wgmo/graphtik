@@ -88,7 +88,7 @@ into a computation graph:
                      x3 ops: <built-in function mul>, <built-in function sub>, abs qubed)
 
 You may plot the function graph in a file like this
-(if in *jupyter*, no need to specify the file):
+(if in *jupyter*, no need to specify the file, see :ref:`jupyter_rendering`):
 
    >>> graphop.plot('graphop.svg')      # doctest: +SKIP
 

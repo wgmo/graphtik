@@ -464,8 +464,8 @@ def render_pydot(dot: pydot.Dot, filename=None, show=False, jupyter_render: str 
         If it equals `-1`, it returns the image but does not open the Window.
     :param jupyter_render:
         a nested dictionary controlling the rendering of graph-plots in Jupyter cells.
-        If `None`, defaults to :data:`default_jupyter_render`
-        (you may modify those in place and they will apply for all future calls).
+        If `None`, defaults to :data:`default_jupyter_render`;  you may modify those
+        in place and they will apply for all future calls (see :ref:`jupyter_rendering`).
 
         You may increase the height of the SVG cell output with
         something like this::

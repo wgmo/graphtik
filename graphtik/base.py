@@ -261,26 +261,18 @@ class Plottable(abc.ABC):
             [default: "ortho"]
         :param jupyter_render:
             a nested dictionary controlling the rendering of graph-plots in Jupyter cells,
-            if `None`, defaults to :data:`jupyter_render` (you may modify it in place
-            and apply for all future calls).
+            if `None`, defaults to :data:`jupyter_render`; you may modify it in place
+            and apply for all future calls (see :ref:`jupyter_rendering`).
         :param legend_url:
             a URL to the *graphtik* legend; if it evaluates to false, none is added.
 
         :return:
             a |pydot.Dot|_ instance
-            (for for API reference visit:
+            (for reference to as similar API to |pydot.Dot|_ instance, visit:
             https://pydotplus.readthedocs.io/reference.html#pydotplus.graphviz.Dot)
 
-            .. Tip::
-                The |pydot.Dot|_ instance returned is rendered directly
-                in *Jupyter/IPython* notebooks as SVG images.
-
-                You may increase the height of the SVG cell output with
-                something like this::
-
-                    netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
-
-                Check :data:`.default_jupyter_render` for defaults.
+            The |pydot.Dot|_ instance returned is rendered directly in *Jupyter/IPython*
+            notebooks as SVG images (see :ref:`jupyter_rendering`).
 
         Note that the `graph` argument is absent - Each Plottable provides
         its own graph internally;  use directly :func:`.render_pydot()` to provide

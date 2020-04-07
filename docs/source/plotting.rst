@@ -67,15 +67,22 @@ If you want all details, plot the solution::
       pip install graphtik[plot]
 
 .. Tip::
-   The |pydot.Dot|_ instances returned by
-   :meth:`.Plottable.plot()` are rendered directly in *Jupyter/IPython* notebooks
-   as SVG images.
+   A description of the similar API to |pydot.Dot|_ instance returned by ``plot()``
+   methods is here: https://pydotplus.readthedocs.io/reference.html#pydotplus.graphviz.Dot
 
-   You may increase the height of the SVG cell output with something like this::
+.. _jupyter_rendering:
 
-        netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
+Jupyter notebooks
+^^^^^^^^^^^^^^^^^
+The |pydot.Dot|_ instances returned by
+:meth:`.Plottable.plot()` are rendered directly in *Jupyter/IPython* notebooks
+as SVG images.
 
-   Check :data:`.default_jupyter_render` for defaults.
+You may increase the height of the SVG cell output with something like this::
+
+      netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
+
+See :data:`.default_jupyter_render` for those defaults and recommendations.
 
 
 Sphinx-generated sites
