@@ -256,14 +256,6 @@ class Plottable(abc.ABC):
             It extracts more infos from a :class:`.Solution` instance, such as,
             if `solution` has an ``executed`` attribute, operations contained in it
             are  drawn as "filled".
-        :param node_props:
-            optional nested dict of Graphviz attributes for certain nodes
-            Mind escaping values for `Graphviz`_ with ``html.escape()``.
-            TODO: move `node_props` in a cloned networkX.
-        :param edge_props:
-            An optional nested dict of Graphviz attributes for certain edges.
-            Mind escaping values for `Graphviz`_ with ``html.escape()``.
-            TODO: move `edge_props` in a cloned networkX.
         :param clusters:
             an optional mapping of nodes --> cluster-names, to group them
         :param splines:

@@ -134,19 +134,6 @@ def _merge_conditions(*conds):
     return sum(int(bool(c)) << i for i, c in enumerate(conds))
 
 
-def _apply_user_props(dotobj, user_props, key):
-    if user_props and key in user_props:
-        dotobj.get_attributes().update(user_props[key])
-        # Delete it, to report unmatched ones, AND not to annotate `steps`.
-        del user_props[key]
-
-
-def _report_unmatched_user_props(user_props, kind):
-    if user_props and log.isEnabledFor(logging.WARNING):
-        unmatched = "\n  ".join(str(i) for i in user_props.items())
-        log.warning("Unmatched `%s_props`:\n  +--%s", kind, unmatched)
-
-
 def quote_dot_word(word: Any):
     """
     Workaround *pydot* parsing of node-id & labels by encoding as HTML.
@@ -202,8 +189,6 @@ def build_pydot(
     inputs=None,
     outputs=None,
     solution=None,
-    node_props=None,
-    edge_props=None,
     clusters=None,
     splines="ortho",
     legend_url="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg",
@@ -312,10 +297,7 @@ def build_pydot(
 
         kw.update(graph.nodes[nx_node])  # TODO: clean graphtik-only props
         node = pydot.Node(**kw)
-        _apply_user_props(node, node_props, key=node.get_name())
         append_or_cluster_node(dot, nx_node, node)
-
-    _report_unmatched_user_props(node_props, "node")
 
     append_any_clusters(dot)
 
@@ -337,11 +319,7 @@ def build_pydot(
 
         edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
 
-        _apply_user_props(edge, edge_props, key=(src, dst))
-
         dot.add_edge(edge)
-
-    _report_unmatched_user_props(edge_props, "edge")
 
     # draw steps sequence
     if steps and len(steps) > 1:
