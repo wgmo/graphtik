@@ -32,17 +32,24 @@ v5.7.1 (7 Apr 2020, @ankostis): Plot job, fix RTD deps
 
 v5.7.0 (6 Apr 2020, @ankostis): FIX +SphinxExt in Wheel
 =======================================================
+All previous distributions in *PyPi* since sphinx-extension was added in *v5.3.0*
+were missing the new package ``sphinxext`` needed to build sites with
+the ``.. graphtik::`` directive.
 
+v5.6.0 (6 Apr 2020, @ankostis, **BROKEN**): +check_if_incomplete
+----------------------------------------------------------------
+--((**BROKEN** because wheel in *PyPi* is missing ``sphinxext`` package))--
 
-v5.6.0 (6 Apr 2020, @ankostis): +check_if_incomplete
-=====================================================
 + feat(sol): + :meth:`.Solution.check_if_incomplete()` just to get multi-errors
   (not raise them)
 + doc: integrate spellchecking of VSCode IDE & `sphinxcontrib.spelling`.
 
 
-v5.5.0 (1 Apr 2020, @ankostis): ortho plots
-===========================================
+v5.5.0 (1 Apr 2020, @ankostis, **BROKEN**): ortho plots
+-------------------------------------------------------
+--((**BROKEN** because wheel in *PyPi* is missing ``sphinxext`` package))--
+
+
 Should have been a major bump due to breaking rename of ``Plotter`` class,
 but...no clients yet.
 
@@ -55,14 +62,20 @@ but...no clients yet.
 + doc(quickstart): exemplify ``@operation`` as a decorator.
 
 
-v5.4.0 (29 Mar 2020, @ankostis): auto-name ops, dogfood quickstart
-==================================================================
+v5.4.0 (29 Mar 2020, @ankostis, **BROKEN**): auto-name ops, dogfood quickstart
+------------------------------------------------------------------------------
+--((**BROKEN** because wheel in *PyPi* is missing ``sphinxext`` package))--
+
+
 + enh(op): use func_name if none given.
 + DOC(quickstart): dynamic plots with sphinxext.
 
 
-v5.3.0 (28 Mar 2020, @ankostis): Sphinx plots, fail-early on bad op
-===================================================================
+v5.3.0 (28 Mar 2020, @ankostis, **BROKEN**): Sphinx plots, fail-early on bad op
+-------------------------------------------------------------------------------
+--((**BROKEN** because wheel in *PyPi* is missing ``sphinxext`` package))--
+
+
 + FEAT(PLOT,SITE): Sphinx extension for plotting graph-diagrams as zoomable SVGs (default),
   PNGs (with link maps), PDFs, etc.
 
