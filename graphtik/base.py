@@ -246,9 +246,13 @@ class Plottable(abc.ABC):
         :param title:
             an optional string to display at the bottom of the graph
         :param node_props:
-            an optional nested dict of Graphviz attributes for certain nodes
+            optional nested dict of Graphviz attributes for certain nodes
+            Mind escaping values for `Graphviz`_ with ``html.escape()``.
+            TODO: move `node_props` in a cloned networkX.
         :param edge_props:
-            an optional nested dict of Graphviz attributes for certain edges
+            An optional nested dict of Graphviz attributes for certain edges.
+            Mind escaping values for `Graphviz`_ with ``html.escape()``.
+            TODO: move `edge_props` in a cloned networkX.
         :param clusters:
             an optional mapping of nodes --> cluster-names, to group them
         :param splines:
@@ -346,7 +350,7 @@ class Plottable(abc.ABC):
             fontname=italic;
             label=<netop>;
             splines=ortho;
-            <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip=1];
+            <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
         ...
 
         """

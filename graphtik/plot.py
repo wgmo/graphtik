@@ -9,7 +9,6 @@ import logging
 import os
 import re
 from typing import Any, Callable, List, Mapping, Tuple, Union
-from urllib.parse import urlencode
 
 import networkx
 import pydot
@@ -195,6 +194,15 @@ def as_identifier(s):
     return s
 
 
+# # TODO: plot meths with PlotContext
+# PlotContext = namedtuple(
+#     "PlotContext", "inputs, outputs, solution, node_props, edge_props, clusters"
+# )
+#     plot_context = PlotContext(
+#         inputs, outputs, solution, node_props, edge_props, clusters
+#     )
+
+
 def build_pydot(
     graph: networkx.Graph,
     name=None,
@@ -285,9 +293,6 @@ def build_pydot(
                     if nx_node in getattr(solution, "overwrites", ())
                     else fill_color
                 )
-                ## NOTE: SVG tooltips not working without URL:
-                #  https://gitlab.com/graphviz/graphviz/issues/1425
-                kw["tooltip"] = html.escape(str(solution.get(nx_node)))
 
         else:  # Operation
             kw = {
@@ -308,19 +313,25 @@ def build_pydot(
                 kw["style"] = "filled"
                 kw["fillcolor"] = cancel_color
 
-            try:
-                filename = urlencode(inspect.getfile(nx_node.fn))
-                kw["URL"] = f"file://{filename}"
-            except Exception as ex:
-                log.debug("Ignoring error while inspecting file of %s: %s", nx_node, ex)
-            try:
-                fn_tooltip = inspect.getsource(nx_node.fn)
-            except Exception as ex:
-                log.debug(
-                    "Ignoring error while inspecting source of %s: %s", nx_node, ex
-                )
-                fn_tooltip = str(nx_node)
-            kw["tooltip"] = html.escape(fn_tooltip)
+        # TODO: move `node_props` in a cloned networkX.
+        if (
+            not node_props
+            or nx_node not in node_props
+            or "URL" not in node_props[nx_node]
+        ):
+            url = _get_node_url(nx_node)
+            if url:
+                kw["URL"] = url
+
+        # TODO: move `node_props` in a cloned networkX.
+        if (
+            not node_props
+            or nx_node not in node_props
+            or "tooltip" not in node_props[nx_node]
+        ):
+            tooltip = _get_node_tooltip(nx_node, solution)
+            if tooltip:
+                kw["tooltip"] = tooltip
 
         node = pydot.Node(**kw,)
         _apply_user_props(node, node_props, key=node.get_name())
@@ -388,6 +399,44 @@ def build_pydot(
         )
 
     return dot
+
+
+def _get_node_url(nx_node) -> Union[str, None]:
+    """
+    Default applied on all nodes if `URL` not in `node_props`.
+    """
+    if isinstance(nx_node, Operation):
+        try:
+            filename = inspect.getfile(nx_node.fn)
+            ## TODO: hook sphinx to link nodes to generated documentation
+            ## NOTE: Jupyter lab is blocking local-urls (e.g. on SVGs).
+            return html.escape(f"file://{filename}")
+        except Exception as ex:
+            log.debug("Ignoring error while inspecting file of %s: %s", nx_node, ex)
+
+
+def _get_node_tooltip(nx_node, sol: dict) -> Union[str, None]:
+    """
+    Default applied on all nodes if `tooltip` not in `node_props`.
+
+    .. Note::
+        SVG tooltips may not work without URL on PDFs:
+        https://gitlab.com/graphviz/graphviz/issues/1425
+    """
+    txt = None
+    if isinstance(nx_node, Operation):
+        try:
+            txt = inspect.getsource(nx_node.fn)
+        except Exception as ex:
+            log.debug("Ignoring error while inspecting source of %s: %s", nx_node, ex)
+            txt = str(nx_node)
+    else:
+        if sol is not None:
+            val = sol.get(nx_node)
+            txt = "None" if val is None else f"({type(val).__name__}) {val}"
+
+    if txt:
+        return html.escape(txt)
 
 
 def supported_plot_formats() -> List[str]:
