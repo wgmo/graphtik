@@ -14,6 +14,10 @@ from urllib.parse import urlencode
 import networkx
 import pydot
 
+from .modifiers import optional
+from .network import _EvictInstruction
+from .op import Operation
+
 log = logging.getLogger(__name__)
 
 #: A nested dictionary controlling the rendering of graph-plots in Jupyter cells,
@@ -213,9 +217,6 @@ def build_pydot(
     See :meth:`.Plottable.plot()` for the arguments, sample code, and
     the legend of the plots.
     """
-    from .op import Operation
-    from .modifiers import optional
-    from .network import _EvictInstruction
 
     _monkey_patch_for_jupyter(pydot)
 
