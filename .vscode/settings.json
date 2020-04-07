@@ -12,11 +12,14 @@
         {
             "name": "project",
             "path": "./docs/source/spelling_wordlist.txt"
-        },
+        }
     ],
     "cSpell.enabled": true,
     "cSpell.dictionaries": [
         "project"
+    ],
+    "cSpell.ignoreRegExpList": [
+        "'s\\b"
     ],
     "cSpell.ignorePaths": [
         ".git/",
