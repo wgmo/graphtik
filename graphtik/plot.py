@@ -324,6 +324,9 @@ def build_pydot(
             if solution and dst not in solution and dst not in steps:
                 kw["color"] = broken_color
 
+        ## Pass user node-properties into DOT.
+        _convey_pub_props(data, kw)
+
         edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
 
         dot.add_edge(edge)
