@@ -322,6 +322,7 @@ def build_pydot(
             url = _get_node_url(nx_node)
             if url:
                 kw["URL"] = url
+                kw["target"] = "_top"
 
         # TODO: move `node_props` in a cloned networkX.
         if (
