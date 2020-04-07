@@ -217,7 +217,7 @@ class Plottable(abc.ABC):
         show=False,
         jupyter_render: Union[None, Mapping, str] = None,
         **kws,
-    ):
+    ) -> "pydot.Dot":
         """
         Entry-point for plotting ready made operation graphs.
 

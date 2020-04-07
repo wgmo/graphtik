@@ -57,9 +57,11 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
                 globs, node["graphvar"], (code.filename, code.lineno)
             )
             if plottable:
-                dot: pydot.Dot = plottable if isinstance(
-                    plottable, pydot.Dot
-                ) else plottable.plot()
+                dot: pydot.Dot
+                if isinstance(plottable, pydot.Dot):
+                    dot = plottable
+                else:
+                    dot = plottable.plot(**self.config.graphtik_plot_keywords)
                 img_format = node["img_format"]
                 rel_img_path = self._render_dot_image(img_format, dot, node)
                 dot_str = (
