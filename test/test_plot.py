@@ -258,7 +258,7 @@ def test_node_quoting0(quoting_pipeline):
         <edge> -> <node>;
         <digraph&#58; strict> -> <node>;
         <node> -> <graph>;
-        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fill_color=yellow, shape=component, style=filled];
+        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
         }
         """
     )
@@ -284,7 +284,7 @@ def test_node_quoting1(quoting_pipeline):
             <edge> -> <node>;
             <digraph&#58; strict> -> <node>;
             <node> -> <graph>;
-            legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fill_color=yellow, shape=component, style=filled];
+            legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
             }
             """
         )
@@ -308,7 +308,7 @@ def test_node_quoting2(quoting_pipeline):
             <edge> -> <node>;
             <digraph&#58; strict> -> <node>;
             <node> -> <graph>;
-            legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fill_color=yellow, shape=component, style=filled];
+            legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
             }
             """
         )

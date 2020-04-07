@@ -371,7 +371,7 @@ def build_pydot(
                 name="legend",
                 shape="component",
                 style="filled",
-                fill_color="yellow",
+                fillcolor="yellow",
                 URL=legend_url,
             )
         )
