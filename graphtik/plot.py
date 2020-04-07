@@ -264,18 +264,18 @@ def build_pydot(
     # draw nodes
     for nx_node in graph.nodes:
         if isinstance(nx_node, str):
-            kw = {}
-
-            # FrameColor change by step type
-            if steps and nx_node in steps:
-                kw = {"color": "#990000"}
-
             # SHAPE change if with inputs/outputs.
             # tip: https://graphviz.gitlab.io/_pages/doc/info/shapes.html
             choice = _merge_conditions(
                 inputs and nx_node in inputs, outputs and nx_node in outputs
             )
             shape = "rect invhouse house hexagon".split()[choice]
+
+            kw = {"name": quote_dot_word(nx_node), "shape": shape}
+
+            # FrameColor change by step type
+            if steps and nx_node in steps:
+                kw["color"] = "#990000"
 
             # LABEL change with solution.
             if solution and nx_node in solution:
@@ -288,9 +288,13 @@ def build_pydot(
                 ## NOTE: SVG tooltips not working without URL:
                 #  https://gitlab.com/graphviz/graphviz/issues/1425
                 kw["tooltip"] = html.escape(str(solution.get(nx_node)))
-            node = pydot.Node(name=quote_dot_word(nx_node), shape=shape, **kw,)
+
         else:  # Operation
-            kw = {"fontname": "italic"}
+            kw = {
+                "shape": "oval",
+                "name": quote_dot_word(nx_node.name),
+                "fontname": "italic",
+            }
 
             if nx_node.rescheduled:
                 kw["penwidth"] = resched_thickness
@@ -318,15 +322,8 @@ def build_pydot(
                 fn_tooltip = str(nx_node)
             kw["tooltip"] = html.escape(fn_tooltip)
 
-            node = pydot.Node(
-                name=quote_dot_word(nx_node.name),
-                shape="oval",
-                ## NOTE: Jupyter lab is blocking local-urls (e.g. on SVGs).
-                **kw,
-            )
-
+        node = pydot.Node(**kw,)
         _apply_user_props(node, node_props, key=node.get_name())
-
         append_or_cluster_node(dot, nx_node, node)
 
     _report_unmatched_user_props(node_props, "node")
