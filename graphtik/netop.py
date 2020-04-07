@@ -418,7 +418,8 @@ def compose(
     :param node_props:
         Added as-is into NetworkX graph, to provide for filtering
         by :meth:`.NetworkOperation.withset()`.
-        Also plot-rendering affected if they match `Graphviz` properties.
+        Also plot-rendering affected if they match `Graphviz` properties,
+        unless they start with underscore(``_``)
 
     :return:
         Returns a special type of operation class, which represents an

@@ -183,6 +183,11 @@ def as_identifier(s):
     return s
 
 
+def _convey_pub_props(src: dict, dst: dict) -> None:
+    """Pass all keys from `src` not starting with underscore(``_``) into `dst`."""
+    dst.update((k, v) for k, v in src.items() if not str(k).startswith("_"))
+
+
 def build_pydot(
     graph: nx.Graph,
     steps=None,
@@ -252,7 +257,7 @@ def build_pydot(
         dot.set_name(as_identifier(name))
 
     # draw nodes
-    for nx_node in graph.nodes:
+    for nx_node, data in graph.nodes(data=True):
         if isinstance(nx_node, str):
             # SHAPE change if with inputs/outputs.
             # tip: https://graphviz.gitlab.io/_pages/doc/info/shapes.html
@@ -295,7 +300,9 @@ def build_pydot(
                 kw["style"] = "filled"
                 kw["fillcolor"] = cancel_color
 
-        kw.update(graph.nodes[nx_node])  # TODO: clean graphtik-only props
+        ## Pass user node-properties into DOT.
+        _convey_pub_props(data, kw)
+
         node = pydot.Node(**kw)
         append_or_cluster_node(dot, nx_node, node)
 

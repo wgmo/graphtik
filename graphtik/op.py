@@ -176,7 +176,8 @@ class FunctionalOperation(Operation):
         :param node_props:
             Added as-is into NetworkX graph, and you may filter operations by
             :meth:`.NetworkOperation.withset()`.
-            Also plot-rendering affected if they match `Graphviz` properties.
+            Also plot-rendering affected if they match `Graphviz` properties,
+            unless they start with underscore(``_``).
         """
         super().__init__()
         node_props = node_props = node_props if node_props else {}
@@ -561,7 +562,8 @@ class operation:
     :param node_props:
         Added as-is into NetworkX graph, and you may filter operations by
         :meth:`.NetworkOperation.withset()`.
-        Also plot-rendering affected if they match `Graphviz` properties.
+        Also plot-rendering affected if they match `Graphviz` properties.,
+        unless they start with underscore(``_``)
 
     :return:
         when called, it returns a :class:`.FunctionalOperation`
