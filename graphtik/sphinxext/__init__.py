@@ -391,8 +391,6 @@ def setup(app: Sphinx):
         [cabc.Mapping],
     )
     app.add_config_value("graphtik_default_graph_format", None, "html", [str, None])
-    # TODO: impl sphinx-config --> graphtik-configs
-    app.add_config_value("graphtik_configurations   ", {}, "html", [cabc.Mapping])
     app.add_config_value(
         "graphtik_plot_keywords", {"title": None}, "html", [cabc.Mapping]
     )
