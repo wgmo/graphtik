@@ -221,6 +221,20 @@ class Plottable(abc.ABC):
         """
         Entry-point for plotting ready made operation graphs.
 
+        :param str graph:
+            (optional) An :class:`nx.Digraph` usually provided by underlying plottables.
+            It may contain graph, node & edge attributes for the plotting methods,
+            eventually reaching `Graphviz`_, among others:
+
+            name (graph)
+                if given, dot-lang graph would not be named "G"; necessary to be unique
+                when referring to generated CMAPs.
+            title (graph)
+                an optional string to display at the bottom of the graph
+
+            .. Note::
+                Remember to escape values for `Graphviz`_ with ``html.escape()``.
+
         :param str filename:
             Write diagram into a file.
             Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
@@ -240,11 +254,6 @@ class Plottable(abc.ABC):
             It extracts more infos from a :class:`.Solution` instance, such as,
             if `solution` has an ``executed`` attribute, operations contained in it
             are  drawn as "filled".
-        :param name:
-            if given, dot-lang graph would not be named "G"; necessary to be unique
-            when referring to generated CMAPs.
-        :param title:
-            an optional string to display at the bottom of the graph
         :param node_props:
             optional nested dict of Graphviz attributes for certain nodes
             Mind escaping values for `Graphviz`_ with ``html.escape()``.
@@ -339,10 +348,10 @@ class Plottable(abc.ABC):
         >>> dot = netop.plot(solution=solution);   # just get the `pydot.Dot` object, renderable in Jupyter
         >>> print(dot)
         digraph netop {
-            fontname=italic;
-            label=<netop>;
-            splines=ortho;
-            <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
+        fontname=italic;
+        label=<netop>;
+        splines=ortho;
+        <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
         ...
 
         """

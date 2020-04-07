@@ -10,7 +10,7 @@ import os
 import re
 from typing import Any, Callable, List, Mapping, Tuple, Union
 
-import networkx
+import networkx as nx
 import pydot
 
 from .modifiers import optional
@@ -204,13 +204,11 @@ def as_identifier(s):
 
 
 def build_pydot(
-    graph: networkx.Graph,
-    name=None,
+    graph: nx.Graph,
     steps=None,
     inputs=None,
     outputs=None,
     solution=None,
-    title=None,
     node_props=None,
     edge_props=None,
     clusters=None,
@@ -262,10 +260,11 @@ def build_pydot(
 
     dot = pydot.Dot(
         graph_type="digraph",
-        label=quote_dot_word(title),
+        label=quote_dot_word(graph.graph.get("title")),
         fontname="italic",
         splines=splines,
     )
+    name = graph.graph.get("name")
     if name:
         dot.set_name(as_identifier(name))
 

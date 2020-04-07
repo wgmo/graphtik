@@ -64,7 +64,7 @@ class IncompleteExecutionError(Exception):
     """
 
     def __str__(self):
-        return self.args[0]
+        return self.args[0]  # pylint: disable=unsubscriptable-object
 
 
 def _unsatisfied_operations(dag, inputs: Collection) -> List:
@@ -337,10 +337,13 @@ class Solution(ChainMap, Plottable):
 
     def _build_pydot(self, **kws):
         """delegate to network"""
-        kws.setdefault("name", f"solution-x{len(self.plan.net.graph.nodes)}-nodes")
+        graph = kws.get("graph")
+        if graph is None:
+            graph = kws["graph"] = self.plan.net.graph.copy()  # copy to annotate
+
+        graph.graph.setdefault("name", f"solution-x{len(graph.nodes)}-nodes")
         kws.setdefault("solution", self)
-        plotter = self.plan
-        return plotter._build_pydot(**kws)
+        return self.plan._build_pydot(**kws)
 
 
 class _DataNode(str):
@@ -504,9 +507,13 @@ class ExecutionPlan(
         clusters = None
         if self.dag.nodes != self.net.graph.nodes:
             clusters = {n: "after pruning" for n in self.dag.nodes}
+
+        graph = kws.get("graph")
+        if graph is None:
+            graph = kws["graph"] = self.net.graph.copy()  # copy to annotate
+
+        graph.graph.setdefault("name", f"plan-x{len(self.net.graph.nodes)}-nodes")
         mykws = {
-            "graph": self.net.graph,
-            "name": f"plan-x{len(self.net.graph.nodes)}-nodes",
             "steps": self.steps,
             "inputs": self.needs,
             "outputs": self.provides,
@@ -936,8 +943,11 @@ class Network(Plottable):
     def _build_pydot(self, **kws):
         from .plot import build_pydot
 
-        kws.setdefault("graph", self.graph)
-        kws.setdefault("name", f"network-x{len(self.graph.nodes)}-nodes")
+        graph = kws.get("graph")
+        if graph is None:
+            graph = kws["graph"] = self.graph.copy()  # copy to annotate
+
+        graph.graph.setdefault("name", f"network-x{len(self.graph.nodes)}-nodes")
         kws.setdefault("inputs", self.needs)
         kws.setdefault("outputs", self.provides)
 
