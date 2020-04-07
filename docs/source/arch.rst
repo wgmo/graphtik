@@ -343,6 +343,16 @@ Architecture
         You may control the rendered image as explained in the *tip*  of
         the :ref:`plotting` section.
 
+        SVGs are in rendered with the `zoom-and-pan javascript library
+        <https://github.com/ariutta/svg-pan-zoom>`_
+
+        .. Attention::
+            Zoom-and-pan does not work in Sphinx sites for Chrome locally - serve
+            the HTML files through some HTTP server, e.g. launch this command
+            to view the site of this project::
+
+                python -m http.server 8080 --directory build/sphinx/html/
+
 
 .. default-role:: obj
 .. |v410-flowchart| raw:: html

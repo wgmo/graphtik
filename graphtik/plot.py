@@ -408,8 +408,9 @@ def _get_node_url(nx_node) -> Union[str, None]:
     if isinstance(nx_node, Operation):
         try:
             filename = inspect.getfile(nx_node.fn)
-            ## TODO: hook sphinx to link nodes to generated documentation
-            ## NOTE: Jupyter lab is blocking local-urls (e.g. on SVGs).
+            ## TODO: node URL for docs(sphinx.ext.viewcode) / source(sphinx.ext.linkcode+conf.py)
+            ## NOTE: Browsers & Jupyter lab are blocking local-urls (e.g. on SVGs)
+            #       try: python -m http.server 8080 --directory build/sphinx/html/
             return html.escape(f"file://{filename}")
         except Exception as ex:
             log.debug("Ignoring error while inspecting file of %s: %s", nx_node, ex)

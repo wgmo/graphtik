@@ -80,10 +80,11 @@ If you want all details, plot the solution::
 
 Sphinx-generated sites
 ^^^^^^^^^^^^^^^^^^^^^^
+This library offers a Sphinx extension to render :term:`plottable`\s in sites.
 
-If you append the :mod:`graphtik.sphinxext` extension in you :file:`docs/conf.py` file
-and then use the :rst:dir:`graphtik` or :rst:dir:`graphtik-output` directives
-to embed graph-plots into your generated site;  you may refer to those plotted graphs
+Append module :mod:`graphtik.sphinxext` as a string in you :file:`docs/conf.py`
+: ``extensions`` list, and then use the :rst:dir:`graphtik` or :rst:dir:`graphtik-output`
+directives to embed graph-plots into a site;  you may refer to those plotted graphs
 with the :rst:role:`graphtik` role (see :ref:`sphinxext-examples` below).
 
 .. hint::
@@ -306,7 +307,12 @@ Configurations
    directive-option is given (and not empty).
 
    .. Attention::
-      Pan_zoom does not work for Chrome locally - serve the result HTML files from a server.
+      Zoom-and-pan does not work in Sphinx sites for Chrome locally - serve
+      the HTML files through some HTTP server, e.g. launch this command
+      to view the site of this project::
+
+            python -m http.server 8080 --directory build/sphinx/html/
+
 
 .. confval:: graphtik_zoomable_options
 
