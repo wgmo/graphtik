@@ -10,6 +10,7 @@ from typing import Optional
 
 from boltons.iterutils import first
 
+
 _debug: ContextVar[Optional[bool]] = ContextVar("debug", default=False)
 _abort: ContextVar[Optional[bool]] = ContextVar(
     "abort", default=Value(ctypes.c_bool, lock=False)
@@ -47,9 +48,9 @@ def _tristate_armed(context_var: ContextVar, enabled):
 
 
 debug = partial(_tristate_armed, _debug)
-"""Like :meth:`set_debug()` as a context-manager to reset old value. """
+"""Like :func:`set_debug()` as a context-manager to reset old value. """
 is_debug = partial(_getter, _debug)
-"""see :meth:`set_debug()`"""
+"""see :func:`set_debug()`"""
 set_debug = partial(_tristate_set, _debug)
 """
 When true, string-representation of network objects and errors become more detailed.
@@ -84,9 +85,9 @@ def is_abort():
 
 
 evictions_skipped = partial(_tristate_armed, _skip_evictions)
-"""Like :meth:`set_skip_evictions()` as a context-manager to reset old value. """
+"""Like :func:`set_skip_evictions()` as a context-manager to reset old value. """
 is_skip_evictions = partial(_getter, _skip_evictions)
-"""see :meth:`set_skip_evictions()`"""
+"""see :func:`set_skip_evictions()`"""
 set_skip_evictions = partial(_tristate_set, _skip_evictions)
 """
 When true, disable globally :term:`evictions`, to keep all intermediate solution values, ...
@@ -100,6 +101,7 @@ regardless of asked outputs.
 
 @contextmanager
 def execution_pool(pool: "Optional[Pool]"):
+    """Like :func:`set_execution_pool()` as a context-manager to reset old value. """
     resetter = _execution_pool.set(pool)
     try:
         yield
@@ -123,9 +125,9 @@ def get_execution_pool() -> "Optional[Pool]":
 
 
 tasks_in_parallel = partial(_tristate_armed, _parallel_tasks)
-"""Like :meth:`set_parallel_tasks()` as a context-manager to reset old value. """
+"""Like :func:`set_parallel_tasks()` as a context-manager to reset old value. """
 is_parallel_tasks = partial(_getter, _parallel_tasks)
-"""see :meth:`set_parallel_tasks()`"""
+"""see :func:`set_parallel_tasks()`"""
 set_parallel_tasks = partial(_tristate_set, _parallel_tasks)
 """
 Enable/disable globally :term:`parallel` execution of operations.
@@ -140,9 +142,9 @@ Enable/disable globally :term:`parallel` execution of operations.
 
 
 tasks_marshalled = partial(_tristate_armed, _marshal_tasks)
-"""Like :meth:`set_marshal_tasks()` as a context-manager to reset old value. """
+"""Like :func:`set_marshal_tasks()` as a context-manager to reset old value. """
 is_marshal_tasks = partial(_getter, _marshal_tasks)
-"""see :meth:`set_marshal_tasks()`"""
+"""see :func:`set_marshal_tasks()`"""
 set_marshal_tasks = partial(_tristate_set, _marshal_tasks)
 """
 Enable/disable globally :term:`marshalling` of :term:`parallel` operations, ...
@@ -159,9 +161,9 @@ inputs & outputs with :mod:`dill`,  which might help for pickling problems.
 
 
 operations_endured = partial(_tristate_armed, _endure_operations)
-"""Like :meth:`set_endure_operations()` as a context-manager to reset old value. """
+"""Like :func:`set_endure_operations()` as a context-manager to reset old value. """
 is_endure_operations = partial(_getter, _endure_operations)
-"""see :meth:`set_endure_operations()`"""
+"""see :func:`set_endure_operations()`"""
 set_endure_operations = partial(_tristate_set, _endure_operations)
 """
 Enable/disable globally :term:`endurance` to keep executing even if some operations fail.
@@ -177,9 +179,9 @@ Enable/disable globally :term:`endurance` to keep executing even if some operati
 
 
 operations_reschedullled = partial(_tristate_armed, _reschedule_operations)
-"""Like :meth:`set_reschedule_operations()` as a context-manager to reset old value. """
+"""Like :func:`set_reschedule_operations()` as a context-manager to reset old value. """
 is_reschedule_operations = partial(_getter, _reschedule_operations)
-"""see :meth:`set_reschedule_operations()`"""
+"""see :func:`set_reschedule_operations()`"""
 set_reschedule_operations = partial(_tristate_set, _reschedule_operations)
 """
 Enable/disable globally :term:`rescheduling` for operations returning only *partial outputs*.
@@ -195,4 +197,5 @@ Enable/disable globally :term:`rescheduling` for operations returning only *part
 
 
 def is_solid_true(*tristates, default=False):
+    """Utility combining multiple tri-state booleans."""
     return first(tristates, default=default, key=lambda i: i is not None)
