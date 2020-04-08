@@ -85,12 +85,12 @@ set_plot_annotator(
     partial(default_plot_annotator, url_fmt="../reference.html#%s", link_target="_top")
 )
 
+github_slug = "pygraphkit/graphtik"
 try:
     git_commit = sbp.check_output("git rev-parse HEAD".split()).strip().decode()
+    github_uri = f"https://github.com/{github_slug}/blob/{git_commit}/%s.py"
 except Exception:
-    git_commit = None
-
-github_slug = "pygraphkit/graphtik"
+    github_uri = f"https://github.com/{github_slug}/blob/master/%s.py"
 
 
 def linkcode_resolve(domain, info):
@@ -100,13 +100,10 @@ def linkcode_resolve(domain, info):
     if not info["module"]:
         return None
 
-    modname = info["module"]
-    item = importlib.import_module(modname)
-    filename = modname.replace(".", "/")
-    if git_commit:
-        uri = f"https://github.com/{github_slug}/blob/{git_commit}/{filename}.py"
-    else:
-        uri = f"https://github.com/{github_slug}/blob/master/{filename}.py"
+    module_name = info["module"]
+    item = importlib.import_module(module_name)
+    module_path = module_name.replace(".", "/")
+    uri = github_uri % module_path
 
     ## Get the lineno from the last valid object
     # that has one.
@@ -131,7 +128,7 @@ def linkcode_resolve(domain, info):
         except Exception as ex:
             log.warning(
                 "Ignoring error while linking sources of '%s:%s': %s(%s)",
-                modname,
+                module_name,
                 item_name,
                 type(ex).__name__,
                 ex,
