@@ -13,7 +13,7 @@ from typing import Any, Callable, List, Mapping, Tuple, Union
 import networkx as nx
 import pydot
 
-from .base import PlotContext
+from .base import PlotArgs
 from .config import get_plot_annotator
 from .modifiers import optional
 from .network import _EvictInstruction
@@ -243,8 +243,8 @@ def build_pydot(
 
     net_annotator = get_plot_annotator()
     if net_annotator:
-        plot_context = PlotContext(steps, inputs, outputs, solution, clusters)
-        net_annotator(graph, plot_context)
+        plot_args = PlotArgs(graph, steps, inputs, outputs, solution, clusters)
+        net_annotator(plot_args)
 
     kw = {
         "graph_type": "digraph",

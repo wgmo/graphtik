@@ -11,7 +11,7 @@ from typing import Callable, Optional
 import networkx as nx
 from boltons.iterutils import first
 
-from .base import PlotContext, default_plot_annotator
+from .base import PlotArgs, default_plot_annotator
 
 
 _debug: ContextVar[Optional[bool]] = ContextVar("debug", default=False)
@@ -31,7 +31,7 @@ _reschedule_operations: ContextVar[Optional[bool]] = ContextVar(
     "reschedule_operations", default=None
 )
 
-NxNetAnnotatorType = Optional[Callable[[nx.DiGraph, PlotContext], None]]
+NxNetAnnotatorType = Optional[Callable[[nx.DiGraph, PlotArgs], None]]
 _plot_annotator: NxNetAnnotatorType = ContextVar(
     "plot_annotator", default=default_plot_annotator
 )

@@ -26,7 +26,6 @@ confval
 conv
 cordero
 cstor
-ctxt
 dataframes
 datanodes
 dcore

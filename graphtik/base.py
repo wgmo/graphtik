@@ -7,7 +7,6 @@ import logging
 from collections import defaultdict, namedtuple
 from typing import Any, Collection, List, Mapping, Union
 
-import networkx as nx
 
 Items = Union[Collection, str, None]
 
@@ -361,19 +360,18 @@ class Plottable(abc.ABC):
         pass
 
 
-PlotContext = namedtuple("PlotContext", "steps, inputs, outputs, solution, clusters")
-"""All the args of a :meth:`.Plottable.plot()` call (the `ctxt`). """
+PlotArgs = namedtuple("PlotArgs", "graph, steps, inputs, outputs, solution, clusters")
+"""All the args of a :meth:`.Plottable.plot()` call. """
 
 
 def default_plot_annotator(
-    nx_net: nx.DiGraph,
-    ctxt: "PlotContext",
-    url_fmt: str = None,
-    link_target: str = None,
+    plot_args: PlotArgs, url_fmt: str = None, link_target: str = None,
 ) -> None:
     """
     Annotate DiGraph to be plotted with doc URLs, and code & solution tooltips.
 
+    :param plot_args:
+        as passed in :meth:`.plot()`.
     :param url_fmt:
         a ``%s``-format string accepting the function-path used to form the final URL
         of the node; if it evaluates to false (default), no URL added.
@@ -395,6 +393,7 @@ def default_plot_annotator(
     import html
     from .op import Operation
 
+    nx_net = plot_args.graph
     for nx_node, node_attrs in nx_net.nodes.data():
         tooltip = None
         if isinstance(nx_node, Operation):
@@ -425,7 +424,8 @@ def default_plot_annotator(
                     tooltip = str(nx_node)
                 node_attrs["tooltip"] = html.escape(tooltip)
         else:  # DATA node
-            if ctxt.solution is not None and "tooltip" not in node_attrs:
-                val = ctxt.solution.get(nx_node)
+            sol = plot_args.solution
+            if sol is not None and "tooltip" not in node_attrs:
+                val = sol.get(nx_node)
                 tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
                 node_attrs["tooltip"] = html.escape(tooltip)
