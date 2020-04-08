@@ -99,10 +99,18 @@ their `:name:` option(see :ref:`sphinxext-examples` below).
 .. hint::
    Note that Sphinx is not doctesting the actual python modules, unless the plotting code
    has ended up, somehow, in the site (e.g. through some autodoc directive).
-   Contrary to `pytest` and `doctest` standard module, the module's globals are not imported,
-   so you may need to do it in the doctest-setup `sphinx#6590
-   <https://github.com/sphinx-doc/sphinx/issues/6590#issuecomment-554697671>`_.
+   Contrary to `pytest` and `doctest` standard module, the module's globals are not imported
+   (until `sphinx#6590 <https://github.com/sphinx-doc/sphinx/issues/6590#issuecomment-554697671>`_
+   is resolved), so you may need to import it in your doctests with e.g.
+   a :rst:dir:`testsetup` directive, like this:
 
+   .. code-block:: rst
+
+      .. testsetup::
+
+         from <this.module> import *
+
+   Unfortunately, you cannot use relative import, and have to write your module's full name.
 
 Directives
 ~~~~~~~~~~
