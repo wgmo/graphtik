@@ -253,7 +253,7 @@ def test_node_quoting0(quoting_pipeline):
         splines=ortho;
         <edge> [shape=invhouse];
         <digraph&#58; strict> [shape=invhouse];
-        <node> [fontname=italic, shape=oval, tooltip="&lt;built-in function add&gt;"];
+        <node> [fontname=italic, shape=oval, tooltip=<&lt;built-in function add&gt;>];
         <graph> [shape=house];
         <edge> -> <node>;
         <digraph&#58; strict> -> <node>;
@@ -279,7 +279,7 @@ def test_node_quoting1(quoting_pipeline):
             splines=ortho;
             <edge> [shape=invhouse];
             <digraph&#58; strict> [shape=invhouse];
-            <node> [URL="abc#_operator.add", fontname=italic, shape=oval, target=_self, tooltip="&lt;built-in function add&gt;"];
+            <node> [URL=<abc#_operator.add>, fontname=italic, shape=oval, target=_self, tooltip=<&lt;built-in function add&gt;>];
             <graph> [shape=house];
             <edge> -> <node>;
             <digraph&#58; strict> -> <node>;

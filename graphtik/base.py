@@ -350,7 +350,7 @@ class Plottable(abc.ABC):
         fontname=italic;
         label=<netop>;
         splines=ortho;
-        <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
+        <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip=<(int) 1>];
         ...
 
         """
@@ -509,6 +509,15 @@ def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
         return default
 
 
+def graphviz_html_string(s):
+    import html
+
+    if s:
+        s = html.escape(s).replace("\n", "&#10;")
+        s = f"<{s}>"
+    return s
+
+
 PlotArgs = namedtuple("PlotArgs", "graph, steps, inputs, outputs, solution, clusters")
 """All the args of a :meth:`.Plottable.plot()` call. """
 
@@ -538,7 +547,6 @@ def default_plot_annotator(
         - Browsers & Jupyter lab are blocking local-urls (e.g. on SVGs),
           see tip in :term:`plottable`.
     """
-    import html
     from .op import Operation
 
     nx_net = plot_args.graph
@@ -549,17 +557,17 @@ def default_plot_annotator(
                 fn_path = func_name(nx_node.fn, None, mod=1, fqdn=1, human=0)
                 if fn_path:
                     url = url_fmt % fn_path
-                    node_attrs["URL"] = html.escape(url)
+                    node_attrs["URL"] = graphviz_html_string(url)
                     if link_target:
                         node_attrs["target"] = link_target
 
             if "tooltip" not in node_attrs:
                 fn_source = func_source(nx_node.fn, None, human=1)
                 if fn_source:
-                    node_attrs["tooltip"] = html.escape(fn_source)
+                    node_attrs["tooltip"] = graphviz_html_string(fn_source)
         else:  # DATA node
             sol = plot_args.solution
             if sol is not None and "tooltip" not in node_attrs:
                 val = sol.get(nx_node)
                 tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
-                node_attrs["tooltip"] = html.escape(tooltip)
+                node_attrs["tooltip"] = graphviz_html_string(tooltip)
