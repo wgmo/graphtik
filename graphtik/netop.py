@@ -247,6 +247,8 @@ class NetworkOperation(Operation, Plottable):
 
     def _build_pydot(self, **kws):
         """delegate to network"""
+        from .plot import quote_dot_word
+
         if self.last_plan:
             plotter = self.last_plan
             net = plotter.net
@@ -257,8 +259,8 @@ class NetworkOperation(Operation, Plottable):
         if graph is None:
             graph = kws["graph"] = net.graph.copy()  # copy to annotate
 
-        graph.graph.setdefault("name", self.name)
-        graph.graph.setdefault("title", self.name)
+        graph.graph.setdefault("_name", self.name)
+        graph.graph.setdefault("label", quote_dot_word(self.name))
         return plotter._build_pydot(**kws)
 
     def compile(

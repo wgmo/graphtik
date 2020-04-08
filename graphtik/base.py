@@ -228,14 +228,14 @@ class Plottable(abc.ABC):
             It may contain graph, node & edge attributes for the plotting methods,
             eventually reaching `Graphviz`_, among others:
 
-            name (graph)
+            _name (graph)
                 if given, dot-lang graph would not be named "G"; necessary to be unique
                 when referring to generated CMAPs.
-            title (graph)
-                an optional string to display at the bottom of the graph
+                Note that it is "private", not to convey to DOT file.
 
             .. Note::
-                Remember to escape values for `Graphviz`_ with ``html.escape()``.
+                Remember to properly escape values for `Graphviz`_
+                e.g. with :func:`html.escape()` or :func:`.plot.quote_dot_word()`.
 
         :param str filename:
             Write diagram into a file.

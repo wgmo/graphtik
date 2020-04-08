@@ -246,13 +246,15 @@ def build_pydot(
         plot_context = PlotContext(steps, inputs, outputs, solution, clusters)
         net_annotator(graph, plot_context)
 
-    dot = pydot.Dot(
-        graph_type="digraph",
-        label=quote_dot_word(graph.graph.get("title")),
-        fontname="italic",
-        splines=splines,
-    )
-    name = graph.graph.get("name")
+    kw = {
+        "graph_type": "digraph",
+        "fontname": "italic",
+        "splines": splines,
+    }
+    _convey_pub_props(graph.graph, kw)
+    dot = pydot.Dot(**kw)
+
+    name = graph.graph.get("_name")
     if name:
         dot.set_name(as_identifier(name))
 
@@ -300,9 +302,7 @@ def build_pydot(
                 kw["style"] = "filled"
                 kw["fillcolor"] = cancel_color
 
-        ## Pass user node-properties into DOT.
         _convey_pub_props(data, kw)
-
         node = pydot.Node(**kw)
         append_or_cluster_node(dot, nx_node, node)
 
@@ -324,11 +324,8 @@ def build_pydot(
             if solution and dst not in solution and dst not in steps:
                 kw["color"] = broken_color
 
-        ## Pass user node-properties into DOT.
         _convey_pub_props(data, kw)
-
         edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
-
         dot.add_edge(edge)
 
     # draw steps sequence

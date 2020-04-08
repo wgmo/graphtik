@@ -341,7 +341,7 @@ class Solution(ChainMap, Plottable):
         if graph is None:
             graph = kws["graph"] = self.plan.net.graph.copy()  # copy to annotate
 
-        graph.graph.setdefault("name", f"solution-x{len(graph.nodes)}-nodes")
+        graph.graph.setdefault("_name", f"solution-x{len(graph.nodes)}-nodes")
         kws.setdefault("solution", self)
         return self.plan._build_pydot(**kws)
 
@@ -512,7 +512,7 @@ class ExecutionPlan(
         if graph is None:
             graph = kws["graph"] = self.net.graph.copy()  # copy to annotate
 
-        graph.graph.setdefault("name", f"plan-x{len(self.net.graph.nodes)}-nodes")
+        graph.graph.setdefault("_name", f"plan-x{len(self.net.graph.nodes)}-nodes")
         mykws = {
             "steps": self.steps,
             "inputs": self.needs,
@@ -947,7 +947,7 @@ class Network(Plottable):
         if graph is None:
             graph = kws["graph"] = self.graph.copy()  # copy to annotate
 
-        graph.graph.setdefault("name", f"network-x{len(self.graph.nodes)}-nodes")
+        graph.graph.setdefault("_name", f"network-x{len(self.graph.nodes)}-nodes")
         kws.setdefault("inputs", self.needs)
         kws.setdefault("outputs", self.provides)
 
