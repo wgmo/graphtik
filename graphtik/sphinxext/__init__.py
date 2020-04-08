@@ -393,6 +393,7 @@ def setup(app: Sphinx):
     app.add_config_value("graphtik_default_graph_format", None, "html", [str, None])
     app.add_config_value("graphtik_plot_keywords", {}, "html", [cabc.Mapping])
     app.add_config_value("graphtik_zoomable", True, "html", [bool])
+    app.add_config_value("autodoc_warning_is_error", False, "html", [bool])
     app.add_config_value(
         "graphtik_zoomable_options",
         "{controlIconsEnabled: true, fit: true}",

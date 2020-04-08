@@ -44,8 +44,15 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         return HistoricDict()
 
     def _warn_out(self, text: str) -> None:
-        """Silence warnings since urelated to building site. """
-        log.info(f"WARN-like: {text}", nonl=True)
+        """
+        Silence warnings since errors unrelated to building site, ...
+
+        unless :rst:confval`graphtik_warning_is_error` is true (default false).
+        """
+        if self.config.autodoc_warning_is_error:
+            super()._warn_out(text)
+        else:
+            log.info(f"WARN-like: {text}", nonl=True)
         self.outfile.write(text)
 
     def _globals_updated(self, code: extdoctest.TestCode, globs: dict):
@@ -133,15 +140,20 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
     ) -> Path:
         """
         Ensure png(+usemap)|svg|svgz|pdf file exist, and return its path.
+
+        :raises:
+            any exception from Graphviz program
         """
         ## Derrive image-filename from graph contents.
-        #
+        #  TODO: don't derrive image-filename from sha1 contents!
+        #        copy from http://www.sphinx-doc.org/en/stable/extdev/tutorial.html
+        #  TODO: delete old images (see event todo-tutorial)
         hasher = sha1()
         hasher.update(str(dot).encode())
         fname = f"graphtik-{hasher.hexdigest()}.{img_format}"
         abs_fpath = Path(self.outdir, self.imagedir, fname)
 
-        ## Don not re-write images, thay have content-named path,
+        ## Don not re-write images, that have content-named path,
         #  so they are never out-of-date.
         #
         if not abs_fpath.is_file():

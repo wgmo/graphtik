@@ -288,6 +288,14 @@ Configurations
 
    Arguments or :func:`.build_pydot()` to apply when rendering plottables.
 
+.. confval:: graphtik_warning_is_error
+
+   - type: `bool`
+   - default: ``false``
+
+   If false, suppress doctest errors, and avoid failures when building site
+   with ``-W`` option, since these are unrelated to the building of the site.
+
 
 Other customizations
 ~~~~~~~~~~~~~~~~~~~~
