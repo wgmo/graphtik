@@ -216,3 +216,219 @@ def test_jetsam_sites_scream(acallable, expected_jetsam):
     ex = excinfo.value
     assert hasattr(ex, "jetsam"), acallable
     assert set(ex.jetsam.keys()) == set(expected_jetsam)
+
+
+def _foo():
+    pass
+
+
+class _Foo:
+    def foo(self):
+        pass
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "eval"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "builtins.eval"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "<built-in function eval>"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "builtins.eval"),
+        ## FQDN = 1
+        #
+        ({"mod": 0, "fqdn": 1, "human": 0}, "eval"),
+        ({"mod": 1, "fqdn": 1, "human": 0}, "builtins.eval"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "<built-in function eval>"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "builtins.eval"),
+    ],
+)
+def test_func_name_builtin(kw, exp):
+    assert base.func_name(eval, **kw) == exp
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "_foo"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base._foo"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "_foo"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base._foo"),
+        ## FQDN = 1
+        #
+        ({"mod": 0, "fqdn": 1, "human": 0}, "_foo"),
+        ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._foo"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_foo"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._foo"),
+    ],
+)
+def test_func_name_non_partial(kw, exp):
+    assert base.func_name(_foo, **kw) == exp
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "_foo"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base._foo"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "_foo(...)"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base._foo(...)"),
+        ## FQDN = 1
+        #
+        ({"mod": 0, "fqdn": 1, "human": 0}, "_foo"),
+        ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._foo"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_foo(...)"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._foo(...)"),
+    ],
+)
+def test_func_name_partial_empty(kw, exp):
+    assert base.func_name(fnt.partial(_foo), **kw) == exp
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "_foo"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base._foo"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "_foo((1,), {'a': 2}, ...)"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base._foo((1,), {'a': 2}, ...)"),
+        ## FQDN = 1
+        #
+        ({"mod": 0, "fqdn": 1, "human": 0}, "_foo"),
+        ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._foo"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_foo((1,), {'a': 2}, ...)"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._foo((1,), {'a': 2}, ...)"),
+    ],
+)
+def test_func_name_partial_args(kw, exp):
+    assert base.func_name(fnt.partial(_foo, 1, a=2), **kw) == exp
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "_foo"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base._foo"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "_foo((1,), {'a': 2, 'b': 3}, ...)"),
+        (
+            {"mod": 1, "fqdn": 0, "human": 1},
+            "test.test_base._foo((1,), {'a': 2, 'b': 3}, ...)",
+        ),
+        ## FQDN = 1
+        #
+        ({"mod": 0, "fqdn": 1, "human": 0}, "_foo"),
+        ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._foo"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_foo((1,), {'a': 2, 'b': 3}, ...)"),
+        (
+            {"mod": 1, "fqdn": 1, "human": 1},
+            "test.test_base._foo((1,), {'a': 2, 'b': 3}, ...)",
+        ),
+    ],
+)
+def test_func_name_partial_x2(kw, exp):
+    assert base.func_name(fnt.partial(fnt.partial(_foo, 1, a=2), b=3), **kw) == exp
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "foo"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.foo"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "foo"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo",),
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 1, "human": 0}, "_Foo.foo"),
+        ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._Foo.foo"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_Foo.foo"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo",),
+    ],
+)
+def test_func_name_class_method(kw, exp):
+    assert base.func_name(_Foo.foo, **kw) == exp
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "foo"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.foo"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "foo"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo",),
+        ## FQDN = 1
+        #
+        ({"mod": 0, "fqdn": 1, "human": 0}, "_Foo.foo"),
+        ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._Foo.foo"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_Foo.foo"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo",),
+    ],
+)
+def test_func_name_object_method(kw, exp):
+    assert base.func_name(_Foo().foo, **kw) == exp
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "foo"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.foo"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "foo(...)"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo(...)",),
+        ## FQDN = 1
+        #
+        ({"mod": 0, "fqdn": 1, "human": 0}, "_Foo.foo"),
+        ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._Foo.foo"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_Foo.foo(...)"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo(...)",),
+    ],
+)
+def test_func_name_partial_method(kw, exp):
+    assert base.func_name(fnt.partialmethod(_Foo.foo), **kw) == exp
+
+
+@pytest.mark.parametrize(
+    "kw, exp",
+    [
+        ## FQDN = 0
+        #
+        ({"mod": 0, "fqdn": 0, "human": 0}, "<lambda>",),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.<lambda>",),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "<lambda>",),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.<lambda>",),
+        ## FQDN = 1
+        #
+        (
+            {"mod": 0, "fqdn": 1, "human": 0},
+            "test_func_name_lambda_local.<locals>.<lambda>",
+        ),
+        (
+            {"mod": 1, "fqdn": 1, "human": 0},
+            "test.test_base.test_func_name_lambda_local.<locals>.<lambda>",
+        ),
+        (
+            {"mod": 0, "fqdn": 1, "human": 1},
+            "test_func_name_lambda_local.<locals>.<lambda>",
+        ),
+        (
+            {"mod": 1, "fqdn": 1, "human": 1},
+            "test.test_base.test_func_name_lambda_local.<locals>.<lambda>",
+        ),
+    ],
+)
+def test_func_name_lambda_local(kw, exp):
+    assert base.func_name(lambda: None, **kw) == exp

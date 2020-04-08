@@ -1,12 +1,18 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""Generic or specific utilities"""
+"""
+Generic or specific utilities  without polluting imports.
+
+.. testsetup::
+
+    from graphtik.base import *
+"""
 
 import abc
 import logging
 from collections import defaultdict, namedtuple
-from typing import Any, Collection, List, Mapping, Union
-
+from functools import partial, partialmethod
+from typing import Any, Collection, List, Mapping, Optional, Tuple, Union
 
 Items = Union[Collection, str, None]
 
@@ -360,6 +366,89 @@ class Plottable(abc.ABC):
         pass
 
 
+def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]:
+    """
+    FQDN of `fn`, descending into partials to print their args.
+
+    :param default:
+        What to return if it fails; by default it raises.
+    :param mod:
+        when true, prepend module like ``module.name.fn_name``
+    :param fqdn:
+        when true, use ``__qualname__`` (instead of ``__name__``)
+        which differs mostly on methods, where it contains class(es),
+        and locals, respectively (:pep:`3155`).
+        *Sphinx* uses `fqdn=True` for generating IDs.
+    :param human:
+        when true, partials denote their args like ``$fn(a=1, ...)`` in the returned text,
+        otherwise, just the (fqd-)name, appropriate for IDs.
+
+    :return:
+        a (possibly dot-separated) string, or `default` (unless this is ``...```).
+    :raises:
+        Only if default is ``...``, otherwise, errors debug-logged.
+
+
+    **Examples**
+
+        >>> func_name(func_name)
+        'func_name'
+        >>> func_name(func_name, mod=1)
+        'graphtik.base.func_name'
+        >>> func_name(MultiValueError.mro, fqdn=0)
+        'mro'
+        >>> func_name(MultiValueError.mro, fqdn=1)
+        'MultiValueError.mro'
+
+    Even functions defined in docstrings are reported:
+
+        >>> def f():
+        ...     def inner():
+        ...         pass
+        ...     return inner
+
+        >>> func_name(f, mod=1, fqdn=1)
+        'graphtik.base.f'
+        >>> func_name(f(), fqdn=1)
+        'f.<locals>.inner'
+
+    On failures, arg `default` controls the outcomes:
+
+    TBD
+    """
+    import inspect
+
+    try:
+        if isinstance(fn, (partial, partialmethod)):
+            # Always bubble-up errors.
+            fn_name = func_name(fn.func, default, mod, fqdn, human)
+            if human:
+                args = [str(i) for i in (fn.args, fn.keywords) if i]
+                args.append("...")
+                args_str = ", ".join(args)
+                fn_name = f"{fn_name}({args_str})"
+
+            return fn_name
+
+        if human and inspect.isbuiltin(fn) and not mod:
+            fn_name = str(fn)
+        else:
+            fn_name = fn.__qualname__ if fqdn else fn.__name__
+        assert fn_name
+
+        mod_name = getattr(fn, "__module__", None)
+        if mod and mod_name:
+            fn_name = ".".join((mod_name, fn_name))
+        return fn_name
+    except Exception as ex:
+        if default is ...:
+            raise
+        log.debug(
+            "Ignored error while inspecting %r name: %s", fn, ex,
+        )
+        return default
+
+
 PlotArgs = namedtuple("PlotArgs", "graph, steps, inputs, outputs, solution, clusters")
 """All the args of a :meth:`.Plottable.plot()` call. """
 
@@ -399,14 +488,12 @@ def default_plot_annotator(
         if isinstance(nx_node, Operation):
             if url_fmt and "URL" not in node_attrs:
                 try:
-                    fn_name = nx_node.fn.__name__
-                    module_name = inspect.getmodule(nx_node.fn).__name__
-                    fn_path = f"{module_name}.{fn_name}"
-
-                    url = html.escape(url_fmt % fn_path)
-                    node_attrs["URL"] = url
-                    if link_target:
-                        node_attrs["target"] = link_target
+                    fn_path = func_name(nx_node.fn, mod=1, fqdn=1, human=0)
+                    if fn_path:
+                        url = url_fmt % fn_path
+                        node_attrs["URL"] = html.escape(url)
+                        if link_target:
+                            node_attrs["target"] = link_target
                 except Exception as ex:
                     log.debug(
                         "Ignoring error while building doc-URL for %s: %s", nx_node, ex,
