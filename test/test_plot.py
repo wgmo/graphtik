@@ -246,14 +246,14 @@ def test_node_quoting0(quoting_pipeline):
     dot_str = str(quoting_pipeline.plot())
     print(dot_str)
     exp = dedent(
-        """\
+        """
         digraph graph_ {
         fontname=italic;
         label=<graph>;
         splines=ortho;
         <edge> [shape=invhouse];
         <digraph&#58; strict> [shape=invhouse];
-        <node> [fontname=italic, shape=oval, tooltip="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)"];
+        <node> [fontname=italic, shape=oval, tooltip="&lt;built-in function add&gt;"];
         <graph> [shape=house];
         <edge> -> <node>;
         <digraph&#58; strict> -> <node>;
@@ -261,8 +261,8 @@ def test_node_quoting0(quoting_pipeline):
         legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
         }
         """
-    )
-    assert dot_str == exp
+    ).strip()
+    assert dot_str.strip() == exp
 
 
 def test_node_quoting1(quoting_pipeline):
@@ -272,14 +272,14 @@ def test_node_quoting1(quoting_pipeline):
         dot_str = str(quoting_pipeline.plot())
         print(dot_str)
         exp = dedent(
-            """\
+            """
             digraph graph_ {
             fontname=italic;
             label=<graph>;
             splines=ortho;
             <edge> [shape=invhouse];
             <digraph&#58; strict> [shape=invhouse];
-            <node> [URL="abc#_operator.add", fontname=italic, shape=oval, target=_self, tooltip="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)"];
+            <node> [URL="abc#_operator.add", fontname=italic, shape=oval, target=_self, tooltip="&lt;built-in function add&gt;"];
             <graph> [shape=house];
             <edge> -> <node>;
             <digraph&#58; strict> -> <node>;
@@ -287,8 +287,8 @@ def test_node_quoting1(quoting_pipeline):
             legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
             }
             """
-        )
-        assert dot_str == exp
+        ).strip()
+        assert dot_str.strip() == exp
 
 
 def test_node_quoting2(quoting_pipeline):
@@ -296,7 +296,7 @@ def test_node_quoting2(quoting_pipeline):
         dot_str = str(quoting_pipeline.plot())
         print(dot_str)
         exp = dedent(
-            """\
+            """
             digraph graph_ {
             fontname=italic;
             label=<graph>;
@@ -311,5 +311,5 @@ def test_node_quoting2(quoting_pipeline):
             legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
             }
             """
-        )
-        assert dot_str == exp
+        ).strip()
+        assert dot_str.strip() == exp

@@ -3,6 +3,7 @@
 import functools as fnt
 import itertools as itt
 import logging
+import textwrap
 from unittest.mock import MagicMock
 
 import pytest
@@ -218,6 +219,9 @@ def test_jetsam_sites_scream(acallable, expected_jetsam):
     assert set(ex.jetsam.keys()) == set(expected_jetsam)
 
 
+###############
+## func_name
+##
 def _foo():
     pass
 
@@ -234,13 +238,13 @@ class _Foo:
         #
         ({"mod": 0, "fqdn": 0, "human": 0}, "eval"),
         ({"mod": 1, "fqdn": 0, "human": 0}, "builtins.eval"),
-        ({"mod": 0, "fqdn": 0, "human": 1}, "<built-in function eval>"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "eval"),
         ({"mod": 1, "fqdn": 0, "human": 1}, "builtins.eval"),
         ## FQDN = 1
         #
         ({"mod": 0, "fqdn": 1, "human": 0}, "eval"),
         ({"mod": 1, "fqdn": 1, "human": 0}, "builtins.eval"),
-        ({"mod": 0, "fqdn": 1, "human": 1}, "<built-in function eval>"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "eval"),
         ({"mod": 1, "fqdn": 1, "human": 1}, "builtins.eval"),
     ],
 )
@@ -432,3 +436,73 @@ def test_func_name_partial_method(kw, exp):
 )
 def test_func_name_lambda_local(kw, exp):
     assert base.func_name(lambda: None, **kw) == exp
+
+
+###############
+## func_source
+##
+@pytest.mark.parametrize(
+    "fn", [_foo, fnt.partial(_foo), fnt.partial(_foo, 1),],
+)
+def test_func_source_func(fn):
+    exp = "def _foo():\n    pass"
+    assert base.func_source(fn, human=1).strip() == exp
+
+
+@pytest.mark.parametrize(
+    "fn",
+    [
+        _Foo.foo,
+        fnt.partial(_Foo.foo),
+        _Foo().foo,
+        fnt.partial(_Foo().foo),
+        fnt.partialmethod(_Foo.foo),
+    ],
+)
+def test_func_source_method(fn):
+    exp = "def foo(self):\n        pass"
+    assert base.func_source(fn, human=1).strip() == exp
+
+
+@pytest.mark.parametrize("fn", [eval, fnt.partial(eval)])
+def test_func_source_builtin(fn):
+    exp = "<built-in function eval>"
+    got = base.func_source(fn, human=1)
+    assert got == exp
+
+
+###############
+## func_sourcelines
+##
+@pytest.mark.parametrize(
+    "fn", [_foo, fnt.partial(_foo), fnt.partial(_foo, 1),],
+)
+def test_func_sourcelines_func(fn):
+    exp = "def _foo():\n    pass"
+    got = base.func_sourcelines(fn, human=1)
+    assert "".join(got[0]).strip() == exp
+    assert got[1] == 225
+
+
+@pytest.mark.parametrize(
+    "fn",
+    [
+        _Foo.foo,
+        fnt.partial(_Foo.foo),
+        _Foo().foo,
+        fnt.partial(_Foo().foo),
+        fnt.partialmethod(_Foo.foo),
+    ],
+)
+def test_func_sourcelines_method(fn):
+    exp = "def foo(self):\n        pass"
+    got = base.func_sourcelines(fn, human=1)
+    assert "".join(got[0]).strip() == exp
+    assert got[1] == 230
+
+
+@pytest.mark.parametrize("fn", [eval, fnt.partial(eval)])
+def test_func_sourcelines_builtin(fn):
+    exp = ["<built-in function eval>"]
+    got = base.func_sourcelines(fn, human=1)
+    assert got == (exp, -1)

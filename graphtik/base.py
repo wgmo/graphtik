@@ -11,7 +11,7 @@ Generic or specific utilities  without polluting imports.
 import abc
 import logging
 from collections import defaultdict, namedtuple
-from functools import partial, partialmethod
+from functools import partial, partialmethod, wraps
 from typing import Any, Collection, List, Mapping, Optional, Tuple, Union
 
 Items = Union[Collection, str, None]
@@ -380,7 +380,7 @@ def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]
         and locals, respectively (:pep:`3155`).
         *Sphinx* uses `fqdn=True` for generating IDs.
     :param human:
-        when true, partials denote their args like ``$fn(a=1, ...)`` in the returned text,
+        when true, partials denote their args like ``fn({"a": 1}, ...)`` in the returned text,
         otherwise, just the (fqd-)name, appropriate for IDs.
 
     :return:
@@ -416,24 +416,19 @@ def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]
 
     TBD
     """
-    import inspect
+    if isinstance(fn, (partial, partialmethod)):
+        # Always bubble-up errors.
+        fn_name = func_name(fn.func, default, mod, fqdn, human)
+        if human:
+            args = [str(i) for i in (fn.args, fn.keywords) if i]
+            args.append("...")
+            args_str = ", ".join(args)
+            fn_name = f"{fn_name}({args_str})"
+
+        return fn_name
 
     try:
-        if isinstance(fn, (partial, partialmethod)):
-            # Always bubble-up errors.
-            fn_name = func_name(fn.func, default, mod, fqdn, human)
-            if human:
-                args = [str(i) for i in (fn.args, fn.keywords) if i]
-                args.append("...")
-                args_str = ", ".join(args)
-                fn_name = f"{fn_name}({args_str})"
-
-            return fn_name
-
-        if human and inspect.isbuiltin(fn) and not mod:
-            fn_name = str(fn)
-        else:
-            fn_name = fn.__qualname__ if fqdn else fn.__name__
+        fn_name = fn.__qualname__ if fqdn else fn.__name__
         assert fn_name
 
         mod_name = getattr(fn, "__module__", None)
@@ -445,6 +440,71 @@ def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]
             raise
         log.debug(
             "Ignored error while inspecting %r name: %s", fn, ex,
+        )
+        return default
+
+
+def _un_partial_ize(func):
+    """
+    Alter functions working on 1st arg being a callable, to descend it if it's a partial.
+    """
+
+    @wraps(func)
+    def wrapper(fn, *args, **kw):
+        if isinstance(fn, (partial, partialmethod)):
+            return func(fn.func, *args, **kw)
+        return func(fn, *args, **kw)
+
+    return wrapper
+
+
+@_un_partial_ize
+def func_source(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
+    """
+    Like :func:`inspect.getsource` supporting partials.
+
+    :param default:
+        If given, better be a 2-tuple respecting types,
+        or ``...``, to raise.
+    :param human:
+        when true, partials denote their args like ``$fn(a=1, ...)`` in the returned text,
+        otherwise, just the (fqd-)name, appropriate for IDs.
+    """
+    import inspect
+
+    try:
+        if human and inspect.isbuiltin(fn):
+            return str(fn)
+        return inspect.getsource(fn)
+    except Exception as ex:
+        if default is ...:
+            raise
+        log.debug(
+            "Ignored error while inspecting %r sources: %s", fn, ex,
+        )
+        return default
+
+
+@_un_partial_ize
+def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
+    """
+    Like :func:`inspect.getsourcelines` supporting partials.
+
+    :param default:
+        If given, better be a 2-tuple respecting types,
+        or ``...``, to raise.
+    """
+    import inspect
+
+    try:
+        if human and inspect.isbuiltin(fn):
+            return [str(fn)], -1
+        return inspect.getsourcelines(fn)
+    except Exception as ex:
+        if default is ...:
+            raise
+        log.debug(
+            "Ignored error while inspecting %r sourcelines: %s", fn, ex,
         )
         return default
 
@@ -478,7 +538,6 @@ def default_plot_annotator(
         - Browsers & Jupyter lab are blocking local-urls (e.g. on SVGs),
           see tip in :term:`plottable`.
     """
-    import inspect
     import html
     from .op import Operation
 
@@ -487,29 +546,17 @@ def default_plot_annotator(
         tooltip = None
         if isinstance(nx_node, Operation):
             if url_fmt and "URL" not in node_attrs:
-                try:
-                    fn_path = func_name(nx_node.fn, mod=1, fqdn=1, human=0)
-                    if fn_path:
-                        url = url_fmt % fn_path
-                        node_attrs["URL"] = html.escape(url)
-                        if link_target:
-                            node_attrs["target"] = link_target
-                except Exception as ex:
-                    log.debug(
-                        "Ignoring error while building doc-URL for %s: %s", nx_node, ex,
-                    )
+                fn_path = func_name(nx_node.fn, None, mod=1, fqdn=1, human=0)
+                if fn_path:
+                    url = url_fmt % fn_path
+                    node_attrs["URL"] = html.escape(url)
+                    if link_target:
+                        node_attrs["target"] = link_target
 
             if "tooltip" not in node_attrs:
-                try:
-                    tooltip = inspect.getsource(nx_node.fn)
-                except Exception as ex:
-                    log.debug(
-                        "Ignoring error while building source-tooltip of %s: %s",
-                        nx_node,
-                        ex,
-                    )
-                    tooltip = str(nx_node)
-                node_attrs["tooltip"] = html.escape(tooltip)
+                fn_source = func_source(nx_node.fn, None, human=1)
+                if fn_source:
+                    node_attrs["tooltip"] = html.escape(fn_source)
         else:  # DATA node
             sol = plot_args.solution
             if sol is not None and "tooltip" not in node_attrs:

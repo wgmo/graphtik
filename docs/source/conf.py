@@ -37,7 +37,7 @@ from enchant.tokenize import (
 from sphinx.application import Sphinx
 
 from graphtik.config import set_plot_annotator
-from graphtik.base import default_plot_annotator
+from graphtik.base import default_plot_annotator, func_sourcelines
 
 log = logging.getLogger(__name__)
 
@@ -119,7 +119,7 @@ def linkcode_resolve(domain, info):
         steps.append((name, item))
     for name, item in reversed(steps):
         try:
-            source, lineno = inspect.getsourcelines(item)
+            source, lineno = func_sourcelines(item, human=0)
             end_lineno = lineno + len(source) - 1
             uri = f"{uri}#L{lineno}-L{end_lineno}"
             break
