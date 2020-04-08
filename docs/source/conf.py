@@ -101,40 +101,66 @@ def linkcode_resolve(domain, info):
         return None
 
     module_name = info["module"]
-    item = importlib.import_module(module_name)
     module_path = module_name.replace(".", "/")
-    uri = github_uri % module_path
-
-    ## Get the lineno from the last valid object
-    # that has one.
+    uri = github_uri % module_path  # just the file is too broad
+    ## Attempt to locate also lineno
+    #  from the last valid object that has one.
     #
-    item_name = info["fullname"]
-    step_names = item_name.split(".")
-    steps = []
-    for name in step_names:
-        child = getattr(item, name, None)
-        if not child:
-            break
-        item = child
-        steps.append((name, item))
+    try:
+        item = importlib.import_module(module_name)
+    except Exception as ex:
+        log.warning(
+            "Ignoring failed import while searching lineno of '%s:%s': %s(%s)",
+            module_name,
+            item_name,
+            type(ex).__name__,
+            ex,
+        )
+    else:
+        item_name = info["fullname"]
+        step_names = item_name.split(".")
+        steps = []
+        ## Descend from module towards the item
+        #
+        for name in step_names:
+            child = getattr(item, name, None)
+            if not child:
+                break
+            item = child
+            steps.append((name, item))
+
+            line_info = _locate_lineno_on_any_step(steps, module_name, item_name)
+            if line_info:
+                lineno, end_lineno = line_info
+                uri = f"{uri}#L{lineno}-L{end_lineno}"
+                break
+
+    return uri
+
+
+def _locate_lineno_on_any_step(steps, module_name, item_name):
+    """Backtrack from steps until lines found."""
     for name, item in reversed(steps):
         try:
             source, lineno = func_sourcelines(item, human=0)
             end_lineno = lineno + len(source) - 1
-            uri = f"{uri}#L{lineno}-L{end_lineno}"
-            break
+            return lineno, end_lineno
         except TypeError as ex:
+            # don't clutter logs, these are mostly non functions.
             assert "module, class, method, function," in str(ex), ex
+        except OSError as ex:
+            # don't clutter logs, these are mostly non functions.
+            assert "could not find class definition" in str(ex), ex
         except Exception as ex:
             log.warning(
-                "Ignoring error while linking sources of '%s:%s': %s(%s)",
+                "Ignoring error on %s(%r) while searching lineno of '%s:%s': %s(%s)",
+                name,
+                item,
                 module_name,
                 item_name,
                 type(ex).__name__,
                 ex,
             )
-
-    return uri
 
 
 rst_epilog = """
