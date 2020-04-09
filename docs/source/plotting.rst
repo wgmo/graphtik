@@ -109,6 +109,7 @@ their `:name:` option(see :ref:`sphinxext-examples` below).
       .. testsetup::
 
          from <this.module> import *
+         __name__ = <this.module>
 
    Unfortunately, you cannot use relative import, and have to write your module's full name.
 

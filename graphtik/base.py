@@ -6,6 +6,7 @@ Generic or specific utilities  without polluting imports.
 .. testsetup::
 
     from graphtik.base import *
+    __name__ = "graphtik.base"
 """
 
 import abc
