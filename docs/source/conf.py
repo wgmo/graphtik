@@ -60,7 +60,6 @@ os.environ["PYENCHANT_IGNORE_MISSING_LIB"] = "1"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.coverage",
     "sphinx.ext.linkcode",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
