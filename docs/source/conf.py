@@ -27,13 +27,6 @@ import sys
 from functools import partial
 
 import packaging.version
-from enchant.tokenize import (
-    EmailFilter,
-    Filter,
-    MentionFilter,
-    URLFilter,
-    unit_tokenize,
-)
 from sphinx.application import Sphinx
 
 from graphtik.config import set_plot_annotator
@@ -52,7 +45,6 @@ sys.path.insert(0, os.path.abspath("../../"))
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = "2.0"
 
-os.environ["PYENCHANT_IGNORE_MISSING_LIB"] = "1"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -64,7 +56,6 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     # "sphinx.ext.doctest",  # doctests maintained by pytest
-    "sphinxcontrib.spelling",
     "graphtik.sphinxext",
 ]
 
@@ -170,19 +161,6 @@ rst_epilog = """
 .. _pydot.Dot: https://github.com/pydot/pydot
 """
 
-
-class SpellingFilter(Filter):
-    """Skip small 3-letter words."""
-
-    def _plot(self, word):
-        return unit_tokenize(word.lower())
-
-    def _skip(self, word):
-        return len(word) <= 3
-
-
-# spelling_word_list_filename = "spelling_wordlist.txt"
-spelling_filters = [SpellingFilter, MentionFilter, URLFilter]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

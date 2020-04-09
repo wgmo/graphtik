@@ -7,7 +7,6 @@ addons:
   apt:
     packages:
       - graphviz
-      - enchant
 install:
   - pip install Sphinx codecov packaging
   - 'python -c $''import os, packaging.version as version\nv = version.parse(os.environ.get("TRAVIS_TAG",

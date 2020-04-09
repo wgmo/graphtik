@@ -7,30 +7,5 @@
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
-    "editor.formatOnSaveTimeout": 1500,
-    "cSpell.dictionaryDefinitions": [
-        {
-            "name": "project",
-            "path": "./docs/source/spelling_wordlist.txt"
-        }
-    ],
-    "cSpell.enabled": true,
-    "cSpell.dictionaries": [
-        "project"
-    ],
-    "cSpell.ignoreRegExpList": [
-        "'s\\b"
-    ],
-    "cSpell.ignorePaths": [
-        ".git/",
-        "*venv*/",
-        "build/",
-        "dist/",
-        "*.egg-info/",
-        ".vscode/",
-        "__*",
-        "*scratch*",
-        "**/spelling_wordlist.txt"
-    ],
-    "cSpell.words": []
+    "editor.formatOnSaveTimeout": 1500
 }
