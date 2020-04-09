@@ -363,8 +363,9 @@ def _should_work(app: Sphinx):
     return any(re.search(regex, builder_name) for regex in builder_name_regexes)
 
 
-def _run_doctests_on_graphtik_document(app: Sphinx, doctree: nodes.Node, docname: str):
+def _run_doctests_on_graphtik_document(app: Sphinx, doctree: nodes.Node):
     """Callback of `doctree-resolved`` event. """
+    docname = app.env.docname
     from ._graphtikbuilder import get_graphtik_builder
 
     if _should_work(app) and any(doctree.traverse(graphtik_node)):
@@ -432,7 +433,7 @@ def setup(app: Sphinx):
         object_types[dir_name] = obj_type
 
     app.connect("config-inited", _validate_and_apply_configs)
-    app.connect("doctree-resolved", _run_doctests_on_graphtik_document)
+    app.connect("doctree-read", _run_doctests_on_graphtik_document)
 
     # Permanently set this, or else, e.g. +SKIP will not work!
     app.config.trim_doctest_flags = False
