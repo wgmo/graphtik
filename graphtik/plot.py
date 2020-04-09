@@ -133,6 +133,9 @@ def _monkey_patch_for_jupyter(pydot):
         pydot.Dot._repr_html_ = _dot2svg
 
 
+_monkey_patch_for_jupyter(pydot)
+
+
 def _is_class_value_in_list(lst, cls, value):
     return any(isinstance(i, cls) and i == value for i in lst)
 
@@ -191,9 +194,59 @@ def as_identifier(s):
     return s
 
 
+def _yield_pub_props(adict: dict, dst: dict) -> None:
+    """Yield kv-pairs from `adict` whose keys do not start with underscore(``_``)."""
+    return ((k, v) for k, v in adict.items() if not str(k).startswith("_"))
+
+
 def _convey_pub_props(src: dict, dst: dict) -> None:
     """Pass all keys from `src` not starting with underscore(``_``) into `dst`."""
     dst.update((k, v) for k, v in src.items() if not str(k).startswith("_"))
+
+
+class Style:
+    """Indirect simple values applied everywhere - patch or pass new instance to plotter."""
+
+    resched_thickness = 4
+    fill_color = "wheat"
+    failed_color = "LightCoral"
+    cancel_color = "Grey"
+    broken_color = "Red"
+    overwrite_color = "SkyBlue"
+    steps_color = "#009999"
+    legend_color = "yellow"
+    legend_url = "https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg"
+
+    def __init__(self, **kw):
+        vars(self).update(kw)
+
+
+class Plotter:
+    def __init__(self, **kw):
+        style = self.style = kw.pop("style", Style())
+
+        self.kw_graph = {
+            "graph_type": "digraph",
+            "fontname": "italic",
+            # Whether to plot `curved/polyline edges
+            # <https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:splines>`_
+            "splines": "ortho",
+        }
+        self.kw_data = {}
+        self.kw_op = {}
+        self.kw_edge = {}
+
+        #: If ``'URL'``` key missing/empty, no legend icon will be plotted.
+        self.kw_legend = {
+            "name": "legend",
+            "shape": "component",
+            "style": "filled",
+            "fillcolor": style.legend_color,
+            "URL": style.legend_url,
+        }
+
+        # user overwrites
+        vars(self).update(**kw)
 
 
 def build_pydot(
@@ -203,8 +256,7 @@ def build_pydot(
     outputs=None,
     solution=None,
     clusters=None,
-    splines="ortho",
-    legend_url="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg",
+    plotter: Plotter = None,
 ) -> pydot.Dot:
     """
     Build a |pydot.Dot|_ out of a Network graph/steps/inputs/outputs and return it
@@ -214,18 +266,10 @@ def build_pydot(
     See :meth:`.Plottable.plot()` for the arguments, sample code, and
     the legend of the plots.
     """
-
-    _monkey_patch_for_jupyter(pydot)
-
     assert graph is not None
 
-    resched_thickness = 4
-    fill_color = "wheat"
-    failed_color = "LightCoral"
-    cancel_color = "Grey"
-    broken_color = "Red"
-    overwrite_color = "SkyBlue"
-    steps_color = "#009999"
+    plotter = plotter or get_installed_plotter()
+
     new_clusters = {}
 
     def append_or_cluster_node(dot, nx_node, node):
@@ -254,11 +298,7 @@ def build_pydot(
         plot_args = PlotArgs(graph, steps, inputs, outputs, solution, clusters)
         net_annotator(plot_args)
 
-    kw = {
-        "graph_type": "digraph",
-        "fontname": "italic",
-        "splines": splines,
-    }
+    kw = plotter.kw_graph.copy()
     _convey_pub_props(graph.graph, kw)
     dot = pydot.Dot(**kw)
 
@@ -286,9 +326,9 @@ def build_pydot(
             if solution and nx_node in solution:
                 kw["style"] = "filled"
                 kw["fillcolor"] = (
-                    overwrite_color
+                    Style.overwrite_color
                     if nx_node in getattr(solution, "overwrites", ())
-                    else fill_color
+                    else Style.fill_color
                 )
 
         else:  # Operation
@@ -299,16 +339,16 @@ def build_pydot(
             }
 
             if nx_node.rescheduled:
-                kw["penwidth"] = resched_thickness
+                kw["penwidth"] = Style.resched_thickness
             if hasattr(solution, "is_failed") and solution.is_failed(nx_node):
                 kw["style"] = "filled"
-                kw["fillcolor"] = failed_color
+                kw["fillcolor"] = Style.failed_color
             elif nx_node in getattr(solution, "executed", ()):
                 kw["style"] = "filled"
-                kw["fillcolor"] = fill_color
+                kw["fillcolor"] = Style.fill_color
             elif nx_node in getattr(solution, "canceled", ()):
                 kw["style"] = "filled"
-                kw["fillcolor"] = cancel_color
+                kw["fillcolor"] = Style.cancel_color
 
         _convey_pub_props(data, kw)
         node = pydot.Node(**kw)
@@ -330,7 +370,7 @@ def build_pydot(
         if getattr(src, "rescheduled", None) or getattr(src, "endured", None):
             kw["style"] = "dashed"
             if solution and dst not in solution and dst not in steps:
-                kw["color"] = broken_color
+                kw["color"] = Style.broken_color
 
         _convey_pub_props(data, kw)
         edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
@@ -349,8 +389,8 @@ def build_pydot(
                 dst=dst_name,
                 label=str(i),
                 style="dotted",
-                color=steps_color,
-                fontcolor=steps_color,
+                color=Style.steps_color,
+                fontcolor=Style.steps_color,
                 fontname="bold",
                 fontsize=18,
                 arrowhead="vee",
@@ -358,16 +398,8 @@ def build_pydot(
             )
             dot.add_edge(edge)
 
-    if legend_url:
-        dot.add_node(
-            pydot.Node(
-                name="legend",
-                shape="component",
-                style="filled",
-                fillcolor="yellow",
-                URL=legend_url,
-            )
-        )
+    if plotter.kw_legend.get("URL"):
+        dot.add_node(pydot.Node(**plotter.kw_legend))
 
     return dot
 
@@ -639,3 +671,36 @@ def set_plot_annotator(annotator: NxNetAnnotatorType):
 def get_plot_annotator() -> NxNetAnnotatorType:
     """Get the :class:`nx.DiGraph` plot annotator."""
     return _plot_annotator.get()
+
+
+NxNetAnnotatorType = Optional[Callable[[nx.DiGraph, PlotArgs], None]]
+_plot_annotator: NxNetAnnotatorType = ContextVar(
+    "plot_annotator", default=default_plot_annotator
+)
+
+
+_installed_plotter: Plotter = ContextVar("installed_plotter", default=Plotter)
+
+
+@contextmanager
+def installed_plotter(annotator: Union[Plotter, Callable[[], Plotter]]) -> None:
+    """Like :func:`set_installed_plotter()` as a context-manager to reset old value. """
+    resetter = _installed_plotter.set(annotator)
+    try:
+        yield
+    finally:
+        _installed_plotter.set(resetter)
+
+
+def set_installed_plotter(annotator: Union[Plotter, Callable[[], Plotter]]):
+    """Pass the :class:`Plotter` instance or its no-args factory to handle plotting."""
+    return _installed_plotter.set(annotator)
+
+
+def get_installed_plotter() -> Plotter:
+    """Get the :class:`nx.DiGraph` plot annotator."""
+    plotter = _installed_plotter.get()
+    if callable(plotter):
+        plotter = plotter()
+
+    return plotter

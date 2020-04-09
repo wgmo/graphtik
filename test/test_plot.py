@@ -12,7 +12,13 @@ import pytest
 from graphtik import base, compose, network, operation, plot
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
-from graphtik.plot import build_pydot, default_plot_annotator, plot_annotator
+from graphtik.plot import (
+    Plotter,
+    Style,
+    build_pydot,
+    default_plot_annotator,
+    plot_annotator,
+)
 
 
 @pytest.fixture
@@ -215,19 +221,45 @@ def test_plot_legend(pipeline, tmp_path):
     _check_plt_img(img)
 
 
-def test_link_to_legend(pipeline):
+def test_link_to_legend(pipeline, monkeypatch):
+    """Test hierarchy of plotters"""
+    ## default URL
+    #
+    url = Style.legend_url
     dot = str(pipeline.plot())
-    # last argument of `build_pydot(..., legend_url)`.
-    assert build_pydot.__defaults__[-1] in dot
-    dot = str(pipeline.plot(legend_url=None))
-    assert build_pydot.__defaults__[-1] not in dot
-    dot = str(pipeline.plot(legend_url=""))
-    assert build_pydot.__defaults__[-1] not in dot
-
-    url = "http://example.org"
-    dot = str(pipeline.plot(legend_url=url))
-    assert build_pydot.__defaults__[-1] not in dot
     assert url in dot
+
+    ## URL --> Style
+    #
+    monkeypatch.setattr(Style, "legend_url", None)
+    dot = str(pipeline.plot())
+    assert url not in dot
+
+    monkeypatch.setattr(Style, "legend_url", "")
+    dot = str(pipeline.plot())
+    assert url not in dot
+
+    url2 = "http://example.1.org"
+    monkeypatch.setattr(Style, "legend_url", url2)
+    dot = str(pipeline.plot())
+    assert url2 in dot
+    assert url not in dot
+
+    ## URL --> installed_lotter
+    #
+    # TODO: test installed-plotter contextvar
+
+    ## URL --> plotter-args
+    #
+    dot = str(pipeline.plot(plotter=Plotter(kw_legend={"URL": None})))
+    assert url not in dot
+    assert url2 not in dot
+
+    url3 = "http://example.2.org"
+    dot = str(pipeline.plot(plotter=Plotter(style=Style(legend_url=url3))))
+    assert url3 in dot
+    assert url not in dot
+    assert url2 not in dot
 
 
 @pytest.fixture()

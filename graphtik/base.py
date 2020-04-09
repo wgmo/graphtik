@@ -264,16 +264,10 @@ class Plottable(abc.ABC):
             are  drawn as "filled".
         :param clusters:
             an optional mapping of nodes --> cluster-names, to group them
-        :param splines:
-            Whether to plot `curved/polyline edges
-            <https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:splines>`_
-            [default: "ortho"]
         :param jupyter_render:
             a nested dictionary controlling the rendering of graph-plots in Jupyter cells,
             if `None`, defaults to :data:`jupyter_render`; you may modify it in place
             and apply for all future calls (see :ref:`jupyter_rendering`).
-        :param legend_url:
-            a URL to the *graphtik* legend; if it evaluates to false, none is added.
 
         :return:
             a |pydot.Dot|_ instance
