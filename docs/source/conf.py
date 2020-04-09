@@ -92,11 +92,10 @@ def linkcode_resolve(domain, info):
         return None
 
     module_name = info["module"]
+    item_name = info["fullname"]
     module_path = module_name.replace(".", "/")
     uri = github_uri % module_path  # just the file is too broad
-    ## Attempt to locate also lineno
-    #  from the last valid object that has one.
-    #
+
     try:
         item = importlib.import_module(module_name)
     except Exception as ex:
@@ -108,34 +107,19 @@ def linkcode_resolve(domain, info):
             ex,
         )
     else:
-        item_name = info["fullname"]
-        step_names = item_name.split(".")
-        steps = []
-        ## Descend from module towards the item
-        #
-        for name in step_names:
-            child = getattr(item, name, None)
-            if not child:
-                break
-            item = child
-            steps.append((name, item))
-
-            line_info = _locate_lineno_on_any_step(steps, module_name, item_name)
-            if line_info:
-                lineno, end_lineno = line_info
-                uri = f"{uri}#L{lineno}-L{end_lineno}"
-                break
-
-    return uri
-
-
-def _locate_lineno_on_any_step(steps, module_name, item_name):
-    """Backtrack from steps until lines found."""
-    for name, item in reversed(steps):
         try:
+            ## Descend from module towards the item
+            #
+            for name in item_name.split("."):
+                child = getattr(item, name, None)
+                if not child:
+                    break
+                item = child
+
             source, lineno = func_sourcelines(item, human=0)
             end_lineno = lineno + len(source) - 1
-            return lineno, end_lineno
+            uri = f"{uri}#L{lineno}-L{end_lineno}"
+            return uri
         except TypeError as ex:
             # don't clutter logs, these are mostly non functions.
             assert "module, class, method, function," in str(ex), ex
@@ -144,11 +128,8 @@ def _locate_lineno_on_any_step(steps, module_name, item_name):
             assert "could not find class definition" in str(ex), ex
         except Exception as ex:
             log.warning(
-                "Ignoring error on %s(%r) while searching lineno of '%s:%s': %s(%s)",
-                name,
+                "Ignoring error on while searching lineno of '%s': %s(%s)",
                 item,
-                module_name,
-                item_name,
                 type(ex).__name__,
                 ex,
             )
