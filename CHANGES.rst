@@ -236,7 +236,7 @@ Details
 + FIX(NET): keep Solution's insertion order also for PARALLEL executions.
 
 + FEAT(NET, OP): :term:`reschedule`\d operations with partial outputs;
-  they must have :attr:`.FunctionalOperation.reschedule` set to true,
+  they must have :attr:`.FunctionalOperation.rescheduled` set to true,
   or else they will fail.
 
 + FEAT(OP, netop): specify :term:`endurance`/`reschedule` on a per operation basis,

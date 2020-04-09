@@ -175,10 +175,12 @@ class Solution(ChainMap, Plottable):
         self.is_parallel = is_parallel_tasks()
         self.is_marshal = is_marshal_tasks()
 
-        ## Clone will be modified, by removing the downstream edges of:
-        #  - any partial outputs not provided, or
-        #  - all `provides` of failed operations.
-        # FIXME: SPURIOUS dag reversals on multi-threaded runs (see below next assertion)!
+        #: Cloned from `plan` will be modified, by removing the downstream edges of:
+        #:
+        #: - any partial outputs not provided, or
+        #: - all `provides` of failed operations.
+        #:
+        #: FIXME: SPURIOUS dag reversals on multi-threaded runs (see below next assertion)!
         self.dag = plan.dag.copy()
         # assert next(iter(dag.edges))[0] == next(iter(plan.dag.edges))[0]:
 
@@ -921,6 +923,8 @@ class Network(Plottable):
             if not isinstance(graph, nx.Graph):
                 raise ValueError(f"Must be a NetworkX graph, was: {graph}")
 
+        #: The :mod:`networkx` (Di)Graph containing all operations and dependencies,
+        #: prior to :term:`compilation`.
         self.graph = graph
 
         for op in operations:

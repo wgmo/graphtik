@@ -225,7 +225,7 @@ Architecture
     operation
         Either the abstract notion of an action with specified `needs` and `provides`,
         or the concrete wrapper :class:`.FunctionalOperation` for arbitrary functions
-        (any :class:`callable`), that feeds on `inputs` and update `outputs`,
+        (any :func:`callable`), that feeds on `inputs` and update `outputs`,
         from/to `solution`, or given-by/returned-to the user by a `netop`.
 
         The distinction between *needs*/*provides* and *inputs*/*outputs* is akin to
@@ -335,8 +335,8 @@ Architecture
 
     plottable
         Objects that can plot their graph network, such as those inheriting :class:`.Plottable`,
-        (:class:`.NetworkOperation`, :class:`.Network`, :class:`.ExecutionPlan`m :class:`.Solution`)
-        or a |pydot.Dot|_ instance (the result of the :meth:`Plottable.plot()` method).
+        (:class:`.NetworkOperation`, :class:`.Network`, :class:`.ExecutionPlan`, :class:`.Solution`)
+        or a |pydot.Dot|_ instance (the result of the :meth:`.Plottable.plot()` method).
 
         Such objects may render as SVG in *Jupter notebooks* (through their ``plot()`` method)
         and can render in a Sphinx site with with the :rst:dir:`graphtik` *RsT directive*.

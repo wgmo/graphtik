@@ -104,15 +104,7 @@ class Operation(abc.ABC):
 
 class FunctionalOperation(Operation):
     """
-    An :term:`operation` performing a callable (ie a function, a method, a
-    lambda).
-
-    :param provides:
-        Value names this operation provides (including aliases/sideffects).
-    :param real_provides:
-        Value names the underlying function provides (without aliases, with(!) sideffects).
-
-        FIXME: `real_provides` not sure what it does with sideffects
+    An :term:`operation` performing a callable (ie a function, a method, a lambda).
 
     .. Tip::
         Use :class:`operation()` builder class to build instances of this class instead.
@@ -141,39 +133,57 @@ class FunctionalOperation(Operation):
 
         See :class:`.operation` for the full documentation of parameters.
 
-        :param name:
+        .. attribute:: FunctionalOperation.name
+
             a name for the operation (e.g. `'conv1'`, `'sum'`, etc..);
             it will be prefixed by `parents`.
-        :param needs:
+        .. attribute:: FunctionalOperation.needs
+
             Names of input data objects this operation requires.
-        :param provides:
+        .. attribute:: FunctionalOperation.provides
+
             Names of the **real output values** the underlying function provides
-            (without `aliases`, with(!) sideffects)
-        :param aliases:
+            (without `aliases`, with(!) `sideffects`)
+
+            NOTE that the instance attribute eventually includes aliases & sideffects.
+        .. attribute:: FunctionalOperation.real_provides
+
+            Value names the underlying function provides (without aliases, with(!) sideffects).
+
+            FIXME: `real_provides` not sure what it does with sideffects.
+        .. attribute:: FunctionalOperation.aliases
+
             an optional mapping of real `provides` to additional ones, together
             comprising this operations :term:`provides`.
-        :param parents:
+        .. attribute:: FunctionalOperation.parents
+
             a tuple wth the names of the parents, prefixing `name`,
             but also kept for equality/hash check.
-        :param rescheduled:
+        .. attribute:: FunctionalOperation.rescheduled
+
             If true, underlying *callable* may produce a subset of `provides`,
             and the :term:`plan` must then :term:`reschedule` after the operation
             has executed.  In that case, it makes more sense for the *callable*
             to `returns_dict`.
-        :param endured:
+        .. attribute:: FunctionalOperation.endured
+
             If true, even if *callable* fails, solution will :term:`reschedule`;
             ignored if :term:`endurance` enabled globally.
-        :param parallel:
+        .. attribute:: FunctionalOperation.parallel
+
             execute in :term:`parallel`
-        :param marshalled:
+        .. attribute:: FunctionalOperation.marshalled
+
             If true, operation will be :term:`marshalled <marshalling>` while computed,
             along with its `inputs` & `outputs`.
             (usefull when run in `parallel` with a :term:`process pool`).
-        :param returns_dict:
+        .. attribute:: FunctionalOperation.returns_dict
+
             if true, it means the `fn` returns a dictionary with all `provides`,
             and no further processing is done on them
             (i.e. the returned output-values are not zipped with `provides`)
-        :param node_props:
+        .. attribute:: FunctionalOperation.node_props
+
             Added as-is into NetworkX graph, and you may filter operations by
             :meth:`.NetworkOperation.withset()`.
             Also plot-rendering affected if they match `Graphviz` properties,
