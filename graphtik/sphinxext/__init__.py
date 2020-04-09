@@ -2,8 +2,12 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """Extends Sphinx with :rst:dir:`graphtik` directive rendering plots from doctest code."""
 import collections.abc as cabc
+import itertools as itt
+import os
 import re
-from typing import List, Union, cast
+from collections import defaultdict
+from pathlib import Path
+from typing import Dict, List, Set, Union, cast
 
 import sphinx
 from docutils import nodes
@@ -13,10 +17,12 @@ from sphinx.application import Sphinx
 from sphinx.config import Config
 from sphinx.domains import Domain, Index, ObjType
 from sphinx.domains.std import StandardDomain
+from sphinx.environment import BuildEnvironment
 from sphinx.ext import doctest as extdoctest
 from sphinx.locale import _, __
 from sphinx.roles import XRefRole
 from sphinx.util import logging
+from sphinx.util.console import bold  # type: ignore
 from sphinx.writers.html import HTMLTranslator
 from sphinx.writers.latex import LaTeXTranslator
 
@@ -374,6 +380,70 @@ def _run_doctests_on_graphtik_document(app: Sphinx, doctree: nodes.Node):
         graphtik_builder.test_doc(docname, doctree)
 
 
+class DocFilesPurgatory:
+    """Keeps 2-way associations of docs <--> abs-files, to purge them."""
+
+    #: Multi-map: docnames -> abs-file-paths
+    doc_fpaths: Dict[str, Set[Path]]
+
+    def __init__(self):
+        self.doc_fpaths = defaultdict(set)
+
+    def register_doc_fpath(self, docname: str, fpath: Path):
+        """Must be absolute, for purging to work."""
+        self.doc_fpaths[docname].add(fpath)
+
+    def purge_doc(self, docname: str):
+        """Remove doc-files not used by any other doc."""
+        doc_fpaths = self.doc_fpaths
+
+        for fpath in doc_fpaths.get(docname, ()):
+            docs_involved = set(
+                docs for docs, fpaths in doc_fpaths.items() if fpath in fpaths
+            )
+            assert docname in docs_involved, (docname, docs_involved)
+
+            ## Delete file when given `docname` is the only document using it.
+            #
+            if len(docs_involved) == 1:  # equality checked also by assertion
+
+                try:
+                    log.debug(
+                        "Deleting outdated image '%s' of doc %r...", docname, fpath
+                    )
+                    fpath.unlink(missing_ok=True)
+                except Exception as ex:
+                    log.warning(
+                        "Ignoring error while deleting outdated fpath '%s': %s",
+                        fpath,
+                        ex,
+                    )
+
+        doc_fpaths.pop(docname, None)
+
+    def __getstate__(self) -> Dict:
+        """Obtains serializable data for pickling."""
+        return self.doc_fpaths
+
+    def __setstate__(self, state: Dict) -> None:
+        """Restore serialized data for pickling."""
+        self.doc_fpaths = state
+
+
+def _purge_old_document_images(app: Sphinx, env: BuildEnvironment, docname: str):
+    img_registry: DocFilesPurgatory = getattr(env, "graphtik_image_purgatory", None)
+    if img_registry:
+        try:
+            env.graphtik_image_purgatory.purge_doc(docname)
+        except Exception as ex:
+            app.logger.error(
+                bold(__("Failed purging old images due to: %s")), ex, exc_info=ex
+            )
+
+    else:
+        env.graphtik_image_purgatory = DocFilesPurgatory()
+
+
 def _validate_and_apply_configs(app: Sphinx, config: Config):
     """Callback of `config-inited`` event. """
     config.graphtik_default_graph_format is None or _valid_format_option(
@@ -382,6 +452,7 @@ def _validate_and_apply_configs(app: Sphinx, config: Config):
 
 
 def setup(app: Sphinx):
+    setup.app = app
     app.require_sphinx("2.0")
     app.setup_extension("sphinx.ext.doctest")
 
@@ -434,6 +505,7 @@ def setup(app: Sphinx):
 
     app.connect("config-inited", _validate_and_apply_configs)
     app.connect("doctree-read", _run_doctests_on_graphtik_document)
+    app.connect("env-purge-doc", _purge_old_document_images)
 
     # Permanently set this, or else, e.g. +SKIP will not work!
     app.config.trim_doctest_flags = False

@@ -62,6 +62,7 @@
         "filtdict",
         "fname",
         "fpath",
+        "fpaths",
         "fqdn",
         "functools",
         "garrigues",
@@ -189,7 +190,6 @@
         "writtable",
         "xfail",
         "xlib",
-        "zoomable",
-        ""
+        "zoomable"
     ]
 }

@@ -156,6 +156,9 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         ## Don not re-write images, that have content-named path,
         #  so they are never out-of-date.
         #
+        self.env.graphtik_image_purgatory.register_doc_fpath(
+            self.env.docname, abs_fpath
+        )
         if not abs_fpath.is_file():
             abs_fpath.parent.mkdir(parents=True, exist_ok=True)
             dot.write(abs_fpath, format=img_format)
