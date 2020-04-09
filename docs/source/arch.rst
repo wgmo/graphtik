@@ -109,8 +109,8 @@ Architecture
 
     configurations
         The functions controlling `compile` & `execution` globally  are defined
-        in :mod:`.config` module;  they underlying global data are stored in
-        :class:`contextvars.ContextVar` instances, to allow for nested control.
+        in :mod:`.config` module and x1 in :mod:`.plot`;  they underlying global data
+        are stored in :class:`contextvars.ContextVar` instances, to allow for nested control.
 
         All *boolean* configuration flags are **tri-state** (``None, False, True``),
         allowing to "force" all operations, when they are not set to the ``None``

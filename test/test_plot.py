@@ -10,11 +10,9 @@ from textwrap import dedent
 import pytest
 
 from graphtik import base, compose, network, operation, plot
-from graphtik.config import plot_annotator
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
-from graphtik.plot import build_pydot
-from graphtik.base import default_plot_annotator
+from graphtik.plot import build_pydot, default_plot_annotator, plot_annotator
 
 
 @pytest.fixture

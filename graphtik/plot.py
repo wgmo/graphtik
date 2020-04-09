@@ -1,6 +1,11 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-""" Plotting of graphtik graphs."""
+"""
+Plotting of graphtik graphs.
+
+Separate from `graphtik.base` to avoid too many imports too early.
+from contextlib import contextmanager
+"""
 import html
 import inspect
 import io
@@ -8,18 +13,21 @@ import json
 import logging
 import os
 import re
-from typing import Any, Callable, List, Mapping, Tuple, Union
+from collections import namedtuple
+from contextlib import contextmanager
+from contextvars import ContextVar
+from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 import pydot
 
-from .base import PlotArgs
-from .config import get_plot_annotator
+from .base import func_name, func_source
 from .modifiers import optional
 from .network import _EvictInstruction
 from .op import Operation
 
 log = logging.getLogger(__name__)
+
 
 #: A nested dictionary controlling the rendering of graph-plots in Jupyter cells,
 #:
@@ -539,3 +547,97 @@ def legend(
     # cluster.add_node("operation")
 
     return render_pydot(dot, filename=filename, show=show)
+
+
+def graphviz_html_string(s):
+    import html
+
+    if s:
+        s = html.escape(s).replace("\n", "&#10;")
+        s = f"<{s}>"
+    return s
+
+
+PlotArgs = namedtuple("PlotArgs", "graph, steps, inputs, outputs, solution, clusters")
+"""All the args of a :meth:`.Plottable.plot()` call. """
+
+
+def default_plot_annotator(
+    plot_args: PlotArgs, url_fmt: str = None, link_target: str = None,
+) -> None:
+    """
+    Annotate DiGraph to be plotted with doc URLs, and code & solution tooltips.
+
+    :param plot_args:
+        as passed in :meth:`.plot()`.
+    :param url_fmt:
+        a ``%s``-format string accepting the function-path used to form the final URL
+        of the node; if it evaluates to false (default), no URL added.
+    :param link_target:
+        if given, adds a graphviz target attribute to control where to open
+        the url (e.g. ``_blank`` or ``_top``)
+
+    Override it with :func:`.config.nx_network_annotator` or
+    :func:`.config.set_nx_network_annotator`.
+
+    .. Note::
+        - SVG tooltips may not work without URL on PDFs:
+          https://gitlab.com/graphviz/graphviz/issues/1425
+
+        - Browsers & Jupyter lab are blocking local-urls (e.g. on SVGs),
+          see tip in :term:`plottable`.
+    """
+    from .op import Operation
+
+    nx_net = plot_args.graph
+    for nx_node, node_attrs in nx_net.nodes.data():
+        tooltip = None
+        if isinstance(nx_node, Operation):
+            if url_fmt and "URL" not in node_attrs:
+                fn_path = func_name(nx_node.fn, None, mod=1, fqdn=1, human=0)
+                if fn_path:
+                    url = url_fmt % fn_path
+                    node_attrs["URL"] = graphviz_html_string(url)
+                    if link_target:
+                        node_attrs["target"] = link_target
+
+            if "tooltip" not in node_attrs:
+                fn_source = func_source(nx_node.fn, None, human=1)
+                if fn_source:
+                    node_attrs["tooltip"] = graphviz_html_string(fn_source)
+        else:  # DATA node
+            sol = plot_args.solution
+            if sol is not None and "tooltip" not in node_attrs:
+                val = sol.get(nx_node)
+                tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
+                node_attrs["tooltip"] = graphviz_html_string(tooltip)
+
+
+NxNetAnnotatorType = Optional[Callable[[nx.DiGraph, PlotArgs], None]]
+_plot_annotator: NxNetAnnotatorType = ContextVar(
+    "plot_annotator", default=default_plot_annotator
+)
+
+
+@contextmanager
+def plot_annotator(annotator: NxNetAnnotatorType):
+    """Like :func:`set_plot_annotator()` as a context-manager to reset old value. """
+    resetter = _plot_annotator.set(annotator)
+    try:
+        yield
+    finally:
+        _plot_annotator.set(resetter)
+
+
+def set_plot_annotator(annotator: NxNetAnnotatorType):
+    """
+    Pass :class:`nx.DiGraph` to be plotted through this callable
+
+    to prepare e.g. code/doc links/tooltips).
+    """
+    return _plot_annotator.set(annotator)
+
+
+def get_plot_annotator() -> NxNetAnnotatorType:
+    """Get the :class:`nx.DiGraph` plot annotator."""
+    return _plot_annotator.get()

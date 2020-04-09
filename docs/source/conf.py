@@ -29,8 +29,9 @@ from functools import partial
 import packaging.version
 from sphinx.application import Sphinx
 
-from graphtik.config import set_plot_annotator
-from graphtik.base import default_plot_annotator, func_sourcelines
+from graphtik.base import func_sourcelines
+from graphtik.plot import default_plot_annotator, set_plot_annotator
+
 
 log = logging.getLogger(__name__)
 
