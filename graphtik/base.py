@@ -106,6 +106,149 @@ def astuple(i, argname, allowed_types=tuple):
     return i
 
 
+def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]:
+    """
+    FQDN of `fn`, descending into partials to print their args.
+
+    :param default:
+        What to return if it fails; by default it raises.
+    :param mod:
+        when true, prepend module like ``module.name.fn_name``
+    :param fqdn:
+        when true, use ``__qualname__`` (instead of ``__name__``)
+        which differs mostly on methods, where it contains class(es),
+        and locals, respectively (:pep:`3155`).
+        *Sphinx* uses `fqdn=True` for generating IDs.
+    :param human:
+        when true, partials denote their args like ``fn({"a": 1}, ...)`` in the returned text,
+        otherwise, just the (fqd-)name, appropriate for IDs.
+
+    :return:
+        a (possibly dot-separated) string, or `default` (unless this is ``...```).
+    :raises:
+        Only if default is ``...``, otherwise, errors debug-logged.
+
+
+    **Examples**
+
+        >>> func_name(func_name)
+        'func_name'
+        >>> func_name(func_name, mod=1)
+        'graphtik.base.func_name'
+        >>> func_name(MultiValueError.mro, fqdn=0)
+        'mro'
+        >>> func_name(MultiValueError.mro, fqdn=1)
+        'MultiValueError.mro'
+
+    Even functions defined in docstrings are reported:
+
+        >>> def f():
+        ...     def inner():
+        ...         pass
+        ...     return inner
+
+        >>> func_name(f, mod=1, fqdn=1)
+        'graphtik.base.f'
+        >>> func_name(f(), fqdn=1)
+        'f.<locals>.inner'
+
+    On failures, arg `default` controls the outcomes:
+
+    TBD
+    """
+    if isinstance(fn, (partial, partialmethod)):
+        # Always bubble-up errors.
+        fn_name = func_name(fn.func, default, mod, fqdn, human)
+        if human:
+            args = [str(i) for i in (fn.args, fn.keywords) if i]
+            args.append("...")
+            args_str = ", ".join(args)
+            fn_name = f"{fn_name}({args_str})"
+
+        return fn_name
+
+    try:
+        fn_name = fn.__qualname__ if fqdn else fn.__name__
+        assert fn_name
+
+        mod_name = getattr(fn, "__module__", None)
+        if mod and mod_name:
+            fn_name = ".".join((mod_name, fn_name))
+        return fn_name
+    except Exception as ex:
+        if default is ...:
+            raise
+        log.debug(
+            "Ignored error while inspecting %r name: %s", fn, ex,
+        )
+        return default
+
+
+def _un_partial_ize(func):
+    """
+    Alter functions working on 1st arg being a callable, to descend it if it's a partial.
+    """
+
+    @wraps(func)
+    def wrapper(fn, *args, **kw):
+        if isinstance(fn, (partial, partialmethod)):
+            return func(fn.func, *args, **kw)
+        return func(fn, *args, **kw)
+
+    return wrapper
+
+
+@_un_partial_ize
+def func_source(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
+    """
+    Like :func:`inspect.getsource` supporting partials.
+
+    :param default:
+        If given, better be a 2-tuple respecting types,
+        or ``...``, to raise.
+    :param human:
+        when true, partials denote their args like ``$fn(a=1, ...)`` in the returned text,
+        otherwise, just the (fqd-)name, appropriate for IDs.
+    """
+    import inspect
+
+    try:
+        if human and inspect.isbuiltin(fn):
+            return str(fn)
+        return inspect.getsource(fn)
+    except Exception as ex:
+        if default is ...:
+            raise
+        log.debug(
+            "Ignored error while inspecting %r sources: %s", fn, ex,
+        )
+        return default
+
+
+@_un_partial_ize
+def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
+    """
+    Like :func:`inspect.getsourcelines` supporting partials.
+
+    :param default:
+        If given, better be a 2-tuple respecting types,
+        or ``...``, to raise.
+    """
+    import inspect
+
+    try:
+        if human and inspect.isbuiltin(fn):
+            return [str(fn)], -1
+        return inspect.getsourcelines(fn)
+    except Exception as ex:
+        if default is ...:
+            raise
+        log.debug(
+            "Ignored error while inspecting %r sourcelines: %s", fn, ex,
+        )
+        return default
+
+
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
     Annotate exception with salvaged values from locals() and raise!
@@ -359,146 +502,3 @@ class Plottable(abc.ABC):
     @abc.abstractmethod
     def _build_pydot(self, **kws):
         pass
-
-
-def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]:
-    """
-    FQDN of `fn`, descending into partials to print their args.
-
-    :param default:
-        What to return if it fails; by default it raises.
-    :param mod:
-        when true, prepend module like ``module.name.fn_name``
-    :param fqdn:
-        when true, use ``__qualname__`` (instead of ``__name__``)
-        which differs mostly on methods, where it contains class(es),
-        and locals, respectively (:pep:`3155`).
-        *Sphinx* uses `fqdn=True` for generating IDs.
-    :param human:
-        when true, partials denote their args like ``fn({"a": 1}, ...)`` in the returned text,
-        otherwise, just the (fqd-)name, appropriate for IDs.
-
-    :return:
-        a (possibly dot-separated) string, or `default` (unless this is ``...```).
-    :raises:
-        Only if default is ``...``, otherwise, errors debug-logged.
-
-
-    **Examples**
-
-        >>> func_name(func_name)
-        'func_name'
-        >>> func_name(func_name, mod=1)
-        'graphtik.base.func_name'
-        >>> func_name(MultiValueError.mro, fqdn=0)
-        'mro'
-        >>> func_name(MultiValueError.mro, fqdn=1)
-        'MultiValueError.mro'
-
-    Even functions defined in docstrings are reported:
-
-        >>> def f():
-        ...     def inner():
-        ...         pass
-        ...     return inner
-
-        >>> func_name(f, mod=1, fqdn=1)
-        'graphtik.base.f'
-        >>> func_name(f(), fqdn=1)
-        'f.<locals>.inner'
-
-    On failures, arg `default` controls the outcomes:
-
-    TBD
-    """
-    if isinstance(fn, (partial, partialmethod)):
-        # Always bubble-up errors.
-        fn_name = func_name(fn.func, default, mod, fqdn, human)
-        if human:
-            args = [str(i) for i in (fn.args, fn.keywords) if i]
-            args.append("...")
-            args_str = ", ".join(args)
-            fn_name = f"{fn_name}({args_str})"
-
-        return fn_name
-
-    try:
-        fn_name = fn.__qualname__ if fqdn else fn.__name__
-        assert fn_name
-
-        mod_name = getattr(fn, "__module__", None)
-        if mod and mod_name:
-            fn_name = ".".join((mod_name, fn_name))
-        return fn_name
-    except Exception as ex:
-        if default is ...:
-            raise
-        log.debug(
-            "Ignored error while inspecting %r name: %s", fn, ex,
-        )
-        return default
-
-
-def _un_partial_ize(func):
-    """
-    Alter functions working on 1st arg being a callable, to descend it if it's a partial.
-    """
-
-    @wraps(func)
-    def wrapper(fn, *args, **kw):
-        if isinstance(fn, (partial, partialmethod)):
-            return func(fn.func, *args, **kw)
-        return func(fn, *args, **kw)
-
-    return wrapper
-
-
-@_un_partial_ize
-def func_source(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
-    """
-    Like :func:`inspect.getsource` supporting partials.
-
-    :param default:
-        If given, better be a 2-tuple respecting types,
-        or ``...``, to raise.
-    :param human:
-        when true, partials denote their args like ``$fn(a=1, ...)`` in the returned text,
-        otherwise, just the (fqd-)name, appropriate for IDs.
-    """
-    import inspect
-
-    try:
-        if human and inspect.isbuiltin(fn):
-            return str(fn)
-        return inspect.getsource(fn)
-    except Exception as ex:
-        if default is ...:
-            raise
-        log.debug(
-            "Ignored error while inspecting %r sources: %s", fn, ex,
-        )
-        return default
-
-
-@_un_partial_ize
-def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
-    """
-    Like :func:`inspect.getsourcelines` supporting partials.
-
-    :param default:
-        If given, better be a 2-tuple respecting types,
-        or ``...``, to raise.
-    """
-    import inspect
-
-    try:
-        if human and inspect.isbuiltin(fn):
-            return [str(fn)], -1
-        return inspect.getsourcelines(fn)
-    except Exception as ex:
-        if default is ...:
-            raise
-        log.debug(
-            "Ignored error while inspecting %r sourcelines: %s", fn, ex,
-        )
-        return default
