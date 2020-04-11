@@ -153,18 +153,26 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         fname = f"graphtik-{hasher.hexdigest()}.{img_format}"
         abs_fpath = Path(self.outdir, self.imagedir, fname)
 
-        ## Don not re-write images, that have content-named path,
+        ## Do not re-write images, that have content-named path,
         #  so they are never out-of-date.
         #
         self.env.graphtik_image_purgatory.register_doc_fpath(
             self.env.docname, abs_fpath
         )
+        if self.config.graphtik_save_dot_files:
+            self.env.graphtik_image_purgatory.register_doc_fpath(
+                self.env.docname, abs_fpath.with_suffix(".txt")
+            )
+
         if not abs_fpath.is_file():
             abs_fpath.parent.mkdir(parents=True, exist_ok=True)
             dot.write(abs_fpath, format=img_format)
             if img_format == "png":
                 cmap = dot.create(format="cmapx", encoding="utf-8").decode("utf-8")
                 node.cmap = cmap
+            if self.config.graphtik_save_dot_files:
+                with open(abs_fpath.with_suffix(".txt"), "w") as f:
+                    f.write(str(dot))
 
         ## XXX: used to work till active-builder attributes were transfered to self.
         # rel_fpath = Path(self.imgpath, fname)
