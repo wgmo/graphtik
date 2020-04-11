@@ -49,7 +49,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
 
         unless :rst:confval`graphtik_warning_is_error` is true (default false).
         """
-        if self.config.autodoc_warning_is_error:
+        if self.config.graphtik_warning_is_error:
             super()._warn_out(text)
         else:
             log.info(f"WARN-like: {text}", nonl=True)
