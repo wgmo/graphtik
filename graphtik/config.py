@@ -105,7 +105,7 @@ def execution_pool(pool: "Optional[Pool]"):
     try:
         yield
     finally:
-        _execution_pool.set(resetter)
+        _execution_pool.reset(resetter)
 
 
 def set_execution_pool(pool: "Optional[Pool]"):
