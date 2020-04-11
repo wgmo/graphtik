@@ -13,7 +13,8 @@ import abc
 import logging
 from collections import defaultdict, namedtuple
 from functools import partial, partialmethod, wraps
-from typing import Any, Collection, List, Mapping, Optional, Tuple, Union
+from typing import Any, Collection, List, Mapping, NamedTuple, Optional
+from typing import Tuple, Union
 
 Items = Union[Collection, str, None]
 
@@ -351,6 +352,59 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         raise ex2
 
 
+_PlotArgs_render_args = {"filename", "show", "jupyter_render"}
+
+
+class PlotArgs(NamedTuple):
+    """All the args of a :meth:`.Plottable.plot()` call. """
+
+    plotter: "Plotter" = None
+    graph: "nx.Graph" = None
+    name: str = None
+    steps: Collection = None
+    inputs: Collection = None
+    outputs: Collection = None
+    solution: "Solution" = None
+    clusters: Mapping = None
+    jupyter_render: Mapping = None
+    filename: str = None
+    show: Union[bool, int] = None
+
+    def clone_or_merge_graph(self, base_graph) -> "PlotArgs":
+        """
+        Overlay :attr:`graph` over `base_graph`, or clone `base_graph`, if no attribute.
+
+        :return:
+            the updated plot_args
+        """
+        import networkx as nx
+
+        if self.graph:
+            graph = nx.compose(base_graph, self.graph)
+        else:
+            graph = base_graph.copy()  # cloned, to freely annotate downstream
+
+        return self._replace(graph=graph)
+
+    def with_defaults(self, *args, **kw) -> "PlotArgs":
+        """Replace only fields with `None` values."""
+        return self._replace(
+            **{k: v for k, v in dict(*args, **kw).items() if getattr(self, k) is None}
+        )
+
+    @property
+    def kw_build_pydot(self) -> dict:
+        return {
+            k: v
+            for k, v in self._asdict().items()
+            if k not in _PlotArgs_render_args and k != "plotter"
+        }
+
+    @property
+    def kw_render_pydot(self) -> dict:
+        return {k: v for k, v in self._asdict().items() if k in _PlotArgs_render_args}
+
+
 ## Defined here, to avoid subclasses importing `plot` module.
 class Plottable(abc.ABC):
     """
@@ -366,33 +420,43 @@ class Plottable(abc.ABC):
         self,
         filename=None,
         show=False,
+        *,
+        plotter: "Plotter" = None,
+        graph: "networkx.Graph" = None,
+        name=None,
+        steps=None,
+        inputs=None,
+        outputs=None,
+        solution=None,
+        clusters=None,
         jupyter_render: Union[None, Mapping, str] = None,
-        **kws,
     ) -> "pydot.Dot":
         """
         Entry-point for plotting ready made operation graphs.
 
+        :param str filename:
+            Write diagram into a file.
+            Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
+            call :func:`.plot.supported_plot_formats()` for more.
+        :param show:
+            If it evaluates to true, opens the  diagram in a  matplotlib window.
+            If it equals `-1`, it plots but does not open the Window.
+        :param plotter:
+            an instance to handle plotting; if none, the :term:`installed plotter`
+            is used by default.
+        :param name:
+            if not given, dot-lang graph would is named "G"; necessary to be unique
+            when referring to generated CMAPs.
+            No need to quote it, handled by the plotter, downstream.
         :param str graph:
-            (optional) An :class:`nx.Digraph` usually provided by underlying plottables.
-            It may contain graph, node & edge attributes for the plotting methods,
-            eventually reaching `Graphviz`_, among others:
-
-            _name (graph)
-                if given, dot-lang graph would not be named "G"; necessary to be unique
-                when referring to generated CMAPs.
-                Note that it is "private", not to convey to DOT file.
+            (optional) A :class:`nx.Digraph` with overrides to merge with the graph provided
+            by underlying plottables (depending of course on the :term:`installed plotter`).
+            It may contain "public" graph, node & edge attributes eventually reaching
+            `Graphviz`_.
 
             .. Note::
                 Remember to properly escape values for `Graphviz`_
                 e.g. with :func:`html.escape()` or :func:`.plot.quote_dot_word()`.
-
-        :param str filename:
-            Write diagram into a file.
-            Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
-            call :func:`plot.supported_plot_formats()` for more.
-        :param show:
-            If it evaluates to true, opens the  diagram in a  matplotlib window.
-            If it equals `-1`, it plots but does not open the Window.
         :param inputs:
             an optional name list, any nodes in there are plotted
             as a "house"
@@ -492,13 +556,30 @@ class Plottable(abc.ABC):
         ...
 
         """
-        from .plot import render_pydot
+        kw = locals().copy()
+        del kw["self"]
+        plot_args = PlotArgs(**kw)
 
-        dot = self._build_pydot(**kws)
-        return render_pydot(
-            dot, filename=filename, show=show, jupyter_render=jupyter_render
-        )
+        from .plot import Plotter, get_installed_plotter
+
+        if plotter and not isinstance(plotter, Plotter):
+            raise ValueError(f"Invalid `plotter` argument given: {plotter}")
+        plot_args = plot_args._replace(plotter=plotter or get_installed_plotter())
+
+        plot_args = self.prepare_plot_args(plot_args)
+        assert plot_args.graph, plot_args
+
+        return plot_args.plotter.plot(plot_args)
 
     @abc.abstractmethod
-    def _build_pydot(self, **kws):
+    def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
+        """
+        Called by :meth:`plot()` to create the nx-graph and other plot-args, e.g. solution.
+
+        - Clone the graph or merge it with the one in the `plot_args`
+          (see :meth:`PlotArgs.clone_or_merge_graph()`.
+
+        - For the rest args, prefer :meth:`PlotArgs.with_defaults()` over :meth:`._replace()`,
+          not to override user args.
+        """
         pass

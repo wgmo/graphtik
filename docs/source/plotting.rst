@@ -164,7 +164,8 @@ Directives
       - an instance of :class:`.Plottable` (such as :class:`.NetworkOperation`,
          :class:`.Network`, :class:`.ExecutionPlan` or :class:`.Solution`);
 
-      - an already plotted |pydot.Dot|_ instance, ie, the result of a :meth:`.plot()` call
+      - an already plotted |pydot.Dot|_ instance, ie, the result of
+        a :meth:`.Plottable.plot()` call
 
       If missing, it renders the last variable in the doctest code assigned with
       the above types.
@@ -298,25 +299,54 @@ Configurations
    with ``-W`` option, since these are unrelated to the building of the site.
 
 
-Other customizations
+:confval:`doctest_test_doctest_blocks` :green:`(foreign config)`
+   Don't disable doctesting of *literal-blocks*, ie,
+   don't reset the :confval:`doctest_test_doctest_blocks` configuration value, or else,
+   such code would be invisible to :rst:dir:`graphtik` directive.
+
+:confval:`trim_doctest_flags` :green:`(foreign config)`
+   This configuration is forced to ``False`` (default was ``True``).
+
+   .. Attention::
+      This means that in the rendered site, options-in-comments like ``# doctest: +SKIP``
+      and ``<BLACKLINE>`` artifacts will be visible.
+
+
+.. _plot-customizations:
+
+Plot customizations
 ~~~~~~~~~~~~~~~~~~~~
-:func:`.plot_annotator`
-   A :term:`graphtik configuration <configurations>` to be overridden with a function
-   that annotates nodes to be plotted;  e.g. have nodes link back to the sphinx site.
+:term:`plotter`\s` & style constants
+   Rendering of plots is performed by :class:`.plot.Plotter` instances.
+   Simple values theming `Graphviz`_ attributes are defined on the :class:`.plot.Style`
+   class, which is an :attr:`attribute <.Plotter.style>` of *plotter*.
 
-   This project does it in its own :file:`docs/source/conf.py` sphinx file.
-   In particular, it configures the base-url of the :func:`.default_plot_annotator()`.
+   You may customize the styles and/or *plotter* behavior with various methods,
+   ordered by breadth of the effects (most broadly effecting method at the top):
 
-:confval:`doctest_test_doctest_blocks`
-   Don't disable doctesting of *literal-blocks*, that is,
-   don't reset the :confval:`doctest_test_doctest_blocks` configuration value,
-   or it will hinder your  capability to render ``:graphvar:`` from such code.
+   1. Get and modify in-place the styles of the *default* :term:`installed plotter`,
+      like that::
 
-.. Attention::
-   This extension forces the :confval:`trim_doctest_flags` configuration to ``False``
-   (default is ``True``), which means that in the rendered site,
-   options-in-comments like ``# doctest: +SKIP`` and ``<BLACKLINE>`` artifacts
-   will be visible.
+         get_installed_plotter().style.kw_op["fillcolor"] = "purple"
+
+      This will affect all :meth:`.Plottable.plot()` calls for a python session.
+      You cannot change the *plotter* instance with this method - only styles
+      and monkeypatching.
+
+   2. Create a new :class:`.Plotter` (or :meth:`clone <.Plotter.copy>` the default plotter)
+      to customize its styles, and make it the new *installed plotter*,
+      affecting all calls in :class:`context <contextvars.ContextVar>`.
+
+      If customizing style constants is not enough, you may subclass :class:`.Plotter`
+      and install it.
+
+   3. Do as above (new *plotter*), but pass the customized plotter when calling
+      :meth:`.Plottable.plot()`.
+
+   This project does (2) in its own :file:`docs/source/conf.py` sphinx file.
+   In particular, it configures the base-url of operation node links
+   (by default, nodes do not link to any url).
+
 
 .. _sphinxext-examples:
 

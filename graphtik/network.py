@@ -1,6 +1,6 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-""":term:`Compile` & :term:`execute` network graphs of operations."""
+""":term:`compile` & :term:`execute` network graphs of operations."""
 import copy
 import logging
 import random
@@ -15,7 +15,7 @@ from typing import Any, Callable, Collection, List, Mapping, Optional, Tuple, Un
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import UNSET, Items, Plottable, aslist, astuple, jetsam
+from .base import UNSET, Items, PlotArgs, Plottable, aslist, astuple, jetsam
 from .config import (
     get_execution_pool,
     is_abort,
@@ -337,15 +337,11 @@ class Solution(ChainMap, Plottable):
         if ex:
             raise ex
 
-    def _build_pydot(self, **kws):
-        """delegate to network"""
-        graph = kws.get("graph")
-        if graph is None:
-            graph = kws["graph"] = self.plan.net.graph.copy()  # copy to annotate
-
-        graph.graph.setdefault("_name", f"solution-x{len(graph.nodes)}-nodes")
-        kws.setdefault("solution", self)
-        return self.plan._build_pydot(**kws)
+    def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
+        """delegate to plan, with solution"""
+        name = f"solution-x{len(self.plan.net.graph.nodes)}-nodes"
+        plot_args = plot_args.with_defaults(name=name, solution=self)
+        return self.plan.prepare_plot_args(plot_args)
 
 
 class _DataNode(str):
@@ -503,27 +499,21 @@ class ExecutionPlan(
         otherwise, *evictions* (along with prefect-evictions check) are skipped.
     """
 
-    def _build_pydot(self, **kws):
-        from .plot import build_pydot
+    def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
+        plot_args = plot_args.clone_or_merge_graph(self.net.graph)
+        graph = plot_args.graph
 
         clusters = None
-        if self.dag.nodes != self.net.graph.nodes:
+        if self.dag.nodes != graph.nodes:
             clusters = {n: "after pruning" for n in self.dag.nodes}
 
-        graph = kws.get("graph")
-        if graph is None:
-            graph = kws["graph"] = self.net.graph.copy()  # copy to annotate
-
-        graph.graph.setdefault("_name", f"plan-x{len(self.net.graph.nodes)}-nodes")
-        mykws = {
-            "steps": self.steps,
-            "inputs": self.needs,
-            "outputs": self.provides,
-            "clusters": clusters,
-        }
-        mykws.update(kws)
-
-        return build_pydot(**mykws)
+        return plot_args.with_defaults(
+            name=f"plan-x{len(graph.nodes)}-nodes",
+            steps=self.steps,
+            inputs=self.needs,
+            outputs=self.provides,
+            clusters=clusters,
+        )
 
     def __repr__(self):
         needs = aslist(self.needs, "needs")
@@ -944,18 +934,14 @@ class Network(Plottable):
         )
         return f"Network(x{len(self.graph.nodes)} nodes, x{len(ops)} ops: {''.join(steps)})"
 
-    def _build_pydot(self, **kws):
-        from .plot import build_pydot
-
-        graph = kws.get("graph")
-        if graph is None:
-            graph = kws["graph"] = self.graph.copy()  # copy to annotate
-
-        graph.graph.setdefault("_name", f"network-x{len(self.graph.nodes)}-nodes")
-        kws.setdefault("inputs", self.needs)
-        kws.setdefault("outputs", self.provides)
-
-        return build_pydot(**kws)
+    def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
+        plot_args = plot_args.clone_or_merge_graph(self.graph)
+        plot_args.with_defaults(
+            name=f"network-x{len(self.graph.nodes)}-nodes",
+            inputs=self.needs,
+            outputs=self.provides,
+        )
+        return plot_args
 
     def _append_operation(self, graph, operation: Operation):
         """

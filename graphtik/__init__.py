@@ -39,6 +39,9 @@ from .config import (
     tasks_marshalled,
 )
 
+## SEE ALSO: `.plot.installed_plotter()`, `.plot.set_installed_plotter()` &
+#  `.plot.get_installed_plotter()` configs, not imported, unless plot is needed..
+
 from .modifiers import *  # noqa, on purpose to include any new modifiers
 from .netop import compose
 from .network import AbortedException, IncompleteExecutionError

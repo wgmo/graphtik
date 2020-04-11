@@ -1,6 +1,6 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-""":term:`Configurations` for network execution, and utilities on them."""
+""":term:`configurations` for network execution, and utilities on them."""
 import ctypes
 from contextlib import contextmanager
 from contextvars import ContextVar

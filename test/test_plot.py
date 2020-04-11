@@ -12,13 +12,7 @@ import pytest
 from graphtik import base, compose, network, operation, plot
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
-from graphtik.plot import (
-    Plotter,
-    Style,
-    build_pydot,
-    default_plot_annotator,
-    plot_annotator,
-)
+from graphtik.plot import Plotter, Style, installed_plotter, get_installed_plotter
 
 
 @pytest.fixture
@@ -221,45 +215,70 @@ def test_plot_legend(pipeline, tmp_path):
     _check_plt_img(img)
 
 
-def test_link_to_legend(pipeline, monkeypatch):
-    """Test hierarchy of plotters"""
+def test_style_Ref():
+    s = plot.Ref("arch_url")
+    assert str(s) == "https://graphtik.readthedocs.io/en/latest/arch.html"
+    assert repr(s) == "Ref(<class 'graphtik.plot.Style'>, 'arch_url')"
+
+    class C:
+        arch_url = "1"
+
+    s = s.rebased(C)
+    assert str(s) == "1"
+    assert (
+        repr(s) == "Ref(<class 'test.test_plot.test_style_Ref.<locals>.C'>, 'arch_url')"
+    )
+
+
+def test_plotter_customizations(pipeline, monkeypatch):
     ## default URL
     #
-    url = Style.legend_url
+    url = Style.kw_legend["URL"]
     dot = str(pipeline.plot())
     assert url in dot
 
-    ## URL --> Style
+    ## New installed_plotter
     #
-    monkeypatch.setattr(Style, "legend_url", None)
+    with installed_plotter(Plotter(style=Style(kw_legend={"URL": None}))):
+        dot = str(pipeline.plot())
+        assert url not in dot
+
+        ## URL --> plotter in args
+        #
+        url1 = "http://example.1.org"
+        dot = str(pipeline.plot(plotter=Plotter(style=Style(kw_legend={"URL": url1}))))
+        assert url1 in dot
+        assert url not in dot
     dot = str(pipeline.plot())
+    assert url in dot
+
+    url2 = "http://example.2.org"
+    with installed_plotter(Plotter(style=Style(kw_legend={"URL": url2}))):
+        dot = str(pipeline.plot())
+        assert url2 in dot
+        assert url not in dot
+    dot = str(pipeline.plot())
+    assert url in dot
+    assert url1 not in dot
+
+    ## URL --> plotter in args
+    #
+    dot = str(pipeline.plot(plotter=Plotter(style=Style(kw_legend={"URL": None}))))
     assert url not in dot
 
-    monkeypatch.setattr(Style, "legend_url", "")
-    dot = str(pipeline.plot())
-    assert url not in dot
-
-    url2 = "http://example.1.org"
-    monkeypatch.setattr(Style, "legend_url", url2)
-    dot = str(pipeline.plot())
+    dot = str(pipeline.plot(plotter=Plotter(style=Style(kw_legend={"URL": url2}))))
     assert url2 in dot
     assert url not in dot
 
-    ## URL --> installed_lotter
-    #
-    # TODO: test installed-plotter contextvar
 
-    ## URL --> plotter-args
-    #
-    dot = str(pipeline.plot(plotter=Plotter(kw_legend={"URL": None})))
-    assert url not in dot
-    assert url2 not in dot
-
-    url3 = "http://example.2.org"
-    dot = str(pipeline.plot(plotter=Plotter(style=Style(legend_url=url3))))
-    assert url3 in dot
-    assert url not in dot
-    assert url2 not in dot
+def test_plotter_customizations_ignore_class(pipeline, monkeypatch):
+    # Class patches ignored
+    url = Style.kw_legend["URL"]
+    url_ignore = "http://foo.com"
+    monkeypatch.setitem(Style.kw_legend, "URL", url_ignore)
+    dot = str(pipeline.plot())
+    assert url in dot
+    assert url_ignore not in dot
 
 
 @pytest.fixture()
@@ -281,10 +300,10 @@ def test_node_quoting0(quoting_pipeline):
         fontname=italic;
         label=<graph>;
         splines=ortho;
-        <edge> [shape=invhouse];
-        <digraph&#58; strict> [shape=invhouse];
+        <edge> [shape=rect];
+        <digraph&#58; strict> [shape=rect];
         <node> [fontname=italic, shape=oval, tooltip=<&lt;built-in function add&gt;>];
-        <graph> [shape=house];
+        <graph> [shape=rect];
         <edge> -> <node>;
         <digraph&#58; strict> -> <node>;
         <node> -> <graph>;
@@ -295,51 +314,27 @@ def test_node_quoting0(quoting_pipeline):
     assert dot_str.strip() == exp
 
 
-def test_node_quoting1(quoting_pipeline):
-    with plot_annotator(
-        partial(default_plot_annotator, url_fmt="abc#%s", link_target="_self")
-    ):
-        dot_str = str(quoting_pipeline.plot())
-        print(dot_str)
-        exp = dedent(
-            """
-            digraph graph_ {
-            fontname=italic;
-            label=<graph>;
-            splines=ortho;
-            <edge> [shape=invhouse];
-            <digraph&#58; strict> [shape=invhouse];
-            <node> [URL=<abc#_operator.add>, fontname=italic, shape=oval, target=_self, tooltip=<&lt;built-in function add&gt;>];
-            <graph> [shape=house];
-            <edge> -> <node>;
-            <digraph&#58; strict> -> <node>;
-            <node> -> <graph>;
-            legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
-            }
-            """
-        ).strip()
-        assert dot_str.strip() == exp
+def test_node_quoting1(quoting_pipeline, monkeypatch):
+    style = get_installed_plotter().style
+    monkeypatch.setattr(style, "kw_op_url", {"url_format": "abc#%s", "target": "_self"})
 
-
-def test_node_quoting2(quoting_pipeline):
-    with plot_annotator(None):
-        dot_str = str(quoting_pipeline.plot())
-        print(dot_str)
-        exp = dedent(
-            """
-            digraph graph_ {
-            fontname=italic;
-            label=<graph>;
-            splines=ortho;
-            <edge> [shape=invhouse];
-            <digraph&#58; strict> [shape=invhouse];
-            <node> [fontname=italic, shape=oval];
-            <graph> [shape=house];
-            <edge> -> <node>;
-            <digraph&#58; strict> -> <node>;
-            <node> -> <graph>;
-            legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
-            }
-            """
-        ).strip()
-        assert dot_str.strip() == exp
+    dot_str = str(quoting_pipeline.plot())
+    print(dot_str)
+    exp = dedent(
+        """
+        digraph graph_ {
+        fontname=italic;
+        label=<graph>;
+        splines=ortho;
+        <edge> [shape=rect];
+        <digraph&#58; strict> [shape=rect];
+        <node> [URL=<abc#_operator.add>, fontname=italic, shape=oval, target=_self, tooltip=<&lt;built-in function add&gt;>];
+        <graph> [shape=rect];
+        <edge> -> <node>;
+        <digraph&#58; strict> -> <node>;
+        <node> -> <graph>;
+        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
+        }
+        """
+    ).strip()
+    assert dot_str.strip() == exp

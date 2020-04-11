@@ -30,7 +30,7 @@ import packaging.version
 from sphinx.application import Sphinx
 
 from graphtik.base import func_sourcelines
-from graphtik.plot import default_plot_annotator, set_plot_annotator
+from graphtik.plot import Plotter, Style, get_installed_plotter, set_installed_plotter
 
 
 log = logging.getLogger(__name__)
@@ -101,10 +101,10 @@ extlinks = {
     "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#"),
 }
 
-## Plot graphs with links to docs & tooltips with sources.
-set_plot_annotator(
-    partial(default_plot_annotator, url_fmt="../reference.html#%s", link_target="_top")
-)
+# Plot graphs with links to docs.
+plotter = get_installed_plotter().copy()
+plotter.style.kw_op_url = {"url_format": "../reference.html#%s", "target": "_top"}
+set_installed_plotter(plotter)
 
 github_slug = "pygraphkit/graphtik"
 try:
@@ -166,6 +166,7 @@ def linkcode_resolve(domain, info):
 
 
 rst_epilog = """
+.. include:: <s5defs.txt>
 .. _Graphkit: https://github.com/yahoo/graphkit
 .. _Graphviz: https://graphviz.org
 .. _pydot: https://github.com/pydot/pydot

@@ -292,7 +292,7 @@ class FunctionalOperation(Operation):
 
         return FunctionalOperation(**kw2)
 
-    def _prepare_args_error(
+    def _prepare_plot_args_error(
         self,
         exceptions: List[Tuple[Any, Exception]],
         missing: List,
@@ -484,7 +484,7 @@ class FunctionalOperation(Operation):
                     errors.append((n, nex))
 
             if errors or missing or varargs_bad:
-                raise self._prepare_args_error(
+                raise self._prepare_plot_args_error(
                     errors, missing, varargs_bad, named_inputs
                 )
 

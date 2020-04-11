@@ -10,7 +10,7 @@ from typing import Any, Callable, Mapping
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import UNSET, Items, Plottable, aslist, astuple, jetsam
+from .base import UNSET, Items, PlotArgs, Plottable, aslist, astuple, jetsam
 from .config import is_debug, reset_abort
 from .modifiers import optional, sideffect
 from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
@@ -245,23 +245,18 @@ class NetworkOperation(Operation, Plottable):
             marshalled=marshalled,
         )
 
-    def _build_pydot(self, **kws):
-        """delegate to network"""
+    def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
+        """Delegate to network if last-plan does not exist. """
         from .plot import quote_dot_word
 
-        if self.last_plan:
-            plotter = self.last_plan
-            net = plotter.net
-        else:
-            plotter = net = self.net
+        plottable = self.last_plan or self.net
+        plot_args = plot_args.with_defaults(name=self.name)
+        plot_args = plottable.prepare_plot_args(plot_args)
+        assert plot_args.graph, plot_args
 
-        graph = kws.get("graph")
-        if graph is None:
-            graph = kws["graph"] = net.graph.copy()  # copy to annotate
+        plot_args.graph.graph.setdefault("label", quote_dot_word(self.name))
 
-        graph.graph.setdefault("_name", self.name)
-        graph.graph.setdefault("label", quote_dot_word(self.name))
-        return plotter._build_pydot(**kws)
+        return plot_args
 
     def compile(
         self, inputs=None, outputs=UNSET, predicate: NodePredicate = UNSET

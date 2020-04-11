@@ -8,14 +8,14 @@ Architecture
 .. default-role:: term
 .. glossary::
 
-    COMPUTE
+    compute
     computation
         |v410-flowchart|
         The definition & execution of networked operation is split in 1+2 phases:
 
-        - `COMPOSITION`
-        - `COMPILATION`
-        - `EXECUTION`
+        - `composition`
+        - `compilation`
+        - `execution`
 
         ... it is constrained by these IO data-structures:
 
@@ -43,7 +43,7 @@ Architecture
 
 
     compose
-    COMPOSITION
+    composition
         The *phase* where `operation`\s are constructed and grouped into `netop`\s and
         corresponding `network`\s.
 
@@ -54,13 +54,13 @@ Architecture
               and build :class:`.NetworkOperation` instances.
 
     compile
-    COMPILATION
+    compilation
         The *phase* where the :class:`.Network` creates a new `execution plan`
         by `pruning` all `graph` nodes into a subgraph `dag`, and  deriving
         the `execution steps`.
 
     execute
-    EXECUTION
+    execution
     sequential
         The *phase* where the :class:`.ExecutionPlan` calls the underlying functions
         of all `operation`\s contained in `execution steps`, with `inputs`/`outputs`
@@ -77,7 +77,7 @@ Architecture
     parallel execution
     execution pool
     task
-        `Execute` `operation`\s *in parallel*, with a `thread pool` or `process pool`
+        `execute` `operation`\s *in parallel*, with a `thread pool` or `process pool`
         (instead of `sequential`).
         Operations and `netop` are marked as such on construction, or enabled globally
         from `configurations`.
@@ -108,9 +108,11 @@ Architecture
         Note that `sideffects` do not work when this is enabled.
 
     configurations
+    graphtik configuration
         The functions controlling `compile` & `execution` globally  are defined
-        in :mod:`.config` module and x1 in :mod:`.plot`;  they underlying global data
-        are stored in :class:`contextvars.ContextVar` instances, to allow for nested control.
+        in :mod:`.config` module and +1 in :mod:`graphtik.plot` module;
+        the underlying global data are stored in :class:`contextvars.ContextVar` instances,
+        to allow for nested control.
 
         All *boolean* configuration flags are **tri-state** (``None, False, True``),
         allowing to "force" all operations, when they are not set to the ``None``
@@ -189,7 +191,7 @@ Architecture
         Class :class:`.ExecutionPlan` perform the `execution` phase which contains
         the `dag` and the `steps`.
 
-        `Compile`\ed *execution plans* are cached in :attr:`.Network._cached_plans`
+        `compile`\ed *execution plans* are cached in :attr:`.Network._cached_plans`
         across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     inputs
@@ -242,7 +244,7 @@ Architecture
         from `solution` (or given by the user) when :meth:`.Operation.compute()`
         is called during `execution`.
 
-        `Modifiers` may annotate certain names as `optionals`, `sideffects`,
+        `modifiers` may annotate certain names as `optionals`, `sideffects`,
         or map them to differently named function arguments.
 
         The `graph` is laid out by matching the *needs* & `provides` of all *operations*.
@@ -253,7 +255,7 @@ Architecture
         stored into the `solution` or returned to the user after :meth:`.Operation.compute()`
         is called during `execution`.
 
-        `Modifiers` may annotate certain names as `sideffects`.
+        `modifiers` may annotate certain names as `sideffects`.
 
         The `graph` is laid out by matching the `needs` & *provides* of all *operations*.
 
@@ -262,7 +264,7 @@ Architecture
         `optionals` & `sideffects` (see :mod:`graphtik.modifiers` module).
 
     optionals
-        `Needs` corresponding either:
+        `needs` corresponding either:
 
         - to function arguments-with-defaults (annotated with :class:`.optional`), or
         - to ``*args`` (annotated with :class:`.vararg` & :class:`.varargs`),
@@ -352,6 +354,21 @@ Architecture
             to view the site of this project::
 
                 python -m http.server 8080 --directory build/sphinx/html/
+
+    plotter
+        A :class:`.Plotter` is responsible for rendering `plottable`\s as images.
+        It is the `installed plotter` that does that, unless overridden in a
+        :meth:`.Plottable.plot()` call.
+        Plotters can be customized by :ref:`various means <plot-customizations>`.
+
+    installed plotter
+        The `plotter` currently installed in the respective `graphtik configuration`
+        with one of :func:`.installed_plotter` or :func:`.set_installed_plotter`
+        functions - this term implies also any :ref:`plot-customizations`
+        done on the installed plotter's :class:`.plot.Style` attribute.
+
+        The **default** *installed plotter* is the plotter instance that this project
+        comes pre-configured with, ie, when no *plot-customizations* have yet happened.
 
 
 .. default-role:: obj
