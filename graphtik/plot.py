@@ -132,6 +132,20 @@ def _monkey_patch_for_jupyter(pydot):
     if not hasattr(pydot.Dot, "_repr_html_"):
         pydot.Dot._repr_html_ = _dot2svg
 
+        import dot_parser
+
+        def parse_dot_data(s):
+            """Patched to fix pydot/pydot#171 by letting ex bubble-up."""
+            global top_graphs
+
+            top_graphs = list()
+            graphparser = dot_parser.graph_definition()
+            graphparser.parseWithTabs()
+            tokens = graphparser.parseString(s)
+            return list(tokens)
+
+        dot_parser.parse_dot_data = parse_dot_data
+
 
 _monkey_patch_for_jupyter(pydot)
 
