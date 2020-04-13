@@ -370,7 +370,11 @@ class Style:
     ## DATA node
 
     kw_data = {}
-    kw_data_pruned = {"color": Ref("cancel_color"), "tooltip": "(pruned node)"}
+    kw_data_pruned = {
+        "color": Ref("cancel_color"),
+        "tooltip": "(pruned node)",
+        "fontcolor": Ref("cancel_color"),
+    }
     kw_data_in_plan = {"color": Ref("in_plan")}
     kw_data_in_solution = {"style": "filled", "fillcolor": Ref("fill_color")}
     kw_data_overwritten = {"style": "filled", "fillcolor": Ref("overwrite_color")}
@@ -387,7 +391,7 @@ class Style:
     kw_op = {}
     #: props only for HTML-Table label
     kw_op_label = {}
-    kw_op_pruned = {"color": Ref("cancel_color")}
+    kw_op_pruned = {"color": Ref("cancel_color"), "fontcolor": Ref("cancel_color")}
     kw_op_executed = {"fillcolor": Ref("fill_color")}
     kw_op_rescheduled = {"penwidth": Ref("resched_thickness")}
     kw_op_endured = {"penwidth": Ref("resched_thickness")}
@@ -414,7 +418,15 @@ class Style:
                         'HREF': op_url | hrefer | ee,
                         'TARGET': op_link_target | ee
                     } | xmlattr }}
-                    >{{ '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name }}</TD></TR
+                    >
+                    {%- if fontcolor -%}
+                        <FONT COLOR="{{ fontcolor }}">
+                    {%- endif -%}
+                    {{ '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name }}
+                    {%- if fontcolor -%}
+                        </FONT>
+                    {%- endif -%}
+                    </TD></TR
                 >
                 {%- if fn_name -%}
                 <TR><TD {{- {
@@ -422,7 +434,15 @@ class Style:
                             'HREF': fn_url | hrefer | ee,
                             'TARGET': fn_link_target | ee
                         } | xmlattr }}
-                    ><B>FN:</B> {{ fn_name | eee }}</TD></TR>
+                    >
+                    {%- if fontcolor -%}
+                        <FONT COLOR="{{ fontcolor }}">
+                    {%- endif -%}
+                    <B>FN:</B> {{ fn_name | eee }}
+                    {%- if fontcolor -%}
+                        </FONT>
+                    {%- endif -%}
+                    </TD></TR>
                 {%- endif %}
             </TABLE>>
             """

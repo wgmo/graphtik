@@ -71,6 +71,7 @@ def test_op_label_template_full():
         fn_name="the fn",
         penwidth="44",
         color="red",
+        fontcolor="blue",
         fillcolor="wheat",
         op_url="http://op_url.com<label>",
         op_tooltip='<op " \t tooltip>',
@@ -82,12 +83,12 @@ def test_op_label_template_full():
     got = plot._render_template(plot.Style.op_template, **kw)
     print(got)
     exp = """
-    <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BORDER="44" COLOR="red" BGCOLOR="wheat"
-        ><TR><TD BORDER="1" SIDES="b" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
-            ><B>OP:</B> <I>the op</I></TD></TR
-        ><TR><TD TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
-            ><B>FN:</B> the fn</TD></TR>
-    </TABLE>>
+        <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BORDER="44" COLOR="red" BGCOLOR="wheat"
+            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
+                ><FONT COLOR="blue"><B>OP:</B> <I>the op</I></FONT></TD></TR
+            ><TR><TD TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
+                ><FONT COLOR="blue"><B>FN:</B> the fn</FONT></TD></TR>
+        </TABLE>>
         """
 
     assert _striplines(got) == _striplines(exp)
