@@ -247,14 +247,15 @@ class NetworkOperation(Operation, Plottable):
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         """Delegate to network if last-plan does not exist. """
-        from .plot import quote_dot_word
+        from .plot import graphviz_html_string
 
         plottable = self.last_plan or self.net
         plot_args = plot_args.with_defaults(name=self.name)
         plot_args = plottable.prepare_plot_args(plot_args)
         assert plot_args.graph, plot_args
 
-        plot_args.graph.graph.setdefault("label", quote_dot_word(self.name))
+        plot_args.graph.graph.setdefault("label", graphviz_html_string(self.name))
+        plot_args.graph.graph["_source"] = "netop"
 
         return plot_args
 

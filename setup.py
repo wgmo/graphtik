@@ -15,7 +15,7 @@ with open("README.rst") as f:
 with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
-plot_deps = ["pydot"]
+plot_deps = ["pydot", "jinja2"]
 matplot_deps = plot_deps + ["matplotlib"]
 sphinx_deps = plot_deps + ["sphinx >=2"]
 test_deps = list(

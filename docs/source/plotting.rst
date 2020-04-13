@@ -324,7 +324,7 @@ Plot customizations
    You may customize the styles and/or *plotter* behavior with various methods,
    ordered by breadth of the effects (most broadly effecting method at the top):
 
-   1. Get and modify in-place the styles of the *default* :term:`installed plotter`,
+   1. Get and modify in-place the styles of the :term:`default installed plotter`,
       like that::
 
          get_installed_plotter().style.kw_op["fillcolor"] = "purple"

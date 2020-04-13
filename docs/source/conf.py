@@ -30,7 +30,7 @@ import packaging.version
 from sphinx.application import Sphinx
 
 from graphtik.base import func_sourcelines
-from graphtik.plot import Plotter, Style, get_installed_plotter, set_installed_plotter
+from graphtik import plot
 
 
 log = logging.getLogger(__name__)
@@ -101,10 +101,14 @@ extlinks = {
     "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#"),
 }
 
-# Plot graphs with links to docs.
-plotter = get_installed_plotter().copy()
-plotter.style.kw_op_url = {"url_format": "../reference.html#%s", "target": "_top"}
-set_installed_plotter(plotter)
+# Save dot files, for debug.
+graphtik_save_dot_files = True
+
+# Plot graphtik SVGs with links to docs.
+#
+plotter = plot.get_installed_plotter().copy()
+plotter.style.py_item_url_format = "../reference.html#%(dot_path)s"
+plot.set_installed_plotter(plotter)
 
 github_slug = "pygraphkit/graphtik"
 try:

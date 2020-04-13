@@ -1219,7 +1219,7 @@ def test_rescheduling(exemethod, resched, rescheduled):
     assert list(sol.canceled) == [canc]
     dot = str(sol.plot())
     assert "Grey" in dot  # Canceled
-    assert "penwidth=4" in dot  # Rescheduled
+    assert 'BORDER="4"' in dot  # Rescheduled
     assert "x2 partial-ops" in str(sol.check_if_incomplete())
     with pytest.raises(IncompleteExecutionError, match="x2 partial-ops"):
         assert sol.scream_if_incomplete()
@@ -1386,9 +1386,33 @@ def test_compose_another_network(exemethod, bools):
         )(sub),
         parallel=parallel2,
     )
+    ## Ensure all old-nodes were prefixed.
+    #
+    old_nodes = graphop.net.graph.nodes
+    new_nodes = bigger_graph.net.graph.nodes
+    for old_node in old_nodes:
+        if isinstance(old_node, Operation):
+            assert old_node not in new_nodes
+        else:
+            assert old_node in new_nodes
 
     sol = bigger_graph.compute({"a": 2, "b": 5, "c": 5}, ["a_minus_ab_minus_c"])
     assert sol == {"a_minus_ab_minus_c": -13}
+
+    ## Test Plots
+
+    ## Ensure all old-nodes were prefixed.
+    #
+    # Access all nodes from Network, where no "after pruning" cluster exists.
+    old_nodes = [n for n in graphop.net.plot().get_nodes()]
+    new_node_names = [n.get_name() for n in bigger_graph.net.plot().get_nodes()]
+
+    for old_node in old_nodes:
+        if old_node.get_shape() == "plain":  # Operation
+            assert old_node.get_name() not in new_node_names
+        else:
+            # legend-node included here.`
+            assert old_node.get_name() in new_node_names
 
 
 def test_abort(exemethod):

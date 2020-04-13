@@ -16,6 +16,14 @@ Changelog
 %%%%%%%%%
 
 
+v5.8.0 (8 Apr 2020, @ankostis): Plot job, fix RTD deps
+======================================================
++ FEAT(PLOT): plots are now fully configurable with *graph*, *node* & *edge*
+  ("non-private") attributes, conveyed with the `networkx` graph given to plot routine.
+
++ drop(plot): don't suppress the grafting of the title in netop images.
+
+
 v5.7.1 (7 Apr 2020, @ankostis): Plot job, fix RTD deps
 ======================================================
 + ENH(PLOT): Operation tooltips now show function sources.

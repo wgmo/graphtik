@@ -341,7 +341,10 @@ class Solution(ChainMap, Plottable):
         """delegate to plan, with solution"""
         name = f"solution-x{len(self.plan.net.graph.nodes)}-nodes"
         plot_args = plot_args.with_defaults(name=name, solution=self)
-        return self.plan.prepare_plot_args(plot_args)
+        plot_args = self.plan.prepare_plot_args(plot_args)
+        plot_args.graph.graph["_source"] = "solution"
+
+        return plot_args
 
 
 class _DataNode(str):
@@ -507,6 +510,7 @@ class ExecutionPlan(
         if self.dag.nodes != graph.nodes:
             clusters = {n: "after pruning" for n in self.dag.nodes}
 
+        graph.graph["_source"] = "plan"
         return plot_args.with_defaults(
             name=f"plan-x{len(graph.nodes)}-nodes",
             steps=self.steps,
@@ -941,6 +945,7 @@ class Network(Plottable):
             inputs=self.needs,
             outputs=self.provides,
         )
+        plot_args.graph.graph["_source"] = "net"
         return plot_args
 
     def _append_operation(self, graph, operation: Operation):

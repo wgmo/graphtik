@@ -208,8 +208,7 @@ def func_source(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
         If given, better be a 2-tuple respecting types,
         or ``...``, to raise.
     :param human:
-        when true, partials denote their args like ``$fn(a=1, ...)`` in the returned text,
-        otherwise, just the (fqd-)name, appropriate for IDs.
+        when true, denote builtins like python does
     """
     import inspect
 
@@ -450,13 +449,30 @@ class Plottable(abc.ABC):
             No need to quote it, handled by the plotter, downstream.
         :param str graph:
             (optional) A :class:`nx.Digraph` with overrides to merge with the graph provided
-            by underlying plottables (depending of course on the :term:`installed plotter`).
-            It may contain "public" graph, node & edge attributes eventually reaching
-            `Graphviz`_.
+            by underlying plottables (translated by the :term:`installed plotter`).
 
-            .. Note::
-                Remember to properly escape values for `Graphviz`_
-                e.g. with :func:`html.escape()` or :func:`.plot.quote_dot_word()`.
+            It may contain "public" or "private *graph*, *node* & *edge* attributes:
+
+            - "private" attributes: those starting with underscore(``_``),
+              handled by :term:`plotter`:
+
+              - ``_source`` *(graph)*: a non user-overridable attribute with values
+                used to select plotter-styles::
+
+                    netop | net | plan | solution | <'_source` missing>
+              - ``_fn_link_target`` & ``_fn_link_target`` *(node)*: if truthy,
+                override result 2-tuple of :meth:`_get_fn_link()`.
+              - ``_op_tooltip`` & ``_fn_tooltip`` *(node)*: if truthy,
+                override those derrived from :meth:`_make_op_tooltip()` &
+                :meth:`_make_op_tooltip()`.
+
+            - "public" attributes: reaching `Graphviz`_ as-is.
+
+              .. Note::
+
+                Remember to escape those values as `Graphviz`_ HTML-Like strings
+                (use :func:`.plot.graphviz_html_string()`).
+
         :param inputs:
             an optional name list, any nodes in there are plotted
             as a "house"
@@ -552,7 +568,7 @@ class Plottable(abc.ABC):
         fontname=italic;
         label=<netop>;
         splines=ortho;
-        <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip=<(int) 1>];
+        <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
         ...
 
         """

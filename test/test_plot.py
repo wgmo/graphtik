@@ -2,17 +2,18 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 
 import abc
+import pickle
 import sys
 from functools import partial
 from operator import add
-from textwrap import dedent
 
+import dill
 import pytest
 
 from graphtik import base, compose, network, operation, plot
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
-from graphtik.plot import Plotter, Style, installed_plotter, get_installed_plotter
+from graphtik.plot import Plotter, Style, get_installed_plotter, installed_plotter
 
 
 @pytest.fixture
@@ -56,6 +57,98 @@ def test_plotting_docstring():
     for ext in common_formats:
         assert ext in NetworkOperation.plot.__doc__
         assert ext in network.Network.plot.__doc__
+
+
+def _striplines(s):
+    if not s:
+        return s
+    return "/n".join(i.strip() for i in s.strip().splitlines())
+
+
+def test_op_label_template_full():
+    kw = dict(
+        op_name="the op",
+        fn_name="the fn",
+        penwidth="44",
+        color="red",
+        fillcolor="wheat",
+        op_url="http://op_url.com<label>",
+        op_tooltip='<op " \t tooltip>',
+        op_link_target="_self",
+        fn_url='http://fn_url.com/quoto"and',
+        fn_tooltip="<fn\ntooltip>",
+        fn_link_target="_top",
+    )
+    got = plot._render_template(plot.Style.op_template, **kw)
+    print(got)
+    exp = """
+    <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BORDER="44" COLOR="red" BGCOLOR="wheat"
+        ><TR><TD BORDER="1" SIDES="b" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
+            ><B>OP:</B> <I>the op</I></TD></TR
+        ><TR><TD TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
+            ><B>FN:</B> the fn</TD></TR>
+    </TABLE>>
+        """
+
+    assert _striplines(got) == _striplines(exp)
+    for k, v in [
+        (k, v) for k, v in kw.items() if "tooltip" not in k and "url" not in k
+    ]:
+        assert v in got, (k, v)
+
+
+def test_op_label_template_empty():
+    got = plot._render_template(plot.Style.op_template)
+    print(got)
+    exp = """
+        <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+            ><TR><TD BORDER="1" SIDES="b"
+                ></TD></TR
+            >
+        </TABLE>>
+        """
+    assert _striplines(got) == _striplines(exp)
+
+
+def test_op_label_template_fn_empty():
+    got = plot._render_template(plot.Style.op_template, op_name="op", fn_name="fn")
+    print(got)
+    exp = """
+        <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+            ><TR><TD BORDER="1" SIDES="b"
+                ><B>OP:</B> <I>op</I></TD></TR
+            ><TR><TD
+                ><B>FN:</B> fn</TD></TR>
+        </TABLE>>
+        """
+    assert _striplines(got) == _striplines(exp)
+
+
+def test_op_label_template_nones():
+    kw = dict(
+        op_name=None,
+        fn_name=None,
+        penwidth=None,
+        color=None,
+        fillcolor=None,
+        op_url=None,
+        op_tooltip=None,
+        op_link_target=None,
+        fn_url=None,
+        fn_tooltip=None,
+        fn_link_target=None,
+    )
+    got = plot._render_template(plot.Style.op_template, **kw)
+    print(got)
+    exp = """
+        <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+            ><TR><TD BORDER="1" SIDES="b"
+                ></TD></TR
+            >
+        </TABLE>>
+        """
+
+    assert _striplines(got) == _striplines(exp)
 
 
 @pytest.mark.slow
@@ -217,7 +310,7 @@ def test_plot_legend(pipeline, tmp_path):
 
 def test_style_Ref():
     s = plot.Ref("arch_url")
-    assert str(s) == "https://graphtik.readthedocs.io/en/latest/arch.html"
+    assert s.target == "https://graphtik.readthedocs.io/en/latest/arch.html"
     assert repr(s) == "Ref(<class 'graphtik.plot.Style'>, 'arch_url')"
 
     class C:
@@ -228,6 +321,11 @@ def test_style_Ref():
     assert (
         repr(s) == "Ref(<class 'test.test_plot.test_style_Ref.<locals>.C'>, 'arch_url')"
     )
+
+    r = plot.Ref("resched_thickness")  # int target
+    str(r)  # should not scream
+    assert r.target == 4
+    assert repr(r) == "Ref(<class 'graphtik.plot.Style'>, 'resched_thickness')"
 
 
 def test_plotter_customizations(pipeline, monkeypatch):
@@ -281,60 +379,106 @@ def test_plotter_customizations_ignore_class(pipeline, monkeypatch):
     assert url_ignore not in dot
 
 
+@pytest.mark.xfail(reason="jinja2 template fails pickling")
+def test_plotter_pickle():
+    plotter = Plotter()
+    pickle.dumps(plotter)
+
+
+@pytest.mark.xfail(reason="jinja2 template fails dill")
+def test_plotter_dill():
+    plotter = Plotter()
+    dill.dumps(plotter)
+
+
+def func():
+    pass
+
+
 @pytest.fixture()
-def quoting_pipeline():
+def dot_str_pipeline():
     return compose(
         "graph",
         operation(name="node", needs=["edge", "digraph: strict"], provides=["<graph>"])(
             add
         ),
+        operation(
+            name="cu:sto:m", needs=["edge", "digraph: strict"], provides=["<graph>"]
+        )(func),
     )
 
 
-def test_node_quoting0(quoting_pipeline):
-    dot_str = str(quoting_pipeline.plot())
+def test_node_dot_str0(dot_str_pipeline):
+    dot_str = str(dot_str_pipeline.plot())
     print(dot_str)
-    exp = dedent(
-        """
+    exp = """
         digraph graph_ {
         fontname=italic;
         label=<graph>;
         splines=ortho;
         <edge> [shape=rect];
         <digraph&#58; strict> [shape=rect];
-        <node> [fontname=italic, shape=oval, tooltip=<&lt;built-in function add&gt;>];
-        <graph> [shape=rect];
+        <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)"
+                ><B>OP:</B> <I>node</I></TD></TR
+            ><TR><TD TOOLTIP="&lt;built-in function add&gt;"
+                ><B>FN:</B> _operator.add</TD></TR>
+        </TABLE>>, shape=plain, tooltip=<node>];
+        <&lt;graph&gt;> [shape=rect];
+        <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)"
+                ><B>OP:</B> <I>cu:sto:m</I></TD></TR
+            ><TR><TD TOOLTIP="def func():&#10;    pass"
+                ><B>FN:</B> test.test_plot.func</TD></TR>
+        </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
         <edge> -> <node>;
+        <edge> -> <cu&#58;sto&#58;m>;
         <digraph&#58; strict> -> <node>;
-        <node> -> <graph>;
-        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
+        <digraph&#58; strict> -> <cu&#58;sto&#58;m>;
+        <node> -> <&lt;graph&gt;>;
+        <cu&#58;sto&#58;m> -> <&lt;graph&gt;>;
+        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_top];
         }
         """
-    ).strip()
-    assert dot_str.strip() == exp
+
+    assert _striplines(dot_str) == _striplines(exp)
 
 
-def test_node_quoting1(quoting_pipeline, monkeypatch):
+def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     style = get_installed_plotter().style
-    monkeypatch.setattr(style, "kw_op_url", {"url_format": "abc#%s", "target": "_self"})
+    monkeypatch.setattr(style, "py_item_url_format", "abc#%s")
+    monkeypatch.setattr(style, "op_link_target", {"target": "_self"})
+    monkeypatch.setattr(style, "fn_link_target", {"target": "bad"})
 
-    dot_str = str(quoting_pipeline.plot())
+    dot_str = str(dot_str_pipeline.plot())
     print(dot_str)
-    exp = dedent(
-        """
+    exp = """
         digraph graph_ {
         fontname=italic;
         label=<graph>;
         splines=ortho;
         <edge> [shape=rect];
         <digraph&#58; strict> [shape=rect];
-        <node> [URL=<abc#_operator.add>, fontname=italic, shape=oval, target=_self, tooltip=<&lt;built-in function add&gt;>];
-        <graph> [shape=rect];
+        <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="{&#x27;target&#x27;: &#x27;bad&#x27;}"
+                ><B>OP:</B> <I>node</I></TD></TR
+            ><TR><TD TOOLTIP="&lt;built-in function add&gt;" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="{&#x27;target&#x27;: &#x27;bad&#x27;}"
+                ><B>FN:</B> _operator.add</TD></TR>
+        </TABLE>>, shape=plain, tooltip=<node>];
+        <&lt;graph&gt;> [shape=rect];
+        <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="{&#x27;target&#x27;: &#x27;bad&#x27;}"
+                ><B>OP:</B> <I>cu:sto:m</I></TD></TR
+            ><TR><TD TOOLTIP="def func():&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="{&#x27;target&#x27;: &#x27;bad&#x27;}"
+                ><B>FN:</B> test.test_plot.func</TD></TR>
+        </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
         <edge> -> <node>;
+        <edge> -> <cu&#58;sto&#58;m>;
         <digraph&#58; strict> -> <node>;
-        <node> -> <graph>;
-        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled];
+        <digraph&#58; strict> -> <cu&#58;sto&#58;m>;
+        <node> -> <&lt;graph&gt;>;
+        <cu&#58;sto&#58;m> -> <&lt;graph&gt;>;
+        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_top];
         }
         """
-    ).strip()
-    assert dot_str.strip() == exp
+    assert _striplines(dot_str) == _striplines(exp)

@@ -1,12 +1,11 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-Plotting of graphtik graphs.
+Plotting of graphtik graphs (see also plot-classes on :mod:`.base` module).
 
 Separate from `graphtik.base` to avoid too many imports too early.
 from contextlib import contextmanager
 """
-import copy
 import html
 import inspect
 import io
@@ -14,11 +13,14 @@ import json
 import logging
 import os
 import re
+import textwrap
 from collections import namedtuple
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
+from functools import partial
+from typing import Any, Callable, List, Mapping, NamedTuple, Optional, Tuple, Union
 
+import jinja2
 import networkx as nx
 import pydot
 from boltons.iterutils import remap
@@ -161,30 +163,54 @@ def _merge_conditions(*conds):
     return sum(int(bool(c)) << i for i, c in enumerate(conds))
 
 
-def quote_dot_word(word: Any):
+def graphviz_html_string(
+    s, *, repl_nl=None, repl_colon=None, xmltext=None,
+):
     """
     Workaround *pydot* parsing of node-id & labels by encoding as HTML.
 
     - `pydot` library does not quote DOT-keywords anywhere (pydot#111).
-    - Char ``:`` denote port/compass-points and break IDs (pydot#224).
+    - Char ``:`` on node-names denote port/compass-points and break IDs (pydot#224).
     - Non-strings are not quoted_if_necessary by pydot.
+    - NLs im tooltips of HTML-Table labels `need substitution with the XML-entity
+      <see https://stackoverflow.com/a/27448551/548792>`_.
+    - HTML-Label attributes (``xmlattr=True``) need both html-escape & quote.
 
     .. Attention::
         It does not correctly handle ``ID:port:compass-point`` format.
 
     See https://www.graphviz.org/doc/info/lang.html)
     """
-    if word is None:
-        return word
-    word = str(word)
-    if not word:
-        return word
+    import html
 
-    if word[0] != "<" or word[-1] != ">":
-        word = f"<{html.escape(word)}>"
-    word = word.replace(":", "&#58;")
+    if s:
+        s = html.escape(s)
 
-    return word
+        if repl_nl:
+            s = s.replace("\n", "&#10;").replace("\t", "&#9;")
+        if repl_colon:
+            s = s.replace(":", "&#58;")
+        if not xmltext:
+            s = f"<{s}>"
+    return s
+
+
+def quote_html_tooltips(s):
+    """Graphviz HTML-Labels ignore NLs & TABs."""
+    if s:
+        s = html.escape(s.strip()).replace("\n", "&#10;").replace("\t", "&#9;")
+    return s
+
+
+def quote_node_id(s):
+    """See :func:`graphviz_html_string()`"""
+    return graphviz_html_string(s, repl_colon=True)
+
+
+def get_node_name(nx_node):
+    if isinstance(nx_node, Operation):
+        nx_node = nx_node.name
+    return quote_node_id(nx_node)
 
 
 def as_identifier(s):
@@ -215,9 +241,24 @@ def _pub_props(*d, **kw) -> None:
     return {k: v for k, v in dict(*d, *kw).items() if not str(k).startswith("_")}
 
 
-def _convey_pub_props(src: dict, dst: dict) -> None:
-    """Pass all keys from `src` not starting with underscore(``_``) into `dst`."""
-    dst.update((k, v) for k, v in src.items() if not str(k).startswith("_"))
+def _render_template(tpl: jinja2.Template, **kw) -> str:
+    """Ignore falsy values, to skip attributes in template all together. """
+    return tpl.render(**{k: v for k, v in kw.items() if v})
+
+
+class NodeArgs(NamedTuple):
+    """All the args for :meth:`.Plotter._make_node()` call. """
+
+    #: Where to add graphviz nodes & stuff.
+    dot: pydot.Dot
+    #: The node (data(str) or :class:`Operation`) as gotten from nx-graph.
+    nx_node: Any = None
+    #: Attributes gotten from nx-graph fot the given node.
+    node_attrs: dict = None
+    #: The pydot-node created
+    dot_node: Any = None
+    #: Collect the actual clustered `dot_nodes` among the given nodes.
+    clustered: dict = None
 
 
 class Ref:
@@ -237,27 +278,72 @@ class Ref:
         """Makes re-based clone to the given class/object."""
         return Ref(self.ref, base)
 
+    @property
+    def target(self):
+        return getattr(self.base, self.ref, "!missed!")
+
     def __repr__(self):
         return f"Ref({self.base}, '{self.ref}')"
 
     def __str__(self):
-        return getattr(self.base, self.ref, "!missed!")
+        return str(self.target)
+
+
+def _drop_gt_lt(x):
+    """SVGs break even with &gt;."""
+    return x and re.sub('[<>"]', "_", str(x))
+
+
+def _escape_or_none(context: jinja2.environment.EvalContext, x, escaper):
+    """Do not markup Nones/empties, not to break `xmlattr` filter."""
+    return x and jinja2.Markup(escaper(str(x)))
+
+
+_jinja2_env = jinja2.Environment()
+# Default `escape` filter breaks Nones for xmlattr.
+
+_jinja2_env.filters["ee"] = jinja2.evalcontextfilter(
+    partial(_escape_or_none, escaper=html.escape)
+)
+_jinja2_env.filters["eee"] = jinja2.evalcontextfilter(
+    partial(_escape_or_none, escaper=quote_html_tooltips)
+)
+_jinja2_env.filters["slug"] = jinja2.evalcontextfilter(
+    partial(_escape_or_none, escaper=as_identifier)
+)
+_jinja2_env.filters["hrefer"] = _drop_gt_lt
 
 
 class Style:
-    """Values applied like a theme - patch class or pass instance to plotter."""
+    """
+    The poor man's css-like :term:`plot styles` applied like a theme.
 
-    resched_thickness = 4
+    .. NOTE::
+        Changing class attributes AFTER the module has loaded WON'T change themes;
+        Either patch directly the :attr:`Plotter.style` of :term:`installed plotter`),
+        or pass a new styles to a new plotter, as described in :ref:`plot-customizations`.
+
+    """
+
+    ##########
+    ## VARIABLES
+
     fill_color = "wheat"
     failed_color = "LightCoral"
+    resched_thickness = 4
     cancel_color = "Grey"
     broken_color = "Red"
     overwrite_color = "SkyBlue"
     steps_color = "#009999"
-    in_plan = "#990000"
+    in_plan = "#000099"
+    #: See :meth:`.Plotter._make_py_item_link()`.
+    py_item_url_format: Union[str, Callable[[str], str]] = None
     #: the url to the architecture section explaining *graphtik* glossary,
     #: linked by legend.
     arch_url = "https://graphtik.readthedocs.io/en/latest/arch.html"
+
+    ##########
+    ## GRAPH
 
     kw_graph = {
         "graph_type": "digraph",
@@ -266,26 +352,102 @@ class Style:
         # <https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:splines>`_
         "splines": "ortho",
     }
-    kw_data = {}
-    kw_op = {}
-    kw_op_url = {
-        # See :meth:`.Pltter.annotate_plot_args()`
-        # Union[str, Callable[[str], str]]
-        # "url_format": None,
-        # "target": None,
+    #: styles per plot-type
+    kw_graph_type = {
+        "netop": {},
+        "net": {},
+        "plan": {},
+        "solution": {},
+        # nx-graphs without ``_source`` graph-attr
+        None: {},
     }
-    kw_op_executed = {"fillcolor": Ref("fill_color"), "style": "filled"}
-    kw_op_failed = {"fillcolor": Ref("failed_color"), "style": "filled"}
-    kw_op_canceled = {"fillcolor": Ref("cancel_color"), "style": "filled"}
-    kw_edge = {}
+    kw_graph_netop = {}
+    kw_graph_net = {}
+    kw_graph_plan = {}
+    kw_graph_solution = {}
 
-    #: If ``'URL'``` key missing/empty, no legend icon will be plotted.
+    ##########
+    ## DATA node
+
+    kw_data = {}
+    kw_data_in_plan = {"color": Ref("in_plan")}
+    kw_data_in_solution = {"style": "filled", "fillcolor": Ref("fill_color")}
+    kw_data_overwritten = {"style": "filled", "fillcolor": Ref("overwrite_color")}
+
+    ##########
+    ## OPERATION node
+
+    #: Keys to ignore from operation styles & node-attrs,
+    #: because they are handled internally by HTML-Label, and/or
+    #: interact badly with that label.
+    op_bad_html_label_keys = {"shape", "label", "style"}
+    op_link_target = fn_link_target = "_top"
+    #: props for operation node (outside of label))
+    kw_op = {}
+    #: props only for HTML-Table label
+    kw_op_label = {}
+    kw_op_executed = {"fillcolor": Ref("fill_color")}
+    kw_op_rescheduled = {"penwidth": Ref("resched_thickness")}
+    kw_op_endured = {"penwidth": Ref("resched_thickness")}
+    kw_op_failed = {"fillcolor": Ref("failed_color")}
+    kw_op_canceled = {"fillcolor": Ref("cancel_color")}
+    #: Applied only if :attr:`py_item_url_format` defined, or
+    #: ``"_op_link_target"`` in nx_node-attributes.
+
+    #: Try to mimic a regular `Graphviz`_ node attributes
+    #: (see examples in ``test.test_plot.test_op_template_full()`` for params).
+    #: TODO: fix jinja2 template is un-picklable!
+    op_template = _jinja2_env.from_string(
+        textwrap.dedent(
+            """\
+            <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+                {{- {
+                        'BORDER': penwidth | ee,
+                        'COLOR': color | ee,
+                        'BGCOLOR': fillcolor | ee
+                    } | xmlattr }}
+                ><TR><TD BORDER="1" SIDES="b"
+                {{- {
+                        'TOOLTIP': op_tooltip | truncate | eee,
+                        'HREF': op_url | hrefer | ee,
+                        'TARGET': op_link_target | ee
+                    } | xmlattr }}
+                    >{{ '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name }}</TD></TR
+                >
+                {%- if fn_name -%}
+                <TR><TD {{- {
+                            'TOOLTIP': fn_tooltip | truncate | eee,
+                            'HREF': fn_url | hrefer | ee,
+                            'TARGET': fn_link_target | ee
+                        } | xmlattr }}
+                    ><B>FN:</B> {{ fn_name | eee }}</TD></TR>
+                {%- endif %}
+            </TABLE>>
+            """
+        ).strip(),
+    )
+
+    ##########
+    ## EDGE
+
+    kw_edge = {}
+    kw_edge_optional = {"style": "dashed"}
+    kw_edge_sideffect = {"color": "blue"}
+    kw_edge_rescheduled = {"style": "dotted"}
+    kw_edge_endured = {"style": "dotted"}
+    kw_edge_broken = {"color": Ref("broken_color")}
+
+    ##########
+    ## Other
+
+    #: If ``'URL'``` key missing/empty, no legend icon included in plots.
     kw_legend = {
         "name": "legend",
         "shape": "component",
         "style": "filled",
         "fillcolor": "yellow",
         "URL": "https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg",
+        "target": "_top",
     }
 
     def __init__(self, **kw):
@@ -299,17 +461,33 @@ class Style:
         self.resolve_refs(values)
 
     def resolve_refs(self, values: dict = None) -> None:
-        """Rebase any refs in styles, and deep copy (for free)."""
+        """
+        Rebase any refs in styles, and deep copy (for free) as instance attributes.
+
+        :raises:
+            Nothing(!), not to CRASH :term:`default installed plotter` on import-time.
+            Ref-errors are log-ERROR reported, and the item with the ref is skipped.
+        """
+
+        def remap_item(path, k, v):
+            if isinstance(v, Ref):
+                try:
+                    return (k, v.rebased(self).target)
+                except Exception as ex:
+                    log.error(
+                        "Invalid style-ref '%s.%s': '%r' --> '%s' due to: %s",
+                        ".".join(path),
+                        k,
+                        v,
+                        v,
+                        ex,
+                    )
+                    return False
+            return True
+
         if values is None:
             values = vars(self)
-        vars(self).update(
-            remap(
-                values,
-                lambda _p, k, v: (k, str(v.rebased(self)))
-                if isinstance(v, Ref)
-                else True,
-            )
-        )
+        vars(self).update(remap(values, remap_item))
 
 
 class Plotter:
@@ -327,24 +505,15 @@ class Plotter:
 
     def copy(self) -> "Plotter":
         """deep copy of all styles"""
-        return copy.deepcopy(self)
+        clone = type(self)(self.style)
+        clone.__dict__ = remap(vars(self), lambda *a: True)
+        return clone
 
     def plot(self, plot_args: PlotArgs):
-        plot_args = self.annotate_plot_args(plot_args)
-        dot = self.build_pydot(**plot_args.kw_build_pydot)
+        dot = self.build_pydot(plot_args)
         return self.render_pydot(dot, **plot_args.kw_render_pydot)
 
-    def build_pydot(
-        self,
-        graph: nx.Graph,
-        *,
-        name=None,
-        steps=None,
-        inputs=None,
-        outputs=None,
-        solution=None,
-        clusters=None,
-    ) -> pydot.Dot:
+    def build_pydot(self, plot_args: PlotArgs) -> pydot.Dot:
         """
         Build a |pydot.Dot|_ out of a Network graph/steps/inputs/outputs and return it
 
@@ -353,108 +522,55 @@ class Plotter:
         See :meth:`.Plottable.plot()` for the arguments, sample code, and
         the legend of the plots.
         """
+        graph, steps, solution = plot_args.graph, plot_args.steps, plot_args.solution
+        style = self.style
+
         if graph is None:
             raise ValueError("At least `graph` to plot must be given!")
 
-        style = self.style
-
-        new_clusters = {}
-
-        def append_or_cluster_node(dot, nx_node, node):
-            if not clusters or not nx_node in clusters:
-                dot.add_node(node)
-            else:
-                cluster_name = clusters[nx_node]
-                node_cluster = new_clusters.get(cluster_name)
-                if not node_cluster:
-                    node_cluster = new_clusters[cluster_name] = pydot.Cluster(
-                        cluster_name, label=cluster_name
-                    )
-                node_cluster.add_node(node)
-
-        def append_any_clusters(dot):
-            for cluster in new_clusters.values():
-                dot.add_subgraph(cluster)
-
-        def get_node_name(a):
-            if isinstance(a, Operation):
-                a = a.name
-            return quote_dot_word(a)
-
         kw = style.kw_graph.copy()
-        _convey_pub_props(graph.graph, kw)
+        kw.update(style.kw_graph_type[graph.graph.get("_source")])
+        kw.update(_pub_props(graph.graph))
         dot = pydot.Dot(**kw)
 
-        if name:
-            dot.set_name(as_identifier(name))
+        if plot_args.name:
+            dot.set_name(as_identifier(plot_args.name))
 
-        # draw nodes
+        ## NODES
+        #
+        base_node_args = node_args = NodeArgs(dot=dot, clustered={})
         for nx_node, data in graph.nodes(data=True):
-            if isinstance(nx_node, str):
-                # SHAPE change if with inputs/outputs.
-                # tip: https://graphviz.gitlab.io/_pages/doc/info/shapes.html
-                choice = _merge_conditions(
-                    inputs and nx_node in inputs, outputs and nx_node in outputs
-                )
-                shape = "rect invhouse house hexagon".split()[choice]
+            node_args = base_node_args._replace(nx_node=nx_node, node_attrs=data)
 
-                kw = {"name": quote_dot_word(nx_node), "shape": shape}
+            dot_node = self._make_node(plot_args, node_args)
+            node_args = node_args._replace(dot_node=dot_node)
 
-                # FrameColor change by step type
-                if steps and nx_node in steps:
-                    kw["color"] = style.in_plan
+            self._append_or_cluster_node(plot_args, node_args)
+        self._append_any_clustered_nodes(plot_args, node_args)
 
-                # LABEL change with solution.
-                if solution and nx_node in solution:
-                    kw["style"] = "filled"
-                    kw["fillcolor"] = (
-                        style.overwrite_color
-                        if nx_node in getattr(solution, "overwrites", ())
-                        else style.fill_color
-                    )
-
-            else:  # Operation
-                kw = {
-                    "shape": "oval",
-                    "name": quote_dot_word(nx_node.name),
-                    "fontname": "italic",
-                }
-
-                if nx_node.rescheduled:
-                    kw["penwidth"] = style.resched_thickness
-                if hasattr(solution, "is_failed") and solution.is_failed(nx_node):
-                    kw["style"] = "filled"
-                    kw["fillcolor"] = style.failed_color
-                elif nx_node in getattr(solution, "executed", ()):
-                    kw["style"] = "filled"
-                    kw["fillcolor"] = style.fill_color
-                elif nx_node in getattr(solution, "canceled", ()):
-                    kw["style"] = "filled"
-                    kw["fillcolor"] = style.cancel_color
-
-            _convey_pub_props(data, kw)
-            node = pydot.Node(**kw)
-            append_or_cluster_node(dot, nx_node, node)
-
-        append_any_clusters(dot)
-
-        # draw edges
+        ## EDGES
+        #
         for src, dst, data in graph.edges(data=True):
             src_name = get_node_name(src)
             dst_name = get_node_name(dst)
 
             kw = {}
             if data.get("optional"):
-                kw["style"] = "dashed"
+                kw.update(style.kw_edge_optional)
             if data.get("sideffect"):
-                kw["color"] = "blue"
+                kw.update(style.kw_edge_sideffect)
 
-            if getattr(src, "rescheduled", None) or getattr(src, "endured", None):
-                kw["style"] = "dashed"
-                if solution and dst not in solution and dst not in steps:
-                    kw["color"] = style.broken_color
+            is_broken = solution and dst not in solution and dst not in steps
+            if getattr(src, "rescheduled", None):
+                kw.update(style.kw_edge_rescheduled)
+                if is_broken:
+                    kw.update(style.kw_edge_broken)
+            if getattr(src, "endured", None):
+                kw.update(style.kw_edge_endured)
+                if is_broken:
+                    kw.update(style.kw_edge_broken)
 
-            _convey_pub_props(data, kw)
+            kw.update(_pub_props(data))
             edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
             dot.add_edge(edge)
 
@@ -480,12 +596,11 @@ class Plotter:
                 )
                 dot.add_edge(edge)
 
-        if style.kw_legend.get("URL"):
-            dot.add_node(pydot.Node(**style.kw_legend))
+        self._add_legend_icon(plot_args, node_args)
 
         return dot
 
-    def annotate_plot_args(self, plot_args: PlotArgs) -> None:
+    def _make_node(self, plot_args: PlotArgs, node_args: NodeArgs) -> pydot.Node:
         """
         Customize nodes, e.g. add doc URLs/tooltips, solution tooltips.
 
@@ -495,17 +610,9 @@ class Plotter:
         :return:
             the updated `plot_args`
 
-        Currently it populates the following *networkx* node-properties:
+        Currently it does the folllowing on operations:
 
-        1. Merge :attr:`Style.kw_op_url` dictionary on operation-nodes,
-           **only** if that style attribute contains a truthy value for the key
-           ``'url_format'``;  that key-value may be either:
-
-           - a callable ``format_url(fn_dot_path: str) -> str``, or
-           - an ``%s``-format string accepting the same function dot-path.
-
-            The above result is placed in a ``'URL'`` key, understood by `Graphviz`_,
-            and the ``'url_format'`` key is discarded before merge.
+        1. Set fn-link to `fn` documentation url (from edge_props['fn_url'] or discovered).
 
            .. Note::
                - SVG tooltips may not work without URL on PDFs:
@@ -520,37 +627,192 @@ class Plotter:
         """
         from .op import Operation
 
-        kw_op_url = self.style.kw_op_url
-        if not kw_op_url or not kw_op_url.get("url_format"):
-            kw_op_url = None
+        nx_node = node_args.nx_node
+        node_attrs = node_args.node_attrs
+        inputs = plot_args.inputs
+        outputs = plot_args.outputs
+        steps = plot_args.steps
+        solution = plot_args.solution
+        style = self.style
 
-        for nx_node, node_attrs in plot_args.graph.nodes.data():
-            tooltip = None
-            if isinstance(nx_node, Operation):
-                if kw_op_url and "URL" not in node_attrs:
-                    fn_path = func_name(nx_node.fn, None, mod=1, fqdn=1, human=0)
-                    if fn_path:
-                        url_fmt = kw_op_url["url_format"]
-                        url = (
-                            url_fmt(fn_path) if callable(url_fmt) else url_fmt % fn_path
-                        )
+        if isinstance(nx_node, str):  # DATA
+            # SHAPE change if with inputs/outputs.
+            # tip: https://graphviz.gitlab.io/_pages/doc/info/shapes.html
+            choice = _merge_conditions(
+                inputs and nx_node in inputs, outputs and nx_node in outputs
+            )
+            shape = "rect invhouse house hexagon".split()[choice]
 
-                        kw = kw_op_url.copy()
-                        del kw["url_format"]
-                        kw["URL"] = graphviz_html_string(url)
-                        node_attrs.update(kw)
-                if "tooltip" not in node_attrs:
-                    fn_source = func_source(nx_node.fn, None, human=1)
-                    if fn_source:
-                        node_attrs["tooltip"] = graphviz_html_string(fn_source)
-            else:  # DATA node
-                sol = plot_args.solution
-                if sol is not None and "tooltip" not in node_attrs:
-                    val = sol.get(nx_node)
-                    tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
-                    node_attrs["tooltip"] = graphviz_html_string(tooltip)
+            kw = {
+                "name": quote_node_id(nx_node),
+                "shape": shape,
+            }
 
-        return plot_args
+            if steps and nx_node in steps:
+                kw.update(style.kw_data_in_plan)
+
+            if solution is not None:
+                if nx_node in solution:
+                    kw.update(style.kw_data_in_solution)
+                    if nx_node in solution.overwrites:
+                        kw.update(style.kw_data_overwritten)
+
+                val = solution.get(nx_node)
+                tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
+                kw["tooltip"] = quote_html_tooltips(tooltip)
+
+            kw.update(_pub_props(node_attrs))
+
+        else:  # OPERATION
+
+            kw_label = style.kw_op_label.copy()
+            kw_label.update(
+                {
+                    "op_name": nx_node.name,
+                    "fn_name": func_name(nx_node.fn, mod=1, fqdn=1, human=1),
+                    "op_tooltip": self._make_op_tooltip(plot_args, node_args),
+                    "fn_tooltip": self._make_fn_tooltip(plot_args, node_args),
+                }
+            )
+
+            if nx_node.rescheduled:
+                kw_label.update(style.kw_op_rescheduled)
+            if nx_node.endured:
+                kw_label.update(style.kw_op_endured)
+            if solution:
+                if solution.is_failed(nx_node):
+                    kw_label.update(style.kw_op_failed)
+                elif nx_node in solution.executed:
+                    kw_label.update(style.kw_op_executed)
+                elif nx_node in solution.canceled:
+                    kw_label.update(style.kw_op_canceled)
+
+            (kw_label["op_url"], kw_label["op_link_target"]) = self._make_op_link(
+                plot_args, node_args
+            )
+            (kw_label["fn_url"], kw_label["fn_link_target"]) = self._make_fn_link(
+                plot_args, node_args
+            )
+
+            kw_label.update(_pub_props(node_attrs))
+
+            kw = {
+                "name": quote_node_id(nx_node.name),
+                "shape": "plain",
+                "label": _render_template(self.style.op_template, **kw_label),
+                "tooltip": graphviz_html_string(
+                    nx_node.name  # without it, "TABLE" shown...
+                ),
+            }
+
+            # Graphviz node attributes interacting badly with HTML-Labels.
+            #
+            bad_props = style.op_bad_html_label_keys
+            kw.update(
+                (k, v) for k, v in _pub_props(node_attrs).items() if k not in bad_props
+            )
+
+        return pydot.Node(**kw)
+
+    def _make_op_link(
+        self, plot_args: PlotArgs, node_args: NodeArgs
+    ) -> Tuple[Optional[str], Optional[str]]:
+        return self._make_py_item_link(plot_args, node_args, node_args.nx_node, "op")
+
+    def _make_fn_link(
+        self, plot_args: PlotArgs, node_args: NodeArgs
+    ) -> Tuple[Optional[str], Optional[str]]:
+        return self._make_py_item_link(plot_args, node_args, node_args.nx_node.fn, "fn")
+
+    def _make_py_item_link(
+        self, plot_args: PlotArgs, node_args: NodeArgs, item, prefix
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Deduce fn's url (e.g. docs) from style, or from override in  `node_attrs`.
+
+        :return:
+            Search and return, in this order, any pair with truthy "url" element:
+
+            1. node-attrs: ``(_{prefix}_url, _{prefix}_link_target)``
+            2. style-attributes: ``({prefix}_url, {prefix}_link_target)``
+            3. fallback: ``(None, None)``
+
+            An existent link-target from (1) still applies even if (2) is selected.
+        """
+        node_attrs = node_args.node_attrs
+        if f"_{prefix}_url" in node_attrs:
+            return (
+                node_attrs[f"_{prefix}_url"],
+                node_attrs.get(f"_{prefix}_link_target"),
+            )
+
+        fn_link = (None, None)
+        url_format = self.style.py_item_url_format
+        if url_format:
+            dot_path = func_name(node_args.nx_node.fn, None, mod=1, fqdn=1, human=0)
+            if dot_path:
+                url_data = {
+                    "dot_path": dot_path,
+                    "posix_path": dot_path.replace(".", "/"),
+                }
+
+                fn_url = (
+                    url_format(url_data)
+                    if callable(url_format)
+                    else url_format % url_data
+                )
+                fn_link = (
+                    fn_url,
+                    node_attrs.get(f"_{prefix}_link_target", self.style.fn_link_target),
+                )
+
+        return fn_link
+
+    def _make_op_tooltip(self, plot_args: PlotArgs, node_args: NodeArgs):
+        """the string-representation of an operation (name, needs, provides)"""
+        return node_args.node_attrs.get("_op_tooltip", str(node_args.nx_node))
+
+    def _make_fn_tooltip(self, plot_args: PlotArgs, node_args: NodeArgs):
+        """the sources of the operation-function"""
+        if "_fn_tooltip" in node_args.node_attrs:
+            return node_args.node_attrs["_fn_tooltip"]
+
+        fn_source = func_source(node_args.nx_node.fn, None, human=1)
+        if fn_source:
+            fn_source = fn_source
+
+        return fn_source
+
+    def _append_or_cluster_node(self, plot_args: PlotArgs, node_args: NodeArgs) -> None:
+        """Add dot-node in dot now, or "cluster" it, to be added later. """
+        # TODO remap netsed plot-clusters:
+        clusters = plot_args.clusters
+        clustered = node_args.clustered
+        nx_node = node_args.nx_node
+
+        if not clusters or not nx_node in clusters:
+            node_args.dot.add_node(node_args.dot_node)
+        else:
+            cluster_name = clusters[nx_node]
+            node_cluster = clustered.get(cluster_name)
+            if not node_cluster:
+                node_cluster = clustered[cluster_name] = pydot.Cluster(
+                    cluster_name, label=cluster_name
+                )
+            node_cluster.add_node(node_args.dot_node)
+
+    def _append_any_clustered_nodes(
+        self, plot_args: PlotArgs, node_args: NodeArgs
+    ) -> None:
+        # TODO remap netsed plot-clusters:
+        dot = node_args.dot
+        for cluster in node_args.clustered.values():
+            dot.add_subgraph(cluster)
+
+    def _add_legend_icon(self, plot_args: PlotArgs, node_args: NodeArgs):
+        """Optionally add an icon to diagrams linking to legend (if url given)."""
+        if self.style.kw_legend.get("URL"):
+            node_args.dot.add_node(pydot.Node(**self.style.kw_legend))
 
     def render_pydot(
         self, dot: pydot.Dot, filename=None, show=False, jupyter_render: str = None
@@ -646,8 +908,8 @@ class Plotter:
             failed      [shape=oval style=filled fillcolor=LightCoral fontname=italic
                         tooltip="Failed operation - downstream ops will cancel."
                         URL="%(arch_url)s#term-endurance"];
-            rescheduled  [shape=oval penwidth=4 fontname=italic
-                        tooltip="Operation may fail / provide partial outputs so `net` must reschedule."
+            rescheduled [shape=oval penwidth=4 fontname=italic label=<endured/rescheduled>
+                        tooltip="Operation may fail or provide partial outputs so `net` must reschedule."
                         URL="%(arch_url)s#term-reschedulling"];
             canceled    [shape=oval style=filled fillcolor=Grey fontname=italic
                         tooltip="Canceled operation due to failures or partial outputs upstream."
@@ -734,15 +996,6 @@ def legend(
 def supported_plot_formats() -> List[str]:
     """return automatically all `pydot` extensions"""
     return [".%s" % f for f in pydot.Dot().formats]
-
-
-def graphviz_html_string(s):
-    import html
-
-    if s:
-        s = html.escape(s).replace("\n", "&#10;")
-        s = f"<{s}>"
-    return s
 
 
 _installed_plotter: ContextVar[Plotter] = ContextVar(

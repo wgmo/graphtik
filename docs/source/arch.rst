@@ -359,16 +359,25 @@ Architecture
         A :class:`.Plotter` is responsible for rendering `plottable`\s as images.
         It is the `installed plotter` that does that, unless overridden in a
         :meth:`.Plottable.plot()` call.
-        Plotters can be customized by :ref:`various means <plot-customizations>`.
+        Plotters can be customized by :ref:`various means <plot-customizations>`,
+        such `plot styles`.
 
     installed plotter
-        The `plotter` currently installed in the respective `graphtik configuration`
-        with one of :func:`.installed_plotter` or :func:`.set_installed_plotter`
-        functions - this term implies also any :ref:`plot-customizations`
-        done on the installed plotter's :class:`.plot.Style` attribute.
+    default installed plotter
+        The `plotter` currently installed "in-context" of the respective `graphtik
+        configuration` - this term implies also any :ref:`plot-customizations`
+        done on the installed plotter (such as `plot styles`).
+
+        Installation happens by calling one of :func:`.installed_plotter` or
+        :func:`.set_installed_plotter` functions.
 
         The **default** *installed plotter* is the plotter instance that this project
         comes pre-configured with, ie, when no *plot-customizations* have yet happened.
+
+    plot styles
+        The attributes of :class:`.plot.Style` class.
+        The actual styles in-use are those in the :attr:`.Plotter.style` attribute
+        of the `installed plotter`.
 
 
 .. default-role:: obj
