@@ -16,10 +16,32 @@ Changelog
 %%%%%%%%%
 
 
-v5.8.0 (8 Apr 2020, @ankostis): Plot job, fix RTD deps
-======================================================
-+ FEAT(PLOT): plots are now fully configurable with *graph*, *node* & *edge*
-  ("non-private") attributes, conveyed with the `networkx` graph given to plot routine.
+v6.0.0 (13 Apr 2020, @ankostis): New Plotting Device...
+=======================================================
++ ENH/REFACT(PLOT):
+
+  + REFACT/BREAK: plots are now fully configurable with :term:`plot styles`
+    through the use of :term:`installed plotter`.
+  + ENH: Render operation nodes with Graphviz *HTML-Table Labels*.
+
+    .. graphtik::
+      :hide:
+
+      >>> from graphtik import compose, operation, varargs
+      >>> from graphtik import plot
+      >>> netop = compose('', operation(print, name='print-something', needs=varargs("any"), provides="str")())
+      >>> netop.net.graph.graph['label'] = None
+      >>> dot = netop.plot(
+      ...        plotter=plot.Plotter(style=plot.Style(kw_legend=None)),
+      ...        name=None
+      ... )
+
+  + ENH: Convey graph, node & edge ("non-private") attributes from the *networkx* graph
+    given to the :term:`plotter`.
+  + FEAT: Operation node link to docs (hackish, based on a URL formatting).
+  + Improved plotting documentation & +3 new terms.
+
+* FIX: ReadTheDice deps
 
 + drop(plot): don't suppress the grafting of the title in netop images.
 
