@@ -836,8 +836,9 @@ class Plotter:
 
     def _add_legend_icon(self, plot_args: PlotArgs, node_args: NodeArgs):
         """Optionally add an icon to diagrams linking to legend (if url given)."""
-        if self.style.kw_legend.get("URL"):
-            node_args.dot.add_node(pydot.Node(**self.style.kw_legend))
+        kw_legend = self.style.kw_legend
+        if kw_legend and self.style.kw_legend.get("URL"):
+            node_args.dot.add_node(pydot.Node(**kw_legend))
 
     def render_pydot(
         self, dot: pydot.Dot, filename=None, show=False, jupyter_render: str = None
