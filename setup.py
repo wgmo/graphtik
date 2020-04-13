@@ -15,7 +15,7 @@ with open("README.rst") as f:
 with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
-plot_deps = ["pydot", "jinja2"]
+plot_deps = ["pydot", "jinja2", "importlib_resources; python_version<'3.7'"]
 matplot_deps = plot_deps + ["matplotlib"]
 sphinx_deps = plot_deps + ["sphinx >=2"]
 test_deps = list(
@@ -52,6 +52,7 @@ setup(
         "Bug Tracker": "https://github.com/pygraphkit/graphtik/issues",
     },
     packages=find_packages(exclude=["test"]),
+    package_data={"graphtik.sphinxext": ["*.css"]},
     python_requires=">=3.6",
     install_requires=[
         "contextvars; python_version < '3.7'",
