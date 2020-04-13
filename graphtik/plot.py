@@ -370,6 +370,7 @@ class Style:
     ## DATA node
 
     kw_data = {}
+    kw_data_pruned = {"color": Ref("cancel_color"), "tooltip": "(pruned node)"}
     kw_data_in_plan = {"color": Ref("in_plan")}
     kw_data_in_solution = {"style": "filled", "fillcolor": Ref("fill_color")}
     kw_data_overwritten = {"style": "filled", "fillcolor": Ref("overwrite_color")}
@@ -386,6 +387,7 @@ class Style:
     kw_op = {}
     #: props only for HTML-Table label
     kw_op_label = {}
+    kw_op_pruned = {"color": Ref("cancel_color")}
     kw_op_executed = {"fillcolor": Ref("fill_color")}
     kw_op_rescheduled = {"penwidth": Ref("resched_thickness")}
     kw_op_endured = {"penwidth": Ref("resched_thickness")}
@@ -657,24 +659,29 @@ class Plotter:
                     if nx_node in solution.overwrites:
                         kw.update(style.kw_data_overwritten)
 
-                val = solution.get(nx_node)
-                tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
-                kw["tooltip"] = quote_html_tooltips(tooltip)
+                if nx_node not in solution.plan.dag.nodes:
+                    kw.update(**style.kw_data_pruned)
+                else:
+                    val = solution.get(nx_node)
+                    tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
+                    kw["tooltip"] = quote_html_tooltips(tooltip)
 
             kw.update(_pub_props(node_attrs))
 
         else:  # OPERATION
-
+            op_name = nx_node.name
             kw_label = style.kw_op_label.copy()
             kw_label.update(
                 {
-                    "op_name": nx_node.name,
+                    "op_name": op_name,
                     "fn_name": func_name(nx_node.fn, mod=1, fqdn=1, human=1),
                     "op_tooltip": self._make_op_tooltip(plot_args, node_args),
                     "fn_tooltip": self._make_fn_tooltip(plot_args, node_args),
                 }
             )
 
+            if steps and nx_node not in steps:
+                kw_label.update(style.kw_op_pruned)
             if nx_node.rescheduled:
                 kw_label.update(style.kw_op_rescheduled)
             if nx_node.endured:
@@ -700,9 +707,7 @@ class Plotter:
                 "name": quote_node_id(nx_node.name),
                 "shape": "plain",
                 "label": _render_template(self.style.op_template, **kw_label),
-                "tooltip": graphviz_html_string(
-                    nx_node.name  # without it, "TABLE" shown...
-                ),
+                "tooltip": graphviz_html_string(op_name),  # or else, "TABLE" shown...
             }
 
             # Graphviz node attributes interacting badly with HTML-Labels.

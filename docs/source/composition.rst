@@ -190,5 +190,8 @@ NetworkOperation('merged_graph',
 
 As always, we can run computations with this graph by simply calling it:
 
-   >>> merged_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["cab"])
+   >>> sol = merged_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["cab"])
+   >>> sol
    {'cab': 50}
+
+.. graphtik::
