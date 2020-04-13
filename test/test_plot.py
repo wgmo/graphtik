@@ -448,8 +448,8 @@ def test_node_dot_str0(dot_str_pipeline):
 def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     style = get_installed_plotter().style
     monkeypatch.setattr(style, "py_item_url_format", "abc#%s")
-    monkeypatch.setattr(style, "op_link_target", {"target": "_self"})
-    monkeypatch.setattr(style, "fn_link_target", {"target": "bad"})
+    monkeypatch.setattr(style, "op_link_target", "_self")
+    monkeypatch.setattr(style, "fn_link_target", "bad")
 
     dot_str = str(dot_str_pipeline.plot())
     print(dot_str)
@@ -461,16 +461,16 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         <edge> [shape=rect];
         <digraph&#58; strict> [shape=rect];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="{&#x27;target&#x27;: &#x27;bad&#x27;}"
+            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
                 ><B>OP:</B> <I>node</I></TD></TR
-            ><TR><TD TOOLTIP="&lt;built-in function add&gt;" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="{&#x27;target&#x27;: &#x27;bad&#x27;}"
+            ><TR><TD TOOLTIP="&lt;built-in function add&gt;" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
                 ><B>FN:</B> _operator.add</TD></TR>
         </TABLE>>, shape=plain, tooltip=<node>];
         <&lt;graph&gt;> [shape=rect];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="{&#x27;target&#x27;: &#x27;bad&#x27;}"
+            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
                 ><B>OP:</B> <I>cu:sto:m</I></TD></TR
-            ><TR><TD TOOLTIP="def func():&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="{&#x27;target&#x27;: &#x27;bad&#x27;}"
+            ><TR><TD TOOLTIP="def func():&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
                 ><B>FN:</B> test.test_plot.func</TD></TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
         <edge> -> <node>;
