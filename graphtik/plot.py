@@ -684,10 +684,10 @@ class Plotter:
             )
             shape = "rect invhouse house hexagon".split()[choice]
 
-            kw = {
-                "name": quote_node_id(nx_node),
-                "shape": shape,
-            }
+            kw = style.kw_data.copy()
+            kw.update(
+                {"name": quote_node_id(nx_node), "shape": shape,}
+            )
 
             if steps and nx_node in steps:
                 kw.update(style.kw_data_in_plan)
