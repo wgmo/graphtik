@@ -353,9 +353,6 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         raise ex2
 
 
-_PlotArgs_render_args = {"filename", "show", "jupyter_render"}
-
-
 class PlotArgs(NamedTuple):
     """
     All the args of a :meth:`.Plottable.plot()` call,
@@ -409,16 +406,8 @@ class PlotArgs(NamedTuple):
         )
 
     @property
-    def kw_build_pydot(self) -> dict:
-        return {
-            k: v
-            for k, v in self._asdict().items()
-            if k not in _PlotArgs_render_args and k != "plotter"
-        }
-
-    @property
     def kw_render_pydot(self) -> dict:
-        return {k: v for k, v in self._asdict().items() if k in _PlotArgs_render_args}
+        return {k: getattr(self, k) for k in self._fields[-3:]}
 
 
 ## Defined here, to avoid subclasses importing `plot` module.
