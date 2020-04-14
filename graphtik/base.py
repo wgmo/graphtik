@@ -360,6 +360,8 @@ class PlotArgs(NamedTuple):
     check this method for a more detailed  explanation of its attributes.
     """
 
+    #: who is the callse
+    plottable: "Plottable" = None
     #: what to plot
     graph: "nx.Graph" = None
     #: The name of the graph in the dot-file (important for cmaps).
@@ -446,8 +448,14 @@ class Plottable(abc.ABC):
         :param show:
             If it evaluates to true, opens the  diagram in a  matplotlib window.
             If it equals `-1`, it plots but does not open the Window.
+        :param plottable:
+            the :term:`plottable` that ordered the plotting.
+            Automatically set downstreams to one of::
+
+                netop | net | plan | solution | <missing>
+
         :param plotter:
-            an instance to handle plotting; if none, the :term:`active plotter`
+            the :term:`plotter` to handle plotting; if none, the :term:`active plotter`
             is used by default.
         :param name:
             if not given, dot-lang graph would is named "G"; necessary to be unique
@@ -462,10 +470,6 @@ class Plottable(abc.ABC):
             - "private" attributes: those starting with underscore(``_``),
               handled by :term:`plotter`:
 
-              - ``_source`` *(graph)*: a non user-overridable attribute with values
-                used to select plotter-styles::
-
-                    netop | net | plan | solution | <'_source` missing>
               - ``_fn_link_target`` & ``_fn_link_target`` *(node)*: if truthy,
                 override result 2-tuple of :meth:`_get_fn_link()`.
               - ``_op_tooltip`` & ``_fn_tooltip`` *(node)*: if truthy,

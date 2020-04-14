@@ -342,7 +342,7 @@ class Solution(ChainMap, Plottable):
         name = f"solution-x{len(self.plan.net.graph.nodes)}-nodes"
         plot_args = plot_args.with_defaults(name=name, solution=self)
         plot_args = self.plan.prepare_plot_args(plot_args)
-        plot_args.graph.graph["_source"] = "solution"
+        plot_args = plot_args._replace(plottable=self)
 
         return plot_args
 
@@ -510,14 +510,16 @@ class ExecutionPlan(
         if self.dag.nodes != graph.nodes:
             clusters = {n: "after pruning" for n in self.dag.nodes}
 
-        graph.graph["_source"] = "plan"
-        return plot_args.with_defaults(
+        plot_args = plot_args.with_defaults(
             name=f"plan-x{len(graph.nodes)}-nodes",
             steps=self.steps,
             inputs=self.needs,
             outputs=self.provides,
             clusters=clusters,
         )
+        plot_args = plot_args._replace(plottable=self)
+
+        return plot_args
 
     def __repr__(self):
         needs = aslist(self.needs, "needs")
@@ -945,7 +947,8 @@ class Network(Plottable):
             inputs=self.needs,
             outputs=self.provides,
         )
-        plot_args.graph.graph["_source"] = "net"
+        plot_args = plot_args._replace(plottable=self)
+
         return plot_args
 
     def _append_operation(self, graph, operation: Operation):

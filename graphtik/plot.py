@@ -27,7 +27,8 @@ from boltons.iterutils import remap
 
 from .base import PlotArgs, func_name, func_source
 from .modifiers import optional
-from .network import _EvictInstruction
+from .netop import NetworkOperation
+from .network import ExecutionPlan, Network, Solution, _EvictInstruction
 from .op import Operation
 
 log = logging.getLogger(__name__)
@@ -353,14 +354,15 @@ class Style:
         "splines": "ortho",
     }
     #: styles per plot-type
-    kw_graph_type = {
-        "netop": {},
-        "net": {},
-        "plan": {},
-        "solution": {},
-        # nx-graphs without ``_source`` graph-attr
-        None: {},
+    kw_pottable_type = {
+        "NetworkOperation": {},
+        "Network": {},
+        "ExecutionPlan": {},
+        "Solution": {},
     }
+    #: For when type-name of :attr:`PlotArgs.plottable` is not found
+    #: in :attr:`.kw_plottable_type` ( ot missing altogether).
+    kw_pottable_type_unknown = {}
     kw_graph_netop = {}
     kw_graph_net = {}
     kw_graph_plan = {}
@@ -570,7 +572,11 @@ class Plotter:
             raise ValueError("At least `graph` to plot must be given!")
 
         kw = style.kw_graph.copy()
-        kw.update(style.kw_graph_type[graph.graph.get("_source")])
+        kw.update(
+            style.kw_pottable_type.get(
+                type(plot_args.plottable).__name__, style.kw_pottable_type_unknown,
+            )
+        )
         kw.update(_pub_props(graph.graph))
         dot = pydot.Dot(**kw)
 
