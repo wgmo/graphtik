@@ -330,13 +330,14 @@ class Style:
     ## VARIABLES
 
     fill_color = "wheat"
+    pruned_color = "LightGrey"
+    canceled_color = "DarkGrey"
     failed_color = "LightCoral"
     resched_thickness = 4
-    cancel_color = "Grey"
     broken_color = "Red"
     overwrite_color = "SkyBlue"
     steps_color = "#009999"
-    in_plan = "#000099"
+    evicted = "#000099"
     #: See :meth:`.Plotter._make_py_item_link()`.
     py_item_url_format: Union[str, Callable[[str], str]] = None
     #: the url to the architecture section explaining *graphtik* glossary,
@@ -373,13 +374,15 @@ class Style:
 
     kw_data = {}
     kw_data_pruned = {
-        "color": Ref("cancel_color"),
-        "tooltip": "(pruned node)",
-        "fontcolor": Ref("cancel_color"),
+        "fontcolor": Ref("pruned_color"),
+        "color": Ref("pruned_color"),
+        "tooltip": "(pruned)",
     }
-    kw_data_in_plan = {"color": Ref("in_plan")}
+    kw_data_to_evict = {}
     kw_data_in_solution = {"style": "filled", "fillcolor": Ref("fill_color")}
+    kw_data_evicted = {"color": Ref("evicted"), "tooltip": "(evicted)"}
     kw_data_overwritten = {"style": "filled", "fillcolor": Ref("overwrite_color")}
+    kw_data_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": "(canceled)"}
 
     ##########
     ## OPERATION node
@@ -393,12 +396,12 @@ class Style:
     kw_op = {}
     #: props only for HTML-Table label
     kw_op_label = {}
-    kw_op_pruned = {"color": Ref("cancel_color"), "fontcolor": Ref("cancel_color")}
+    kw_op_pruned = {"color": Ref("pruned_color"), "fontcolor": Ref("pruned_color")}
     kw_op_executed = {"fillcolor": Ref("fill_color")}
     kw_op_rescheduled = {"penwidth": Ref("resched_thickness")}
     kw_op_endured = {"penwidth": Ref("resched_thickness")}
     kw_op_failed = {"fillcolor": Ref("failed_color")}
-    kw_op_canceled = {"fillcolor": Ref("cancel_color")}
+    kw_op_canceled = {"fillcolor": Ref("canceled_color")}
     #: Applied only if :attr:`py_item_url_format` defined, or
     #: ``"_op_link_target"`` in nx_node-attributes.
 
@@ -694,8 +697,25 @@ class Plotter:
                 {"name": quote_node_id(nx_node), "shape": shape,}
             )
 
-            if steps and nx_node in steps:
-                kw.update(style.kw_data_in_plan)
+            is_pruned = (
+                (
+                    isinstance(plottable, ExecutionPlan)
+                    and nx_node not in plottable.dag.nodes
+                )
+                or (
+                    isinstance(plottable, Solution)
+                    and nx_node not in plottable.dag.nodes
+                )
+                or (solution and nx_node not in solution.dag.nodes)
+            )
+
+            if is_pruned:
+                assert (
+                    not steps or nx_node not in steps
+                ), f"Given `steps` missmatch `plan` and/or `solution`!\n  {plot_args}"
+                kw.update(**style.kw_data_pruned)
+            elif steps and nx_node in steps:
+                kw.update(style.kw_data_to_evict)
 
             if solution is not None:
                 if nx_node in solution:
@@ -703,12 +723,11 @@ class Plotter:
                     if nx_node in solution.overwrites:
                         kw.update(style.kw_data_overwritten)
 
-                if nx_node not in solution.plan.dag.nodes:
-                    kw.update(**style.kw_data_pruned)
-                else:
                     val = solution.get(nx_node)
                     tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
                     kw["tooltip"] = quote_html_tooltips(tooltip)
+                elif not is_pruned:
+                    kw.update(**style.kw_data_canceled)
 
             kw.update(_pub_props(node_attrs))
 
@@ -978,7 +997,7 @@ class Plotter:
             inp_out [shape=hexagon label="inp+out"
                     tooltip="Data both given and asked."
                     URL="%(arch_url)s#term-netop"];
-            evicted [shape=rect color="%(in_plan)s"
+            evicted [shape=rect color="%(evicted)s"
                     tooltip="Instruction step to erase data from solution, to save memory."
                     URL="%(arch_url)s#term-evictions"];
             sol     [shape=rect style=filled fillcolor=wheat label="in solution"
