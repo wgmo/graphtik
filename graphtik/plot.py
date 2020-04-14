@@ -674,13 +674,12 @@ class Plotter:
         """
         from .op import Operation
 
+        style = self.style
         nx_node = node_args.nx_node
         node_attrs = node_args.node_attrs
-        inputs = plot_args.inputs
-        outputs = plot_args.outputs
-        steps = plot_args.steps
-        solution = plot_args.solution
-        style = self.style
+        (plottable, _, _, steps, inputs, outputs, solution, *_,) = plot_args
+        if solution is None and isinstance(plottable, Solution):
+            solution = plottable
 
         if isinstance(nx_node, str):  # DATA
             # SHAPE change if with inputs/outputs.
