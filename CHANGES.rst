@@ -28,12 +28,12 @@ v6.0.0 (13 Apr 2020, @ankostis): New Plotting Device...
       :hide:
 
       >>> from graphtik import compose, operation, varargs
-      >>> from graphtik import plot
+      >>> from graphtik.plot import get_installed_plotter
       >>> netop = compose('', operation(print, name='print-something', needs=varargs("any"), provides="str")())
       >>> netop.net.graph.graph['label'] = None
       >>> dot = netop.plot(
-      ...        plotter=plot.Plotter(style=plot.Style(kw_legend=None)),
-      ...        name=None
+      ...     name=None,
+      ...     plotter=get_installed_plotter().with_styles(kw_legend=None),
       ... )
 
   + ENH: Convey graph, node & edge ("non-private") attributes from the *networkx* graph

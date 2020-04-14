@@ -472,12 +472,21 @@ class Style:
         "target": "_top",
     }
 
-    def __init__(self, **kw):
+    def __init__(self, _prototype: "Style" = None, **kw):
         """
         Deep-copy class-attributes (to avoid sideffects) and apply user-overrides,
 
         retargeting any :class:`Ref` on my self (from class's 'values).
+
+        :param _prototype:
+            If given, class-attributes are ignored, deep-copying "public" properties
+            only from this instance (and apply on top any `kw`).
         """
+        if _prototype is None:
+            _prototype = type(self)
+        else:
+            assert isinstance(_prototype, Style), _prototype
+
         values = {
             k: v
             for k, v in vars(type(self)).items()
@@ -515,6 +524,10 @@ class Style:
             values = vars(self)
         vars(self).update(remap(values, remap_item))
 
+    def with_set(self, **kw) -> "Style":
+        """Returns a deep-clone modified by `kw`."""
+        return type(self)(_prototype=self, **kw)
+
 
 class Plotter:
     """
@@ -526,14 +539,16 @@ class Plotter:
         controlling theming values & dictionaries for plots.
     """
 
-    def __init__(self, style=None):
-        self.style = style or Style()
+    def __init__(self, style: Style = None):
+        self.style: Style = style or Style()
 
-    def copy(self) -> "Plotter":
-        """deep copy of all styles"""
-        clone = type(self)(self.style)
-        clone.__dict__ = remap(vars(self), lambda *a: True)
-        return clone
+    def with_styles(self, **kw) -> "Plotter":
+        """
+        Returns a cloned plotter with deep-coped styles modified as given.
+
+        See also :meth:`Style.with_set()`.
+        """
+        return type(self)(self.style.with_set(**kw))
 
     def plot(self, plot_args: PlotArgs):
         dot = self.build_pydot(plot_args)

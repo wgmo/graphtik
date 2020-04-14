@@ -329,21 +329,25 @@ Plot customizations
 
          get_installed_plotter().style.kw_op["fillcolor"] = "purple"
 
-      This will affect all :meth:`.Plottable.plot()` calls for a python session.
-      You cannot change the *plotter* instance with this method - only styles
-      and monkeypatching.
+      - This will affect all :meth:`.Plottable.plot()` calls for a python session.
+      - You cannot change the *plotter* instance with this method - only styles
+        (and monkeypatching plotter's methods).
 
-   2. Create a new :class:`.Plotter` (or :meth:`clone <.Plotter.copy>` the default plotter)
-      to customize its styles, and make it the new *installed plotter*,
-      affecting all calls in :class:`context <contextvars.ContextVar>`.
+   2. Create a new :class:`.Plotter` with customized :attr:`.Plotter.style`, or
+      clone and customize the styles of an existing plotter by the use of
+      its :meth:`.Plotter.with_styles` method, and make that the new *installed plotter*.
 
-      If customizing style constants is not enough, you may subclass :class:`.Plotter`
-      and install it.
+      - This will affect all calls in :class:`context <contextvars.ContextVar>`.
+      - If customizing style constants is not enough, you may subclass :class:`.Plotter`
+        and install it.
 
-   3. Do as above (new *plotter*), but pass the customized plotter when calling
-      :meth:`.Plottable.plot()`.
+   3. Take any *plotter*, customize its clone, and then call :meth:`.Plottable.plot()`,
+      with something like that::
 
-   This project does (2) in its own :file:`docs/source/conf.py` sphinx file.
+         netop.plot(plotter=get_installed_plotter().with_styles(kw_legend=None))
+
+
+   This project dogfoods (2) in its own :file:`docs/source/conf.py` sphinx file.
    In particular, it configures the base-url of operation node links
    (by default, nodes do not link to any url).
 
