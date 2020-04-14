@@ -301,14 +301,14 @@ def test_func_name_partial_empty(kw, exp):
         #
         ({"mod": 0, "fqdn": 0, "human": 0}, "_foo"),
         ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base._foo"),
-        ({"mod": 0, "fqdn": 0, "human": 1}, "_foo((1,), {'a': 2}, ...)"),
-        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base._foo((1,), {'a': 2}, ...)"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "_foo(1, a=2, ...)"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base._foo(1, a=2, ...)"),
         ## FQDN = 1
         #
         ({"mod": 0, "fqdn": 1, "human": 0}, "_foo"),
         ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._foo"),
-        ({"mod": 0, "fqdn": 1, "human": 1}, "_foo((1,), {'a': 2}, ...)"),
-        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._foo((1,), {'a': 2}, ...)"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_foo(1, a=2, ...)"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._foo(1, a=2, ...)"),
     ],
 )
 def test_func_name_partial_args(kw, exp):
@@ -322,20 +322,14 @@ def test_func_name_partial_args(kw, exp):
         #
         ({"mod": 0, "fqdn": 0, "human": 0}, "_foo"),
         ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base._foo"),
-        ({"mod": 0, "fqdn": 0, "human": 1}, "_foo((1,), {'a': 2, 'b': 3}, ...)"),
-        (
-            {"mod": 1, "fqdn": 0, "human": 1},
-            "test.test_base._foo((1,), {'a': 2, 'b': 3}, ...)",
-        ),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "_foo(1, a=2, b=3, ...)"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base._foo(1, a=2, b=3, ...)",),
         ## FQDN = 1
         #
         ({"mod": 0, "fqdn": 1, "human": 0}, "_foo"),
         ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._foo"),
-        ({"mod": 0, "fqdn": 1, "human": 1}, "_foo((1,), {'a': 2, 'b': 3}, ...)"),
-        (
-            {"mod": 1, "fqdn": 1, "human": 1},
-            "test.test_base._foo((1,), {'a': 2, 'b': 3}, ...)",
-        ),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "_foo(1, a=2, b=3, ...)"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._foo(1, a=2, b=3, ...)",),
     ],
 )
 def test_func_name_partial_x2(kw, exp):

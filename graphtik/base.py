@@ -161,9 +161,9 @@ def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]
         # Always bubble-up errors.
         fn_name = func_name(fn.func, default, mod, fqdn, human)
         if human:
-            args = [str(i) for i in (fn.args, fn.keywords) if i]
-            args.append("...")
-            args_str = ", ".join(args)
+            args = ", ".join(str(i) for i in fn.args)
+            kw = ", ".join(f"{k}={v}" for k, v in fn.keywords.items())
+            args_str = ", ".join(i for i in (args, kw) + ("...",) if i)
             fn_name = f"{fn_name}({args_str})"
 
         return fn_name
