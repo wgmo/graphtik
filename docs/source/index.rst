@@ -103,6 +103,10 @@ Run the graph-operation and request all of the outputs:
    >>> sol
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
+Solutions are :term:`plottable` as well:
+
+   >>> solution.plot('solution.svg')      # doctest: +SKIP
+
 .. graphtik::
 
 Run the graph-operation and request a subset of the outputs:
@@ -110,10 +114,6 @@ Run the graph-operation and request a subset of the outputs:
    >>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
    >>> solution
    {'a_minus_ab': -8}
-
-Solutions are :term:`plottable` as well:
-
-   >>> solution.plot('solution.svg')      # doctest: +SKIP
 
 .. graphtik::
 
