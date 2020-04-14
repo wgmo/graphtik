@@ -518,12 +518,10 @@ def test_impossible_outputs():
         operation(name="op2", needs=["aa", "bb"], provides="aabb")(identity),
     )
     with pytest.raises(ValueError) as exinfo:
-        netop.plot("t.pdf")
         netop.compute({"a": 1,}, ["aabb"])
     assert exinfo.match("Unreachable outputs")
 
     with pytest.raises(ValueError) as exinfo:
-        netop.plot("t.pdf")
         netop.compute({"a": 1,}, ["aa", "aabb"])
     assert exinfo.match("Unreachable outputs")
 
