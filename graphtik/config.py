@@ -99,7 +99,7 @@ regardless of asked outputs.
 
 
 @contextmanager
-def execution_pool(pool: "Optional[Pool]"):
+def execution_pool_plugged(pool: "Optional[Pool]"):
     """Like :func:`set_execution_pool()` as a context-manager to reset old value. """
     resetter = _execution_pool.set(pool)
     try:

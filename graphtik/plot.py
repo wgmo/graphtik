@@ -1049,7 +1049,7 @@ _installed_plotter: ContextVar[Plotter] = ContextVar(
 
 
 @contextmanager
-def installed_plotter(plotter: Plotter) -> None:
+def installed_plotter_plugged(plotter: Plotter) -> None:
     """Like :func:`set_installed_plotter()` as a context-manager to reset old value. """
     if not isinstance(plotter, Plotter):
         raise ValueError(f"Cannot install invalid plotter: {plotter}")

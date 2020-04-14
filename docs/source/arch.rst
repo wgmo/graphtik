@@ -368,7 +368,7 @@ Architecture
         configuration` - this term implies also any :ref:`plot-customizations`
         done on the installed plotter (such as `plot styles`).
 
-        Installation happens by calling one of :func:`.installed_plotter` or
+        Installation happens by calling one of :func:`.installed_plotter_plugged()` or
         :func:`.set_installed_plotter` functions.
 
         The **default** *installed plotter* is the plotter instance that this project

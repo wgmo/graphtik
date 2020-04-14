@@ -13,7 +13,12 @@ import pytest
 from graphtik import base, compose, network, operation, plot
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
-from graphtik.plot import Plotter, Style, get_installed_plotter, installed_plotter
+from graphtik.plot import (
+    Plotter,
+    Style,
+    get_installed_plotter,
+    installed_plotter_plugged,
+)
 
 
 @pytest.fixture
@@ -346,7 +351,7 @@ def test_plotter_customizations(pipeline, monkeypatch):
 
     ## New installed_plotter
     #
-    with installed_plotter(Plotter(style=Style(kw_legend={"URL": None}))):
+    with installed_plotter_plugged(Plotter(style=Style(kw_legend={"URL": None}))):
         dot = str(pipeline.plot())
         assert url not in dot
 
@@ -360,7 +365,7 @@ def test_plotter_customizations(pipeline, monkeypatch):
     assert url in dot
 
     url2 = "http://example.2.org"
-    with installed_plotter(Plotter(style=Style(kw_legend={"URL": url2}))):
+    with installed_plotter_plugged(Plotter(style=Style(kw_legend={"URL": url2}))):
         dot = str(pipeline.plot())
         assert url2 in dot
         assert url not in dot

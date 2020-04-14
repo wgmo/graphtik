@@ -16,7 +16,7 @@ from .config import (
     abort_run,
     debug,
     evictions_skipped,
-    execution_pool,
+    execution_pool_plugged,
     get_execution_pool,
     is_abort,
     is_debug,
@@ -39,7 +39,7 @@ from .config import (
     tasks_marshalled,
 )
 
-## SEE ALSO: `.plot.installed_plotter()`, `.plot.set_installed_plotter()` &
+## SEE ALSO: `.plot.installed_plotter_plugged()`, `.plot.set_installed_plotter()` &
 #  `.plot.get_installed_plotter()` configs, not imported, unless plot is needed..
 
 from .modifiers import *  # noqa, on purpose to include any new modifiers

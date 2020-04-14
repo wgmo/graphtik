@@ -25,7 +25,7 @@ from graphtik import (
     abort_run,
     compose,
     evictions_skipped,
-    execution_pool,
+    execution_pool_plugged,
     get_execution_pool,
     is_marshal_tasks,
     network,
@@ -85,7 +85,7 @@ def exemethod(request):
             else:
                 pool = mp_dummy.Pool(nsharks)
 
-            with execution_pool(pool), pool:
+            with execution_pool_plugged(pool), pool:
                 yield parallel
         else:
             yield parallel
@@ -1253,7 +1253,7 @@ def test_multithreading_plan_execution():
         )(partial(abspow, p=3)),
     )
 
-    with mp_dummy.Pool(int(2 * cpu_count())) as pool, execution_pool(pool):
+    with mp_dummy.Pool(int(2 * cpu_count())) as pool, execution_pool_plugged(pool):
         pool.map(
             # lambda i: graph.withset(name='graph').compute(
             lambda i: graph.compute(
