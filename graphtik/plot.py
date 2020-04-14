@@ -478,7 +478,11 @@ class Style:
 
         retargeting any :class:`Ref` on my self (from class's 'values).
         """
-        values = _pub_props(vars(type(self)))
+        values = {
+            k: v
+            for k, v in vars(type(self)).items()
+            if not callable(v) and not k.startswith("_")
+        }
         values.update(kw)
         self.resolve_refs(values)
 
