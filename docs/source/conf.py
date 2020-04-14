@@ -105,8 +105,8 @@ extlinks = {
 graphtik_save_dot_files = True
 
 # Plot graphtik SVGs with links to docs.
-plot.set_installed_plotter(
-    plot.get_installed_plotter().with_styles(
+plot.set_active_plotter(
+    plot.get_active_plotter().with_styles(
         py_item_url_format="../reference.html#%(dot_path)s"
     )
 )

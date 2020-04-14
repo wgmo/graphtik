@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-Plotting of graphtik graphs (see also plot-classes on :mod:`.base` module).
+Plotting of graph graphs handled by :term:`active plotter`.
 
 Separate from `graphtik.base` to avoid too many imports too early.
 from contextlib import contextmanager
@@ -320,7 +320,7 @@ class Style:
 
     .. NOTE::
         Changing class attributes AFTER the module has loaded WON'T change themes;
-        Either patch directly the :attr:`Plotter.style` of :term:`installed plotter`),
+        Either patch directly the :attr:`Plotter.style` of :term:`active plotter`),
         or pass a new styles to a new plotter, as described in :ref:`plot-customizations`.
 
     """
@@ -500,7 +500,7 @@ class Style:
         Rebase any refs in styles, and deep copy (for free) as instance attributes.
 
         :raises:
-            Nothing(!), not to CRASH :term:`default installed plotter` on import-time.
+            Nothing(!), not to CRASH :term:`default active plotter` on import-time.
             Ref-errors are log-ERROR reported, and the item with the ref is skipped.
         """
 
@@ -1030,11 +1030,11 @@ def legend(
     Generate a legend for all plots (see :meth:`.Plottable.plot()` for args)
 
     :param plotter:
-        override the :term:`installed plotter`
+        override the :term:`active plotter`
 
     See :meth:`Plotter.render_pydot` for the rest arguments.
     """
-    plotter = plotter or get_installed_plotter()
+    plotter = plotter or get_active_plotter()
     return plotter.legend(filename, show, jupyter_render)
 
 
@@ -1043,24 +1043,24 @@ def supported_plot_formats() -> List[str]:
     return [".%s" % f for f in pydot.Dot().formats]
 
 
-_installed_plotter: ContextVar[Plotter] = ContextVar(
-    "installed_plotter", default=Plotter()
-)
+_active_plotter: ContextVar[Plotter] = ContextVar("active_plotter", default=Plotter())
 
 
 @contextmanager
-def installed_plotter_plugged(plotter: Plotter) -> None:
-    """Like :func:`set_installed_plotter()` as a context-manager to reset old value. """
+def active_plotter_plugged(plotter: Plotter) -> None:
+    """
+    Like :func:`set_active_plotter()` as a context-manager, resetting back to old value.
+    """
     if not isinstance(plotter, Plotter):
         raise ValueError(f"Cannot install invalid plotter: {plotter}")
-    resetter = _installed_plotter.set(plotter)
+    resetter = _active_plotter.set(plotter)
     try:
         yield
     finally:
-        _installed_plotter.reset(resetter)
+        _active_plotter.reset(resetter)
 
 
-def set_installed_plotter(plotter: Plotter):
+def set_active_plotter(plotter: Plotter):
     """
     The default instance to render :term:`plottable`\\s,
 
@@ -1071,13 +1071,13 @@ def set_installed_plotter(plotter: Plotter):
     """
     if not isinstance(plotter, Plotter):
         raise ValueError(f"Cannot install invalid plotter: {plotter}")
-    return _installed_plotter.set(plotter)
+    return _active_plotter.set(plotter)
 
 
-def get_installed_plotter() -> Plotter:
-    """Get the previously installed  :class:`.Plotter` instance or default one."""
-    plotter = _installed_plotter.get()
+def get_active_plotter() -> Plotter:
+    """Get the previously active  :class:`.plotter` instance or default one."""
+    plotter = _active_plotter.get()
     if not isinstance(plotter, Plotter):
-        raise ValueError(f"Missing or invalid installed plotter: {plotter}")
+        raise ValueError(f"Missing or invalid active plotter: {plotter}")
 
     return plotter

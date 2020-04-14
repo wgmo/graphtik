@@ -16,8 +16,8 @@ from graphtik.netop import NetworkOperation
 from graphtik.plot import (
     Plotter,
     Style,
-    get_installed_plotter,
-    installed_plotter_plugged,
+    get_active_plotter,
+    active_plotter_plugged,
 )
 
 
@@ -349,9 +349,9 @@ def test_plotter_customizations(pipeline, monkeypatch):
     dot = str(pipeline.plot())
     assert url in dot
 
-    ## New installed_plotter
+    ## New active_plotter
     #
-    with installed_plotter_plugged(Plotter(style=Style(kw_legend={"URL": None}))):
+    with active_plotter_plugged(Plotter(style=Style(kw_legend={"URL": None}))):
         dot = str(pipeline.plot())
         assert url not in dot
 
@@ -365,7 +365,7 @@ def test_plotter_customizations(pipeline, monkeypatch):
     assert url in dot
 
     url2 = "http://example.2.org"
-    with installed_plotter_plugged(Plotter(style=Style(kw_legend={"URL": url2}))):
+    with active_plotter_plugged(Plotter(style=Style(kw_legend={"URL": url2}))):
         dot = str(pipeline.plot())
         assert url2 in dot
         assert url not in dot
@@ -465,7 +465,7 @@ def test_node_dot_str0(dot_str_pipeline):
 
 
 def test_node_dot_str1(dot_str_pipeline, monkeypatch):
-    style = get_installed_plotter().style
+    style = get_active_plotter().style
     monkeypatch.setattr(style, "py_item_url_format", "abc#%s")
     monkeypatch.setattr(style, "op_link_target", "_self")
     monkeypatch.setattr(style, "fn_link_target", "bad")

@@ -441,7 +441,7 @@ class Plottable(abc.ABC):
             If it evaluates to true, opens the  diagram in a  matplotlib window.
             If it equals `-1`, it plots but does not open the Window.
         :param plotter:
-            an instance to handle plotting; if none, the :term:`installed plotter`
+            an instance to handle plotting; if none, the :term:`active plotter`
             is used by default.
         :param name:
             if not given, dot-lang graph would is named "G"; necessary to be unique
@@ -449,7 +449,7 @@ class Plottable(abc.ABC):
             No need to quote it, handled by the plotter, downstream.
         :param str graph:
             (optional) A :class:`nx.Digraph` with overrides to merge with the graph provided
-            by underlying plottables (translated by the :term:`installed plotter`).
+            by underlying plottables (translated by the :term:`active plotter`).
 
             It may contain "public" or "private *graph*, *node* & *edge* attributes:
 
@@ -576,11 +576,11 @@ class Plottable(abc.ABC):
         del kw["self"]
         plot_args = PlotArgs(**kw)
 
-        from .plot import Plotter, get_installed_plotter
+        from .plot import Plotter, get_active_plotter
 
         if plotter and not isinstance(plotter, Plotter):
             raise ValueError(f"Invalid `plotter` argument given: {plotter}")
-        plot_args = plot_args._replace(plotter=plotter or get_installed_plotter())
+        plot_args = plot_args._replace(plotter=plotter or get_active_plotter())
 
         plot_args = self.prepare_plot_args(plot_args)
         assert plot_args.graph, plot_args

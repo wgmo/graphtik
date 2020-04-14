@@ -39,8 +39,8 @@ from .config import (
     tasks_marshalled,
 )
 
-## SEE ALSO: `.plot.installed_plotter_plugged()`, `.plot.set_installed_plotter()` &
-#  `.plot.get_installed_plotter()` configs, not imported, unless plot is needed..
+## SEE ALSO: `.plot.active_plotter_plugged()`, `.plot.set_active_plotter()` &
+#  `.plot.get_active_plotter()` configs, not imported, unless plot is needed..
 
 from .modifiers import *  # noqa, on purpose to include any new modifiers
 from .netop import compose

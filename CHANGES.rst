@@ -21,19 +21,19 @@ v6.0.0 (13 Apr 2020, @ankostis): New Plotting Device...
 + ENH/REFACT(PLOT):
 
   + REFACT/BREAK: plots are now fully configurable with :term:`plot styles`
-    through the use of :term:`installed plotter`.
+    through the use of :term:`installed plotter <active plotter>`.
   + ENH: Render operation nodes with Graphviz *HTML-Table Labels*.
 
     .. graphtik::
       :hide:
 
       >>> from graphtik import compose, operation, varargs
-      >>> from graphtik.plot import get_installed_plotter
+      >>> from graphtik.plot import get_active_plotter
       >>> netop = compose('', operation(print, name='print-something', needs=varargs("any"), provides="str")())
       >>> netop.net.graph.graph['label'] = None
       >>> dot = netop.plot(
       ...     name=None,
-      ...     plotter=get_installed_plotter().with_styles(kw_legend=None),
+      ...     plotter=get_active_plotter().with_styles(kw_legend=None),
       ... )
 
   + ENH: Convey graph, node & edge ("non-private") attributes from the *networkx* graph

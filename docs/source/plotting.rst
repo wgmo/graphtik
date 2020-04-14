@@ -324,10 +324,10 @@ Plot customizations
    You may customize the styles and/or *plotter* behavior with various methods,
    ordered by breadth of the effects (most broadly effecting method at the top):
 
-   1. Get and modify in-place the styles of the :term:`default installed plotter`,
+   1. Get and modify in-place the styles of the :term:`default active plotter`,
       like that::
 
-         get_installed_plotter().style.kw_op["fillcolor"] = "purple"
+         get_active_plotter().style.kw_op["fillcolor"] = "purple"
 
       - This will affect all :meth:`.Plottable.plot()` calls for a python session.
       - You cannot change the *plotter* instance with this method - only styles
@@ -335,7 +335,7 @@ Plot customizations
 
    2. Create a new :class:`.Plotter` with customized :attr:`.Plotter.style`, or
       clone and customize the styles of an existing plotter by the use of
-      its :meth:`.Plotter.with_styles` method, and make that the new *installed plotter*.
+      its :meth:`.Plotter.with_styles` method, and make that the new *active plotter*.
 
       - This will affect all calls in :class:`context <contextvars.ContextVar>`.
       - If customizing style constants is not enough, you may subclass :class:`.Plotter`
@@ -344,7 +344,7 @@ Plot customizations
    3. Take any *plotter*, customize its clone, and then call :meth:`.Plottable.plot()`,
       with something like that::
 
-         netop.plot(plotter=get_installed_plotter().with_styles(kw_legend=None))
+         netop.plot(plotter=get_active_plotter().with_styles(kw_legend=None))
 
 
    This project dogfoods (2) in its own :file:`docs/source/conf.py` sphinx file.

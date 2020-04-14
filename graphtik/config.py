@@ -1,6 +1,14 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-""":term:`configurations` for network execution, and utilities on them."""
+"""
+:term:`configurations` for network execution, and utilities on them.
+
+.. seealso:: methods :func:`.plot.active_plotter_plugged()`, :func:`.plot.set_active_plotter()`,
+    :func:`.plot.get_active_plotter()`
+
+    Plot configrations were not defined here, not to pollute import space early,
+    until they are actually needed.
+"""
 import ctypes
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -47,7 +55,9 @@ def _tristate_armed(context_var: ContextVar, enabled):
 
 
 debug = partial(_tristate_armed, _debug)
-"""Like :func:`set_debug()` as a context-manager to reset old value. """
+"""
+Like :func:`set_debug()` as a context-manager, resetting back to old value.
+"""
 is_debug = partial(_getter, _debug)
 """see :func:`set_debug()`"""
 set_debug = partial(_tristate_set, _debug)
@@ -84,7 +94,9 @@ def is_abort():
 
 
 evictions_skipped = partial(_tristate_armed, _skip_evictions)
-"""Like :func:`set_skip_evictions()` as a context-manager to reset old value. """
+"""
+Like :func:`set_skip_evictions()` as a context-manager, resetting back to old value.
+"""
 is_skip_evictions = partial(_getter, _skip_evictions)
 """see :func:`set_skip_evictions()`"""
 set_skip_evictions = partial(_tristate_set, _skip_evictions)
@@ -100,7 +112,9 @@ regardless of asked outputs.
 
 @contextmanager
 def execution_pool_plugged(pool: "Optional[Pool]"):
-    """Like :func:`set_execution_pool()` as a context-manager to reset old value. """
+    """
+    Like :func:`set_execution_pool()` as a context-manager, resetting back to old value.
+    """
     resetter = _execution_pool.set(pool)
     try:
         yield
@@ -124,7 +138,9 @@ def get_execution_pool() -> "Optional[Pool]":
 
 
 tasks_in_parallel = partial(_tristate_armed, _parallel_tasks)
-"""Like :func:`set_parallel_tasks()` as a context-manager to reset old value. """
+"""
+Like :func:`set_parallel_tasks()` as a context-manager, resetting back to old value.
+"""
 is_parallel_tasks = partial(_getter, _parallel_tasks)
 """see :func:`set_parallel_tasks()`"""
 set_parallel_tasks = partial(_tristate_set, _parallel_tasks)
@@ -141,7 +157,9 @@ Enable/disable globally :term:`parallel` execution of operations.
 
 
 tasks_marshalled = partial(_tristate_armed, _marshal_tasks)
-"""Like :func:`set_marshal_tasks()` as a context-manager to reset old value. """
+"""
+Like :func:`set_marshal_tasks()` as a context-manager, resetting back to old value.
+"""
 is_marshal_tasks = partial(_getter, _marshal_tasks)
 """see :func:`set_marshal_tasks()`"""
 set_marshal_tasks = partial(_tristate_set, _marshal_tasks)
@@ -160,7 +178,9 @@ inputs & outputs with :mod:`dill`,  which might help for pickling problems.
 
 
 operations_endured = partial(_tristate_armed, _endure_operations)
-"""Like :func:`set_endure_operations()` as a context-manager to reset old value. """
+"""
+Like :func:`set_endure_operations()` as a context-manager, resetting back to old value.
+"""
 is_endure_operations = partial(_getter, _endure_operations)
 """see :func:`set_endure_operations()`"""
 set_endure_operations = partial(_tristate_set, _endure_operations)
@@ -178,7 +198,9 @@ Enable/disable globally :term:`endurance` to keep executing even if some operati
 
 
 operations_reschedullled = partial(_tristate_armed, _reschedule_operations)
-"""Like :func:`set_reschedule_operations()` as a context-manager to reset old value. """
+"""
+Like :func:`set_reschedule_operations()` as a context-manager, resetting back to old value.
+"""
 is_reschedule_operations = partial(_getter, _reschedule_operations)
 """see :func:`set_reschedule_operations()`"""
 set_reschedule_operations = partial(_tristate_set, _reschedule_operations)
