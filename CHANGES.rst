@@ -16,6 +16,18 @@ Changelog
 %%%%%%%%%
 
 
+v6.1.0 (14 Apr 2020, @ankostis): config plugs & fix styles
+==========================================================
+Should have been a major bump due to breaking renames, but...no clients yet
+(and just out of to 5.x --> 6.x major bump).
+
++ REFACT/BREAK(plot): rename ``installed_plotter --> active_plotter``.
++ REFACT/BREAK(congfig): denote context-manager functions by adding a ``"_plugged"`` suffix.
++ FEAT(plot): offer ``with_XXX()`` cloning methods on Plotter/Style instances.
++ FIX(plot): Style cstor were had his methods broken due to eager copying them
+  from its parent class.
+
+
 v6.0.0 (13 Apr 2020, @ankostis): New Plotting Device...
 =======================================================
 + ENH/REFACT(PLOT):
