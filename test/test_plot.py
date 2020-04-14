@@ -84,9 +84,9 @@ def test_op_label_template_full():
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BORDER="44" COLOR="red" BGCOLOR="wheat"
-            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
+            ><TR><TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
                 ><FONT COLOR="blue"><B>OP:</B> <I>the op</I></FONT></TD></TR
-            ><TR><TD TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
+            ><TR><TD ALIGN="left" TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
                 ><FONT COLOR="blue"><B>FN:</B> the fn</FONT></TD></TR>
         </TABLE>>
         """
@@ -103,7 +103,7 @@ def test_op_label_template_empty():
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b"
+            ><TR><TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ></TD></TR
             >
         </TABLE>>
@@ -116,9 +116,9 @@ def test_op_label_template_fn_empty():
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b"
+            ><TR><TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ><B>OP:</B> <I>op</I></TD></TR
-            ><TR><TD
+            ><TR><TD ALIGN="left" TARGET=""
                 ><B>FN:</B> fn</TD></TR>
         </TABLE>>
         """
@@ -143,7 +143,7 @@ def test_op_label_template_nones():
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b"
+            ><TR><TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ></TD></TR
             >
         </TABLE>>
@@ -420,16 +420,16 @@ def test_node_dot_str0(dot_str_pipeline):
         <edge> [shape=rect];
         <digraph&#58; strict> [shape=rect];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)"
+            ><TR><TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET=""
                 ><B>OP:</B> <I>node</I></TD></TR
-            ><TR><TD TOOLTIP="&lt;built-in function add&gt;"
+            ><TR><TD ALIGN="left" TOOLTIP="&lt;built-in function add&gt;" TARGET=""
                 ><B>FN:</B> _operator.add</TD></TR>
         </TABLE>>, shape=plain, tooltip=<node>];
         <&lt;graph&gt;> [shape=rect];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)"
+            ><TR><TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET=""
                 ><B>OP:</B> <I>cu:sto:m</I></TD></TR
-            ><TR><TD TOOLTIP="def func():&#10;    pass"
+            ><TR><TD ALIGN="left" TOOLTIP="def func():&#10;    pass" TARGET=""
                 ><B>FN:</B> test.test_plot.func</TD></TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
         <edge> -> <node>;
@@ -461,16 +461,16 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         <edge> [shape=rect];
         <digraph&#58; strict> [shape=rect];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
+            ><TR><TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
                 ><B>OP:</B> <I>node</I></TD></TR
-            ><TR><TD TOOLTIP="&lt;built-in function add&gt;" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
+            ><TR><TD ALIGN="left" TOOLTIP="&lt;built-in function add&gt;" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
                 ><B>FN:</B> _operator.add</TD></TR>
         </TABLE>>, shape=plain, tooltip=<node>];
         <&lt;graph&gt;> [shape=rect];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-            ><TR><TD BORDER="1" SIDES="b" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
+            ><TR><TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
                 ><B>OP:</B> <I>cu:sto:m</I></TD></TR
-            ><TR><TD TOOLTIP="def func():&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
+            ><TR><TD ALIGN="left" TOOLTIP="def func():&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
                 ><B>FN:</B> test.test_plot.func</TD></TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
         <edge> -> <node>;
