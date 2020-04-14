@@ -407,46 +407,46 @@ class Style:
         textwrap.dedent(
             """\
             <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-                {{- {
-                        'BORDER': penwidth | ee,
-                        'COLOR': color | ee,
-                        'BGCOLOR': fillcolor | ee
-                    } | xmlattr }}
-                ><TR><TD BORDER="1" SIDES="b" ALIGN="left"
-                {{- {
-                        'TOOLTIP': op_tooltip | truncate | eee,
-                        'HREF': op_url | hrefer | ee,
-                        'TARGET': op_link_target | e
-                    } | xmlattr }}
+              {{- {
+              'BORDER': penwidth | ee,
+              'COLOR': color | ee,
+              'BGCOLOR': fillcolor | ee
+              } | xmlattr -}}>
+                <TR>
+                    <TD BORDER="1" SIDES="b" ALIGN="left"
+                      {{- {
+                      'TOOLTIP': op_tooltip | truncate | eee,
+                      'HREF': op_url | hrefer | ee,
+                      'TARGET': op_link_target | e
+                      } | xmlattr }}
                     >
-                    {%- if fontcolor -%}
-                        <FONT COLOR="{{ fontcolor }}">
-                    {%- endif -%}
-                    {{ '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name }}
-                    {%- if fontcolor -%}
-                        </FONT>
-                    {%- endif -%}
-                    </TD></TR
-                >
+                        {%- if fontcolor -%}<FONT COLOR="{{ fontcolor }}">{%- endif -%}
+                        {{- '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name -}}
+                        {%- if fontcolor -%}</FONT>{%- endif -%}
+                    </TD>
+                </TR>
                 {%- if fn_name -%}
-                <TR><TD ALIGN="left" {{- {
-                            'TOOLTIP': fn_tooltip | truncate | eee,
-                            'HREF': fn_url | hrefer | ee,
-                            'TARGET': fn_link_target | e
-                        } | xmlattr }}
-                    >
-                    {%- if fontcolor -%}
+                <TR>
+                    <TD ALIGN="left"
+                      {{- {
+                      'TOOLTIP': fn_tooltip | truncate | eee,
+                      'HREF': fn_url | hrefer | ee,
+                      'TARGET': fn_link_target | e
+                      } | xmlattr }}
+                      >
+                        {%- if fontcolor -%}
                         <FONT COLOR="{{ fontcolor }}">
-                    {%- endif -%}
-                    <B>FN:</B> {{ fn_name | eee }}
-                    {%- if fontcolor -%}
+                        {%- endif -%}
+                        <B>FN:</B> {{ fn_name | eee }}
+                        {%- if fontcolor -%}
                         </FONT>
-                    {%- endif -%}
-                    </TD></TR>
+                        {%- endif -%}
+                    </TD>
+                </TR>
                 {%- endif %}
             </TABLE>>
             """
-        ).strip(),
+        ).strip()
     )
 
     ##########
