@@ -238,14 +238,14 @@ class _Foo:
         #
         ({"mod": 0, "fqdn": 0, "human": 0}, "eval"),
         ({"mod": 1, "fqdn": 0, "human": 0}, "builtins.eval"),
-        ({"mod": 0, "fqdn": 0, "human": 1}, "eval"),
-        ({"mod": 1, "fqdn": 0, "human": 1}, "builtins.eval"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "<built-in function eval>"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "<built-in function eval>"),
         ## FQDN = 1
         #
         ({"mod": 0, "fqdn": 1, "human": 0}, "eval"),
         ({"mod": 1, "fqdn": 1, "human": 0}, "builtins.eval"),
-        ({"mod": 0, "fqdn": 1, "human": 1}, "eval"),
-        ({"mod": 1, "fqdn": 1, "human": 1}, "builtins.eval"),
+        ({"mod": 0, "fqdn": 1, "human": 1}, "<built-in function eval>"),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "<built-in function eval>"),
     ],
 )
 def test_func_name_builtin(kw, exp):

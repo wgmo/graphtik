@@ -438,7 +438,7 @@ def test_node_dot_str0(dot_str_pipeline):
                 ><B>OP:</B> <I>node</I></TD>
             </TR><TR>
                 <TD ALIGN="left" TOOLTIP="&lt;built-in function add&gt;" TARGET=""
-                ><B>FN:</B> _operator.add</TD>
+                ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
         <&lt;graph&gt;> [shape=rect];
@@ -485,7 +485,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
                 ><B>OP:</B> <I>node</I></TD>
             </TR><TR>
                 <TD ALIGN="left" TOOLTIP="&lt;built-in function add&gt;" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
-                ><B>FN:</B> _operator.add</TD>
+                ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
         <&lt;graph&gt;> [shape=rect];

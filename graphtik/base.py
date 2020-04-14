@@ -10,11 +10,11 @@ Generic or specific utilities  without polluting imports.
 """
 
 import abc
+import inspect
 import logging
 from collections import defaultdict, namedtuple
 from functools import partial, partialmethod, wraps
-from typing import Any, Collection, List, Mapping, NamedTuple, Optional
-from typing import Tuple, Union
+from typing import Any, Collection, List, Mapping, NamedTuple, Optional, Tuple, Union
 
 Items = Union[Collection, str, None]
 
@@ -157,6 +157,7 @@ def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]
 
     TBD
     """
+
     if isinstance(fn, (partial, partialmethod)):
         # Always bubble-up errors.
         fn_name = func_name(fn.func, default, mod, fqdn, human)
@@ -169,6 +170,8 @@ def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]
         return fn_name
 
     try:
+        if human and inspect.isbuiltin(fn):
+            return str(fn)
         fn_name = fn.__qualname__ if fqdn else fn.__name__
         assert fn_name
 
@@ -210,8 +213,6 @@ def func_source(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
     :param human:
         when true, denote builtins like python does
     """
-    import inspect
-
     try:
         if human and inspect.isbuiltin(fn):
             return str(fn)
@@ -234,8 +235,6 @@ def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
         If given, better be a 2-tuple respecting types,
         or ``...``, to raise.
     """
-    import inspect
-
     try:
         if human and inspect.isbuiltin(fn):
             return [str(fn)], -1
