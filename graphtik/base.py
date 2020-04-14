@@ -357,18 +357,33 @@ _PlotArgs_render_args = {"filename", "show", "jupyter_render"}
 
 
 class PlotArgs(NamedTuple):
-    """All the args of a :meth:`.Plottable.plot()` call. """
+    """
+    All the args of a :meth:`.Plottable.plot()` call,
 
-    plotter: "Plotter" = None
+    check this method for a more detailed  explanation of its attributes.
+    """
+
+    #: what to plot
     graph: "nx.Graph" = None
+    #: The name of the graph in the dot-file (important for cmaps).
     name: str = None
+    #: the list of execution plan steps.
     steps: Collection = None
+    #: the list of input names .
     inputs: Collection = None
+    #: the list of output names .
     outputs: Collection = None
+    #: Contains the computed results, which might be different from :attr:`plottable`.
     solution: "Solution" = None
+    #: a mapping of nodes to cluster names
     clusters: Mapping = None
+    #: if given, overrides :active plotter`
+    plotter: "Plotter" = None
+    #: jupyter configuration overrides
     jupyter_render: Mapping = None
+    #: where to write image
     filename: str = None
+    #: whether to show in a matplotlib window
     show: Union[bool, int] = None
 
     def clone_or_merge_graph(self, base_graph) -> "PlotArgs":
