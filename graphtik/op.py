@@ -20,6 +20,7 @@ from .base import (
     Plottable,
     aslist,
     astuple,
+    func_name,
     jetsam,
 )
 from .config import is_debug, is_reschedule_operations, is_solid_true
@@ -205,7 +206,7 @@ class FunctionalOperation(Operation):
 
         ## Overwrite reparsed op-data.
         if name is None:
-            name = str(fn)
+            name = func_name(fn, None, mod=0, fqdn=0, human=0)
         name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
         name, needs, real_provides = reparse_operation_data(name, needs, provides)
 
@@ -260,7 +261,7 @@ class FunctionalOperation(Operation):
         provides = aslist(self.provides, "provides")
         aliases = aslist(self.aliases, "aliases")
         aliases = f", aliases={aliases!r}" if aliases else ""
-        fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
+        fn_name = self.fn and func_name(self.fn, None, mod=0, fqdn=0, human=0)
         returns_dict_marker = self.returns_dict and "{}" or ""
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
         resched = "?" if self.rescheduled else ""
@@ -717,7 +718,7 @@ class operation:
         provides = aslist(self.provides, "provides")
         aliases = aslist(self.aliases, "aliases")
         aliases = f", aliases={aliases!r}" if aliases else ""
-        fn_name = self.fn and getattr(self.fn, "__name__", str(self.fn))
+        fn_name = self.fn and func_name(self.fn, None, mod=0, fqdn=0, human=0)
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
         resched = "?" if self.rescheduled else ""
         endured = "!" if self.endured else ""

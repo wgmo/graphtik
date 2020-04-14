@@ -88,7 +88,7 @@ into a computation graph:
 >>> graphop
 NetworkOperation('graphop', needs=['a', 'b', 'ab', 'a_minus_ab'],
                     provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed'],
-                    x3 ops: <built-in function mul>, <built-in function sub>, abs qubed)
+                    x3 ops: mul, sub, abs qubed)
 
 Run the graph and request all of the outputs:
 
