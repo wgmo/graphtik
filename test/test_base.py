@@ -459,8 +459,15 @@ def test_func_source_method(fn):
 
 
 @pytest.mark.parametrize("fn", [eval, fnt.partial(eval)])
-def test_func_source_builtin(fn):
-    exp = "<built-in function eval>"
+def test_func_source_builtin_id(fn):
+    exp = str(eval)
+    got = base.func_source(fn, human=0)
+    assert got == exp
+
+
+@pytest.mark.parametrize("fn", [eval, fnt.partial(eval)])
+def test_func_source_builtin_human(fn):
+    exp = "Evaluate the given source in the context of globals and locals."
     got = base.func_source(fn, human=1)
     assert got == exp
 

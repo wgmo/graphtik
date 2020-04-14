@@ -196,7 +196,7 @@ def _un_partial_ize(func):
     @wraps(func)
     def wrapper(fn, *args, **kw):
         if isinstance(fn, (partial, partialmethod)):
-            return func(fn.func, *args, **kw)
+            fn = fn.func
         return func(fn, *args, **kw)
 
     return wrapper
@@ -214,8 +214,11 @@ def func_source(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
         when true, denote builtins like python does
     """
     try:
-        if human and inspect.isbuiltin(fn):
-            return str(fn)
+        if inspect.isbuiltin(fn):
+            if human:
+                return inspect.getdoc(fn).splitlines()[0]
+            else:
+                return str(fn)
         return inspect.getsource(fn)
     except Exception as ex:
         if default is ...:

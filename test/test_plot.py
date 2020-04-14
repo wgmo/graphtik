@@ -422,6 +422,9 @@ def dot_str_pipeline():
     )
 
 
+@pytest.mark.xfail(
+    sys.version_info < (3, 7), reason="PY3.6- have different docstrings for builtins."
+)
 def test_node_dot_str0(dot_str_pipeline):
     dot_str = str(dot_str_pipeline.plot())
     print(dot_str)
@@ -437,7 +440,7 @@ def test_node_dot_str0(dot_str_pipeline):
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET=""
                 ><B>OP:</B> <I>node</I></TD>
             </TR><TR>
-                <TD ALIGN="left" TOOLTIP="&lt;built-in function add&gt;" TARGET=""
+                <TD ALIGN="left" TOOLTIP="Same as a + b." TARGET=""
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
@@ -464,6 +467,9 @@ def test_node_dot_str0(dot_str_pipeline):
     assert _striplines(dot_str) == _striplines(exp)
 
 
+@pytest.mark.xfail(
+    sys.version_info < (3, 7), reason="PY3.6 - has different docstrings for builtins."
+)
 def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     style = get_active_plotter().style
     monkeypatch.setattr(style, "py_item_url_format", "abc#%s")
@@ -484,7 +490,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
                 ><B>OP:</B> <I>node</I></TD>
             </TR><TR>
-                <TD ALIGN="left" TOOLTIP="&lt;built-in function add&gt;" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
+                <TD ALIGN="left" TOOLTIP="Same as a + b." HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
