@@ -380,10 +380,8 @@ class PlotArgs(NamedTuple):
     plotter: "Plotter" = None
     #: jupyter configuration overrides
     jupyter_render: Mapping = None
-    #: where to write image
-    filename: str = None
-    #: whether to show in a matplotlib window
-    show: Union[bool, int] = None
+    #: where to write image or show in a matplotlib window
+    filename: Union[str, bool, int] = None
 
     def clone_or_merge_graph(self, base_graph) -> "PlotArgs":
         """
@@ -409,7 +407,7 @@ class PlotArgs(NamedTuple):
 
     @property
     def kw_render_pydot(self) -> dict:
-        return {k: getattr(self, k) for k in self._fields[-3:]}
+        return {k: getattr(self, k) for k in self._fields[-2:]}
 
 
 ## Defined here, to avoid subclasses importing `plot` module.
@@ -425,8 +423,8 @@ class Plottable(abc.ABC):
 
     def plot(
         self,
-        filename=None,
-        show=False,
+        filename: Union[str, bool, int] = None,
+        show=None,
         *,
         plotter: "Plotter" = None,
         graph: "networkx.Graph" = None,
@@ -442,17 +440,21 @@ class Plottable(abc.ABC):
         Entry-point for plotting ready made operation graphs.
 
         :param str filename:
-            Write diagram into a file.
-            Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
-            call :func:`.plot.supported_plot_formats()` for more.
+            Write a file or open a `matplotlib` window.
 
-            :seealso: :attr:`.PlotArgs.filename`
-        :param show:
-            If it evaluates to true, opens the  diagram in a  matplotlib window.
-            If it equals `-1`, it plots but does not open the Window.
-            Requires `matplotlib` package to be installed.
+            - If it is a string or file, the diagram is written into the file-path
 
-            :seealso: :attr:`.PlotArgs.show`
+              Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
+              call :func:`.plot.supported_plot_formats()` for more.
+
+            - If it IS `True`, opens the  diagram in a  matplotlib window
+              (requires `matplotlib` package to be installed).
+
+            - If it equals `-1`, it mat-plots but does not open the window.
+
+            - Otherwise, just return the ``pydot.Dot`` instance.
+
+            :seealso: :attr:`.PlotArgs.filename`, :meth:`.Plotter.render_pydot()`
         :param plottable:
             the :term:`plottable` that ordered the plotting.
             Automatically set downstreams to one of::
@@ -520,6 +522,10 @@ class Plottable(abc.ABC):
             and apply for all future calls (see :ref:`jupyter_rendering`).
 
             :seealso: :attr:`.PlotArgs.jupyter_render`
+        :param show:
+            .. deprecated:: v6.1.1
+                Merged with `filename` param (filename takes precedence).
+
         :return:
             a |pydot.Dot|_ instance
             (for reference to as similar API to |pydot.Dot|_ instance, visit:
@@ -601,7 +607,19 @@ class Plottable(abc.ABC):
 
         """
         kw = locals().copy()
+
         del kw["self"]
+        show = kw.pop("show", None)
+        if show:
+            import warnings
+
+            warnings.warn(
+                "Argument `plot` has merged with `filename` and will be deleted soon.",
+                DeprecationWarning,
+            )
+            if not filename:
+                kw["filename"] = show
+
         plot_args = PlotArgs(**kw)
 
         from .plot import Plotter, get_active_plotter

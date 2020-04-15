@@ -883,21 +883,28 @@ class Plotter:
         if kw_legend and self.style.kw_legend.get("URL"):
             node_args.dot.add_node(pydot.Node(**kw_legend))
 
-    def render_pydot(
-        self, dot: pydot.Dot, filename=None, show=False, jupyter_render: str = None
-    ):
+    def render_pydot(self, dot: pydot.Dot, filename=None, jupyter_render: str = None):
         """
         Render a |pydot.Dot|_ instance with `Graphviz`_ in a file and/or in a matplotlib window.
 
         :param dot:
             the pre-built |pydot.Dot|_ instance
         :param str filename:
-            Write diagram into a file.
-            Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
-            call :func:`.supported_plot_formats()` for more.
-        :param show:
-            If it evaluates to true, opens the  diagram in a  matplotlib window.
-            If it equals `-1`, it returns the image but does not open the Window.
+            Write a file or open a `matplotlib` window.
+
+            - If it is a string or file, the diagram is written into the file-path
+
+              Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
+              call :func:`.plot.supported_plot_formats()` for more.
+
+            - If it IS `True`, opens the  diagram in a  matplotlib window
+              (requires `matplotlib` package to be installed).
+
+            - If it equals `-1`, it mat-plots but does not open the window.
+
+            - Otherwise, just return the ``pydot.Dot`` instance.
+
+            :seealso: :attr:`.PlotArgs.filename`
         :param jupyter_render:
             a nested dictionary controlling the rendering of graph-plots in Jupyter cells.
             If `None`, defaults to :data:`default_jupyter_render`;  you may modify those
@@ -907,16 +914,30 @@ class Plotter:
             something like this::
 
                 netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
-
         :return:
-            the matplotlib image if ``show=-1``, or the given `dot` annotated with any
+            the matplotlib image if ``filename=-1``, or the given `dot` annotated with any
             jupyter-rendering configurations given in `jupyter_render` parameter.
 
         See :meth:`.Plottable.plot()` for sample code.
         """
-        # Save plot
-        #
-        if filename:
+        if isinstance(filename, (bool, int)):
+            ## Display graph via matplotlib
+            #
+            import matplotlib.pyplot as plt
+            import matplotlib.image as mpimg
+
+            png = dot.create_png()
+            sio = io.BytesIO(png)
+            img = mpimg.imread(sio)
+            if filename != -1:
+                plt.imshow(img, aspect="equal")
+                plt.show()
+
+            return img
+
+        elif filename:
+            ## Save plot
+            #
             formats = supported_plot_formats()
             _basename, ext = os.path.splitext(filename)
             if not ext.lower() in formats:
@@ -927,27 +948,12 @@ class Plotter:
 
             dot.write(filename, format=ext.lower()[1:])
 
-        ## Display graph via matplotlib
-        #
-        if show:
-            import matplotlib.pyplot as plt
-            import matplotlib.image as mpimg
-
-            png = dot.create_png()
-            sio = io.BytesIO(png)
-            img = mpimg.imread(sio)
-            if show != -1:
-                plt.imshow(img, aspect="equal")
-                plt.show()
-
-            return img
-
         ## Propagate any properties for rendering in Jupyter cells.
         dot._jupyter_render = jupyter_render
 
         return dot
 
-    def legend(self, filename=None, show=None, jupyter_render: Mapping = None):
+    def legend(self, filename=None, jupyter_render: Mapping = None):
         """
         Generate a legend for all plots (see :meth:`.Plottable.plot()` for args)
 
@@ -1044,7 +1050,7 @@ class Plotter:
         # nodes = dot.Node()
         # cluster.add_node("operation")
 
-        return self.render_pydot(dot, filename=filename, show=show)
+        return self.render_pydot(dot, filename=filename, jupyter_render=jupyter_render)
 
 
 def legend(
@@ -1055,11 +1061,24 @@ def legend(
 
     :param plotter:
         override the :term:`active plotter`
+    :param show:
+        .. deprecated:: v6.1.1
+            Merged with `filename` param (filename takes precedence).
 
     See :meth:`Plotter.render_pydot` for the rest arguments.
     """
+    if show:
+        import warnings
+
+        warnings.warn(
+            "Argument `plot` has merged with `filename` and will be deleted soon.",
+            DeprecationWarning,
+        )
+        if not filename:
+            filename = show
+
     plotter = plotter or get_active_plotter()
-    return plotter.legend(filename, show, jupyter_render)
+    return plotter.legend(filename, jupyter_render)
 
 
 def supported_plot_formats() -> List[str]:

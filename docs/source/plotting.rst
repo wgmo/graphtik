@@ -11,10 +11,11 @@ For :ref:`debugging` it is necessary to visualize the graph-operation.
 You may plot any :term:`plottable` and annotate on top the *execution plan* and
 solution of the last computation, calling methods with arguments like this::
 
-   netop.plot(show=True)              # open a matplotlib window
+   netop.plot(True)                   # open a matplotlib window
    netop.plot("netop.svg")            # other supported formats: png, jpg, pdf, ...
    netop.plot()                       # without arguments return a pydot.DOT object
    netop.plot(solution=solution)      # annotate graph with solution values
+   solution.plot()                    # plot solution only
 
 ... or for the last ...::
 
