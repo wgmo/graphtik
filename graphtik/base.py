@@ -360,7 +360,7 @@ class PlotArgs(NamedTuple):
     check this method for a more detailed  explanation of its attributes.
     """
 
-    #: who is the callse
+    #: who is the caller
     plottable: "Plottable" = None
     #: what to plot
     graph: "nx.Graph" = None
@@ -445,22 +445,32 @@ class Plottable(abc.ABC):
             Write diagram into a file.
             Common extensions are ``.png .dot .jpg .jpeg .pdf .svg``
             call :func:`.plot.supported_plot_formats()` for more.
+
+            :seealso: :attr:`.PlotArgs.filename`
         :param show:
             If it evaluates to true, opens the  diagram in a  matplotlib window.
             If it equals `-1`, it plots but does not open the Window.
+            Requires `matplotlib` package to be installed.
+
+            :seealso: :attr:`.PlotArgs.show`
         :param plottable:
             the :term:`plottable` that ordered the plotting.
             Automatically set downstreams to one of::
 
                 netop | net | plan | solution | <missing>
 
+            :seealso: :attr:`.PlotArgs.plottable`
         :param plotter:
             the :term:`plotter` to handle plotting; if none, the :term:`active plotter`
             is used by default.
+
+            :seealso: :attr:`.PlotArgs.plotter`
         :param name:
             if not given, dot-lang graph would is named "G"; necessary to be unique
             when referring to generated CMAPs.
             No need to quote it, handled by the plotter, downstream.
+
+            :seealso: :attr:`.PlotArgs.name`
         :param str graph:
             (optional) A :class:`nx.Digraph` with overrides to merge with the graph provided
             by underlying plottables (translated by the :term:`active plotter`).
@@ -483,18 +493,25 @@ class Plottable(abc.ABC):
                 Remember to escape those values as `Graphviz`_ HTML-Like strings
                 (use :func:`.plot.graphviz_html_string()`).
 
+            :seealso: :attr:`.PlotArgs.graph`
         :param inputs:
             an optional name list, any nodes in there are plotted
             as a "house"
+
+            :seealso: :attr:`.PlotArgs.inputs`
         :param outputs:
             an optional name list, any nodes in there are plotted
             as an "inverted-house"
+
+            :seealso: :attr:`.PlotArgs.outputs`
         :param solution:
             an optional dict with values to annotate nodes, drawn "filled"
             (currently content not shown, but node drawn as "filled").
             It extracts more infos from a :class:`.Solution` instance, such as,
             if `solution` has an ``executed`` attribute, operations contained in it
             are  drawn as "filled".
+
+            :seealso: :attr:`.PlotArgs.solution`
         :param clusters:
             an optional mapping of nodes --> cluster-names, to group them
         :param jupyter_render:
@@ -502,6 +519,7 @@ class Plottable(abc.ABC):
             if `None`, defaults to :data:`jupyter_render`; you may modify it in place
             and apply for all future calls (see :ref:`jupyter_rendering`).
 
+            :seealso: :attr:`.PlotArgs.jupyter_render`
         :return:
             a |pydot.Dot|_ instance
             (for reference to as similar API to |pydot.Dot|_ instance, visit:
