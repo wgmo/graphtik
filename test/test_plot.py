@@ -300,7 +300,7 @@ def test_plot_matpotlib(pipeline, tmp_path):
     ## Try matplotlib Window, but # without opening a Window.
 
     # do not open window in headless travis
-    img = pipeline.plot(show=-1)
+    img = pipeline.plot(filename=-1)
     _check_plt_img(img)
 
 
@@ -318,7 +318,7 @@ def test_plot_legend(pipeline, tmp_path):
     dot = plot.legend()
     assert dot
 
-    img = plot.legend(show=-1)
+    img = plot.legend(filename=-1)
     _check_plt_img(img)
 
 
