@@ -16,9 +16,21 @@ Changelog
 %%%%%%%%%
 
 
+v6.1.1 (XX Apr 2020, @ankostis):
+================================
++ ENH(plot): apply more styles on data-nodes; distinguish between Prune/Cancel/Evict
+  data Styles and add tooltips for those cases (ie data nodes without values).
++ ENH(base): improve auto-naming of operations, descending *partials* politely and
+  handling better builtins.
++ DEPRECATE(plot): `show` argument in  plot methods & functions;  dropped completely
+  from the args of the younger class :class:`Plotter`.
+
+  It has merged with `filename` param (the later takes precedence if both given).
+
+
 v6.1.0 (14 Apr 2020, @ankostis): config plugs & fix styles
 ==========================================================
-Should have been a major bump due to breaking renames, but...no clients yet
+Should have been a MAJOR BUMP due to breaking renames, but...no clients yet
 (and just out of to 5.x --> 6.x major bump).
 
 + REFACT/BREAK(plot): rename ``installed_plotter --> active_plotter``.
@@ -30,6 +42,8 @@ Should have been a major bump due to breaking renames, but...no clients yet
 
 v6.0.0 (13 Apr 2020, @ankostis): New Plotting Device...
 =======================================================
+**--((superseded by v6.1.0 due to installed_potter --> active_plotter))--**
+
 + ENH/REFACT(PLOT):
 
   + REFACT/BREAK: plots are now fully configurable with :term:`plot styles`
