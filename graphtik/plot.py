@@ -589,7 +589,7 @@ class Plotter:
         ## NODES
         #
         base_node_args = node_args = NodeArgs(dot=dot, clustered={})
-        for nx_node, data in graph.nodes(data=True):
+        for nx_node, data in graph.nodes.data(True):
             node_args = base_node_args._replace(nx_node=nx_node, node_attrs=data)
 
             dot_node = self._make_node(plot_args, node_args)
@@ -600,7 +600,7 @@ class Plotter:
 
         ## EDGES
         #
-        for src, dst, data in graph.edges(data=True):
+        for src, dst, data in graph.edges.data(True):
             src_name = get_node_name(src)
             dst_name = get_node_name(dst)
 

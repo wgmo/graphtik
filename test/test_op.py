@@ -233,7 +233,7 @@ def test_op_node_props():
 def _collect_op_props(netop):
     return {
         k.name: v
-        for k, v in netop.net.graph.nodes(data=True)
+        for k, v in netop.net.graph.nodes.data(True)
         if isinstance(k, Operation)
     }
 
