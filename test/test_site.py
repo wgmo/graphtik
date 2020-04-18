@@ -48,7 +48,7 @@ class _WarningStream:
             )
         )
 
-    def __str__(self):
+    def __repr__(self):
         return self.output.getvalue()
 
 
@@ -66,8 +66,7 @@ def test_README_as_PyPi_landing_page(monkeypatch):
         stream=err_stream,
         halt_level=2,  # 2=WARN, 1=INFO
     )
-    if not result:
-        raise AssertionError(str(err_stream))
+    assert result, err_stream
 
 
 def test_sphinx_html(monkeypatch):
