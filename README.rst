@@ -1,8 +1,9 @@
 Graphtik
 ========
 
-|python-ver| |dev-status| |gh-version| |pypi-version| |travis-status|
-|doc-status| |cover-status| |codestyle| |proj-lic|
+|python-ver| |dev-status| |gh-version| |pypi-version|
+(build-version: |release|, build-date: |today|)
+|travis-status| |doc-status| |cover-status| |codestyle| |proj-lic|
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
 

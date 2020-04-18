@@ -4,11 +4,29 @@
 import io
 import os
 import re
+import datetime as dt
+import subprocess as sbp
 from setuptools import setup, find_packages
 
 
+def _ask_git_version(default: str) -> str:
+    try:
+        return sbp.check_output(
+            "git describe --always".split(), universal_newlines=True
+        ).strip()
+    except Exception:
+        return default
+
+
+git_ver = _ask_git_version("x.x.x")
+
 with open("README.rst") as f:
-    long_description = f.read()
+    long_description = (
+        f.read()
+        .replace("|version|", git_ver)
+        .replace("|release|", git_ver)
+        .replace("|today|", dt.datetime.now().isoformat())
+    )
 
 # Grab the version using convention described by flask
 # https://github.com/pallets/flask/blob/master/setup.py#L10
