@@ -940,6 +940,26 @@ class Network(Plottable):
         )
         return f"Network(x{len(self.graph.nodes)} nodes, x{len(ops)} ops: {''.join(steps)})"
 
+    def find_ops(self, predicate) -> List[Operation]:
+        """
+        Scan operation nodes and fetch those satisfying `predicate`.
+
+        :param predicate:
+            the :term:`node predicate` is a 2-argument callable(op, node-data)
+            that should return true for nodes to include.
+        """
+        return [
+            n
+            for n, d in self.graph.nodes.data(True)
+            if isinstance(n, Operation) and predicate(n, d)
+        ]
+
+    def find_op_by_name(self, name) -> Union[Operation, None]:
+        """Fetch the 1st operation named with the given `name`."""
+        for n in yield_ops(self.graph.nodes):
+            if n.name == name:
+                return n
+
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         plot_args = plot_args.clone_or_merge_graph(self.graph)
         plot_args = plot_args.with_defaults(
