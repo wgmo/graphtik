@@ -942,7 +942,7 @@ class Network(Plottable):
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         plot_args = plot_args.clone_or_merge_graph(self.graph)
-        plot_args.with_defaults(
+        plot_args = plot_args.with_defaults(
             name=f"network-x{len(self.graph.nodes)}-nodes",
             inputs=self.needs,
             outputs=self.provides,

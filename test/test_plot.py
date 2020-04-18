@@ -8,6 +8,7 @@ from functools import partial
 from operator import add
 
 import dill
+import networkx as nx
 import pytest
 
 from graphtik import base, compose, network, operation, plot
@@ -16,8 +17,8 @@ from graphtik.netop import NetworkOperation
 from graphtik.plot import (
     Plotter,
     Style,
-    get_active_plotter,
     active_plotter_plugged,
+    get_active_plotter,
 )
 
 
@@ -433,8 +434,8 @@ def test_node_dot_str0(dot_str_pipeline):
         fontname=italic;
         label=<graph>;
         splines=ortho;
-        <edge> [shape=rect];
-        <digraph&#58; strict> [shape=rect];
+        <edge> [shape=invhouse];
+        <digraph&#58; strict> [shape=invhouse];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET=""
@@ -444,7 +445,7 @@ def test_node_dot_str0(dot_str_pipeline):
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
-        <&lt;graph&gt;> [shape=rect];
+        <&lt;graph&gt;> [shape=house];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET=""
@@ -483,8 +484,8 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         fontname=italic;
         label=<graph>;
         splines=ortho;
-        <edge> [shape=rect];
-        <digraph&#58; strict> [shape=rect];
+        <edge> [shape=invhouse];
+        <digraph&#58; strict> [shape=invhouse];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
@@ -494,7 +495,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
-        <&lt;graph&gt;> [shape=rect];
+        <&lt;graph&gt;> [shape=house];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
