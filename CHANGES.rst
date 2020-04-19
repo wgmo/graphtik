@@ -16,16 +16,33 @@ Changelog
 %%%%%%%%%
 
 
-v6.1.1 (XX Apr 2020, @ankostis):
-================================
-+ ENH(plot): apply more styles on data-nodes; distinguish between Prune/Cancel/Evict
-  data Styles and add tooltips for those cases (ie data nodes without values).
+v6.2.0 (19 Apr 2020, @ankostis): plotting fixes & more styles, net find util methods
+====================================================================================
++ PLOT:
+
+  + DEPRECATE(plot): `show` argument in  plot methods & functions;  dropped completely
+    from the args of the younger class :class:`Plotter`.
+
+    It has merged with `filename` param (the later takes precedence if both given).
+  + ENH: apply more styles on data-nodes; distinguish between Prune/Cancel/Evict
+    data Styles and add tooltips for those cases (ie data nodes without values).
+
+  + DROP: do not plot wth ``splines=ortho``, because it `crashes with some shapes
+    <https://gitlab.com/graphviz/graphviz/issues/1408>`_;
+    explain in docs how to re-enables this (x2 ways).
+  + FIX: node/edge attributes were ignored due to `networkx` API misuse - add TCs
+    on that.
+  + FIX: Networks were not plotting Inps/Outs/Name due to forgotten ``namedtuple._replace()``
+    assignment.
+  + feat: introduce ``_no_plot`` nx-attribute to filter out nodes/edges.
+
 + ENH(base): improve auto-naming of operations, descending *partials* politely and
   handling better builtins.
-+ DEPRECATE(plot): `show` argument in  plot methods & functions;  dropped completely
-  from the args of the younger class :class:`Plotter`.
 
-  It has merged with `filename` param (the later takes precedence if both given).
++ FEAT(net): add :meth:`.Network.find_ops()` & :meth:`.Network.find_op_by_name()`
+  utility methods.
+
++ enh(build, site, doc): graft Build Ver/Date as gotten from Git in PyPilanding-page.
 
 
 v6.1.0 (14 Apr 2020, @ankostis): config plugs & fix styles
