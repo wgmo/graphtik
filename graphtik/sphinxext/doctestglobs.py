@@ -22,6 +22,28 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
     epilog = None
     run_empty_code = False
 
+    def get_filename_for_node(self, node: nodes.Node, docname: str) -> str:
+        """
+        Return filename (possibly with docstring) since :meth:`get_line_number` inaccurate.
+
+        Incomplete solution introduced by sphinx-doc/sphinx#4584
+        """
+        return node.source
+
+    @staticmethod
+    def get_line_number(node: nodes.Node) -> int:
+        """
+        Workaround the admition that parent class can't tell lineno.
+
+        PATCHED because the line number is given relative to the stripped docstring,
+        not the document, so report original filename in :meth:`get_filename_for_node()`
+        above.
+
+        Incomplete solution introduced by sphinx-doc/sphinx#4584
+        """
+        # TODO: find the root cause of this off by one error.
+        return None if node.line is None else node.line - 1
+
     def test_doc(self, docname: str, doctree: nodes.Node) -> None:
         """
         HACK: Method overridden to annotate all TestCode instances with their nodes,
