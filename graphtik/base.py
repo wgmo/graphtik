@@ -362,7 +362,7 @@ class PlotArgs(NamedTuple):
 
     #: who is the caller
     plottable: "Plottable" = None
-    #: what to plot
+    #: what to plot (or the "overlay" when calling :meth:`Plottable.plot()`)
     graph: "nx.Graph" = None
     #: The name of the graph in the dot-file (important for cmaps).
     name: str = None
@@ -390,25 +390,13 @@ class PlotArgs(NamedTuple):
         :return:
             the updated plot_args
         """
-        import networkx as nx
 
         if self.graph:
+            import networkx as nx
+
             graph = nx.compose(base_graph, self.graph)
         else:
             graph = base_graph.copy()  # cloned, to freely annotate downstream
-
-        ## Drop any nodes & edges with "_no_plot" attribute
-        #
-        graph.remove_nodes_from(
-            [n for n, no_plot in graph.nodes.data("_no_plot") if no_plot]
-        )
-        graph.remove_edges_from(
-            [
-                (src, dst)
-                for src, dst, no_plot in graph.edges.data("_no_plot")
-                if no_plot
-            ]
-        )
 
         return self._replace(graph=graph)
 
@@ -501,6 +489,7 @@ class Plottable(abc.ABC):
                 override those derrived from :meth:`_make_op_tooltip()` &
                 :meth:`_make_op_tooltip()`.
               - ``_no_plot``: nodes and/or edges skipped from plotting
+                (see *"Examples:"* section, below)
 
             - "public" attributes: reaching `Graphviz`_ as-is.
 
@@ -593,7 +582,7 @@ class Plottable(abc.ABC):
 
         To generate the **legend**, see :func:`.legend()`.
 
-        **Sample code:**
+        **Examples:**
 
         >>> from graphtik import compose, operation
         >>> from graphtik.modifiers import optional
@@ -618,6 +607,19 @@ class Plottable(abc.ABC):
         splines=ortho;
         <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
         ...
+
+        You may use the :attr:`PlotArgs.graph` overlay to skip certain nodes (or edges)
+        from the plots:
+
+        >>> import networkx as nx
+
+        >>> g = nx.DiGraph()  # the overlay
+        >>> to_hide = netop.net.find_op_by_name("sub")
+        >>> g.add_node(to_hide, _no_plot=True)
+        >>> dot = netop.plot(graph=g)
+        >>> assert "<sub>" not in str(dot), str(dot)
+
+        .. graphtik::
 
         """
         kw = locals().copy()

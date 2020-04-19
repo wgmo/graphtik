@@ -14,7 +14,6 @@ import pytest
 from graphtik import base, compose, network, operation, plot
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
-from graphtik.network import yield_ops
 from graphtik.plot import (
     Plotter,
     Style,
@@ -407,7 +406,7 @@ def test_plotter_dill():
     dill.dumps(plotter)
 
 
-def func():
+def func(a, b):
     pass
 
 
@@ -452,7 +451,7 @@ def test_node_dot_str0(dot_str_pipeline):
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET=""
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
             </TR><TR>
-                <TD ALIGN="left" TOOLTIP="def func():&#10;    pass" TARGET=""
+                <TD ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET=""
                 ><B>FN:</B> test.test_plot.func</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
@@ -483,25 +482,31 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     overlay = nx.DiGraph()
     hidden_op = dot_str_pipeline.net.find_op_by_name("node")
     overlay.add_node(hidden_op, _no_plot=True)
-    dot_str = str(dot_str_pipeline.plot(graph=overlay))
+
+    sol = dot_str_pipeline.compute({"edge": 1, "digraph: strict": 2})
+    dot_str = str(sol.plot(graph=overlay))
+
     print(dot_str)
     exp = """
-        digraph graph_ {
+        digraph solution_x5_nodes {
         fontname=italic;
-        label=<graph>;
         splines=ortho;
-        <edge> [shape=invhouse];
-        <digraph&#58; strict> [shape=invhouse];
-        <&lt;graph&gt;> [shape=house];
-        <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
+        subgraph "cluster_after pruning" {
+        label="after pruning";
+        <edge> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
+        <digraph&#58; strict> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 2"];
+        <&lt;graph&gt;> [fillcolor=SkyBlue, shape=house, style=filled, tooltip=None];
+        <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
             </TR><TR>
-                <TD ALIGN="left" TOOLTIP="def func():&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
+                <TD ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
                 ><B>FN:</B> test.test_plot.func</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
+        }
+
         <edge> -> <cu&#58;sto&#58;m>;
         <digraph&#58; strict> -> <cu&#58;sto&#58;m>;
         <cu&#58;sto&#58;m> -> <&lt;graph&gt;>;
@@ -509,3 +514,4 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         }
         """
     assert _striplines(dot_str) == _striplines(exp)
+    assert "<node>" not in dot_str

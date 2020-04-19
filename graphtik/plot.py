@@ -18,7 +18,17 @@ from collections import namedtuple
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import partial
-from typing import Any, Callable, List, Mapping, NamedTuple, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    List,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import jinja2
 import networkx as nx
@@ -574,6 +584,8 @@ class Plotter:
         if graph is None:
             raise ValueError("At least `graph` to plot must be given!")
 
+        graph, steps = self._skip_nodes(graph, steps)
+
         kw = style.kw_graph.copy()
         kw.update(
             style.kw_pottable_type.get(
@@ -882,6 +894,25 @@ class Plotter:
         kw_legend = self.style.kw_legend
         if kw_legend and self.style.kw_legend.get("URL"):
             node_args.dot.add_node(pydot.Node(**kw_legend))
+
+    def _skip_nodes(
+        self, graph: nx.Graph, steps: Collection
+    ) -> Tuple[nx.Graph, Collection]:
+        ## Drop any nodes, steps & edges with "_no_plot" attribute.
+        #
+        nodes_to_del = {n for n, no_plot in graph.nodes.data("_no_plot") if no_plot}
+        graph.remove_nodes_from(nodes_to_del)
+        if steps:
+            steps = [s for s in steps if s not in nodes_to_del]
+        graph.remove_edges_from(
+            [
+                (src, dst)
+                for src, dst, no_plot in graph.edges.data("_no_plot")
+                if no_plot
+            ]
+        )
+
+        return graph, steps
 
     def render_pydot(self, dot: pydot.Dot, filename=None, jupyter_render: str = None):
         """
