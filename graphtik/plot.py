@@ -360,9 +360,11 @@ class Style:
     kw_graph = {
         "graph_type": "digraph",
         "fontname": "italic",
-        # Whether to plot `curved/polyline edges
-        # <https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:splines>`_
-        "splines": "ortho",
+        ## Whether to plot `curved/polyline edges
+        #  <https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:splines>`_
+        #  BUT disabled due to crashes:
+        #  https://gitlab.com/graphviz/graphviz/issues/1408
+        #"splines": "ortho",
     }
     #: styles per plot-type
     kw_pottable_type = {

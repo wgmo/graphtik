@@ -491,7 +491,9 @@ class Plottable(abc.ABC):
               - ``_no_plot``: nodes and/or edges skipped from plotting
                 (see *"Examples:"* section, below)
 
-            - "public" attributes: reaching `Graphviz`_ as-is.
+            - "public" attributes: reaching `Graphviz`_ as-is, e.g.
+              to set ``spline -> ortho`` on the graph attributes
+              (this can also be achieved by modified :term:`plot styles`).
 
               .. Note::
 
@@ -579,8 +581,8 @@ class Plottable(abc.ABC):
         green-dotted arrows
             execution steps labeled in succession
 
-
         To generate the **legend**, see :func:`.legend()`.
+
 
         **Examples:**
 
@@ -604,9 +606,10 @@ class Plottable(abc.ABC):
         digraph netop {
         fontname=italic;
         label=<netop>;
-        splines=ortho;
         <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
         ...
+
+        .. TODO: move advanced plot examples from API --> tutorial page
 
         You may use the :attr:`PlotArgs.graph` overlay to skip certain nodes (or edges)
         from the plots:

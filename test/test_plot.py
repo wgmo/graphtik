@@ -433,7 +433,6 @@ def test_node_dot_str0(dot_str_pipeline):
         digraph graph_ {
         fontname=italic;
         label=<graph>;
-        splines=ortho;
         <edge> [shape=invhouse];
         <digraph&#58; strict> [shape=invhouse];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
@@ -482,6 +481,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     overlay = nx.DiGraph()
     hidden_op = dot_str_pipeline.net.find_op_by_name("node")
     overlay.add_node(hidden_op, _no_plot=True)
+    overlay.graph["splines"] = "ortho"
 
     sol = dot_str_pipeline.compute({"edge": 1, "digraph: strict": 2})
     dot_str = str(sol.plot(graph=overlay))
