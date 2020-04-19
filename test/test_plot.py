@@ -14,6 +14,7 @@ import pytest
 from graphtik import base, compose, network, operation, plot
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
+from graphtik.network import yield_ops
 from graphtik.plot import (
     Plotter,
     Style,
@@ -477,7 +478,12 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     monkeypatch.setattr(style, "op_link_target", "_self")
     monkeypatch.setattr(style, "fn_link_target", "bad")
 
-    dot_str = str(dot_str_pipeline.plot())
+    ## Test node-hidding & Graph-overlaying.
+    #
+    overlay = nx.DiGraph()
+    hidden_op = dot_str_pipeline.net.find_op_by_name("node")
+    overlay.add_node(hidden_op, _no_plot=True)
+    dot_str = str(dot_str_pipeline.plot(graph=overlay))
     print(dot_str)
     exp = """
         digraph graph_ {
@@ -486,15 +492,6 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         splines=ortho;
         <edge> [shape=invhouse];
         <digraph&#58; strict> [shape=invhouse];
-        <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
-            <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
-                ><B>OP:</B> <I>node</I></TD>
-            </TR><TR>
-                <TD ALIGN="left" TOOLTIP="Same as a + b." HREF="abc#{&#x27;dot_path&#x27;: &#x27;_operator.add&#x27;, &#x27;posix_path&#x27;: &#x27;_operator/add&#x27;}" TARGET="bad"
-                ><B>FN:</B> &lt;built-in function add&gt;</TD>
-            </TR>
-        </TABLE>>, shape=plain, tooltip=<node>];
         <&lt;graph&gt;> [shape=house];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
@@ -505,11 +502,8 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
                 ><B>FN:</B> test.test_plot.func</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
-        <edge> -> <node>;
         <edge> -> <cu&#58;sto&#58;m>;
-        <digraph&#58; strict> -> <node>;
         <digraph&#58; strict> -> <cu&#58;sto&#58;m>;
-        <node> -> <&lt;graph&gt;>;
         <cu&#58;sto&#58;m> -> <&lt;graph&gt;>;
         legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_top];
         }

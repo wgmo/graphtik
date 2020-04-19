@@ -397,6 +397,19 @@ class PlotArgs(NamedTuple):
         else:
             graph = base_graph.copy()  # cloned, to freely annotate downstream
 
+        ## Drop any nodes & edges with "_no_plot" attribute
+        #
+        graph.remove_nodes_from(
+            [n for n, no_plot in graph.nodes.data("_no_plot") if no_plot]
+        )
+        graph.remove_edges_from(
+            [
+                (src, dst)
+                for src, dst, no_plot in graph.edges.data("_no_plot")
+                if no_plot
+            ]
+        )
+
         return self._replace(graph=graph)
 
     def with_defaults(self, *args, **kw) -> "PlotArgs":
@@ -487,6 +500,7 @@ class Plottable(abc.ABC):
               - ``_op_tooltip`` & ``_fn_tooltip`` *(node)*: if truthy,
                 override those derrived from :meth:`_make_op_tooltip()` &
                 :meth:`_make_op_tooltip()`.
+              - ``_no_plot``: nodes and/or edges skipped from plotting
 
             - "public" attributes: reaching `Graphviz`_ as-is.
 
