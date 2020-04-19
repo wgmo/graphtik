@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-Generic or specific utilities  without polluting imports.
+Generic utilities, or :mod:`.plot` API but without polluting imports.
 
 .. testsetup::
 
@@ -608,6 +608,8 @@ class Plottable(abc.ABC):
         label=<netop>;
         <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
         ...
+
+        .. graphtik::
 
         .. TODO: move advanced plot examples from API --> tutorial page
 

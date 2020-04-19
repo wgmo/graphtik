@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-Plotting of graph graphs handled by :term:`active plotter`.
+Plotting of graph graphs handled by :term:`active plotter` (see also :mod:`.base`).
 
 Separate from `graphtik.base` to avoid too many imports too early.
 from contextlib import contextmanager
@@ -364,7 +364,7 @@ class Style:
         #  <https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:splines>`_
         #  BUT disabled due to crashes:
         #  https://gitlab.com/graphviz/graphviz/issues/1408
-        #"splines": "ortho",
+        # "splines": "ortho",
     }
     #: styles per plot-type
     kw_pottable_type = {
