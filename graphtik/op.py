@@ -86,6 +86,10 @@ def reparse_operation_data(name, needs, provides):
 class Operation(abc.ABC):
     """An abstract class representing an action with :meth:`.compute()`."""
 
+    @property
+    def __name__(self) -> str:
+        return self.name  # pylint: disable=no-member
+
     @abc.abstractmethod
     def compute(self, named_inputs, outputs=None):
         """
