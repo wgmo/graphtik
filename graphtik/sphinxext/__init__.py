@@ -280,7 +280,7 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         img_attrs = {k: v for k, v in options.items() if k in _img_options}
         # TODO: emulate sphinx-processing for image width & height attrs.
         image = dynaimage(**img_attrs)
-        image.source, dynaimage.line = location
+        image.source, image.line = location
         image["classes"].extend(options.get("class", "").split())
         #  TODO: TCs for zooamble-SVGs options & configs.
         if "svg" in img_format:
