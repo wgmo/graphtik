@@ -351,8 +351,8 @@ class Style:
     resched_thickness = 4
     broken_color = "Red"
     overwrite_color = "SkyBlue"
-    steps_color = "#009999"
-    evicted = "#000099"
+    steps_color = "#00bbbb"
+    evicted = "#006666"
     #: See :meth:`.Plotter._make_py_item_link()`.
     py_item_url_format: Union[str, Callable[[str], str]] = None
     #: the url to the architecture section explaining *graphtik* glossary,
@@ -396,11 +396,20 @@ class Style:
         "tooltip": "(pruned)",
     }
     kw_data_sideffect = {"color": "blue", "fontcolor": "blue"}
-    kw_data_to_evict = {}
+    kw_data_to_evict = {
+        "color": Ref("evicted"),
+        "fontcolor": Ref("evicted"),
+        "style": ["dashed"],
+        "tooltip": "(to evict)",
+    }
     kw_data_in_solution = {"style": ["filled"], "fillcolor": Ref("fill_color")}
-    kw_data_evicted = {"color": Ref("evicted"), "tooltip": "(evicted)"}
+    kw_data_evicted = {"penwidth": "3", "tooltip": "(evicted)"}
     kw_data_overwritten = {"style": ["filled"], "fillcolor": Ref("overwrite_color")}
-    kw_data_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": "(canceled)"}
+    kw_data_canceled = {
+        "fillcolor": Ref("canceled_color"),
+        "style": ["filled"],
+        "tooltip": "(canceled)",
+    }
 
     ##########
     ## OPERATION node
@@ -418,8 +427,8 @@ class Style:
     kw_op_executed = {"fillcolor": Ref("fill_color")}
     kw_op_rescheduled = {"penwidth": Ref("resched_thickness")}
     kw_op_endured = {"penwidth": Ref("resched_thickness")}
-    kw_op_failed = {"fillcolor": Ref("failed_color")}
-    kw_op_canceled = {"fillcolor": Ref("canceled_color")}
+    kw_op_failed = {"fillcolor": Ref("failed_color"), "tooltip": "(failed)"}
+    kw_op_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": "(canceled)"}
     #: Applied only if :attr:`py_item_url_format` defined, or
     #: ``"_op_link_target"`` in nx_node-attributes.
 
@@ -752,7 +761,9 @@ class Plotter:
             if data.get("sideffect"):
                 styles.append(style.kw_edge_sideffect)
 
-            is_broken = solution and dst not in solution and dst not in steps
+            is_broken = (
+                solution is not None and dst not in solution and dst not in steps
+            )
             if getattr(src, "rescheduled", None):
                 styles.append(style.kw_edge_rescheduled)
                 if is_broken:
@@ -845,7 +856,7 @@ class Plotter:
                     isinstance(plottable, Solution)
                     and nx_node not in plottable.dag.nodes
                 )
-                or (solution and nx_node not in solution.dag.nodes)
+                or (solution is not None and nx_node not in solution.dag.nodes)
             )
 
             if is_pruned:
@@ -853,20 +864,25 @@ class Plotter:
                     not steps or nx_node not in steps
                 ), f"Given `steps` missmatch `plan` and/or `solution`!\n  {plot_args}"
                 styles.append(style.kw_data_pruned)
-            elif steps and nx_node in steps:
-                styles.append(style.kw_data_to_evict)
+            else:
+                if steps and nx_node in steps:
+                    styles.append(style.kw_data_to_evict)
 
-            if solution is not None:
-                if nx_node in solution:
-                    styles.append(style.kw_data_in_solution)
-                    if nx_node in solution.overwrites:
-                        styles.append(style.kw_data_overwritten)
+                if solution is not None:
+                    if nx_node in solution:
+                        styles.append(style.kw_data_in_solution)
+                        if nx_node in solution.overwrites:
+                            styles.append(style.kw_data_overwritten)
 
-                    val = solution.get(nx_node)
-                    tooltip = "None" if val is None else f"({type(val).__name__}) {val}"
-                    styles.append({"tooltip": quote_html_tooltips(tooltip)})
-                elif not is_pruned:
-                    styles.append(style.kw_data_canceled)
+                        val = solution.get(nx_node)
+                        tooltip = (
+                            "None" if val is None else f"({type(val).__name__}) {val}"
+                        )
+                        styles.append({"tooltip": quote_html_tooltips(tooltip)})
+                    elif nx_node not in steps:
+                        styles.append(style.kw_data_canceled)
+                    else:
+                        styles.append(style.kw_data_evicted)
 
             styles.append(_pub_props(node_attrs))
 
