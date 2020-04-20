@@ -118,6 +118,62 @@ that accepts as input a string of raw image data and converts that data into the
 Then, you can either provide the raw image data string as input, or you can provide
 the ``PIL.Image`` if you have it and skip providing the image data string.
 
+Resilience on errors (*endured*)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+It is possible for pipeline persist executing operations, even if some of them
+are raising errors:
+
+   >>> @operation(endured=1, provides=["space", "time"])
+   ... def get_out():
+   ...     raise ValueError("Quarantined!")
+   >>> get_out
+   FunctionalOperation!(name='get_out', needs=[], provides=['space', 'time'], fn='get_out')
+   >>> @operation(needs="space", provides="fun")
+   ... def exercise(where):
+   ...     return "refreshed"
+   >>> @operation(endured=1, provides="time")
+   ... def stay_home():
+   ...     return "1h"
+   >>> @operation(needs="time", provides="fun")
+   ... def read_book(for_how_long):
+   ...     return "relaxed"
+
+   >>> netop = compose("covid19", get_out, stay_home, exercise, read_book)
+   >>> netop
+   NetworkOperation('covid19',
+                    needs=['space', 'time'],
+                    provides=['space', 'time', 'fun'],
+                    x4 ops: get_out, stay_home, exercise, read_book)
+
+.. graphtik::
+
+.. Hint::
+   Notice the exclamation(``!``) before the parenthesis in the string representation &
+   tooltip of the operations, or its thick outlines, both signifying :term:`reschedule`\d
+   operations.
+
+When executed, the pipeline does not completely fail:
+
+   >>> sol = netop()
+   >>> sol
+   {'time': '1h', 'fun': 'relaxed'}
+
+.. graphtik::
+   :hide:
+
+   >>> from graphtik.plot import Plotter
+   >>> dot = sol.plot(plotter=Plotter(skip_steps=1))
+
+And you can collect the failures (see also :meth:`.Solution.check_if_incomplete()`):
+
+   >>> sol.scream_if_incomplete()
+   Traceback (most recent call last):
+   ...
+   graphtik.network.IncompleteExecutionError:
+   Not completed x2 operations ['exercise', 'get_out'] due to x1 failures and x0 partial-ops:
+     +--get_out: ValueError(Quarantined!)
+
+
 Adding on to an existing computation graph
 ------------------------------------------
 

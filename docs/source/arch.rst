@@ -313,6 +313,7 @@ Architecture
         and possibly *cancel* some of those ( assigned in :attr:`.Solution.canceled`).
 
     endurance
+    endured
         Keep executing as many `operation`\s as possible, even if some of them fail.
         Endurance for an operation  is enabled if :func:`.set_endure_operations()`
         is true globally in the `configurations` or if :attr:`.FunctionalOperation.endured`
