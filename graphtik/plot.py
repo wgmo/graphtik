@@ -618,7 +618,7 @@ class Plotter:
             src_name = get_node_name(src)
             dst_name = get_node_name(dst)
 
-            kw = {}
+            kw = style.kw_edge.copy()
             if data.get("optional"):
                 kw.update(style.kw_edge_optional)
             if data.get("sideffect"):
