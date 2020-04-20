@@ -383,6 +383,11 @@ def yield_ops(nodes):
     return (n for n in nodes if isinstance(n, Operation))
 
 
+def yield_node_names(nodes):
+    """Yield either ``op.name`` or ``str(node)``."""
+    return (str(getattr(n, "name", n)) for n in nodes)
+
+
 def _optionalized(graph, data):
     """Retain optionality of a `data` node based on all `needs` edges."""
     all_optionals = all(e[2] for e in graph.out_edges(data, "optional", False))
@@ -527,7 +532,7 @@ class ExecutionPlan(
         steps = (
             "".join(f"\n  +--{s}" for s in self.steps)
             if is_debug()
-            else ", ".join(str(getattr(s, "name", s)) for s in self.steps)
+            else ", ".join(yield_node_names(self.steps))
         )
         return f"ExecutionPlan(needs={needs}, provides={provides}, x{len(self.steps)} steps: {steps})"
 
