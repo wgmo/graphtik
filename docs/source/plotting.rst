@@ -342,8 +342,11 @@ Plot customizations
    3. Take any *plotter*, customize its clone, and then call :meth:`.Plottable.plot()`,
       with something like that::
 
-         netop.plot(plotter=get_active_plotter().with_styles(kw_legend=None))
+         netop.plot(plotter=Plotter(kw_legend=None))
 
+      ... or the following, if you want to preserve pre-existing customizations::
+
+         netop.plot(plotter=get_active_plotter().with_styles(kw_legend=None))
 
    This project dogfoods (2) in its own :file:`docs/source/conf.py` sphinx file.
    In particular, it configures the base-url of operation node links

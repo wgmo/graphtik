@@ -693,8 +693,8 @@ class Plotter:
         controlling theming values & dictionaries for plots.
     """
 
-    def __init__(self, style: Style = None):
-        self.style: Style = style or Style()
+    def __init__(self, style: Style = None, **styles_kw):
+        self.style: Style = style or Style(**styles_kw)
 
     def with_styles(self, **kw) -> "Plotter":
         """
