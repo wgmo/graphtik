@@ -174,6 +174,63 @@ And you can collect the failures (see also :meth:`.Solution.check_if_incomplete(
      +--get_out: ValueError(Quarantined!)
 
 
+Operations with partial outputs (*rescheduled*)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In case the actually produce `outputs` depend on some condition in the `inputs`,
+the `solution` has to :term:`reschedule` the plan amidst execution, and consider the
+actual `provides` delivered.
+
+
+   >>> @operation(rescheduled=1,
+   ...            needs="quarantine",
+   ...            provides=["space", "time"],
+   ...            returns_dict=True)
+   ... def get_out_or_stay_home(quarantine):
+   ...     if quarantine:
+   ...          return {"time": "1h"}
+   ...     else:
+   ...          return {"space": "around the block"}
+   >>> get_out_or_stay_home
+    FunctionalOperation?(name='get_out_or_stay_home',
+                         needs=['quarantine'],
+                         provides=['space', 'time'],
+                         fn{}='get_out_or_stay_home')
+   >>> @operation(needs="space", provides="fun")
+   ... def exercise(where):
+   ...     return "refreshed"
+   >>> @operation(needs="time", provides="fun")
+   ... def read_book(for_how_long):
+   ...     return "relaxed"
+
+   >>> netop = compose("covid19", get_out_or_stay_home, exercise, read_book)
+
+.. Hint::
+   Notice the questionmark(``?``) before the parenthesis in the string representation &
+   tooltip of the operation, or its thick outlines, both signifying :term:`reschedule`\d
+   operations.
+
+Depending on "quarantine' state we get to execute different part of the pipeline:
+
+   >>> sol = netop(quarantine=True)
+
+.. graphtik::
+   :hide:
+
+   >>> dot = sol.plot(plotter=Plotter(skip_steps=1))
+
+..
+
+   >>> sol = netop(quarantine=False)
+
+.. graphtik::
+   :hide:
+
+   >>> dot = sol.plot(plotter=Plotter(skip_steps=1))
+
+In both case, a warning gets raised about the missing outputs, but the execution
+proceeds regularly to what is possible to evaluate.
+
+
 Adding on to an existing computation graph
 ------------------------------------------
 
