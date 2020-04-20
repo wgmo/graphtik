@@ -273,8 +273,8 @@ class FunctionalOperation(Operation):
         parallel = "|" if self.parallel else ""
         marshalled = "$" if self.marshalled else ""
         return (
-            f"FunctionalOperation{endured}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}{resched}{aliases}, fn{returns_dict_marker}={fn_name!r}{nprops})"
+            f"FunctionalOperation{endured}{resched}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
+            f"provides={provides!r}{aliases}, fn{returns_dict_marker}={fn_name!r}{nprops})"
         )
 
     def withset(self, **kw) -> "FunctionalOperation":
@@ -729,6 +729,6 @@ class operation:
         parallel = "|" if self.parallel else ""
         marshalled = "$" if self.marshalled else ""
         return (
-            f"operation{endured}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}{resched}{aliases}, fn={fn_name!r}{nprops})"
+            f"operation{endured}{resched}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
+            f"provides={provides!r}{aliases}, fn={fn_name!r}{nprops})"
         )

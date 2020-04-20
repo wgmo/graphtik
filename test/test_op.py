@@ -355,10 +355,10 @@ def test_reschedule_unknown_dict_outs(caplog):
 
 def test_rescheduled_op_repr():
     op = operation(str, name="t", provides=["a"], rescheduled=True)
-    assert str(op) == "operation(name='t', needs=[], provides=['a']?, fn='str')"
+    assert str(op) == "operation?(name='t', needs=[], provides=['a'], fn='str')"
     assert (
         str(op())
-        == "FunctionalOperation(name='t', needs=[], provides=['a']?, fn='str')"
+        == "FunctionalOperation?(name='t', needs=[], provides=['a'], fn='str')"
     )
 
 
@@ -373,9 +373,9 @@ def test_endured_op_repr():
 
 def test_endured_rescheduled_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1)
-    assert str(op) == "operation!(name='t', needs=[], provides=[]?, fn='str')"
+    assert str(op) == "operation!?(name='t', needs=[], provides=[], fn='str')"
     assert (
-        str(op()) == "FunctionalOperation!(name='t', needs=[], provides=[]?, fn='str')"
+        str(op()) == "FunctionalOperation!?(name='t', needs=[], provides=[], fn='str')"
     )
 
 
@@ -407,10 +407,10 @@ def test_marshalled_parallel_op_repr():
 
 def test_ALL_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1, parallel=1, marshalled=1)
-    assert str(op) == "operation!|$(name='t', needs=[], provides=[]?, fn='str')"
+    assert str(op) == "operation!?|$(name='t', needs=[], provides=[], fn='str')"
     assert (
         str(op())
-        == "FunctionalOperation!|$(name='t', needs=[], provides=[]?, fn='str')"
+        == "FunctionalOperation!?|$(name='t', needs=[], provides=[], fn='str')"
     )
 
 
