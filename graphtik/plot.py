@@ -395,6 +395,7 @@ class Style:
         "color": Ref("pruned_color"),
         "tooltip": "(pruned)",
     }
+    kw_data_sideffect = {"color": "blue", "fontcolor": "blue"}
     kw_data_to_evict = {}
     kw_data_in_solution = {"style": ["filled"], "fillcolor": Ref("fill_color")}
     kw_data_evicted = {"color": Ref("evicted"), "tooltip": "(evicted)"}
@@ -810,6 +811,7 @@ class Plotter:
         from .op import Operation
 
         style = self.style
+        graph = plot_args.graph
         nx_node = node_args.nx_node
         node_attrs = node_args.node_attrs
         (plottable, _, _, steps, inputs, outputs, solution, *_,) = plot_args
@@ -828,6 +830,11 @@ class Plotter:
             styles.append(
                 {"name": quote_node_id(nx_node), "shape": shape,}
             )
+
+            if any(d for _, _, d in graph.out_edges(nx_node, "sideffect")) or any(
+                d for _, _, d in graph.in_edges(nx_node, "sideffect")
+            ):
+                styles.append(style.kw_data_sideffect)
 
             is_pruned = (
                 (
