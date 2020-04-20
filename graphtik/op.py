@@ -24,7 +24,7 @@ from .base import (
     jetsam,
 )
 from .config import is_debug, is_reschedule_operations, is_solid_true
-from .modifiers import arg, optional, sideffect, vararg, varargs
+from .modifiers import kw, optional, sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
 
@@ -458,7 +458,7 @@ class FunctionalOperation(Operation):
                     ## TODO: augment modifiers with "retrievers" from `inputs`.
                     inp_value = named_inputs[n]
 
-                    if isinstance(n, arg):  # includes `optionals`
+                    if isinstance(n, kw):  # includes `optionals`
                         kwargs[n if n.fn_arg is None else n.fn_arg] = inp_value
 
                     elif isinstance(n, vararg):

@@ -9,9 +9,9 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 import re
 
 
-class arg(str):
+class kw(str):
     """
-    Annotate a :term:`needs` to map from its name in the `inputs` to a different argument-name.
+    Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
 
     :param fn_arg:
         The argument-name corresponding to this named-input.
@@ -25,16 +25,16 @@ class arg(str):
 
     In case the name of the function arguments is different from the name in the
     `inputs` (or just because the name in the `inputs` is not a valid argument-name),
-    you may *map* it with the 2nd argument of :class:`.arg` (or :class:`.optional`):
+    you may *map* it with the 2nd argument of :class:`.kw` (or :class:`.optional`):
 
-        >>> from graphtik import operation, compose, arg, debug
+        >>> from graphtik import operation, compose, kw, debug
 
         >>> def myadd(a, *, b):
         ...    return a + b
 
         >>> graph = compose('mygraph',
         ...     operation(name='myadd',
-        ...               needs=['a', arg("name-in-inputs", "b")],
+        ...               needs=['a', kw("name-in-inputs", "b")],
         ...               provides="sum")(myadd)
         ... )
         >>> with debug(True):
@@ -42,7 +42,7 @@ class arg(str):
         NetworkOperation('mygraph', needs=['a', 'name-in-inputs'], provides=['sum'], x1 ops:
           +--FunctionalOperation(name='myadd',
                                  needs=['a',
-                                 arg('name-in-inputs'-->'b')],
+                                 kw('name-in-inputs'-->'b')],
                                  provides=['sum'],
                                  fn='myadd'))
         >>> graph.compute({"a": 5, "name-in-inputs": 4})['sum']
@@ -61,10 +61,10 @@ class arg(str):
 
     def __repr__(self):
         inner = self if self.fn_arg is None else f"{self}'-->'{self.fn_arg}"
-        return f"arg('{inner}')"
+        return f"kw('{inner}')"
 
 
-class optional(arg):
+class optional(kw):
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
@@ -101,7 +101,7 @@ class optional(arg):
         >>> graph(a=5)
         {'a': 5, 'sum': 5}
 
-    Like :class:`.arg` you may map input-name to a different function-argument:
+    Like :class:`.kw` you may map input-name to a different function-argument:
 
         >>> from graphtik import debug
 
