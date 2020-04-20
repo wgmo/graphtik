@@ -494,6 +494,7 @@ class Style:
     ##########
     ## Other
 
+    skip_steps = False
     kw_step = {
         "style": "dotted",  # Note: Step styles are not *remerged*.`
         "color": Ref("steps_color"),
@@ -777,8 +778,9 @@ class Plotter:
             edge = pydot.Edge(src=src_name, dst=dst_name, **remerge_styles(*styles))
             dot.add_edge(edge)
 
-        # draw steps sequence
-        if steps and len(steps) > 1:
+        ## Draw steps sequence, if it's worth it.
+        #
+        if steps and len(steps) > 2 and not style.skip_steps:
             it1 = iter(steps)
             it2 = iter(steps)
             next(it2)
