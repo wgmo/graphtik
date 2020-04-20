@@ -479,6 +479,15 @@ class Style:
     ##########
     ## Other
 
+    kw_step = {
+        "style": "dotted",
+        "color": Ref("steps_color"),
+        "fontcolor": Ref("steps_color"),
+        "fontname": "bold",
+        "fontsize": 18,
+        "arrowhead": "vee",
+        "splines": True,
+    }
     #: If ``'URL'``` key missing/empty, no legend icon included in plots.
     kw_legend = {
         "name": "legend",
@@ -647,16 +656,7 @@ class Plotter:
                 src_name = get_node_name(src)
                 dst_name = get_node_name(dst)
                 edge = pydot.Edge(
-                    src=src_name,
-                    dst=dst_name,
-                    label=str(i),
-                    style="dotted",
-                    color=style.steps_color,
-                    fontcolor=style.steps_color,
-                    fontname="bold",
-                    fontsize=18,
-                    arrowhead="vee",
-                    splines=True,
+                    src=src_name, dst=dst_name, label=str(i), **style.kw_step
                 )
                 dot.add_edge(edge)
 
