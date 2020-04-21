@@ -101,9 +101,6 @@ extlinks = {
     "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#"),
 }
 
-# Save dot files, for debug.
-graphtik_save_dot_files = True
-
 # Plot graphtik SVGs with links to docs.
 plot.set_active_plotter(
     plot.get_active_plotter().with_styles(
