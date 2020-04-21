@@ -212,6 +212,7 @@ def test_plot_formats(pipeline, tmp_path):
         raise AssertionError("Failed pydot formats: %s" % "".join(sorted(dupe_errs)))
 
 
+@active_plotter_plugged(Plotter(include_steps=True))
 def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     # Plotting original network, no plan.
     base_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))

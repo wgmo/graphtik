@@ -260,10 +260,6 @@ When executed, the pipeline does not completely fail:
    {'time': '1h', 'fun': 'relaxed'}
 
 .. graphtik::
-   :hide:
-
-   >>> from graphtik.plot import Plotter
-   >>> dot = sol.plot(plotter=Plotter(skip_steps=1))
 
 And you can collect the failures (see also :meth:`.Solution.check_if_incomplete()`):
 
@@ -312,21 +308,14 @@ actual `provides` delivered.
 
 Depending on "quarantine' state we get to execute different part of the pipeline:
 
+.. graphtik::
+
    >>> sol = netop(quarantine=True)
 
 .. graphtik::
-   :hide:
-
-   >>> dot = sol.plot(plotter=Plotter(skip_steps=1))
-
-..
 
    >>> sol = netop(quarantine=False)
 
-.. graphtik::
-   :hide:
-
-   >>> dot = sol.plot(plotter=Plotter(skip_steps=1))
 
 In both case, a warning gets raised about the missing outputs, but the execution
 proceeds regularly to what is possible to evaluate.

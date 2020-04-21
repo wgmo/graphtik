@@ -502,7 +502,7 @@ class Style:
     ##########
     ## Other
 
-    skip_steps = False
+    include_steps = False
     kw_step = {
         "style": "dotted",  # Note: Step styles are not *remerged*.`
         "color": Ref("steps_color"),
@@ -798,7 +798,7 @@ class Plotter:
 
         ## Draw steps sequence, if it's worth it.
         #
-        if steps and len(steps) > 2 and not style.skip_steps:
+        if steps and style.include_steps and len(steps) > 1:
             it1 = iter(steps)
             it2 = iter(steps)
             next(it2)
