@@ -606,7 +606,7 @@ class Plottable(abc.ABC):
         digraph netop {
         fontname=italic;
         label=<netop>;
-        <a> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
+        <a> [fillcolor=wheat, margin="0.02,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
         ...
 
         .. graphtik::

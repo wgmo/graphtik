@@ -374,7 +374,9 @@ class Theme:
     ##########
     ## DATA node
 
-    kw_data = {}
+    #: Reduce margins, since sideffects take a lost of space
+    #: (default margin: x=0.11, y=0.055O)
+    kw_data = {"margin": "0.02,0.02"}
     #: SHAPE change if with inputs/outputs,
     #: see https://graphviz.gitlab.io/_pages/doc/info/shapes.html
     kw_data_io_choice = {
