@@ -238,8 +238,8 @@ are raising errors:
 
 .. Hint::
    Notice the exclamation(``!``) before the parenthesis in the string representation &
-   tooltip of the operations, or its thick outlines, both signifying :term:`reschedule`\d
-   operations.
+   tooltip of the operations, or its thick outlines, both signifying :term:`endured`
+   or :term:`reschedule`\d (see below) operations.
 
 When executed, the pipeline does not completely fail:
 
@@ -288,11 +288,6 @@ actual `provides` delivered.
    ...     return "relaxed"
 
    >>> netop = compose("covid19", get_out_or_stay_home, exercise, read_book)
-
-.. Hint::
-   Notice the questionmark(``?``) before the parenthesis in the string representation &
-   tooltip of the operation, or its thick outlines, both signifying :term:`reschedule`\d
-   operations.
 
 Depending on "quarantine' state we get to execute different part of the pipeline:
 
