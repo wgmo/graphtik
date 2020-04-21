@@ -281,12 +281,26 @@ Configurations
    is missing.
    If empty, ``{}`` assumed (library's default options).
 
+
 .. confval:: graphtik_plot_keywords
 
    - type: `dict`
    - default: ``{}``
 
    Arguments or :func:`.build_pydot()` to apply when rendering plottables.
+
+
+.. confval:: graphtik_save_dot_files
+   - type: `bool`, `None`
+   - default: ``None``
+
+   For debugging purposes, stores another :file:`<img>.txt` file next to each image file
+   with the DOT text that produced it.
+
+   When ``none`` (default), controlled by :func:`.config.is_debug` from
+   :term:`configurations` (which by default obeys to :envvar:`GRAPHTIK_DEBUG`
+   environment variable), otherwise, any boolean takes precedence here.
+
 
 .. confval:: graphtik_warning_is_error
 

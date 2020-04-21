@@ -67,7 +67,14 @@ is_debug = partial(_getter, _debug)
 """see :func:`set_debug()`"""
 set_debug = partial(_tristate_set, _debug)
 """
-When true, increase details on string-representation of network objects and errors
+When true, increase details on string-representation of network objects and errors.
+
+Specifically:
+
++ net objects print details recursively;
++ plotted SVG diagrams include style-provenance as tooltips;
++ Sphinx extension also saves the original DOT file next to each image
+  (see :confval:`graphtik_save_dot_files`).
 
 .. Note::
     The default is controlled with :envvar:`GRAPHTIK_DEBUG` environment variable.

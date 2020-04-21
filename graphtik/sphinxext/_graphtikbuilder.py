@@ -15,6 +15,7 @@ from sphinx.locale import _, __
 from sphinx.util import logging
 
 from ..base import Plottable
+from ..config import is_debug
 from ..network import Solution
 from . import doctestglobs, dynaimage, graphtik_node
 
@@ -153,13 +154,17 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         fname = f"graphtik-{hasher.hexdigest()}.{img_format}"
         abs_fpath = Path(self.outdir, self.imagedir, fname)
 
+        save_dot_files = self.config.graphtik_save_dot_files
+        if save_dot_files is None:
+            save_dot_files = is_debug()
+
         ## Do not re-write images, that have content-named path,
         #  so they are never out-of-date.
         #
         self.env.graphtik_image_purgatory.register_doc_fpath(
             self.env.docname, abs_fpath
         )
-        if self.config.graphtik_save_dot_files:
+        if save_dot_files:
             self.env.graphtik_image_purgatory.register_doc_fpath(
                 self.env.docname, abs_fpath.with_suffix(".txt")
             )
@@ -169,7 +174,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
             ## Save dot-file before rendering,
             #  to still have it in case of errors.
             # #
-            if self.config.graphtik_save_dot_files:
+            if save_dot_files:
                 with open(abs_fpath.with_suffix(".txt"), "w") as f:
                     f.write(str(dot))
             dot.write(abs_fpath, format=img_format)

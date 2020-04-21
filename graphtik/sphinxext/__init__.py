@@ -493,7 +493,7 @@ def setup(app: Sphinx):
     app.add_config_value("graphtik_plot_keywords", {}, "html", [cabc.Mapping])
     app.add_config_value("graphtik_zoomable", True, "html", [bool])
     app.add_config_value("graphtik_warning_is_error", False, "html", [bool])
-    app.add_config_value("graphtik_save_dot_files", False, "html", [bool])
+    app.add_config_value("graphtik_save_dot_files", None, "html", [bool])
     app.add_config_value(
         "graphtik_zoomable_options",
         "{controlIconsEnabled: true, fit: true}",
