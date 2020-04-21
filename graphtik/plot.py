@@ -375,6 +375,14 @@ class Theme:
     ## DATA node
 
     kw_data = {}
+    #: SHAPE change if with inputs/outputs,
+    #: see https://graphviz.gitlab.io/_pages/doc/info/shapes.html
+    kw_data_io_choice = {
+        0: {"shape": "rect"},  # no IO
+        1: {"shape": "invhouse"},  # Inp
+        2: {"shape": "house"},  # Out
+        3: {"shape": "hexagon"},  # Inp/Out
+    }
     kw_data_pruned = {
         "fontcolor": Ref("pruned_color"),
         "color": Ref("pruned_color"),
@@ -779,7 +787,7 @@ class Plotter:
 
         plottable_type = type(plot_args.plottable).__name__.split(".")[-1]
         styles.add(
-            plottable_type,
+            f"kw_graph_plottable_type-{plottable_type}",
             theme.kw_graph_plottable_type.get(
                 plottable_type, theme.kw_graph_plottable_type_unknown
             ),
@@ -894,14 +902,14 @@ class Plotter:
             styles = self._new_styles_stack()
 
             styles.add("kw_data")
+            styles.add("node-name", {"name": quote_node_id(nx_node)})
 
-            # SHAPE change if with inputs/outputs.
-            # tip: https://graphviz.gitlab.io/_pages/doc/info/shapes.html
-            choice = _merge_conditions(
+            io_choice = _merge_conditions(
                 inputs and nx_node in inputs, outputs and nx_node in outputs
             )
-            shape = "rect invhouse house hexagon".split()[choice]
-            styles.add("node-code", {"name": quote_node_id(nx_node), "shape": shape,})
+            styles.add(
+                f"kw_data_io_choice: {io_choice}", theme.kw_data_io_choice[io_choice]
+            )
 
             ## Data-kind
             #
@@ -934,15 +942,15 @@ class Plotter:
 
                 if solution is not None:
                     if nx_node in solution:
-                        styles.add("kw_data_in_solution")
-                        if nx_node in solution.overwrites:
-                            styles.add("kw_data_overwritten")
-
                         data_tooltip = self._make_data_value_tooltip(
                             plot_args, node_args
                         )
                         if data_tooltip:
                             styles.add("node-code", {"tooltip": data_tooltip})
+
+                        styles.add("kw_data_in_solution")
+                        if nx_node in solution.overwrites:
+                            styles.add("kw_data_overwritten")
 
                     elif nx_node not in steps:
                         styles.add("kw_data_canceled")
