@@ -14,7 +14,7 @@ __author__ = "hnguyen, ankostis"
 from .base import NO_RESULT
 from .config import (
     abort_run,
-    debug,
+    debug_enabled,
     evictions_skipped,
     execution_pool_plugged,
     get_execution_pool,

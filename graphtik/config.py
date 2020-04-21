@@ -54,7 +54,7 @@ def _tristate_armed(context_var: ContextVar, enabled):
         context_var.reset(resetter)
 
 
-debug = partial(_tristate_armed, _debug)
+debug_enabled = partial(_tristate_armed, _debug)
 """
 Like :func:`set_debug()` as a context-manager, resetting back to old value.
 """

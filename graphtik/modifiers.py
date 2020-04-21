@@ -27,7 +27,7 @@ class kw(str):
     `inputs` (or just because the name in the `inputs` is not a valid argument-name),
     you may *map* it with the 2nd argument of :class:`.kw` (or :class:`.optional`):
 
-        >>> from graphtik import operation, compose, kw, debug
+        >>> from graphtik import operation, compose, kw, debug_enabled
 
         >>> def myadd(a, *, b):
         ...    return a + b
@@ -37,7 +37,7 @@ class kw(str):
         ...               needs=['a', kw("name-in-inputs", "b")],
         ...               provides="sum")(myadd)
         ... )
-        >>> with debug(True):
+        >>> with debug_enabled(True):
         ...     graph
         NetworkOperation('mygraph', needs=['a', 'name-in-inputs'], provides=['sum'], x1 ops:
           +--FunctionalOperation(name='myadd',
@@ -103,14 +103,14 @@ class optional(kw):
 
     Like :class:`.kw` you may map input-name to a different function-argument:
 
-        >>> from graphtik import debug
+        >>> from graphtik import debug_enabled
 
         >>> graph = compose('mygraph',
         ...     operation(name='myadd',
         ...               needs=['a', optional("quasi-real", "b")],
         ...               provides="sum")(myadd)
         ... )
-        >>> with debug(True):
+        >>> with debug_enabled(True):
         ...     graph
         NetworkOperation('mygraph', needs=['a', optional('quasi-real')], provides=['sum'], x1 ops:
           +--FunctionalOperation(name='myadd', needs=['a', optional('quasi-real'-->'b')], provides=['sum'], fn='myadd'))
@@ -133,7 +133,7 @@ class vararg(str):
 
     **Example:**
 
-        >>> from graphtik import operation, compose, vararg, debug
+        >>> from graphtik import operation, compose, vararg, debug_enabled
 
         >>> def addall(a, *b):
         ...    return a + sum(b)
@@ -148,7 +148,7 @@ class vararg(str):
         ...               provides='sum'
         ...     )(addall)
         ... )
-        >>> with debug(True):
+        >>> with debug_enabled(True):
         ...     graph
         NetworkOperation('mygraph',
                          needs=['a', optional('b'), optional('c')],
