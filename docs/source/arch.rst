@@ -10,6 +10,7 @@ Architecture
 
     compute
     computation
+    phase
         |v410-flowchart|
         The definition & execution of networked operation is split in 1+2 phases:
 
@@ -44,7 +45,7 @@ Architecture
 
     compose
     composition
-        The *phase* where `operation`\s are constructed and grouped into `netop`\s and
+        The :term:`phase` where `operation`\s are constructed and grouped into `netop`\s and
         corresponding `network`\s.
 
         .. Tip::
@@ -55,14 +56,14 @@ Architecture
 
     compile
     compilation
-        The *phase* where the :class:`.Network` creates a new `execution plan`
+        The :term:`phase` where the :class:`.Network` creates a new `execution plan`
         by `pruning` all `graph` nodes into a subgraph `dag`, and  deriving
         the `execution steps`.
 
     execute
     execution
     sequential
-        The *phase* where the :class:`.ExecutionPlan` calls the underlying functions
+        The :term:`phase` where the :class:`.ExecutionPlan` calls the underlying functions
         of all `operation`\s contained in `execution steps`, with `inputs`/`outputs`
         taken from the `solution`.
 
@@ -82,7 +83,7 @@ Architecture
         Operations and `netop` are marked as such on construction, or enabled globally
         from `configurations`.
 
-        Note that `sideffects` are not expected to function with *process pools*,
+        Note a `sideffects` are not expected to function with *process pools*,
         certainly not when `marshalling` is enabled.
 
     process pool
@@ -180,7 +181,8 @@ Architecture
 
     overwrites
         Values in the `solution` that have been written by more than one `operation`\s,
-        accessed by :attr:`.Solution.overwrites`:
+        accessed by :attr:`.Solution.overwrites`.
+        Note that `sideffected` dependencies are, by definition, *overwrites*.
 
     net
     network
@@ -227,24 +229,25 @@ Architecture
         of outputs/provides takes place.
 
     operation
+    dependency
         Either the abstract notion of an action with specified `needs` and `provides`,
-        or the concrete wrapper :class:`.FunctionalOperation` for arbitrary functions
+        *dependencies*, or the concrete wrapper :class:`.FunctionalOperation` for
         (any :func:`callable`), that feeds on `inputs` and update `outputs`,
         from/to `solution`, or given-by/returned-to the user by a `netop`.
 
         The distinction between *needs*/*provides* and *inputs*/*outputs* is akin to
-        function *parameters* and *arguments* during define-time and run-time.
+        function *parameters* and *arguments* during define-time and run-time,
+        respectively.
 
     netop
     network operation
         The :class:`.NetworkOperation` class holding a `network` of `operation`\s.
 
     needs
-        A list of (positionally ordered) names of the data needed by an `operation`
-        to receive as `inputs`, roughly corresponding to the arguments of
-        the underlying callable.  The corresponding data-values will be extracted
-        from `solution` (or given by the user) when :meth:`.Operation.compute()`
-        is called during `execution`.
+        A list of (positionally ordered) `dependency` names an `operation`'s
+        underlying callable requires as input arguments.  The respective `input <inputs>`
+        values will be extract from `solution` (or directly given by the user) when
+        :meth:`.Operation.compute()` is called during `execution`.
 
         `modifiers` may annotate certain names as `optionals`, `sideffects`,
         or map them to differently named function arguments.
@@ -252,10 +255,10 @@ Architecture
         The `graph` is laid out by matching the *needs* & `provides` of all *operations*.
 
     provides
-        A list of names to be zipped with the data-values produced when the `operation`'s
-        underlying callable executes.  The resulting `outputs` dictionary will be
-        stored into the `solution` or returned to the user after :meth:`.Operation.compute()`
-        is called during `execution`.
+        A list of `dependency` names to be zipped with the `output <outputs>` values
+        produced when the `operation`'s underlying callable executes.
+        The resulting dictionary will be stored into the `solution` or returned
+        to the user after :meth:`.Operation.compute()` is called during `execution`.
 
         `modifiers` may annotate certain names as `sideffects`.
 
@@ -275,9 +278,23 @@ Architecture
 
     sideffects
         Fictive `needs` or `provides` not consumed/produced by the underlying function
-        of an `operation`, annotated with :class:`.sideffect`.
+        of an `operation`.
         A *sideffect* participates in the `compilation` of the graph, and is updated
         into the `solution`, but is never given/asked to/from functions.
+
+        - An *abstract* *sideffect*, unrelated to any other `dependency` is annotated
+          with :class:`.sideffect` modifier. `sideffected` dependency.
+        - An *sideffect* applied on an existing `dependency` is annotated on that
+          with :class:`.sideffected` modifier.
+
+    sideffected
+        An existing `dependency` that is linked to some `sideffects`.
+
+        In all cases, the *dependency* must be declared in the `needs`.
+        If it's the operation that applies the side-effect modification, then
+        it must be declared also in its `provides`.
+
+        All *sideffected* `outputs` are, by definition, `overwrites`.
 
     prune
     pruning
