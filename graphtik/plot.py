@@ -495,6 +495,7 @@ class Style:
     kw_edge = {}
     kw_edge_optional = {"style": ["dashed"]}
     kw_edge_sideffect = {"color": "blue"}
+    kw_edge_pruned = {"color": Ref("pruned_color")}
     kw_edge_rescheduled = {"style": ["dashed"]}
     kw_edge_endured = {"style": ["dashed"]}
     kw_edge_broken = {"color": Ref("broken_color")}
@@ -787,6 +788,8 @@ class Plotter:
 
             ## Edge-state
             #
+            if graph.nodes[src].get("_pruned") or graph.nodes[dst].get("_pruned"):
+                styles.append(style.kw_edge_pruned)
             if (
                 solution is not None
                 and (src, dst) not in solution.dag.edges
@@ -888,6 +891,7 @@ class Plotter:
                     not steps or nx_node not in steps
                 ), f"Given `steps` missmatch `plan` and/or `solution`!\n  {plot_args}"
                 styles.append(style.kw_data_pruned)
+                graph.nodes[nx_node]["_pruned"] = True  # Signal to edge-plotting.
             else:
                 if steps and nx_node in steps:
                     styles.append(style.kw_data_to_evict)
