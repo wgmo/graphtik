@@ -422,11 +422,13 @@ deeply nested stacks is notoriously hard
 As an aid, you may either increase the logging verbosity, enable the :func:`.set_debug()`
 :term:`configurations` function, or both.
 
-.. Tip::
-   The various :mod:`.network` objects & exceptions print augmented string-representations
-   when :func:`.debug` flag is enabled.  Actually you may wrap the code you are
-   interested in with this flag as "context-manager", to get augmented print-outs
-   for selected code-paths only.
+   .. Tip::
+      The various :mod:`.network` objects & exceptions print augmented string-representations
+      when :func:`.config.set_debug` flag, which you may enable it with :envvar:`GRAPHTIK_DEBUG`
+      environment variable.
+
+      From code you may wrap the code you are interested in with :func:`.config.debug_enabled`
+      "context-manager", to get augmented print-outs for selected code-paths only.
 
 Additionally, when some operation fails, the original exception gets annotated
 with the following properties, as a debug aid:

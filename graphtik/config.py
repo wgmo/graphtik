@@ -10,6 +10,7 @@
     until they are actually needed.
 """
 import ctypes
+import os
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import partial
@@ -18,7 +19,11 @@ from typing import Optional
 
 from boltons.iterutils import first
 
-_debug: ContextVar[Optional[bool]] = ContextVar("debug", default=False)
+_debug_env_var = os.environ.get("GRAPHTIK_DEBUG")
+_debug: ContextVar[Optional[bool]] = ContextVar(
+    "debug",
+    default=_debug_env_var and (_debug_env_var.lower() not in "0 false off no".split()),
+)
 _abort: ContextVar[Optional[bool]] = ContextVar(
     "abort", default=Value(ctypes.c_bool, lock=False)
 )
@@ -62,7 +67,10 @@ is_debug = partial(_getter, _debug)
 """see :func:`set_debug()`"""
 set_debug = partial(_tristate_set, _debug)
 """
-When true, string-representation of network objects and errors become more detailed.
+When true, increase details on string-representation of network objects and errors
+
+.. Note::
+    The default is controlled with :envvar:`GRAPHTIK_DEBUG` environment variable.
 
 Note that enabling this flag is different from enabling logging in DEBUG,
 since it affects all code (eg interactive printing in debugger session,
