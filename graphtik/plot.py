@@ -771,7 +771,9 @@ class Plotter:
                 styles.append(style.kw_edge_sideffect)
 
             is_broken = (
-                solution is not None and dst not in solution and dst not in steps
+                solution is not None
+                and (src, dst) not in solution.dag.edges
+                and (src, dst) in solution.plan.dag.edges
             )
             if getattr(src, "rescheduled", None):
                 styles.append(style.kw_edge_rescheduled)
