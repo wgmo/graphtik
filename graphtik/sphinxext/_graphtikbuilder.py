@@ -166,13 +166,16 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
 
         if not abs_fpath.is_file():
             abs_fpath.parent.mkdir(parents=True, exist_ok=True)
+            ## Save dot-file before rendering,
+            #  to still have it in case of errors.
+            # #
+            if self.config.graphtik_save_dot_files:
+                with open(abs_fpath.with_suffix(".txt"), "w") as f:
+                    f.write(str(dot))
             dot.write(abs_fpath, format=img_format)
             if img_format == "png":
                 cmap = dot.create(format="cmapx", encoding="utf-8").decode("utf-8")
                 node.cmap = cmap
-            if self.config.graphtik_save_dot_files:
-                with open(abs_fpath.with_suffix(".txt"), "w") as f:
-                    f.write(str(dot))
 
         ## XXX: used to work till active-builder attributes were transfered to self.
         # rel_fpath = Path(self.imgpath, fname)
