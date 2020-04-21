@@ -425,8 +425,16 @@ class Style:
     kw_op_label = {}
     kw_op_pruned = {"color": Ref("pruned_color"), "fontcolor": Ref("pruned_color")}
     kw_op_executed = {"fillcolor": Ref("fill_color")}
-    kw_op_rescheduled = {"penwidth": Ref("resched_thickness")}
-    kw_op_endured = {"penwidth": Ref("resched_thickness")}
+    kw_op_endured = {
+        "penwidth": Ref("resched_thickness"),
+        "style": ["dashed"],
+        "tooltip": "(rescheduled)",
+    }
+    kw_op_rescheduled = {
+        "penwidth": Ref("resched_thickness"),
+        "style": ["dashed"],
+        "tooltip": "(rescheduled)",
+    }
     kw_op_failed = {"fillcolor": Ref("failed_color"), "tooltip": "(failed)"}
     kw_op_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": "(canceled)"}
     #: Applied only if :attr:`py_item_url_format` defined, or
@@ -487,8 +495,8 @@ class Style:
     kw_edge = {}
     kw_edge_optional = {"style": ["dashed"]}
     kw_edge_sideffect = {"color": "blue"}
-    kw_edge_rescheduled = {"style": ["dotted"]}
-    kw_edge_endured = {"style": ["dotted"]}
+    kw_edge_rescheduled = {"style": ["dashed"]}
+    kw_edge_endured = {"style": ["dashed"]}
     kw_edge_broken = {"color": Ref("broken_color")}
 
     ##########
