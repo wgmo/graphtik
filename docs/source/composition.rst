@@ -77,7 +77,8 @@ You may plot the solution:
 Producing a subset of outputs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, calling a graph-operation on a set of inputs will yield all of that graph's outputs.
+By default, calling a graph-operation on a set of inputs will yield all of
+that graph's :term:`outputs`.
 You can use the ``outputs`` parameter to request only a subset.
 For example, if ``graphop`` is as above:
 
@@ -88,9 +89,27 @@ For example, if ``graphop`` is as above:
 
 .. graphtik::
 
-When using ``outputs`` to request only a subset of a graph's outputs, Graphtik executes
-only the ``operation`` nodes in the graph that are on a path from the inputs to the requested outputs.
-For example, the ``abspow1`` operation will not be executed here.
+When asking a subset of the graph's `outputs`, Graphtik does 2 things:
+
+- it :term:`prune`\s any :term:`operation`\s that are not on the path from
+  given :term:`inputs` to the requested `outputs` (e.g. the ``abspow1`` operation, above,
+  is not executed);
+- it :term:`evicts <evictions>` any intermediate data from :term:`solution` as soon as
+  they are not needed.
+
+You may see (2) in action by including the sequence of :term:`execution steps`
+into the plot:
+
+.. graphtik::
+
+   >>> from graphtik.plot import Plotter
+
+   >>> dot = out.plot(plotter=Plotter(include_steps=True))
+
+.. tip:
+   Read :ref:`plot-customizations` to understand the trick with the :term:`plotter`.
+
+
 
 Short-circuiting a graph computation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -118,6 +137,88 @@ that accepts as input a string of raw image data and converts that data into the
 Then, you can either provide the raw image data string as input, or you can provide
 the ``PIL.Image`` if you have it and skip providing the image data string.
 
+
+Extending existing computation graphs
+-------------------------------------
+
+Sometimes you will have an existing computation graph to which you want to add operations.
+This is simple, since ``compose`` can compose whole graphs along with individual ``operation`` instances.
+For example, if we have ``graph`` as above, we can add another operation to it
+to create a new graph:
+
+   >>> # Add another subtraction operation to the graph.
+   >>> bigger_graph = compose("bigger_graph",
+   ...    graphop,
+   ...    operation(name="sub2", needs=["a_minus_ab", "c"], provides="a_minus_ab_minus_c")(sub)
+   ... )
+
+.. graphtik::
+
+Run the graph and print the output:
+
+   >>> sol = bigger_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["a_minus_ab_minus_c"])
+   >>> sol
+   {'a_minus_ab_minus_c': -13}
+
+
+.. graphtik::
+
+
+
+Merging computation graphs
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Sometimes you will have two computation graphs---perhaps ones that share operations---you want to combine into one.
+In the simple case, where the graphs don't share operations or where you don't care
+whether a duplicated operation is run multiple (redundant) times,
+you can just do something like this:
+
+.. code-block::
+
+   combined_graph = compose("combined_graph", graph1, graph2)
+
+However, if you want to combine graphs that share operations and don't want to pay the price
+of running redundant computations, you can set the ``merge`` parameter of ``compose()`` to ``True``.
+This will consolidate redundant ``operation`` nodes (based on ``name``) into a single node.
+For example, let's say we have ``graphop``, as in the examples above, along with this graph:
+
+   >>> # This graph shares the "mul1" operation with graph.
+   >>> another_graph = compose("another_graph",
+   ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
+   ...    operation(name="mul2", needs=["c", "ab"], provides=["cab"])(mul)
+   ... )
+   >>> another_graph
+   NetworkOperation('another_graph', needs=['a', 'b', 'c', 'ab'], provides=['ab', 'cab'], x2 ops: mul1, mul2)
+
+.. graphtik::
+   :name: another_graph
+
+We can merge :graphtik:`graphop` and :graphtik:`another_graph` like so, avoiding a redundant ``mul1`` operation:
+
+.. Note::
+
+   The *names* of the graphs must differ.
+
+>>> merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
+>>> print(merged_graph)
+NetworkOperation('merged_graph',
+                  needs=['a', 'b', 'ab', 'a_minus_ab', 'c'],
+                  provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'],
+                  x4 ops:  mul1, sub1, abspow1, mul2)
+
+.. graphtik::
+
+As always, we can run computations with this graph by simply calling it:
+
+   >>> sol = merged_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["cab"])
+   >>> sol
+   {'cab': 50}
+
+.. graphtik::
+
+
+Advanced pipelines
+------------------
 Resilience on errors (*endured*)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 It is possible for pipeline persist executing operations, even if some of them
@@ -229,82 +330,3 @@ Depending on "quarantine' state we get to execute different part of the pipeline
 
 In both case, a warning gets raised about the missing outputs, but the execution
 proceeds regularly to what is possible to evaluate.
-
-
-Adding on to an existing computation graph
-------------------------------------------
-
-Sometimes you will have an existing computation graph to which you want to add operations.
-This is simple, since ``compose`` can compose whole graphs along with individual ``operation`` instances.
-For example, if we have ``graph`` as above, we can add another operation to it
-to create a new graph:
-
-   >>> # Add another subtraction operation to the graph.
-   >>> bigger_graph = compose("bigger_graph",
-   ...    graphop,
-   ...    operation(name="sub2", needs=["a_minus_ab", "c"], provides="a_minus_ab_minus_c")(sub)
-   ... )
-
-.. graphtik::
-
-Run the graph and print the output:
-
-   >>> sol = bigger_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["a_minus_ab_minus_c"])
-   >>> sol
-   {'a_minus_ab_minus_c': -13}
-
-
-.. graphtik::
-
-
-
-More complicated composition: merging computation graphs
-----------------------------------------------------------
-
-Sometimes you will have two computation graphs---perhaps ones that share operations---you want to combine into one.
-In the simple case, where the graphs don't share operations or where you don't care
-whether a duplicated operation is run multiple (redundant) times,
-you can just do something like this:
-
-.. code-block::
-
-   combined_graph = compose("combined_graph", graph1, graph2)
-
-However, if you want to combine graphs that share operations and don't want to pay the price
-of running redundant computations, you can set the ``merge`` parameter of ``compose()`` to ``True``.
-This will consolidate redundant ``operation`` nodes (based on ``name``) into a single node.
-For example, let's say we have ``graphop``, as in the examples above, along with this graph:
-
-   >>> # This graph shares the "mul1" operation with graph.
-   >>> another_graph = compose("another_graph",
-   ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-   ...    operation(name="mul2", needs=["c", "ab"], provides=["cab"])(mul)
-   ... )
-   >>> another_graph
-   NetworkOperation('another_graph', needs=['a', 'b', 'c', 'ab'], provides=['ab', 'cab'], x2 ops: mul1, mul2)
-
-.. graphtik::
-   :name: another_graph
-
-We can merge :graphtik:`graphop` and :graphtik:`another_graph` like so, avoiding a redundant ``mul1`` operation:
-
-.. Note::
-
-   The *names* of the graphs must differ.
-
->>> merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
->>> print(merged_graph)
-NetworkOperation('merged_graph',
-                  needs=['a', 'b', 'ab', 'a_minus_ab', 'c'],
-                  provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'],
-                  x4 ops:  mul1, sub1, abspow1, mul2)
-
-.. graphtik::
-
-As always, we can run computations with this graph by simply calling it:
-
-   >>> sol = merged_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["cab"])
-   >>> sol
-   {'cab': 50}
-
-.. graphtik::

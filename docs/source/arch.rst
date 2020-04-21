@@ -151,9 +151,11 @@ Architecture
         The only *instruction* step is for performing `evictions`.
 
     evictions
-        The :class:`._EvictInstruction` `steps` erase items from
-        `solution` as soon as they are not needed further down the dag,
-        to reduce memory footprint while computing.
+        A memory footprint optimization where intermediate `inputs` & `outputs`
+        are erased from `solution` as soon as they are not needed further down the `dag`.
+
+        *Evictions* are pre-calculated during `compilation`, where :class:`._EvictInstruction`
+        `steps` are inserted in the `execution plan`.
 
     solution
         A :class:`.Solution` instance created internally by :meth:`.NetworkOperation.compute()`
