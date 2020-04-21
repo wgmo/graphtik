@@ -492,7 +492,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         label="after pruning";
         <edge> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 1"];
         <digraph&#58; strict> [fillcolor=wheat, shape=invhouse, style=filled, tooltip="(int) 2"];
-        <&lt;graph&gt;> [fillcolor=SkyBlue, shape=house, style=filled, tooltip=None];
+        <&lt;graph&gt;> [fillcolor=SkyBlue, shape=house, style=filled, tooltip="(None)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"

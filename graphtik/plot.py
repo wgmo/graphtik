@@ -41,6 +41,7 @@ import pydot
 from boltons.iterutils import default_enter, default_visit, get_path, remap
 
 from .base import PlotArgs, func_name, func_source
+from .config import is_debug
 from .modifiers import optional
 from .netop import NetworkOperation
 from .network import ExecutionPlan, Network, Solution, _EvictInstruction
@@ -360,7 +361,7 @@ class Theme:
         # "splines": "ortho",
     }
     #: styles per plot-type
-    kw_pottable_type = {
+    kw_graph_plottable_type = {
         "NetworkOperation": {},
         "Network": {},
         "ExecutionPlan": {},
@@ -368,11 +369,7 @@ class Theme:
     }
     #: For when type-name of :attr:`PlotArgs.plottable` is not found
     #: in :attr:`.kw_plottable_type` ( ot missing altogether).
-    kw_pottable_type_unknown = {}
-    kw_graph_netop = {}
-    kw_graph_net = {}
-    kw_graph_plan = {}
-    kw_graph_solution = {}
+    kw_graph_plottable_type_unknown = {}
 
     ##########
     ## DATA node
@@ -443,7 +440,7 @@ class Theme:
                 <TR>
                     <TD BORDER="1" SIDES="b" ALIGN="left"
                       {{- {
-                      'TOOLTIP': op_tooltip | truncate | eee,
+                      'TOOLTIP': (tooltip or op_tooltip) | truncate | eee,
                       'HREF': op_url | hrefer | ee,
                       'TARGET': op_link_target | e
                       } | xmlattr }}
@@ -680,16 +677,54 @@ def remerge(*containers, source_map: list = None):
     return ret
 
 
-def remerge_styles(*containers, **kw):
-    """Patch pydot-cstor not supporting styles-as-lists (pydot/pydot#228))."""
-    d = remerge(*containers, **kw)
-    assert isinstance(d, dict), d
+class StylesStack(NamedTuple):
+    """A stack of mergeable dicts and their provenance, auto-deduced from a :class:`Theme`."""
 
-    style = d.get("style")
-    if isinstance(style, (list, tuple)):
-        d["style"] = ",".join(str(i) for i in set(style))
+    #: The style instance to read style-attributes from,
+    #: when a style is given as string.
+    theme: Theme
+    #: A list of 2-tuples: (name, dict) containing the actual styles
+    #: along with their provenance.
+    named_styles: List[Tuple[str, dict]]
 
-    return d
+    def add(self, name, kw=None):
+        """
+        Adds a style by name from style-attributes, or provenanced explicitly, or fail early.
+
+        :param name:
+            Either the provenance name when the `kw` styles is given,
+            OR just an existing attribute of :attr:`style` instance.
+        """
+        if kw is None:
+            kw = getattr(self.theme, name)  # will scream early
+        self.named_styles.append((name, kw))
+
+    def asdict(self, debug=None) -> dict:
+        """
+        Optionally include style-merging debug-info and workaround pydot/pydot#228 ...
+
+        pydot-cstor not supporting styles-as-lists.
+
+        :param debug:
+            When not `None`, override :func:`config.is_debug` flag.
+        """
+
+        if (debug is None and is_debug()) or debug:
+            from pprint import pformat
+            from itertools import count
+
+            styles_provenance = {}
+            d = remerge(*self.named_styles, source_map=styles_provenance)
+            d["tooltip"] = graphviz_html_string(pformat(styles_provenance))
+        else:
+            d = remerge(*(style_dict for _name, style_dict in self.named_styles))
+        assert isinstance(d, dict), (d, self.named_styles)
+
+        style = d.get("style")
+        if isinstance(style, (list, tuple)):
+            d["style"] = ",".join(str(i) for i in set(style))
+
+        return d
 
 
 class Plotter:
@@ -713,7 +748,12 @@ class Plotter:
         """
         return type(self)(self.theme.with_set(**kw))
 
+    def _new_styles_stack(self):
+        return StylesStack(self.theme, [])
+
     def plot(self, plot_args: PlotArgs):
+        if isinstance(plot_args.plottable, Solution):
+            plot_args = plot_args.with_defaults(solution=plot_args.plottable)
         dot = self.build_pydot(plot_args)
         return self.render_pydot(dot, **plot_args.kw_render_pydot)
 
@@ -733,15 +773,20 @@ class Plotter:
             raise ValueError("At least `graph` to plot must be given!")
 
         graph, steps = self._skip_nodes(graph, steps)
+        styles = self._new_styles_stack()
 
-        styles = [theme.kw_graph]
-        styles.append(
-            theme.kw_pottable_type.get(
-                type(plot_args.plottable).__name__, theme.kw_pottable_type_unknown,
-            )
+        styles.add("kw_graph")
+
+        plottable_type = type(plot_args.plottable).__name__.split(".")[-1]
+        styles.add(
+            plottable_type,
+            theme.kw_graph_plottable_type.get(
+                plottable_type, theme.kw_graph_plottable_type_unknown
+            ),
         )
-        styles.append(_pub_props(graph.graph))
-        dot = pydot.Dot(**remerge_styles(*styles))
+
+        styles.add("user-overrides", _pub_props(graph.graph))
+        dot = pydot.Dot(**styles.asdict())
 
         if plot_args.name:
             dot.set_name(as_identifier(plot_args.name))
@@ -766,30 +811,32 @@ class Plotter:
 
             ## Edge-kind
             #
-            styles = [theme.kw_edge]
+            styles = self._new_styles_stack()
+
+            styles.add("kw_edge")
             if data.get("optional"):
-                styles.append(theme.kw_edge_optional)
+                styles.add("kw_edge_optional")
             if data.get("sideffect"):
-                styles.append(theme.kw_edge_sideffect)
+                styles.add("kw_edge_sideffect")
 
             if getattr(src, "rescheduled", None):
-                styles.append(theme.kw_edge_rescheduled)
+                styles.add("kw_edge_rescheduled")
             if getattr(src, "endured", None):
-                styles.append(theme.kw_edge_endured)
+                styles.add("kw_edge_endured")
 
             ## Edge-state
             #
             if graph.nodes[src].get("_pruned") or graph.nodes[dst].get("_pruned"):
-                styles.append(theme.kw_edge_pruned)
+                styles.add("kw_edge_pruned")
             if (
                 solution is not None
                 and (src, dst) not in solution.dag.edges
                 and (src, dst) in solution.plan.dag.edges
             ):
-                styles.append(theme.kw_edge_broken)
+                styles.add("kw_edge_broken")
 
-            styles.append(_pub_props(data))
-            edge = pydot.Edge(src=src_name, dst=dst_name, **remerge_styles(*styles))
+            styles.add("user-overrides", _pub_props(data))
+            edge = pydot.Edge(src=src_name, dst=dst_name, **styles.asdict())
             dot.add_edge(edge)
 
         ## Draw steps sequence, if it's worth it.
@@ -842,28 +889,26 @@ class Plotter:
         nx_node = node_args.nx_node
         node_attrs = node_args.node_attrs
         (plottable, _, _, steps, inputs, outputs, solution, *_,) = plot_args
-        if solution is None and isinstance(plottable, Solution):
-            solution = plottable
 
         if isinstance(nx_node, str):  # DATA
+            styles = self._new_styles_stack()
+
+            styles.add("kw_data")
+
             # SHAPE change if with inputs/outputs.
             # tip: https://graphviz.gitlab.io/_pages/doc/info/shapes.html
             choice = _merge_conditions(
                 inputs and nx_node in inputs, outputs and nx_node in outputs
             )
             shape = "rect invhouse house hexagon".split()[choice]
-
-            styles = [theme.kw_data]
-            styles.append(
-                {"name": quote_node_id(nx_node), "shape": shape,}
-            )
+            styles.add("node-code", {"name": quote_node_id(nx_node), "shape": shape,})
 
             ## Data-kind
             #
             if any(d for _, _, d in graph.out_edges(nx_node, "sideffect")) or any(
                 d for _, _, d in graph.in_edges(nx_node, "sideffect")
             ):
-                styles.append(theme.kw_data_sideffect)
+                styles.add("kw_data_sideffect")
 
             ## Data-state
             #
@@ -881,94 +926,102 @@ class Plotter:
                 assert (
                     not steps or nx_node not in steps
                 ), f"Given `steps` missmatch `plan` and/or `solution`!\n  {plot_args}"
-                styles.append(theme.kw_data_pruned)
+                styles.add("kw_data_pruned")
                 graph.nodes[nx_node]["_pruned"] = True  # Signal to edge-plotting.
             else:
                 if steps and nx_node in steps:
-                    styles.append(theme.kw_data_to_evict)
+                    styles.add("kw_data_to_evict")
 
                 if solution is not None:
                     if nx_node in solution:
-                        styles.append(theme.kw_data_in_solution)
+                        styles.add("kw_data_in_solution")
                         if nx_node in solution.overwrites:
-                            styles.append(theme.kw_data_overwritten)
+                            styles.add("kw_data_overwritten")
 
-                        val = solution.get(nx_node)
-                        tooltip = (
-                            "None" if val is None else f"({type(val).__name__}) {val}"
+                        data_tooltip = self._make_data_value_tooltip(
+                            plot_args, node_args
                         )
-                        styles.append({"tooltip": quote_html_tooltips(tooltip)})
-                    elif nx_node not in steps:
-                        styles.append(theme.kw_data_canceled)
-                    else:
-                        styles.append(theme.kw_data_evicted)
+                        if data_tooltip:
+                            styles.add("node-code", {"tooltip": data_tooltip})
 
-            styles.append(_pub_props(node_attrs))
+                    elif nx_node not in steps:
+                        styles.add("kw_data_canceled")
+                    else:
+                        styles.add("kw_data_evicted")
+
+            styles.add("user-overrides", _pub_props(node_attrs))
 
         else:  # OPERATION
             op_name = nx_node.name
-            label_styles = [theme.kw_op_label]
-            label_styles.append(
+            label_styles = self._new_styles_stack()
+
+            label_styles.add("kw_op_label")
+            label_styles.add(
+                "node-code",
                 {
                     "op_name": op_name,
                     "fn_name": func_name(nx_node.fn, mod=1, fqdn=1, human=1),
                     "op_tooltip": self._make_op_tooltip(plot_args, node_args),
                     "fn_tooltip": self._make_fn_tooltip(plot_args, node_args),
-                }
+                },
             )
 
             ## Op-kind
             #
             if nx_node.rescheduled:
-                label_styles.append(theme.kw_op_rescheduled)
+                label_styles.add("kw_op_rescheduled")
             if nx_node.endured:
-                label_styles.append(theme.kw_op_endured)
+                label_styles.add("kw_op_endured")
 
             ## Op-state
             #
             if steps and nx_node not in steps:
-                label_styles.append(theme.kw_op_pruned)
+                label_styles.add("kw_op_pruned")
             if solution:
                 if solution.is_failed(nx_node):
-                    label_styles.append(theme.kw_op_failed)
+                    label_styles.add("kw_op_failed")
                 elif nx_node in solution.executed:
-                    label_styles.append(theme.kw_op_executed)
+                    label_styles.add("kw_op_executed")
                 elif nx_node in solution.canceled:
-                    label_styles.append(theme.kw_op_canceled)
+                    label_styles.add("kw_op_canceled")
 
             (op_url, op_link_target) = self._make_op_link(plot_args, node_args)
             (fn_url, fn_link_target) = self._make_fn_link(plot_args, node_args)
-            label_styles.append(
+            label_styles.add(
+                "tooltip-code",
                 {
                     "op_url": op_url,
                     "op_link_target": op_link_target,
                     "fn_url": fn_url,
                     "fn_link_target": fn_link_target,
-                }
+                },
             )
 
-            label_styles.append(_pub_props(node_attrs))
+            label_styles.add("user-overrides", _pub_props(node_attrs))
 
-            styles = [
+            styles = self._new_styles_stack()
+            styles.add(
+                "init",
                 {
                     "name": quote_node_id(nx_node.name),
                     "shape": "plain",
                     "label": _render_template(
-                        self.theme.op_template, **remerge_styles(*label_styles)
+                        self.theme.op_template, **label_styles.asdict(),
                     ),
                     # Set some base tooltip, or else, "TABLE" shown...
                     "tooltip": graphviz_html_string(op_name),
-                }
-            ]
+                },
+            )
 
             # Graphviz node attributes interacting badly with HTML-Labels.
             #
             bad_props = theme.op_bad_html_label_keys
-            styles.append(
-                {k: v for k, v in _pub_props(node_attrs).items() if k not in bad_props}
+            styles.add(
+                "user-overrides",
+                {k: v for k, v in _pub_props(node_attrs).items() if k not in bad_props},
             )
 
-        return pydot.Node(**remerge_styles(*styles))
+        return pydot.Node(**styles.asdict())
 
     def _make_op_link(
         self, plot_args: PlotArgs, node_args: NodeArgs
@@ -1024,6 +1077,14 @@ class Plotter:
 
         return fn_link
 
+    def _make_data_value_tooltip(self, plot_args: PlotArgs, node_args: NodeArgs):
+        """Called on datanodes, when solution exists. """
+        node = node_args.nx_node
+        if node in plot_args.solution:
+            val = plot_args.solution.get(node)
+            tooltip = "(None)" if val is None else f"({type(val).__name__}) {val}"
+            return quote_html_tooltips(tooltip)
+
     def _make_op_tooltip(self, plot_args: PlotArgs, node_args: NodeArgs):
         """the string-representation of an operation (name, needs, provides)"""
         return node_args.node_attrs.get("_op_tooltip", str(node_args.nx_node))
@@ -1041,7 +1102,7 @@ class Plotter:
 
     def _append_or_cluster_node(self, plot_args: PlotArgs, node_args: NodeArgs) -> None:
         """Add dot-node in dot now, or "cluster" it, to be added later. """
-        # TODO remap netsed plot-clusters:
+        # TODO remap nested plot-clusters:
         clusters = plot_args.clusters
         clustered = node_args.clustered
         nx_node = node_args.nx_node
@@ -1060,7 +1121,7 @@ class Plotter:
     def _append_any_clustered_nodes(
         self, plot_args: PlotArgs, node_args: NodeArgs
     ) -> None:
-        # TODO remap netsed plot-clusters:
+        # TODO remap nested plot-clusters:
         dot = node_args.dot
         for cluster in node_args.clustered.values():
             dot.add_subgraph(cluster)
