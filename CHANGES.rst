@@ -63,7 +63,7 @@ v6.0.0 (13 Apr 2020, @ankostis): New Plotting Device...
 
 + ENH/REFACT(PLOT):
 
-  + REFACT/BREAK: plots are now fully configurable with :term:`plot styles`
+  + REFACT/BREAK: plots are now fully configurable with :term:`plot theme`
     through the use of :term:`installed plotter <active plotter>`.
   + ENH: Render operation nodes with Graphviz *HTML-Table Labels*.
 

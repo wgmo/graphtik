@@ -16,7 +16,7 @@ from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
 from graphtik.plot import (
     Plotter,
-    Style,
+    Theme,
     active_plotter_plugged,
     get_active_plotter,
 )
@@ -86,7 +86,7 @@ def test_op_label_template_full():
         fn_tooltip="<fn\ntooltip>",
         fn_link_target="_top",
     )
-    got = plot._render_template(plot.Style.op_template, **kw)
+    got = plot._render_template(plot.Theme.op_template, **kw)
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BORDER="44" COLOR="red" BGCOLOR="wheat">
@@ -108,7 +108,7 @@ def test_op_label_template_full():
 
 
 def test_op_label_template_empty():
-    got = plot._render_template(plot.Style.op_template)
+    got = plot._render_template(plot.Theme.op_template)
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
@@ -122,7 +122,7 @@ def test_op_label_template_empty():
 
 
 def test_op_label_template_fn_empty():
-    got = plot._render_template(plot.Style.op_template, op_name="op", fn_name="fn")
+    got = plot._render_template(plot.Theme.op_template, op_name="op", fn_name="fn")
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
@@ -152,7 +152,7 @@ def test_op_label_template_nones():
         fn_tooltip=None,
         fn_link_target=None,
     )
-    got = plot._render_template(plot.Style.op_template, **kw)
+    got = plot._render_template(plot.Theme.op_template, **kw)
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
@@ -327,7 +327,7 @@ def test_plot_legend(pipeline, tmp_path):
 def test_style_Ref():
     s = plot.Ref("arch_url")
     assert s.target == "https://graphtik.readthedocs.io/en/latest/arch.html"
-    assert repr(s) == "Ref(<class 'graphtik.plot.Style'>, 'arch_url')"
+    assert repr(s) == "Ref(<class 'graphtik.plot.Theme'>, 'arch_url')"
 
     class C:
         arch_url = "1"
@@ -341,33 +341,33 @@ def test_style_Ref():
     r = plot.Ref("resched_thickness")  # int target
     str(r)  # should not scream
     assert r.target == 4
-    assert repr(r) == "Ref(<class 'graphtik.plot.Style'>, 'resched_thickness')"
+    assert repr(r) == "Ref(<class 'graphtik.plot.Theme'>, 'resched_thickness')"
 
 
 def test_plotter_customizations(pipeline, monkeypatch):
     ## default URL
     #
-    url = Style.kw_legend["URL"]
+    url = Theme.kw_legend["URL"]
     dot = str(pipeline.plot())
     assert url in dot
 
     ## New active_plotter
     #
-    with active_plotter_plugged(Plotter(style=Style(kw_legend={"URL": None}))):
+    with active_plotter_plugged(Plotter(theme=Theme(kw_legend={"URL": None}))):
         dot = str(pipeline.plot())
         assert url not in dot
 
         ## URL --> plotter in args
         #
         url1 = "http://example.1.org"
-        dot = str(pipeline.plot(plotter=Plotter(style=Style(kw_legend={"URL": url1}))))
+        dot = str(pipeline.plot(plotter=Plotter(theme=Theme(kw_legend={"URL": url1}))))
         assert url1 in dot
         assert url not in dot
     dot = str(pipeline.plot())
     assert url in dot
 
     url2 = "http://example.2.org"
-    with active_plotter_plugged(Plotter(style=Style(kw_legend={"URL": url2}))):
+    with active_plotter_plugged(Plotter(theme=Theme(kw_legend={"URL": url2}))):
         dot = str(pipeline.plot())
         assert url2 in dot
         assert url not in dot
@@ -377,19 +377,19 @@ def test_plotter_customizations(pipeline, monkeypatch):
 
     ## URL --> plotter in args
     #
-    dot = str(pipeline.plot(plotter=Plotter(style=Style(kw_legend={"URL": None}))))
+    dot = str(pipeline.plot(plotter=Plotter(theme=Theme(kw_legend={"URL": None}))))
     assert url not in dot
 
-    dot = str(pipeline.plot(plotter=Plotter(style=Style(kw_legend={"URL": url2}))))
+    dot = str(pipeline.plot(plotter=Plotter(theme=Theme(kw_legend={"URL": url2}))))
     assert url2 in dot
     assert url not in dot
 
 
 def test_plotter_customizations_ignore_class(pipeline, monkeypatch):
     # Class patches ignored
-    url = Style.kw_legend["URL"]
+    url = Theme.kw_legend["URL"]
     url_ignore = "http://foo.com"
-    monkeypatch.setitem(Style.kw_legend, "URL", url_ignore)
+    monkeypatch.setitem(Theme.kw_legend, "URL", url_ignore)
     dot = str(pipeline.plot())
     assert url in dot
     assert url_ignore not in dot
@@ -472,10 +472,10 @@ def test_node_dot_str0(dot_str_pipeline):
     sys.version_info < (3, 7), reason="PY3.6 - has different docstrings for builtins."
 )
 def test_node_dot_str1(dot_str_pipeline, monkeypatch):
-    style = get_active_plotter().style
-    monkeypatch.setattr(style, "py_item_url_format", "abc#%s")
-    monkeypatch.setattr(style, "op_link_target", "_self")
-    monkeypatch.setattr(style, "fn_link_target", "bad")
+    theme = get_active_plotter().theme
+    monkeypatch.setattr(theme, "py_item_url_format", "abc#%s")
+    monkeypatch.setattr(theme, "op_link_target", "_self")
+    monkeypatch.setattr(theme, "fn_link_target", "bad")
 
     ## Test node-hidding & Graph-overlaying.
     #

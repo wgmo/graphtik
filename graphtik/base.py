@@ -493,7 +493,7 @@ class Plottable(abc.ABC):
 
             - "public" attributes: reaching `Graphviz`_ as-is, e.g.
               to set ``spline -> ortho`` on the graph attributes
-              (this can also be achieved by modified :term:`plot styles`).
+              (this can also be achieved by modified :term:`plot theme`).
 
               .. Note::
 

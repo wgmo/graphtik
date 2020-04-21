@@ -380,13 +380,13 @@ Architecture
         It is the `active plotter` that does that, unless overridden in a
         :meth:`.Plottable.plot()` call.
         Plotters can be customized by :ref:`various means <plot-customizations>`,
-        such `plot styles`.
+        such `plot theme`.
 
     active plotter
     default active plotter
         The `plotter` currently installed "in-context" of the respective `graphtik
         configuration` - this term implies also any :ref:`plot-customizations`
-        done on the active plotter (such as `plot styles`).
+        done on the active plotter (such as `plot theme`).
 
         Installation happens by calling one of :func:`.active_plotter_plugged()` or
         :func:`.set_active_plotter` functions.
@@ -394,10 +394,10 @@ Architecture
         The **default** *active plotter* is the plotter instance that this project
         comes pre-configured with, ie, when no *plot-customizations* have yet happened.
 
-    plot styles
-        The attributes of :class:`.plot.Style` class.
-        The actual styles in-use are those in the :attr:`.Plotter.style` attribute
-        of the `active plotter`.
+    plot theme
+        The attributes of :class:`.plot.Theme` class.
+        The actual theme in-use is the :attr:`.Plotter.theme` attribute of
+        the `active plotter`.
 
 
 .. default-role:: obj

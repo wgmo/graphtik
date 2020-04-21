@@ -314,29 +314,29 @@ Configurations
 
 Plot customizations
 ~~~~~~~~~~~~~~~~~~~~
-:term:`plotter`\s` & style constants
+:term:`plotter`\s` & theme constants
    Rendering of plots is performed by :class:`.plot.Plotter` instances.
-   Simple values theming `Graphviz`_ attributes are defined on the :class:`.plot.Style`
-   class, which is an :attr:`attribute <.Plotter.style>` of *plotter*.
+   Simple values for `Graphviz`_ styling attributes are defined on :class:`.plot.Theme`
+   class, which is an :attr:`attribute <.Plotter.theme>` of *plotter*.
 
-   You may customize the styles and/or *plotter* behavior with various methods,
+   You may customize the theme and/or *plotter* behavior with various methods,
    ordered by breadth of the effects (most broadly effecting method at the top):
 
-   1. Get and modify in-place the styles of the :term:`default active plotter`,
+   1. Get and modify in-place the theme of the :term:`default active plotter`,
       like that::
 
-         get_active_plotter().style.kw_op["fillcolor"] = "purple"
+         get_active_plotter().theme.kw_op["fillcolor"] = "purple"
 
       - This will affect all :meth:`.Plottable.plot()` calls for a python session.
-      - You cannot change the *plotter* instance with this method - only styles
+      - You cannot change the *plotter* instance with this method - only theme
         (and monkeypatching plotter's methods).
 
-   2. Create a new :class:`.Plotter` with customized :attr:`.Plotter.style`, or
-      clone and customize the styles of an existing plotter by the use of
+   2. Create a new :class:`.Plotter` with customized :attr:`.Plotter.theme`, or
+      clone and customize the theme of an existing plotter by the use of
       its :meth:`.Plotter.with_styles` method, and make that the new *active plotter*.
 
       - This will affect all calls in :class:`context <contextvars.ContextVar>`.
-      - If customizing style constants is not enough, you may subclass :class:`.Plotter`
+      - If customizing theme constants is not enough, you may subclass :class:`.Plotter`
         and install it.
 
    3. Take any *plotter*, customize its clone, and then call :meth:`.Plottable.plot()`,
