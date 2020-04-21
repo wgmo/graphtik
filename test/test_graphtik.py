@@ -1191,7 +1191,7 @@ def test_execution_endurance(exemethod, endurance, endured):
         #
         dot = str(sol.plot())
         assert "LightCoral" in dot  # failed
-        assert "Grey" in dot  # Canceled
+        assert "#a9a9a9" in dot  # Canceled
 
 
 @pytest.mark.parametrize(
@@ -1216,7 +1216,7 @@ def test_rescheduling(exemethod, resched, rescheduled):
     assert sol == {"a": 1, "d": 1}
     assert list(sol.canceled) == [canc]
     dot = str(sol.plot())
-    assert "Grey" in dot  # Canceled
+    assert "#a9a9a9" in dot  # Canceled
     assert 'BORDER="4"' in dot  # Rescheduled
     assert "x2 partial-ops" in str(sol.check_if_incomplete())
     with pytest.raises(IncompleteExecutionError, match="x2 partial-ops"):

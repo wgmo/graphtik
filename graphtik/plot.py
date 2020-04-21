@@ -345,8 +345,8 @@ class Style:
     ## VARIABLES
 
     fill_color = "wheat"
-    pruned_color = "LightGrey"
-    canceled_color = "DarkGrey"
+    pruned_color = "#d3d3d3"  # LightGrey
+    canceled_color = "#a9a9a9"  # DarkGray
     failed_color = "LightCoral"
     resched_thickness = 4
     broken_color = "Red"
