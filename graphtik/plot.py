@@ -772,25 +772,27 @@ class Plotter:
             src_name = get_node_name(src)
             dst_name = get_node_name(dst)
 
+            ## Edge-kind
+            #
             styles = [style.kw_edge]
             if data.get("optional"):
                 styles.append(style.kw_edge_optional)
             if data.get("sideffect"):
                 styles.append(style.kw_edge_sideffect)
 
-            is_broken = (
+            if getattr(src, "rescheduled", None):
+                styles.append(style.kw_edge_rescheduled)
+            if getattr(src, "endured", None):
+                styles.append(style.kw_edge_endured)
+
+            ## Edge-state
+            #
+            if (
                 solution is not None
                 and (src, dst) not in solution.dag.edges
                 and (src, dst) in solution.plan.dag.edges
-            )
-            if getattr(src, "rescheduled", None):
-                styles.append(style.kw_edge_rescheduled)
-                if is_broken:
-                    styles.append(style.kw_edge_broken)
-            if getattr(src, "endured", None):
-                styles.append(style.kw_edge_endured)
-                if is_broken:
-                    styles.append(style.kw_edge_broken)
+            ):
+                styles.append(style.kw_edge_broken)
 
             styles.append(_pub_props(data))
             edge = pydot.Edge(src=src_name, dst=dst_name, **remerge_styles(*styles))
@@ -862,12 +864,16 @@ class Plotter:
                 {"name": quote_node_id(nx_node), "shape": shape,}
             )
 
+            ## Data-kind
+            #
             if any(d for _, _, d in graph.out_edges(nx_node, "sideffect")) or any(
                 d for _, _, d in graph.in_edges(nx_node, "sideffect")
             ):
                 styles.append(style.kw_data_sideffect)
 
-            is_pruned = (
+            ## Data-state
+            #
+            if (
                 (
                     isinstance(plottable, ExecutionPlan)
                     and nx_node not in plottable.dag.nodes
@@ -877,9 +883,7 @@ class Plotter:
                     and nx_node not in plottable.dag.nodes
                 )
                 or (solution is not None and nx_node not in solution.dag.nodes)
-            )
-
-            if is_pruned:
+            ):
                 assert (
                     not steps or nx_node not in steps
                 ), f"Given `steps` missmatch `plan` and/or `solution`!\n  {plot_args}"
@@ -918,12 +922,17 @@ class Plotter:
                 }
             )
 
-            if steps and nx_node not in steps:
-                label_styles.append(style.kw_op_pruned)
+            ## Op-kind
+            #
             if nx_node.rescheduled:
                 label_styles.append(style.kw_op_rescheduled)
             if nx_node.endured:
                 label_styles.append(style.kw_op_endured)
+
+            ## Op-state
+            #
+            if steps and nx_node not in steps:
+                label_styles.append(style.kw_op_pruned)
             if solution:
                 if solution.is_failed(nx_node):
                     label_styles.append(style.kw_op_failed)
