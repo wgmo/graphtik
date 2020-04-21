@@ -3,22 +3,10 @@
 Graph Composition
 =================
 
-Graphtik's ``compose`` factory handles the work of tying together ``operation``
+Graphtik's :func:`.operation.compose()` factory handles the work of tying together ``operation``
 instances into a runnable computation graph.
 
-The ``compose`` factory
------------------------
-
-For now, here's the specification of ``compose``.  We'll get into how to use it in a second.
-
-.. autofunction:: graphtik.compose
-
-.. _simple-graph-composition:
-
-Simple composition of operations
---------------------------------
-
-The simplest use case for ``compose`` is assembling a collection of individual operations
+The simplest use case is to assemble a collection of individual operations
 into a runnable computation graph.
 The example script from :ref:`quick-start` illustrates this well:
 
@@ -50,15 +38,15 @@ This yields a graph which looks like this (see :ref:`plotting`):
 
    >>> graphop.plot('calc_power.svg')  # doctest: +SKIP
 
+
 .. _graph-computations:
 
 Running a computation graph
 ---------------------------
 
-The graph composed in the example above in :ref:`simple-graph-composition` can be run
-by simply calling it with a dictionary argument whose keys correspond to the names of inputs
-to the graph and whose values are the corresponding input values.
-For example, if ``graph`` is as defined above, we can run it like this:
+The graph composed above can be run by simply calling it with a dictionary of values
+with keys corresponding to the named :term:`dependencies <dependency>` (`needs` &
+`provides`):
 
    >>> # Run the graph and request all of the outputs.
    >>> out = graphop(a=2, b=5)
