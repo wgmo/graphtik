@@ -326,22 +326,18 @@ def test_plot_legend(pipeline, tmp_path):
 
 def test_style_Ref():
     s = plot.Ref("arch_url")
-    assert s.target == "https://graphtik.readthedocs.io/en/latest/arch.html"
-    assert repr(s) == "Ref(<class 'graphtik.plot.Theme'>, 'arch_url')"
+    assert s.resolve(Theme) == "https://graphtik.readthedocs.io/en/latest/arch.html"
+    assert repr(s) == "Ref('arch_url')"
 
     class C:
         arch_url = "1"
 
-    s = s.rebased(C)
+    s = s.resolve(C)
     assert str(s) == "1"
-    assert (
-        repr(s) == "Ref(<class 'test.test_plot.test_style_Ref.<locals>.C'>, 'arch_url')"
-    )
 
     r = plot.Ref("resched_thickness")  # int target
     str(r)  # should not scream
-    assert r.target == 4
-    assert repr(r) == "Ref(<class 'graphtik.plot.Theme'>, 'resched_thickness')"
+    assert r.resolve(Theme) == 4
 
 
 def test_plotter_customizations(pipeline, monkeypatch):

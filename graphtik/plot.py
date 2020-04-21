@@ -273,31 +273,19 @@ class NodeArgs(NamedTuple):
 
 
 class Ref:
-    """Cross-reference (by default) to :class:`.Theme` attribute values."""
+    """Deferred attribute reference, :meth:`resolve`\\d when a `base` is given."""
 
-    __slots__ = ("ref", "_base")
+    __slots__ = ("ref",)
 
     def __init__(self, ref, base=None):
         self.ref = ref
-        self._base = base
 
-    @property
-    def base(self):
-        return getattr(self, "_base", None) or Theme
-
-    def rebased(self, base):
+    def resolve(self, base):
         """Makes re-based clone to the given class/object."""
-        return Ref(self.ref, base)
-
-    @property
-    def target(self):
-        return getattr(self.base, self.ref, "!missed!")
+        return getattr(base, self.ref, "!missed!")
 
     def __repr__(self):
-        return f"Ref({self.base}, '{self.ref}')"
-
-    def __str__(self):
-        return str(self.target)
+        return f"Ref('{self.ref}')"
 
 
 def _drop_gt_lt(x):
@@ -527,7 +515,7 @@ class Theme:
         """
         Deep-copy class-attributes (to avoid sideffects) and apply user-overrides,
 
-        retargeting any :class:`Ref` on my self (from class's 'values).
+        resolving any :class:`Ref` on my self (from class's 'values).
 
         :param _prototype:
             If given, class-attributes are ignored, deep-copying "public" properties
@@ -548,7 +536,10 @@ class Theme:
 
     def resolve_refs(self, values: dict = None) -> None:
         """
-        Rebase any refs in styles, and deep copy (for free) as instance attributes.
+        Resolve style attribute refs, and deep copy (for free) as instance attributes.
+
+        :param values:
+            if not given, resolve and clone my class's attributes
 
         :raises:
             Nothing(!), not to CRASH :term:`default active plotter` on import-time.
@@ -558,7 +549,7 @@ class Theme:
         def remap_item(path, k, v):
             if isinstance(v, Ref):
                 try:
-                    return (k, v.rebased(self).target)
+                    return (k, v.resolve(self))
                 except Exception as ex:
                     log.error(
                         "Invalid theme-ref '%s.%s': '%r' --> '%s' due to: %s",
