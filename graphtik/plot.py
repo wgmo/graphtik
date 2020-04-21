@@ -623,7 +623,7 @@ def remerge(*containers, source_map: list = None):
     ...     }
     ... }
 
-
+    >>> from graphtik.plot import remerge
     >>> source_map = {}
     >>> remerge(
     ...     ("defaults", defaults),
@@ -636,7 +636,7 @@ def remerge(*containers, source_map: list = None):
     >>> source_map
     {('subdict', 'as_is'): 'defaults',
      ('subdict', 'overridden_key1'): 'overrides',
-     ('subdict', 'merged_list'):  'overrides',
+     ('subdict', 'merged_list'):  ['defaults', 'overrides'],
      ('subdict',): 'overrides',
      ('subdict', 'overridden_key2'): 'overrides'}
     """
@@ -669,7 +669,15 @@ def remerge(*containers, source_map: list = None):
         if source_map is not None:
 
             def remerge_visit(path, key, value):
-                source_map[path + (key,)] = t_name
+                key = path + (key,)
+                if isinstance(value, list):
+                    old = source_map.get(key)
+                    if old:
+                        old.append(t_name)
+                    else:
+                        source_map[key] = [t_name]
+                else:
+                    source_map[key] = t_name
                 return True
 
         else:

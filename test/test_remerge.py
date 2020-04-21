@@ -87,7 +87,7 @@ def test_override_list_append():
     expected_merged = {"list_to_append": [{"a": 1}, {"b": 1}]}
 
     assert merged == expected_merged
-    assert source_map == {("list_to_append",): "first_override"}
+    assert source_map == {("list_to_append",): ["defaults", "first_override"]}
 
     merged = remerge(defaults, first_override, source_map=None)
     assert merged == expected_merged
