@@ -2,6 +2,7 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 
 import logging
+import re
 from collections import OrderedDict, namedtuple
 from types import SimpleNamespace
 
@@ -295,11 +296,11 @@ def test_as_renames(inp, exp):
     [
         (
             operation(str, aliases={"a": 1}),
-            r"Operation `aliases` contain sources not found in real `provides`: \['a'\]",
+            r"The `aliases` for ('a',) rename ['a'], not found in provides ()!",
         ),
         (
             operation(str, name="t", provides="a", aliases={"a": 1, "b": 2}),
-            r"Operation `aliases` contain sources not found in real `provides`: \['b'\]",
+            r"The `aliases` for ('a', 'b') rename ['b'], not found in provides ('a',)!",
         ),
         (
             operation(
@@ -314,7 +315,7 @@ def test_as_renames(inp, exp):
     ],
 )
 def test_provides_aliases_BAD(opbuilder, ex):
-    with pytest.raises(ValueError, match=ex):
+    with pytest.raises(ValueError, match=re.escape(ex)):
         opbuilder()
 
 

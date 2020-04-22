@@ -34,7 +34,12 @@ def _dict_without(kw, *todel):
 
 
 def as_renames(i, argname):
-    """parses a list of (source-->destination) from dict, list-of-2-items, single 2-tuple."""
+    """
+    Parses a list of (source-->destination) from dict, list-of-2-items, single 2-tuple.
+
+    .. Note::
+        The same `source` may be repeatedly renamed to multiple `destinations`.
+    """
     if not i:
         return ()
 
@@ -151,11 +156,11 @@ class FunctionalOperation(Operation):
             (without `aliases`, with(!) `sideffects`)
 
             NOTE that the instance attribute eventually includes aliases & sideffects.
-        .. attribute:: FunctionalOperation.real_provides
+        .. attribute:: FunctionalOperation.fn_provides
 
             Value names the underlying function provides (without aliases, with(!) sideffects).
 
-            FIXME: `real_provides` not sure what it does with sideffects.
+            FIXME: `fn_provides` not sure what it does with sideffects.
         .. attribute:: FunctionalOperation.aliases
 
             an optional mapping of real `provides` to additional ones, together
@@ -212,15 +217,17 @@ class FunctionalOperation(Operation):
         if name is None:
             name = func_name(fn, None, mod=0, fqdn=0, human=0)
         name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
-        name, needs, real_provides = reparse_operation_data(name, needs, provides)
+        name, needs, provides = reparse_operation_data(name, needs, provides)
+        fn_needs, op_needs = needs, needs
+        fn_provides, op_provides = provides, provides
 
         if aliases:
             aliases = as_renames(aliases, "aliases")
             alias_src, alias_dst = list(zip(*aliases))
-            full_provides = iset(itt.chain(real_provides, alias_dst))
-            if not set(alias_src) <= set(real_provides):
+            if not set(alias_src) <= set(op_provides):
                 raise ValueError(
-                    f"Operation `aliases` contain sources not found in real `provides`: {list(iset(alias_src) - real_provides)}"
+                    f"The `aliases` for {alias_src} rename {list(iset(alias_src) - op_provides)}"
+                    f", not found in provides {op_provides}!"
                 )
             if any(isinstance(i, sideffect) for i in alias_src) or any(
                 isinstance(i, sideffect) for i in alias_dst
@@ -229,14 +236,15 @@ class FunctionalOperation(Operation):
                     f"Operation `aliases` must not contain `sideffects`: {aliases}"
                     "\n  Simply add any extra `sideffects` in the `provides`."
                 )
+            op_provides = iset(itt.chain(op_provides, alias_dst))
         else:
-            full_provides = real_provides
+            op_provides = fn_provides
 
         self.fn = fn
         self.name = name
-        self.needs = needs
-        self.provides = full_provides
-        self.real_provides = real_provides
+        self.needs = op_needs
+        self.provides = op_provides
+        self.fn_provides = fn_provides
         self.aliases = aliases
         self.parents = parents
         self.rescheduled = rescheduled
@@ -285,14 +293,8 @@ class FunctionalOperation(Operation):
             Using :meth:`.namedtuple._replace()` would not pass through cstor,
             so would not get a nested `name` with `parents`, not arguments validation.
         """
-        # fn = kw["fn"] if "fn" in kw else self.fn
-        # name = kw["name"] if "name" in kw else self.name
-        # needs = kw["needs"] if "needs" in kw else self.needs
-        # provides = kw["provides"] if "provides" in kw else self.provides
-        # aliases = kw["aliases"] if "aliases" in kw else self.aliases
         kw2 = vars(self).copy()
-        kw2["provides"] = kw2["real_provides"]
-        del kw2["real_provides"]
+        kw2["provides"] = kw2.pop("fn_provides")
         kw2.update(kw)
 
         return FunctionalOperation(**kw2)
@@ -496,9 +498,7 @@ class FunctionalOperation(Operation):
             results_fn = self.fn(*positional, *vararg_vals, **kwargs)
 
             # TODO: rename op jetsam (real_)provides --> fn_expected
-            provides = iset(
-                n for n in self.real_provides if not isinstance(n, sideffect)
-            )
+            provides = iset(n for n in self.fn_provides if not isinstance(n, sideffect))
             results_op = self._zip_results_with_provides(results_fn, provides)
 
             if outputs:
