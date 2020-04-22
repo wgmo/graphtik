@@ -96,6 +96,27 @@ squares/houses are *data*):
   See :ref:`plotting` on how to make diagrams like this.
 
 
+Aliased `provides`
+^^^^^^^^^^^^^^^^^^
+Sometimes, you need to interface operations where they name some :term:`dependency`
+differently.
+This is doable without introducing "pipe-through" interface operation, either by
+annotating `needs` with :class:`.arg` `modifiers` (see docs) or with *aliases*
+on the `provides` side:
+
+   >>> op = operation(str,
+   ...                needs="anything",
+   ...                provides="real thing",
+   ...                aliases=("real thing", "alias"))()
+
+.. graphtik::
+   :hide:
+
+
+   >>> sample = compose("aliased provides", op)
+
+   .. TODO: make operations plottables
+
 Instantiating operations
 ------------------------
 

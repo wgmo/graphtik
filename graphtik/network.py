@@ -1006,6 +1006,12 @@ class Network(Plottable):
         graph.add_node(operation, **operation.node_props)
         graph.add_edges_from(needs_edges)
 
+        ## Prepare inversed-aliases index, used
+        #  to label edges reaching to aliased `provides`.
+        #
+        aliases = getattr(operation, "aliases", None)
+        alias_sources = {v: src for src, v in aliases} if aliases else ()
+
         ## Provides
         #
         for n in operation.provides:
@@ -1013,6 +1019,17 @@ class Network(Plottable):
             if isinstance(n, sideffect):
                 kw["sideffect"] = True
                 graph.add_node(_DataNode(n), sideffect=True)
+
+            if n in alias_sources:
+                src_provide = alias_sources[n]
+                kw.update(
+                    {
+                        "label": f"<<I>(alias of)</I><BR/>{src_provide}>",
+                        "fontsize": 10,  # default: 14
+                        "_alias_of": src_provide,
+                    }
+                )
+
             graph.add_edge(operation, _DataNode(n), **kw)
 
     def _topo_sort_nodes(self, dag) -> List:
