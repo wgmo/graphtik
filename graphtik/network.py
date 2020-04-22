@@ -1022,13 +1022,7 @@ class Network(Plottable):
 
             if n in alias_sources:
                 src_provide = alias_sources[n]
-                kw.update(
-                    {
-                        "label": f"<<I>(alias of)</I><BR/>{src_provide}>",
-                        "fontsize": 10,  # default: 14
-                        "_alias_of": src_provide,
-                    }
-                )
+                kw["_alias_of"] = src_provide
 
             graph.add_edge(operation, _DataNode(n), **kw)
 

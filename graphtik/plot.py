@@ -490,6 +490,8 @@ class Theme:
     kw_edge = {}
     kw_edge_optional = {"style": ["dashed"]}
     kw_edge_sideffect = {"color": "blue"}
+    kw_edge_alias = {"fontsize": 10}  # default: 14
+    kw_edge_alias_fmt = "<<I>(alias of)</I><BR/>%s>"
     kw_edge_pruned = {"color": Ref("pruned_color")}
     kw_edge_rescheduled = {"style": ["dashed"]}
     kw_edge_endured = {"style": ["dashed"]}
@@ -834,6 +836,16 @@ class Plotter:
                 styles.add("kw_edge_optional")
             if data.get("sideffect"):
                 styles.add("kw_edge_sideffect")
+            aliased_src = data.get("_alias_of")
+            if aliased_src:
+                styles.add("kw_edge_alias")
+                styles.add(
+                    f"kw_edge_alias_fmt-{aliased_src}",
+                    {
+                        "label": theme.kw_edge_alias_fmt
+                        % quote_html_tooltips(aliased_src)
+                    },
+                )
 
             if getattr(src, "rescheduled", None):
                 styles.add("kw_edge_rescheduled")
