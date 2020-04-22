@@ -258,17 +258,17 @@ def _pub_props(*d, **kw) -> None:
     return {k: v for k, v in dict(*d, *kw).items() if not str(k).startswith("_")}
 
 
-class NodeArgs(NamedTuple):
-    """All the args for :meth:`.Plotter._make_node()` call. """
+class ItemArgs(NamedTuple):
+    """All the args for :meth:`.Plotter._make_node()` etall. """
 
     #: Where to add graphviz nodes & stuff.
     dot: pydot.Dot
-    #: The node (data(str) or :class:`Operation`) as gotten from nx-graph.
-    nx_node: Any = None
-    #: Attributes gotten from nx-graph fot the given node.
-    node_attrs: dict = None
-    #: The pydot-node created
-    dot_node: Any = None
+    #: The node (data(str) or :class:`Operation`) or edge as gotten from nx-graph.
+    nx_item: Any = None
+    #: Attributes gotten from nx-graph for the given graph/node/edge.
+    nx_attrs: dict = None
+    #: The pydot-node/edge created
+    dot_item: Any = None
     #: Collect the actual clustered `dot_nodes` among the given nodes.
     clustered: dict = None
 
@@ -732,7 +732,7 @@ class StylesStack(NamedTuple):
             provenance_str = pformat(
                 {".".join(k): v for k, v in styles_provenance.items()}, indent=2
             )
-            tooltip = f"- styles: {provenance_str}\n- extra_attrs: {pformat(nx_attrs, depth=2)}"
+            tooltip = f"- styles: {provenance_str}\n- extra_attrs: {pformat(nx_attrs)}"
             d["tooltip"] = graphviz_html_string(tooltip)
         else:
             d = remerge(*(style_dict for _name, style_dict in self.named_styles))
@@ -811,15 +811,15 @@ class Plotter:
 
         ## NODES
         #
-        base_node_args = node_args = NodeArgs(dot=dot, clustered={})
+        base_item_args = item_args = ItemArgs(dot=dot, clustered={})
         for nx_node, data in graph.nodes.data(True):
-            node_args = base_node_args._replace(nx_node=nx_node, node_attrs=data)
+            item_args = base_item_args._replace(nx_item=nx_node, nx_attrs=data)
 
-            dot_node = self._make_node(plot_args, node_args)
-            node_args = node_args._replace(dot_node=dot_node)
+            dot_node = self._make_node(plot_args, item_args)
+            item_args = item_args._replace(dot_item=dot_node)
 
-            self._append_or_cluster_node(plot_args, node_args)
-        self._append_any_clustered_nodes(plot_args, node_args)
+            self._append_or_cluster_node(plot_args, item_args)
+        self._append_any_clustered_nodes(plot_args, item_args)
 
         ## EDGES
         #
@@ -881,11 +881,11 @@ class Plotter:
                 )
                 dot.add_edge(edge)
 
-        self._add_legend_icon(plot_args, node_args)
+        self._add_legend_icon(plot_args, item_args)
 
         return dot
 
-    def _make_node(self, plot_args: PlotArgs, node_args: NodeArgs) -> pydot.Node:
+    def _make_node(self, plot_args: PlotArgs, item_args: ItemArgs) -> pydot.Node:
         """
         Customize nodes, e.g. add doc URLs/tooltips, solution tooltips.
 
@@ -914,8 +914,8 @@ class Plotter:
 
         theme = self.theme
         graph = plot_args.graph
-        nx_node = node_args.nx_node
-        node_attrs = node_args.node_attrs
+        nx_node = item_args.nx_item
+        node_attrs = item_args.nx_attrs
         (plottable, _, _, steps, inputs, outputs, solution, *_,) = plot_args
 
         if isinstance(nx_node, str):  # DATA
@@ -963,7 +963,7 @@ class Plotter:
                 if solution is not None:
                     if nx_node in solution:
                         data_tooltip = self._make_data_value_tooltip(
-                            plot_args, node_args
+                            plot_args, item_args
                         )
                         if data_tooltip:
                             styles.add("node-code", {"tooltip": data_tooltip})
@@ -989,8 +989,8 @@ class Plotter:
                 {
                     "op_name": op_name,
                     "fn_name": func_name(nx_node.fn, mod=1, fqdn=1, human=1),
-                    "op_tooltip": self._make_op_tooltip(plot_args, node_args),
-                    "fn_tooltip": self._make_fn_tooltip(plot_args, node_args),
+                    "op_tooltip": self._make_op_tooltip(plot_args, item_args),
+                    "fn_tooltip": self._make_fn_tooltip(plot_args, item_args),
                 },
             )
 
@@ -1013,8 +1013,8 @@ class Plotter:
                 elif nx_node in solution.canceled:
                     label_styles.add("kw_op_canceled")
 
-            (op_url, op_link_target) = self._make_op_link(plot_args, node_args)
-            (fn_url, fn_link_target) = self._make_fn_link(plot_args, node_args)
+            (op_url, op_link_target) = self._make_op_link(plot_args, item_args)
+            (fn_url, fn_link_target) = self._make_fn_link(plot_args, item_args)
             label_styles.add(
                 "tooltip-code",
                 {
@@ -1052,17 +1052,17 @@ class Plotter:
         return pydot.Node(**styles.asdict(node_attrs))
 
     def _make_op_link(
-        self, plot_args: PlotArgs, node_args: NodeArgs
+        self, plot_args: PlotArgs, item_args: ItemArgs
     ) -> Tuple[Optional[str], Optional[str]]:
-        return self._make_py_item_link(plot_args, node_args, node_args.nx_node, "op")
+        return self._make_py_item_link(plot_args, item_args, item_args.nx_item, "op")
 
     def _make_fn_link(
-        self, plot_args: PlotArgs, node_args: NodeArgs
+        self, plot_args: PlotArgs, item_args: ItemArgs
     ) -> Tuple[Optional[str], Optional[str]]:
-        return self._make_py_item_link(plot_args, node_args, node_args.nx_node.fn, "fn")
+        return self._make_py_item_link(plot_args, item_args, item_args.nx_item.fn, "fn")
 
     def _make_py_item_link(
-        self, plot_args: PlotArgs, node_args: NodeArgs, item, prefix
+        self, plot_args: PlotArgs, item_args: ItemArgs, item, prefix
     ) -> Tuple[Optional[str], Optional[str]]:
         """
         Deduce fn's url (e.g. docs) from theme, or from override in  `node_attrs`.
@@ -1076,7 +1076,7 @@ class Plotter:
 
             An existent link-target from (1) still applies even if (2) is selected.
         """
-        node_attrs = node_args.node_attrs
+        node_attrs = item_args.nx_attrs
         if f"_{prefix}_url" in node_attrs:
             return (
                 node_attrs[f"_{prefix}_url"],
@@ -1086,7 +1086,7 @@ class Plotter:
         fn_link = (None, None)
         url_format = self.theme.py_item_url_format
         if url_format:
-            dot_path = func_name(node_args.nx_node.fn, None, mod=1, fqdn=1, human=0)
+            dot_path = func_name(item_args.nx_item.fn, None, mod=1, fqdn=1, human=0)
             if dot_path:
                 url_data = {
                     "dot_path": dot_path,
@@ -1105,38 +1105,38 @@ class Plotter:
 
         return fn_link
 
-    def _make_data_value_tooltip(self, plot_args: PlotArgs, node_args: NodeArgs):
+    def _make_data_value_tooltip(self, plot_args: PlotArgs, item_args: ItemArgs):
         """Called on datanodes, when solution exists. """
-        node = node_args.nx_node
+        node = item_args.nx_item
         if node in plot_args.solution:
             val = plot_args.solution.get(node)
             tooltip = "(None)" if val is None else f"({type(val).__name__}) {val}"
             return quote_html_tooltips(tooltip)
 
-    def _make_op_tooltip(self, plot_args: PlotArgs, node_args: NodeArgs):
+    def _make_op_tooltip(self, plot_args: PlotArgs, item_args: ItemArgs):
         """the string-representation of an operation (name, needs, provides)"""
-        return node_args.node_attrs.get("_op_tooltip", str(node_args.nx_node))
+        return item_args.nx_attrs.get("_op_tooltip", str(item_args.nx_item))
 
-    def _make_fn_tooltip(self, plot_args: PlotArgs, node_args: NodeArgs):
+    def _make_fn_tooltip(self, plot_args: PlotArgs, item_args: ItemArgs):
         """the sources of the operation-function"""
-        if "_fn_tooltip" in node_args.node_attrs:
-            return node_args.node_attrs["_fn_tooltip"]
+        if "_fn_tooltip" in item_args.nx_attrs:
+            return item_args.nx_attrs["_fn_tooltip"]
 
-        fn_source = func_source(node_args.nx_node.fn, None, human=1)
+        fn_source = func_source(item_args.nx_item.fn, None, human=1)
         if fn_source:
             fn_source = fn_source
 
         return fn_source
 
-    def _append_or_cluster_node(self, plot_args: PlotArgs, node_args: NodeArgs) -> None:
+    def _append_or_cluster_node(self, plot_args: PlotArgs, item_args: ItemArgs) -> None:
         """Add dot-node in dot now, or "cluster" it, to be added later. """
         # TODO remap nested plot-clusters:
         clusters = plot_args.clusters
-        clustered = node_args.clustered
-        nx_node = node_args.nx_node
+        clustered = item_args.clustered
+        nx_node = item_args.nx_item
 
         if not clusters or not nx_node in clusters:
-            node_args.dot.add_node(node_args.dot_node)
+            item_args.dot.add_node(item_args.dot_item)
         else:
             cluster_name = clusters[nx_node]
             node_cluster = clustered.get(cluster_name)
@@ -1144,21 +1144,21 @@ class Plotter:
                 node_cluster = clustered[cluster_name] = pydot.Cluster(
                     cluster_name, label=cluster_name
                 )
-            node_cluster.add_node(node_args.dot_node)
+            node_cluster.add_node(item_args.dot_item)
 
     def _append_any_clustered_nodes(
-        self, plot_args: PlotArgs, node_args: NodeArgs
+        self, plot_args: PlotArgs, item_args: ItemArgs
     ) -> None:
         # TODO remap nested plot-clusters:
-        dot = node_args.dot
-        for cluster in node_args.clustered.values():
+        dot = item_args.dot
+        for cluster in item_args.clustered.values():
             dot.add_subgraph(cluster)
 
-    def _add_legend_icon(self, plot_args: PlotArgs, node_args: NodeArgs):
+    def _add_legend_icon(self, plot_args: PlotArgs, item_args: ItemArgs):
         """Optionally add an icon to diagrams linking to legend (if url given)."""
         kw_legend = self.theme.kw_legend
         if kw_legend and self.theme.kw_legend.get("URL"):
-            node_args.dot.add_node(pydot.Node(**kw_legend))
+            item_args.dot.add_node(pydot.Node(**kw_legend))
 
     def _skip_nodes(
         self, graph: nx.Graph, steps: Collection
