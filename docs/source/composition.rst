@@ -256,7 +256,7 @@ You may then optionally abort on failures, by raising an appropriate exception:
     ...
     graphtik.network.IncompleteExecutionError:
     Not completed x2 operations ['exercise', 'get_out'] due to x1 failures and x0 partial-ops:
-      +--get_out: ValueError(Quarantined!)
+      +--get_out: ValueError('Quarantined!')
 
 
 Operations with partial outputs (*rescheduled*)

@@ -152,7 +152,7 @@ class Solution(ChainMap, Plottable):
         (after the :meth:`finalized` has been invoked)
     """
 
-    def __init__(self, plan, input_values):
+    def __init__(self, plan, input_values: dict):
         super().__init__(input_values)
 
         self.plan = plan
@@ -162,9 +162,10 @@ class Solution(ChainMap, Plottable):
         self.elapsed_ms = {}
         self.solid = "%X" % random.randint(0, 2 ** 16)
 
-        ## Pre-populate chainmaps with 1 dict per plan's operation
-        #  (appended after of inputs map).
-        #
+        #: An ordered mapping of plan-operations to their results
+        #: (initially empty dicts).
+        #: The result dictionaries pre-populate this (self) chainmap,
+        #: appended after the given `input_values` dict.
         self._layers = {op: {} for op in yield_ops(plan.steps)}
         self.maps.extend(self._layers.values())
 
@@ -321,7 +322,7 @@ class Solution(ChainMap, Plottable):
                 if pouts and isinstance(pouts, list)
             }
             err_msgs = [
-                f"\n  +--{op.name}: {type(ex).__name__}({ex})"
+                f"\n  +--{op.name}: {type(ex).__name__}('{ex}')"
                 for op, ex in failures.items()
             ]
             msg = (
