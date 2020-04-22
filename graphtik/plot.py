@@ -709,12 +709,14 @@ class StylesStack(NamedTuple):
             kw = getattr(self.theme, name)  # will scream early
         self.named_styles.append((name, kw))
 
-    def asdict(self, debug=None) -> dict:
+    def asdict(self, nx_attrs: dict, debug=None) -> dict:
         """
         Optionally include style-merging debug-info and workaround pydot/pydot#228 ...
 
         pydot-cstor not supporting styles-as-lists.
 
+        :param nx_attrs:
+            a dictionary to be included in the debug tooltip
         :param debug:
             When not `None`, override :func:`config.is_debug` flag.
         """
@@ -725,7 +727,11 @@ class StylesStack(NamedTuple):
 
             styles_provenance = {}
             d = remerge(*self.named_styles, source_map=styles_provenance)
-            d["tooltip"] = graphviz_html_string(pformat(styles_provenance))
+            provenance_str = pformat(
+                {".".join(k): v for k, v in styles_provenance.items()}, indent=2
+            )
+            tooltip = f"- styles: {provenance_str}\n- extra_attrs: {pformat(nx_attrs, depth=2)}"
+            d["tooltip"] = graphviz_html_string(tooltip)
         else:
             d = remerge(*(style_dict for _name, style_dict in self.named_styles))
         assert isinstance(d, dict), (d, self.named_styles)
@@ -796,7 +802,7 @@ class Plotter:
         )
 
         styles.add("user-overrides", _pub_props(graph.graph))
-        dot = pydot.Dot(**styles.asdict())
+        dot = pydot.Dot(**styles.asdict(graph.graph))
 
         if plot_args.name:
             dot.set_name(as_identifier(plot_args.name))
@@ -846,7 +852,7 @@ class Plotter:
                 styles.add("kw_edge_broken")
 
             styles.add("user-overrides", _pub_props(data))
-            edge = pydot.Edge(src=src_name, dst=dst_name, **styles.asdict())
+            edge = pydot.Edge(src=src_name, dst=dst_name, **styles.asdict(data))
             dot.add_edge(edge)
 
         ## Draw steps sequence, if it's worth it.
@@ -1016,7 +1022,7 @@ class Plotter:
                     "name": quote_node_id(nx_node.name),
                     "shape": "plain",
                     "label": _render_template(
-                        self.theme.op_template, **label_styles.asdict(),
+                        self.theme.op_template, **label_styles.asdict(node_attrs),
                     ),
                     # Set some base tooltip, or else, "TABLE" shown...
                     "tooltip": graphviz_html_string(op_name),
@@ -1031,7 +1037,7 @@ class Plotter:
                 {k: v for k, v in _pub_props(node_attrs).items() if k not in bad_props},
             )
 
-        return pydot.Node(**styles.asdict())
+        return pydot.Node(**styles.asdict(node_attrs))
 
     def _make_op_link(
         self, plot_args: PlotArgs, node_args: NodeArgs
