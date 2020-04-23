@@ -286,9 +286,10 @@ def _escape_or_none(context: jinja2.environment.EvalContext, x, escaper):
     return x and jinja2.Markup(escaper(str(x)))
 
 
+#: Environmane to append out own jinja2 filters.
 _jinja2_env = jinja2.Environment()
-# Default `escape` filter breaks Nones for xmlattr.
 
+#: Default `escape` filter breaks Nones for xmlattr.
 _jinja2_env.filters["ee"] = jinja2.evalcontextfilter(
     partial(_escape_or_none, escaper=html.escape)
 )
@@ -299,6 +300,10 @@ _jinja2_env.filters["slug"] = jinja2.evalcontextfilter(
     partial(_escape_or_none, escaper=as_identifier)
 )
 _jinja2_env.filters["hrefer"] = _drop_gt_lt
+
+
+def make_template(s):
+    return _jinja2_env.from_string(textwrap.dedent(s).strip())
 
 
 def _render_template(tpl: jinja2.Template, **kw) -> str:
@@ -425,50 +430,48 @@ class Theme:
     #: Try to mimic a regular `Graphviz`_ node attributes
     #: (see examples in ``test.test_plot.test_op_template_full()`` for params).
     #: TODO: fix jinja2 template is un-picklable!
-    op_template = _jinja2_env.from_string(
-        textwrap.dedent(
-            """\
-            <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
-              {{- {
-              'BORDER': penwidth | ee,
-              'COLOR': color | ee,
-              'BGCOLOR': fillcolor | ee
-              } | xmlattr -}}>
-                <TR>
-                    <TD BORDER="1" SIDES="b" ALIGN="left"
-                      {{- {
-                      'TOOLTIP': (tooltip or op_tooltip) | truncate | eee,
-                      'HREF': op_url | hrefer | ee,
-                      'TARGET': op_link_target | e
-                      } | xmlattr }}
-                    >
-                        {%- if fontcolor -%}<FONT COLOR="{{ fontcolor }}">{%- endif -%}
-                        {{- '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name -}}
-                        {%- if fontcolor -%}</FONT>{%- endif -%}
-                    </TD>
-                </TR>
-                {%- if fn_name -%}
-                <TR>
-                    <TD ALIGN="left"
-                      {{- {
-                      'TOOLTIP': fn_tooltip | truncate | eee,
-                      'HREF': fn_url | hrefer | ee,
-                      'TARGET': fn_link_target | e
-                      } | xmlattr }}
-                      >
-                        {%- if fontcolor -%}
-                        <FONT COLOR="{{ fontcolor }}">
-                        {%- endif -%}
-                        <B>FN:</B> {{ fn_name | eee }}
-                        {%- if fontcolor -%}
-                        </FONT>
-                        {%- endif -%}
-                    </TD>
-                </TR>
-                {%- endif %}
-            </TABLE>>
-            """
-        ).strip()
+    op_template = make_template(
+        """
+        <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
+          {{- {
+          'BORDER': penwidth | ee,
+          'COLOR': color | ee,
+          'BGCOLOR': fillcolor | ee
+          } | xmlattr -}}>
+            <TR>
+                <TD BORDER="1" SIDES="b" ALIGN="left"
+                  {{- {
+                  'TOOLTIP': (tooltip or op_tooltip) | truncate | eee,
+                  'HREF': op_url | hrefer | ee,
+                  'TARGET': op_link_target | e
+                  } | xmlattr }}
+                >
+                    {%- if fontcolor -%}<FONT COLOR="{{ fontcolor }}">{%- endif -%}
+                    {{- '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name -}}
+                    {%- if fontcolor -%}</FONT>{%- endif -%}
+                </TD>
+            </TR>
+            {%- if fn_name -%}
+            <TR>
+                <TD ALIGN="left"
+                  {{- {
+                  'TOOLTIP': fn_tooltip | truncate | eee,
+                  'HREF': fn_url | hrefer | ee,
+                  'TARGET': fn_link_target | e
+                  } | xmlattr }}
+                  >
+                    {%- if fontcolor -%}
+                    <FONT COLOR="{{ fontcolor }}">
+                    {%- endif -%}
+                    <B>FN:</B> {{ fn_name | eee }}
+                    {%- if fontcolor -%}
+                    </FONT>
+                    {%- endif -%}
+                </TD>
+            </TR>
+            {%- endif %}
+        </TABLE>>
+        """
     )
 
     ##########
@@ -477,8 +480,13 @@ class Theme:
     kw_edge = {}
     kw_edge_optional = {"style": ["dashed"]}
     kw_edge_sideffect = {"color": "blue"}
-    kw_edge_alias = {"fontsize": 10}  # default: 14
-    kw_edge_alias_fmt = "<<I>(alias of)</I><BR/>%s>"
+    #: Added conditionally if `_alias_of` found in edge-attrs.
+    kw_edge_alias = {
+        "fontsize": 10,  # default: 14
+        "label": make_template(
+            "<<I>(alias of)</I><BR/>{{ nx_attrs['_alias_of'] | eee }}>"
+        ),
+    }
     kw_edge_pruned = {"color": Ref("pruned_color")}
     kw_edge_rescheduled = {"style": ["dashed"]}
     kw_edge_endured = {"style": ["dashed"]}
@@ -833,16 +841,8 @@ class Plotter:
                 styles.add("kw_edge_optional")
             if data.get("sideffect"):
                 styles.add("kw_edge_sideffect")
-            aliased_src = data.get("_alias_of")
-            if aliased_src:
+            if data.get("_alias_of"):
                 styles.add("kw_edge_alias")
-                styles.add(
-                    f"kw_edge_alias_fmt-{aliased_src}",
-                    {
-                        "label": theme.kw_edge_alias_fmt
-                        % quote_html_tooltips(aliased_src)
-                    },
-                )
 
             if getattr(src, "rescheduled", None):
                 styles.add("kw_edge_rescheduled")
