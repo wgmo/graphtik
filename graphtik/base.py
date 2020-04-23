@@ -378,6 +378,25 @@ class PlotArgs(NamedTuple):
     clusters: Mapping = None
     #: if given, overrides :active plotter`
     plotter: "Plotter" = None
+
+    #######
+    # Internal item-args for :meth:`.Plotter._make_node()` etall.
+    #
+    #: Where to add graphviz nodes & stuff.
+    dot: "pydot.Dot" = None
+    #: The node (data(str) or :class:`Operation`) or edge as gotten from nx-graph.
+    nx_item: Any = None
+    #: Attributes gotten from nx-graph for the given graph/node/edge.
+    #: They are NOT a clone, so any modifications affect the nx `graph`.
+    nx_attrs: dict = None
+    #: The pydot-node/edge created
+    dot_item: Any = None
+    #: Collect the actual clustered `dot_nodes` among the given nodes.
+    clustered: dict = None
+
+    #######
+    # Render args
+    #
     #: jupyter configuration overrides
     jupyter_render: Mapping = None
     #: where to write image or show in a matplotlib window
