@@ -785,7 +785,6 @@ class Plotter:
         if plot_args.graph is None:
             raise ValueError("At least `graph` to plot must be given!")
 
-        solution = plot_args.solution
         theme = self.theme
 
         graph, steps = self._skip_no_plot_nodes(plot_args.graph, plot_args.steps)
@@ -818,7 +817,6 @@ class Plotter:
         #
         for nx_node, data in graph.nodes.data(True):
             plot_args = base_plot_args._replace(nx_item=nx_node, nx_attrs=data)
-
             dot_node = self._make_node(plot_args)
             plot_args = plot_args._replace(dot_item=dot_node)
 
@@ -828,42 +826,8 @@ class Plotter:
         ## EDGES
         #
         for src, dst, data in graph.edges.data(True):
-            src_name = get_node_name(src)
-            dst_name = get_node_name(dst)
             plot_args = base_plot_args._replace(nx_item=(src, dst), nx_attrs=data)
-
-            ## Edge-kind
-            #
-            styles = self._new_styles_stack(plot_args)
-
-            styles.add("kw_edge")
-            if data.get("optional"):
-                styles.add("kw_edge_optional")
-            if data.get("sideffect"):
-                styles.add("kw_edge_sideffect")
-            if data.get("_alias_of"):
-                styles.add("kw_edge_alias")
-
-            if getattr(src, "rescheduled", None):
-                styles.add("kw_edge_rescheduled")
-            if getattr(src, "endured", None):
-                styles.add("kw_edge_endured")
-
-            ## Edge-state
-            #
-            if graph.nodes[src].get("_pruned") or graph.nodes[dst].get("_pruned"):
-                styles.add("kw_edge_pruned")
-            if (
-                solution is not None
-                and (src, dst) not in solution.dag.edges
-                and (src, dst) in solution.plan.dag.edges
-            ):
-                styles.add("kw_edge_broken")
-
-            styles.add("user-overrides", _pub_props(data))
-            kw = styles.merge()
-            edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
-            dot.add_edge(edge)
+            dot.add_edge(self._make_edge(plot_args))
 
         ## Draw steps sequence, if it's worth it.
         #
@@ -888,7 +852,7 @@ class Plotter:
 
     def _make_node(self, plot_args: PlotArgs) -> pydot.Node:
         """
-        Customize nodes, e.g. add doc URLs/tooltips, solution tooltips.
+        Override it to customize nodes, e.g. add doc URLs/tooltips, solution tooltips.
 
         :param plot_args:
             must have, at least, a `graph`, `nx_item` & `nx-attrs`, as returned
@@ -1147,6 +1111,46 @@ class Plotter:
         dot = plot_args.dot
         for cluster in plot_args.clustered.values():
             dot.add_subgraph(cluster)
+
+    def _make_edge(self, plot_args: PlotArgs) -> pydot.Edge:
+        """Override it to customize edge appearance. """
+        graph, solution = plot_args.graph, plot_args.solution
+        (src, dst), edge_attrs = plot_args.nx_item, plot_args.nx_attrs
+        src_name, dst_name = get_node_name(src), get_node_name(dst)
+
+        ## Edge-kind
+        #
+        styles = self._new_styles_stack(plot_args)
+
+        styles.add("kw_edge")
+        if edge_attrs.get("optional"):
+            styles.add("kw_edge_optional")
+        if edge_attrs.get("sideffect"):
+            styles.add("kw_edge_sideffect")
+        if edge_attrs.get("_alias_of"):
+            styles.add("kw_edge_alias")
+
+        if getattr(src, "rescheduled", None):
+            styles.add("kw_edge_rescheduled")
+        if getattr(src, "endured", None):
+            styles.add("kw_edge_endured")
+
+        ## Edge-state
+        #
+        if graph.nodes[src].get("_pruned") or graph.nodes[dst].get("_pruned"):
+            styles.add("kw_edge_pruned")
+        if (
+            solution is not None
+            and (src, dst) not in solution.dag.edges
+            and (src, dst) in solution.plan.dag.edges
+        ):
+            styles.add("kw_edge_broken")
+
+        styles.add("user-overrides", _pub_props(edge_attrs))
+        kw = styles.merge()
+        edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
+
+        return edge
 
     def _add_legend_icon(self, plot_args: PlotArgs):
         """Optionally add an icon to diagrams linking to legend (if url given)."""

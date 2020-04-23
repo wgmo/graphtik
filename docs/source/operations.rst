@@ -107,7 +107,7 @@ on the `provides` side:
    >>> op = operation(str,
    ...                needs="anything",
    ...                provides="real thing",
-   ...                aliases=("real thing", "alias"))()
+   ...                aliases=("real thing", "phony"))()
 
 .. graphtik::
    :hide:
