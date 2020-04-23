@@ -101,7 +101,7 @@ Aliased `provides`
 Sometimes, you need to interface operations where they name some :term:`dependency`
 differently.
 This is doable without introducing "pipe-through" interface operation, either by
-annotating `needs` with :class:`.arg` `modifiers` (see docs) or with *aliases*
+annotating `needs` with :class:`.kw` `modifiers` (see docs) or with *aliases*
 on the `provides` side:
 
    >>> op = operation(str,

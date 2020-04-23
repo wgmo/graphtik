@@ -546,7 +546,7 @@ class operation:
         to receive as :term:`inputs`, roughly corresponding to the arguments of
         the underlying `fn`.
 
-        See also :term:`needs` & :term:`modifiers`.
+        See also :term:`needs` & :term:`modifier`.
     :param provides:
         Names of output data this operation provides, which must correspond
         to the returned values of the `fn`.
@@ -554,7 +554,7 @@ class operation:
         unless `returns_dict` is true, in which case a dictionary with (at least)
         as many elements must be returned.
 
-        See also :term:`provides` & :term:`modifiers`.
+        See also :term:`provides` & :term:`modifier`.
     :param aliases:
         an optional mapping of `provides` to additional ones
     :param rescheduled:

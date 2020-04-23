@@ -20,8 +20,8 @@ Architecture
 
         ... it is constrained by these IO data-structures:
 
-        - `operation`\(s) (with `needs` & `provides` for each one)
-
+        - `operation`\(s)
+        - `dependencies <dependency>` (`needs` & `provides`)
         - given `inputs`
         - asked `outputs`
 
@@ -121,11 +121,13 @@ Architecture
 
     graph
     network graph
+        A graph of `operation`\s linked by their `dependencies <dependency>` forming a `pipeline`.
+
         The :attr:`.Network.graph` (currently a DAG) contains all :class:`.FunctionalOperation`
-        and :class:`._DataNode` nodes of some `netop`.
+        and :class:`._DataNode` nodes of a `netop`
 
         They are layed out and connected by repeated calls of
-        :meth:`.Network._append_operation()` by Network constructor.
+        :meth:`.Network._append_operation()` by Network constructor during `composition`.
 
         This graph is then `prune`\d to extract the `dag`, and the `execution steps`
         are calculated, all ingredients for a new :class:`.ExecutionPlan`.
@@ -187,7 +189,7 @@ Architecture
     net
     network
         the :class:`.Network` contains a `graph` of `operation`\s and can
-        `compile` an `execution plan` or `prune` a cloned *network* for
+        `compile` (and cache) `execution plan`\s, or `prune` a cloned *network* for
         given `inputs`/`outputs`/`node predicate`.
 
     plan
@@ -223,13 +225,13 @@ Architecture
 
         An *operation* may return `partial outputs`.
 
-    returns dictionary
-        When an operation is marked with this flag, the underlying function is not
-        expected to return a sequence but a dictionary; hence, no "zipping"
-        of outputs/provides takes place.
+    netop
+    network operation
+    pipeline
+        The :class:`.NetworkOperation` class holding a `network` of `operation`\s
+        and `dependencies <dependency>`.
 
     operation
-    dependency
         Either the abstract notion of an action with specified `needs` and `provides`,
         *dependencies*, or the concrete wrapper :class:`.FunctionalOperation` for
         (any :func:`callable`), that feeds on `inputs` and update `outputs`,
@@ -239,62 +241,109 @@ Architecture
         function *parameters* and *arguments* during define-time and run-time,
         respectively.
 
-    netop
-    network operation
-        The :class:`.NetworkOperation` class holding a `network` of `operation`\s.
+    dependency
+        The name of a `solution` value an `operation` `needs` or `provides`.
+
+        - *Dependencies* are declared during `composition`, when building
+          :class:`.FunctionalOperation` instances.
+          *Operations* are then interlinked together, by matching the *needs* & *provides*
+          of all *operations* contained in a `pipeline`.
+
+        - During `compilation` the `graph` is then `prune`\d based on the :term:`reachability
+          <unsatisfied operation>` of the *dependencies*.
+
+        - During `execution` :meth:`.Operation.compute()` performs 2 "matchings":
+
+          - *inputs* & *outputs* in *solution* are accessed by the *needs* & *provides*
+            names of the *operations*;
+          - operation *needs* & *provides* are zipped against the underlying function's
+            arguments and results.
+
+          These matchings are affected by `modifier`\s.
 
     needs
-        A list of (positionally ordered) `dependency` names an `operation`'s
-        underlying callable requires as input arguments.  The respective `input <inputs>`
-        values will be extract from `solution` (or directly given by the user) when
-        :meth:`.Operation.compute()` is called during `execution`.
+    op_needs
+    fn_needs
+        The list of `dependency` names an `operation` requires from `solution` as `inputs`,
 
-        `modifiers` may annotate certain names as `optionals`, `sideffects`,
-        or map them to differently named function arguments.
+        roughly corresponding to underlying function's arguments (**fn_needs**).
 
-        The `graph` is laid out by matching the *needs* & `provides` of all *operations*.
+        Specifically, :meth:`.Operation.compute()` extracts input values
+        from *solution* by these names, and matches them against function arguments,
+        mostly by their positional order.
+        Whenever this matching is not 1-to-1, and function-arguments  differ from
+        the regular *needs* (**op_needs**), `modifier`\s must be used.
 
     provides
-        A list of `dependency` names to be zipped with the `output <outputs>` values
-        produced when the `operation`'s underlying callable executes.
-        The resulting dictionary will be stored into the `solution` or returned
-        to the user after :meth:`.Operation.compute()` is called during `execution`.
+    op_provides
+    fn_provides
+        The list of `dependency` names an `operation` writes to the `solution` as `outputs`,
 
-        `modifiers` may annotate certain names as `sideffects`.
+        roughly corresponding to underlying function's results (**fn_provides**).
 
-        The `graph` is laid out by matching the `needs` & *provides* of all *operations*.
+        Specifically, :meth:`.Operation.compute()` "zips" this list-of-names
+        with the `output <outputs>` values produced when the `operation`'s
+        function is called.
+        Whenever this "zipping" is not 1-to-1, and function-results  differ from
+        the regular *operation* (**op_needs**) (or results are not a list),
+        it is possible to:
 
-    modifiers
-        Annotations on specific arguments of `needs` and/or `provides` such as
-        `optionals` & `sideffects` (see :mod:`graphtik.modifiers` module).
+        - mark the *operation* that its function `returns dictionary`,
+        - artificially extended the *provides* with `alias`\ed *fn_provides*, or
+        - use `modifier`\s to annotate certain names as `sideffects`,
+
+    alias
+        Map an existing name in `fn_provides` into a duplicate, artificial one in `op_provides` .
+
+        You cannot alias an *alias*.
+
+    returns dictionary
+        When an `operation` is marked with this flag, the underlying function is not
+        expected to return `fn_provides` as a sequence but as a dictionary; hence,
+        no "zipping" of function-results --> `op_provides` takes place.
+
+        Usefull for operation returning `partial outputs`.
+
+    modifier
+        Annotations on a `dependency` such as `optionals` & `sideffects`.
+
+        (see :mod:`graphtik.modifiers` module)
 
     optionals
-        `needs` corresponding either:
+        A `modifier` applied on `needs` only `dependencies <dependency>`, corresponding to either:
 
-        - to function arguments-with-defaults (annotated with :class:`.optional`), or
-        - to ``*args`` (annotated with :class:`.vararg` & :class:`.varargs`),
+        - function arguments-with-defaults (annotated with :class:`.optional`), or
+        - ``*args`` (annotated with :class:`.vararg` & :class:`.varargs`),
 
         that do not hinder execution of the `operation` if absent from `inputs`.
 
     sideffects
-        Fictive `needs` or `provides` not consumed/produced by the underlying function
-        of an `operation`.
-        A *sideffect* participates in the `compilation` of the graph, and is updated
-        into the `solution`, but is never given/asked to/from functions.
+        A `modifier` denoting a fictive `dependency` linking `operation`\s into virtual flows,
 
-        - An *abstract* *sideffect*, unrelated to any other `dependency` is annotated
-          with :class:`.sideffect` modifier. `sideffected` dependency.
-        - An *sideffect* applied on an existing `dependency` is annotated on that
-          with :class:`.sideffected` modifier.
+        without real data exchanges.
+
+        A *sideffect* is a *dependency* denoting a modification to some internal state
+        that may not be fully represented in the `graph` & `solution`.
+        *Sideffects* participate in the `compilation` of the graph, and a dummy value
+        gets written in the `solution` during `execution`, but they are never given/asked
+        to/from functions.
+
+        There are actually 2 relevant `modifier`\s:
+
+        - An *abstract sideffect* (annotated with :class:`.sideffect` modifier)
+          describing modifications taking place beyond the scope of the solution.
+
+        - The `sideffected` modifier (annotated with :class:`.sideffected` modifier)
+          denoting modifications on existing *dependencies*.
+          .
 
     sideffected
-        An existing `dependency` that is linked to some `sideffects`.
+        A `modifier` that annotates an existing `dependency` with `sideffects`, ...
 
-        In all cases, the *dependency* must be declared in the `needs`.
-        If it's the operation that applies the side-effect modification, then
-        it must be declared also in its `provides`.
+        allowing to declare an `operation` that both `needs` and `provides` this *dependency*.
 
         All *sideffected* `outputs` are, by definition, `overwrites`.
+        Annotated with :class:`.sideffected` class.
 
     prune
     pruning
@@ -307,7 +356,7 @@ Architecture
     unsatisfied operation
         The core of `pruning` & `rescheduling`, performed by
         :func:`.network._unsatisfied_operations()` function, which collects
-        all `operation`\s that fall into any of these 2 cases:
+        all `operation`\s with unreachable `dependencies <dependency>`:
 
         - they have `needs` that do not correspond to any of the given `inputs` or
           the intermediately `compute`\d `outputs` of the `solution`;
