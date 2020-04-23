@@ -373,11 +373,13 @@ class PlotArgs(NamedTuple):
     #: the list of output names .
     outputs: Collection = None
     #: Contains the computed results, which might be different from :attr:`plottable`.
-    solution: "Solution" = None
+    solution: "graphtik.network.Solution" = None
     #: a mapping of nodes to cluster names
     clusters: Mapping = None
-    #: if given, overrides :active plotter`
-    plotter: "Plotter" = None
+    #: If given, overrides :active plotter`.
+    plotter: "graphtik.plot.Plotter" = None
+    #: If given, overrides :term:`plot theme` plotter will use.
+    theme: "graphtik.plot.Theme" = None
 
     #######
     # Internal item-args for :meth:`.Plotter._make_node()` etall.
@@ -446,14 +448,15 @@ class Plottable(abc.ABC):
         filename: Union[str, bool, int] = None,
         show=None,
         *,
-        plotter: "Plotter" = None,
+        plotter: "graphtik.plot.Plotter" = None,
+        theme: "graphtik.plot.Theme" = None,
         graph: "networkx.Graph" = None,
         name=None,
         steps=None,
         inputs=None,
         outputs=None,
-        solution=None,
-        clusters=None,
+        solution: "graphtik.network.Solution" = None,
+        clusters: Mapping = None,
         jupyter_render: Union[None, Mapping, str] = None,
     ) -> "pydot.Dot":
         """
@@ -487,6 +490,11 @@ class Plottable(abc.ABC):
             is used by default.
 
             :seealso: :attr:`.PlotArgs.plotter`
+        :param theme:
+            Any :term:`plot theme` overrides; if none, the :attr:`.Plotter.default_theme`
+            of the :term:`active plotter` is used.
+
+            :seealso: :attr:`.PlotArgs.theme`
         :param name:
             if not given, dot-lang graph would is named "G"; necessary to be unique
             when referring to generated CMAPs.

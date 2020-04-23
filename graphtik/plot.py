@@ -313,13 +313,15 @@ def _render_template(tpl: jinja2.Template, **kw) -> str:
 
 class Theme:
     """
-    The poor man's css-like :term:`plot theme` applied like a theme.
+    The poor man's css-like :term:`plot theme` (see also :class:`.StyleStack`).
 
+    .. theme-warn-begin
     .. NOTE::
-        Changing class attributes AFTER the module has loaded WON'T change themes;
-        Either patch directly the :attr:`Plotter.theme` of :term:`active plotter`),
-        or pass a new styles to a new plotter, as described in :ref:`plot-customizations`.
-
+        Changing class attributes AFTER the module has loaded WON'T change themes
+        becuase they are deep-copied on cstor.
+        Either patch directly the :attr:`Plotter.default_theme` of the :term:`active plotter`,
+        or pass a new theme to a plotter, as described in :ref:`plot-customizations`.
+    .. theme-warn-end
     """
 
     ##########
@@ -655,9 +657,6 @@ def remerge(*containers, source_map: list = None):
 class StylesStack(NamedTuple):
     """A mergeable stack of dicts with their provenance, resolved from a :class:`Theme`."""
 
-    #: The style instance to read style-attributes from,
-    #: when a style is given as string.
-    theme: Theme
     #: current item's plot data
     plot_args: PlotArgs
     #: A list of 2-tuples: (name, dict) containing the actual styles
@@ -673,7 +672,7 @@ class StylesStack(NamedTuple):
             OR just an existing attribute of :attr:`style` instance.
         """
         if kw is None:
-            kw = getattr(self.theme, name)  # will scream early
+            kw = getattr(self.plot_args.theme, name)  # will scream early
         self.named_styles.append((name, kw))
 
     def _expand_styles(
@@ -685,7 +684,7 @@ class StylesStack(NamedTuple):
         try:
             if isinstance(v, Ref):
                 visit_type = "theme-ref"
-                return (k, v.resolve(self.theme))
+                return (k, v.resolve(self.plot_args.theme))
             elif isinstance(v, jinja2.Template):
                 visit_type = "template"
                 return (k, v.render(**self.plot_args._asdict()))
@@ -746,30 +745,35 @@ class Plotter:
     """
     a :term:`plotter` renders diagram images of :term:`plottable`\\s.
 
-    .. attribute:: Plotter.theme
+    .. attribute:: Plotter.default_theme
 
         The :ref:`customizable <plot-customizations>` :class:`.Theme` instance
         controlling theme values & dictionaries for plots.
     """
 
     def __init__(self, theme: Theme = None, **styles_kw):
-        self.theme: Theme = theme or Theme(**styles_kw)
+        self.default_theme: Theme = theme or Theme(**styles_kw)
 
     def with_styles(self, **kw) -> "Plotter":
         """
-        Returns a cloned plotter with deep-coped theme modified as given.
+        Returns a cloned plotter with a deep-copied theme modified as given.
 
         See also :meth:`Theme.with_set()`.
         """
-        return type(self)(self.theme.with_set(**kw))
+        return type(self)(self.default_theme.with_set(**kw))
 
     def _new_styles_stack(self, plot_args: PlotArgs):
-        return StylesStack(self.theme, plot_args, [])
+        return StylesStack(plot_args, [])
 
     def plot(self, plot_args: PlotArgs):
-        if isinstance(plot_args.plottable, Solution):
-            ## Don't leave `solution` unassigned
-            plot_args = plot_args.with_defaults(solution=plot_args.plottable)
+        plot_args = plot_args.with_defaults(
+            # Don't leave `solution` unassigned
+            solution=isinstance(plot_args.plottable, Solution)
+            and plot_args.plottable
+            or None,
+            theme=self.default_theme,
+        )
+
         dot = self.build_pydot(plot_args)
         return self.render_pydot(dot, **plot_args.kw_render_pydot)
 
@@ -785,7 +789,7 @@ class Plotter:
         if plot_args.graph is None:
             raise ValueError("At least `graph` to plot must be given!")
 
-        theme = self.theme
+        theme = plot_args.theme
 
         graph, steps = self._skip_no_plot_nodes(plot_args.graph, plot_args.steps)
         plot_args = plot_args._replace(graph=graph, steps=steps)
@@ -878,7 +882,7 @@ class Plotter:
         """
         from .op import Operation
 
-        theme = self.theme
+        theme = plot_args.theme
         graph = plot_args.graph
         nx_node = plot_args.nx_item
         node_attrs = plot_args.nx_attrs
@@ -998,7 +1002,7 @@ class Plotter:
                 {
                     "name": quote_node_id(nx_node.name),
                     "shape": "plain",
-                    "label": _render_template(self.theme.op_template, **kw,),
+                    "label": _render_template(theme.op_template, **kw,),
                     # Set some base tooltip, or else, "TABLE" shown...
                     "tooltip": graphviz_html_string(op_name),
                 },
@@ -1044,7 +1048,7 @@ class Plotter:
             )
 
         fn_link = (None, None)
-        url_format = self.theme.py_item_url_format
+        url_format = plot_args.theme.py_item_url_format
         if url_format:
             dot_path = func_name(plot_args.nx_item.fn, None, mod=1, fqdn=1, human=0)
             if dot_path:
@@ -1060,7 +1064,9 @@ class Plotter:
                 )
                 fn_link = (
                     fn_url,
-                    node_attrs.get(f"_{prefix}_link_target", self.theme.fn_link_target),
+                    node_attrs.get(
+                        f"_{prefix}_link_target", plot_args.theme.fn_link_target
+                    ),
                 )
 
         return fn_link
@@ -1154,8 +1160,8 @@ class Plotter:
 
     def _add_legend_icon(self, plot_args: PlotArgs):
         """Optionally add an icon to diagrams linking to legend (if url given)."""
-        kw_legend = self.theme.kw_legend
-        if kw_legend and self.theme.kw_legend.get("URL"):
+        kw_legend = plot_args.theme.kw_legend
+        if kw_legend and plot_args.theme.kw_legend.get("URL"):
             plot_args.dot.add_node(pydot.Node(**kw_legend))
 
     def _skip_no_plot_nodes(
@@ -1251,7 +1257,9 @@ class Plotter:
 
         return dot
 
-    def legend(self, filename=None, jupyter_render: Mapping = None):
+    def legend(
+        self, filename=None, jupyter_render: Mapping = None, theme: Theme = None
+    ):
         """
         Generate a legend for all plots (see :meth:`.Plottable.plot()` for args)
 
@@ -1337,7 +1345,7 @@ class Plotter:
             }
         }
         """ % {
-            **vars(self.theme),
+            **vars(theme or self.default_theme),
         }
 
         dot = pydot.graph_from_dot_data(dot_text)[0]

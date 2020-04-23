@@ -444,10 +444,15 @@ Architecture
         comes pre-configured with, ie, when no *plot-customizations* have yet happened.
 
     plot theme
-        The attributes of :class:`.plot.Theme` class.
-        The actual theme in-use is the :attr:`.Plotter.theme` attribute of
-        the `active plotter`.
+        The attributes of :class:`.plot.Theme` class, in use or in general.
 
+        The actual theme in-use is the :attr:`.Plotter.default_theme` attribute of
+        the `active plotter`, unless overridden with the :obj:`theme` parameter when
+        calling :meth:`.Plottable.plot()`.
+
+        .. include:: ../../graphtik/plot.py
+            :start-after: .. theme-warn-begin
+            :end-before: .. theme-warn-end
 
 .. default-role:: obj
 .. |v410-flowchart| raw:: html

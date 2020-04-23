@@ -468,11 +468,6 @@ def test_node_dot_str0(dot_str_pipeline):
     sys.version_info < (3, 7), reason="PY3.6 - has different docstrings for builtins."
 )
 def test_node_dot_str1(dot_str_pipeline, monkeypatch):
-    theme = get_active_plotter().theme
-    monkeypatch.setattr(theme, "py_item_url_format", "abc#%s")
-    monkeypatch.setattr(theme, "op_link_target", "_self")
-    monkeypatch.setattr(theme, "fn_link_target", "bad")
-
     ## Test node-hidding & Graph-overlaying.
     #
     overlay = nx.DiGraph()
@@ -480,10 +475,6 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     overlay.add_node(hidden_op, _no_plot=True)
     overlay.graph["splines"] = "ortho"
 
-    sol = dot_str_pipeline.compute({"edge": 1, "digraph: strict": 2})
-    dot_str = str(sol.plot(graph=overlay))
-
-    print(dot_str)
     exp = """
         digraph solution_x5_nodes {
         fontname=italic;
@@ -510,5 +501,45 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_top];
         }
         """
+
+    ## Theme-param.
+    #
+    sol = dot_str_pipeline.compute({"edge": 1, "digraph: strict": 2})
+    dot_str = str(
+        sol.plot(
+            graph=overlay,
+            theme=Theme(
+                py_item_url_format="abc#%s",
+                op_link_target="_self",
+                fn_link_target="bad",
+            ),
+        )
+    )
+
+    print(dot_str)
+    assert _striplines(dot_str) == _striplines(exp)
+    assert "<node>" not in dot_str
+
+    ## Plotter-param
+    #
+    dot_str = str(
+        sol.plot(
+            graph=overlay,
+            plotter=get_active_plotter().with_styles(
+                py_item_url_format="abc#%s",
+                op_link_target="_self",
+                fn_link_target="bad",
+            ),
+        )
+    )
+    assert _striplines(dot_str) == _striplines(exp)
+    assert "<node>" not in dot_str
+
+    ## (last one) Patch theme directly on default active-plotter.
+    #
+    theme = get_active_plotter().default_theme
+    monkeypatch.setattr(theme, "py_item_url_format", "abc#%s")
+    monkeypatch.setattr(theme, "op_link_target", "_self")
+    monkeypatch.setattr(theme, "fn_link_target", "bad")
     assert _striplines(dot_str) == _striplines(exp)
     assert "<node>" not in dot_str

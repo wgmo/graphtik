@@ -330,8 +330,9 @@ Plot customizations
 ~~~~~~~~~~~~~~~~~~~~
 :term:`plotter`\s` & theme constants
    Rendering of plots is performed by :class:`.plot.Plotter` instances.
-   Simple values for `Graphviz`_ styling attributes are defined on :class:`.plot.Theme`
-   class, which is an :attr:`attribute <.Plotter.theme>` of *plotter*.
+   All `Graphviz`_ styling attributes are defined on :class:`.plot.Theme`
+   class, which if not overridden, it is the instance in the :attr:`.Plotter.default_theme`
+   attribute.
 
    You may customize the theme and/or *plotter* behavior with various methods,
    ordered by breadth of the effects (most broadly effecting method at the top):
@@ -339,13 +340,13 @@ Plot customizations
    1. Get and modify in-place the theme of the :term:`default active plotter`,
       like that::
 
-         get_active_plotter().theme.kw_op["fillcolor"] = "purple"
+         get_active_plotter().default_theme.kw_op["fillcolor"] = "purple"
 
       - This will affect all :meth:`.Plottable.plot()` calls for a python session.
-      - You cannot change the *plotter* instance with this method - only theme
-        (and monkeypatching plotter's methods).
+      - You cannot change the *plotter* instance and its methods with this - only
+        the theme (and monkeypatching plotter's methods).
 
-   2. Create a new :class:`.Plotter` with customized :attr:`.Plotter.theme`, or
+   2. Create a new :class:`.Plotter` with customized :attr:`.Plotter.default_theme`, or
       clone and customize the theme of an existing plotter by the use of
       its :meth:`.Plotter.with_styles` method, and make that the new *active plotter*.
 
@@ -361,6 +362,10 @@ Plot customizations
       ... or the following, if you want to preserve pre-existing customizations::
 
          netop.plot(plotter=get_active_plotter().with_styles(kw_legend=None))
+
+      This allows to override Plotter's methods as well.
+
+   4. Simply pass a new `theme` into :meth:`.Plottable.plot()` call.
 
    This project dogfoods (2) in its own :file:`docs/source/conf.py` sphinx file.
    In particular, it configures the base-url of operation node links
