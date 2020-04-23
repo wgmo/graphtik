@@ -262,7 +262,7 @@ class ItemArgs(NamedTuple):
     """All the args for :meth:`.Plotter._make_node()` etall. """
 
     #: Where to add graphviz nodes & stuff.
-    dot: pydot.Dot
+    dot: pydot.Dot = None
     #: The node (data(str) or :class:`Operation`) or edge as gotten from nx-graph.
     nx_item: Any = None
     #: Attributes gotten from nx-graph for the given graph/node/edge.
@@ -281,9 +281,11 @@ class Ref:
     def __init__(self, ref, base=None):
         self.ref = ref
 
-    def resolve(self, base):
+    def resolve(self, base, default=...):
         """Makes re-based clone to the given class/object."""
-        return getattr(base, self.ref, "!missed!")
+        if default is ...:
+            return getattr(base, self.ref)
+        return getattr(base, self.ref, default)
 
     def __repr__(self):
         return f"Ref('{self.ref}')"
@@ -522,58 +524,26 @@ class Theme:
 
     def __init__(self, _prototype: "Theme" = None, **kw):
         """
-        Deep-copy class-attributes (to avoid sideffects) and apply user-overrides,
-
-        resolving any :class:`Ref` on my self (from class's 'values).
+        Deep-copy public class-attributes (or prototype) and apply user-overrides,
 
         :param _prototype:
             If given, class-attributes are ignored, deep-copying "public" properties
             only from this instance (and apply on top any `kw`).
+
+        Don't forget to resolve any :class:`Ref` on my self when used.
         """
         if _prototype is None:
             _prototype = type(self)
         else:
             assert isinstance(_prototype, Theme), _prototype
 
-        values = {
+        class_attrs = {
             k: v
             for k, v in vars(type(self)).items()
             if not callable(v) and not k.startswith("_")
         }
-        values.update(kw)
-        self.resolve_refs(values)
-
-    def resolve_refs(self, values: dict = None) -> None:
-        """
-        Resolve style attribute refs, and deep copy (for free) as instance attributes.
-
-        :param values:
-            if not given, resolve and clone my class's attributes
-
-        :raises:
-            Nothing(!), not to CRASH :term:`default active plotter` on import-time.
-            Ref-errors are log-ERROR reported, and the item with the ref is skipped.
-        """
-
-        def remap_item(path, k, v):
-            if isinstance(v, Ref):
-                try:
-                    return (k, v.resolve(self))
-                except Exception as ex:
-                    log.error(
-                        "Invalid theme-ref '%s.%s': '%r' --> '%s' due to: %s",
-                        ".".join(path),
-                        k,
-                        v,
-                        v,
-                        ex,
-                    )
-                    return False
-            return True
-
-        if values is None:
-            values = vars(self)
-        vars(self).update(remap(values, remap_item))
+        class_attrs.update(kw)
+        vars(self).update(remap(class_attrs))
 
     def with_set(self, **kw) -> "Theme":
         """Returns a deep-clone modified by `kw`."""
@@ -670,15 +640,15 @@ def remerge(*containers, source_map: list = None):
         if source_map is not None:
 
             def remerge_visit(path, key, value):
-                key = path + (key,)
+                full_path = path + (key,)
                 if isinstance(value, list):
-                    old = source_map.get(key)
+                    old = source_map.get(full_path)
                     if old:
                         old.append(t_name)
                     else:
-                        source_map[key] = [t_name]
+                        source_map[full_path] = [t_name]
                 else:
-                    source_map[key] = t_name
+                    source_map[full_path] = t_name
                 return True
 
         else:
@@ -690,11 +660,13 @@ def remerge(*containers, source_map: list = None):
 
 
 class StylesStack(NamedTuple):
-    """A stack of mergeable dicts and their provenance, auto-deduced from a :class:`Theme`."""
+    """A mergeable stack of dicts with their provenance, resolved from a :class:`Theme`."""
 
     #: The style instance to read style-attributes from,
     #: when a style is given as string.
     theme: Theme
+    plot_args: PlotArgs
+    item_args: ItemArgs
     #: A list of 2-tuples: (name, dict) containing the actual styles
     #: along with their provenance.
     named_styles: List[Tuple[str, dict]]
@@ -711,16 +683,42 @@ class StylesStack(NamedTuple):
             kw = getattr(self.theme, name)  # will scream early
         self.named_styles.append((name, kw))
 
-    def asdict(self, nx_attrs: dict, debug=None) -> dict:
+    def _expand_styles(
+        self, path, k, v,
+    ):
         """
-        Optionally include style-merging debug-info and workaround pydot/pydot#228 ...
+        A :func:`.remap()` visit-cb to resolve :class:`.Ref`\\s and render jinja2-templates.
+        """
+        try:
+            if isinstance(v, Ref):
+                visit_type = "theme-ref"
+                return (k, v.resolve(self.theme))
+            elif isinstance(v, jinja2.Template):
+                visit_type = "template"
+                return (k, v.render(self.plot_args, self.item_args))
+            return True
+        except Exception as ex:
+            path = f'{"/".join(path)}.{k}'
+            raise ValueError(
+                f"Failed expanding {visit_type} @ '{path}': {v} due to: {ex}"
+            )
 
-        pydot-cstor not supporting styles-as-lists.
+    def merge(self, debug=None) -> dict:
+        """
+        Recursively merge stack and process styles, in particular:
 
-        :param nx_attrs:
-            a dictionary to be included in the debug tooltip
+        - merge stack of styles, with their provenance if DEBUG (see :func:`remerge()`);
+        - resolve any :class:`Ref`\\s in styles (see :meth:`_expand_styles()`);
+        - render jinja2 templates (see :meth:`_expand_styles()`);
+        - workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
+
         :param debug:
             When not `None`, override :func:`config.is_debug` flag.
+            When debug is enabled, tooltips are overridden with provenance
+            & user-attributes.
+
+        :return:
+            the merged styles
         """
 
         if (debug is None and is_debug()) or debug:
@@ -729,18 +727,24 @@ class StylesStack(NamedTuple):
 
             styles_provenance = {}
             d = remerge(*self.named_styles, source_map=styles_provenance)
+
+            ## Append debug info
+            #
             provenance_str = pformat(
                 {".".join(k): v for k, v in styles_provenance.items()}, indent=2
             )
-            tooltip = f"- styles: {provenance_str}\n- extra_attrs: {pformat(nx_attrs)}"
+            tooltip = f"- styles: {provenance_str}\n- extra_attrs: {pformat(self.item_args.nx_attrs)}"
             d["tooltip"] = graphviz_html_string(tooltip)
+
         else:
             d = remerge(*(style_dict for _name, style_dict in self.named_styles))
         assert isinstance(d, dict), (d, self.named_styles)
 
-        style = d.get("style")
-        if isinstance(style, (list, tuple)):
-            d["style"] = ",".join(str(i) for i in set(style))
+        d = remap(d, visit=self._expand_styles)
+
+        graphviz_style = d.get("style")
+        if isinstance(graphviz_style, (list, tuple)):
+            d["style"] = ",".join(str(i) for i in set(graphviz_style))
 
         return d
 
@@ -766,8 +770,8 @@ class Plotter:
         """
         return type(self)(self.theme.with_set(**kw))
 
-    def _new_styles_stack(self):
-        return StylesStack(self.theme, [])
+    def _new_styles_stack(self, plot_args: PlotArgs, item_args: ItemArgs):
+        return StylesStack(self.theme, plot_args, item_args, [])
 
     def plot(self, plot_args: PlotArgs):
         if isinstance(plot_args.plottable, Solution):
@@ -791,7 +795,8 @@ class Plotter:
             raise ValueError("At least `graph` to plot must be given!")
 
         graph, steps = self._skip_nodes(graph, steps)
-        styles = self._new_styles_stack()
+        # TODO: build a proper ItemArgs for edges and, move to new method.
+        styles = self._new_styles_stack(plot_args, ItemArgs(nx_attrs=graph.graph))
 
         styles.add("kw_graph")
 
@@ -804,7 +809,9 @@ class Plotter:
         )
 
         styles.add("user-overrides", _pub_props(graph.graph))
-        dot = pydot.Dot(**styles.asdict(graph.graph))
+
+        kw = styles.merge()
+        dot = pydot.Dot(**kw)
 
         if plot_args.name:
             dot.set_name(as_identifier(plot_args.name))
@@ -829,7 +836,7 @@ class Plotter:
 
             ## Edge-kind
             #
-            styles = self._new_styles_stack()
+            styles = self._new_styles_stack(plot_args, item_args)
 
             styles.add("kw_edge")
             if data.get("optional"):
@@ -864,7 +871,8 @@ class Plotter:
                 styles.add("kw_edge_broken")
 
             styles.add("user-overrides", _pub_props(data))
-            edge = pydot.Edge(src=src_name, dst=dst_name, **styles.asdict(data))
+            kw = styles.merge()
+            edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
             dot.add_edge(edge)
 
         ## Draw steps sequence, if it's worth it.
@@ -876,8 +884,11 @@ class Plotter:
             for i, (src, dst) in enumerate(zip(it1, it2), 1):
                 src_name = get_node_name(src)
                 dst_name = get_node_name(dst)
+                styles = self._new_styles_stack(plot_args, item_args)
+
+                styles.add("kw_step")
                 edge = pydot.Edge(
-                    src=src_name, dst=dst_name, label=str(i), **theme.kw_step
+                    src=src_name, dst=dst_name, label=str(i), **styles.merge()
                 )
                 dot.add_edge(edge)
 
@@ -919,7 +930,7 @@ class Plotter:
         (plottable, _, _, steps, inputs, outputs, solution, *_,) = plot_args
 
         if isinstance(nx_node, str):  # DATA
-            styles = self._new_styles_stack()
+            styles = self._new_styles_stack(plot_args, item_args)
 
             styles.add("kw_data")
             styles.add("node-name", {"name": quote_node_id(nx_node)})
@@ -981,7 +992,7 @@ class Plotter:
 
         else:  # OPERATION
             op_name = nx_node.name
-            label_styles = self._new_styles_stack()
+            label_styles = self._new_styles_stack(plot_args, item_args)
 
             label_styles.add("kw_op_label")
             label_styles.add(
@@ -1027,15 +1038,14 @@ class Plotter:
 
             label_styles.add("user-overrides", _pub_props(node_attrs))
 
-            styles = self._new_styles_stack()
+            kw = label_styles.merge()
+            styles = self._new_styles_stack(plot_args, item_args)
             styles.add(
                 "init",
                 {
                     "name": quote_node_id(nx_node.name),
                     "shape": "plain",
-                    "label": _render_template(
-                        self.theme.op_template, **label_styles.asdict(node_attrs),
-                    ),
+                    "label": _render_template(self.theme.op_template, **kw,),
                     # Set some base tooltip, or else, "TABLE" shown...
                     "tooltip": graphviz_html_string(op_name),
                 },
@@ -1049,7 +1059,8 @@ class Plotter:
                 {k: v for k, v in _pub_props(node_attrs).items() if k not in bad_props},
             )
 
-        return pydot.Node(**styles.asdict(node_attrs))
+        kw = styles.merge()
+        return pydot.Node(**kw)
 
     def _make_op_link(
         self, plot_args: PlotArgs, item_args: ItemArgs
