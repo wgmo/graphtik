@@ -340,6 +340,27 @@ def test_style_Ref():
     assert r.resolve(Theme) == 4
 
 
+def test_Theme_with_set():
+    p = Theme()
+    p2 = p.with_set()
+    assert p is not p2
+
+    p3 = p.with_set(include_steps=True)
+    assert p3.include_steps
+    assert not p.include_steps
+
+
+def test_Plotter_with_styles():
+    p = Plotter()
+    p2 = p.with_styles()
+    assert p is not p2
+    assert p.default_theme is not p2.default_theme
+
+    p3 = p.with_styles(include_steps=True)
+    assert p3.default_theme.include_steps
+    assert not p.default_theme.include_steps
+
+
 def test_plotter_customizations(pipeline, monkeypatch):
     ## default URL
     #
