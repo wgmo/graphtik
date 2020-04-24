@@ -1164,7 +1164,9 @@ class Plotter:
         """Optionally add an icon to diagrams linking to legend (if url given)."""
         kw_legend = plot_args.theme.kw_legend
         if kw_legend and plot_args.theme.kw_legend.get("URL"):
-            plot_args.dot.add_node(pydot.Node(**kw_legend))
+            styles = self._new_styles_stack(plot_args)
+            styles.add("kw_legend")
+            plot_args.dot.add_node(pydot.Node(**styles.merge()))
 
     def _skip_no_plot_nodes(
         self, graph: nx.Graph, steps: Collection
