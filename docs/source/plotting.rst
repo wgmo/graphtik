@@ -268,12 +268,14 @@ Configurations
    <https://github.com/ariutta/svg-pan-zoom>`_, unless the ``:zoomable:``
    directive-option is given (and not empty).
 
+   .. serve-sphinx-warn-start
    .. Attention::
       Zoom-and-pan does not work in Sphinx sites for Chrome locally - serve
       the HTML files through some HTTP server, e.g. launch this command
       to view the site of this project::
 
             python -m http.server 8080 --directory build/sphinx/html/
+   .. serve-sphinx-warn-end
 
 
 .. confval:: graphtik_zoomable_options
