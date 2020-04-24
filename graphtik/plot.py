@@ -1269,7 +1269,16 @@ class Plotter:
 
         See :meth:`Plotter.render_pydot` for the rest arguments.
         """
-
+        if theme is None:
+            theme = self.default_theme
+        class_attrs = {
+            k: v
+            for k, v in vars(type(theme)).items()
+            if not callable(v) and not k.startswith("_")
+        }
+        styles = self._new_styles_stack(PlotArgs(theme=theme))
+        styles.add("class_attributes", class_attrs)
+        theme_kw = styles.merge()
         ## From https://stackoverflow.com/questions/3499056/making-a-legend-key-in-graphviz
         # Render it manually with these python commands, and remember to update result in git:
         #
@@ -1349,7 +1358,7 @@ class Plotter:
             }
         }
         """ % {
-            **vars(theme or self.default_theme),
+            **theme_kw,
         }
 
         dot = pydot.graph_from_dot_data(dot_text)[0]
