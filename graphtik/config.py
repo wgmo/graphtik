@@ -8,6 +8,12 @@
 
     Plot configrations were not defined here, not to pollute import space early,
     until they are actually needed.
+
+.. note::
+    The contant-manager function ``XXX_plugged()`` or ``XXX_enabled()`` do NOT launch
+    their code blocks using :meth:`contextvars.Context.run()` in a separate "context",
+    so any changes to these or other context-vars will persist
+    (unless they are also done within such context-managers)
 """
 import ctypes
 import os
@@ -62,6 +68,8 @@ def _tristate_armed(context_var: ContextVar, enabled):
 debug_enabled = partial(_tristate_armed, _debug)
 """
 Like :func:`set_debug()` as a context-manager, resetting back to old value.
+
+.. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
 is_debug = partial(_getter, _debug)
 """see :func:`set_debug()`"""
@@ -111,6 +119,8 @@ def is_abort():
 evictions_skipped = partial(_tristate_armed, _skip_evictions)
 """
 Like :func:`set_skip_evictions()` as a context-manager, resetting back to old value.
+
+.. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
 is_skip_evictions = partial(_getter, _skip_evictions)
 """see :func:`set_skip_evictions()`"""
@@ -129,6 +139,8 @@ regardless of asked outputs.
 def execution_pool_plugged(pool: "Optional[Pool]"):
     """
     Like :func:`set_execution_pool()` as a context-manager, resetting back to old value.
+
+    .. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
     """
     resetter = _execution_pool.set(pool)
     try:
@@ -155,6 +167,8 @@ def get_execution_pool() -> "Optional[Pool]":
 tasks_in_parallel = partial(_tristate_armed, _parallel_tasks)
 """
 Like :func:`set_parallel_tasks()` as a context-manager, resetting back to old value.
+
+.. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
 is_parallel_tasks = partial(_getter, _parallel_tasks)
 """see :func:`set_parallel_tasks()`"""
@@ -174,6 +188,8 @@ Enable/disable globally :term:`parallel` execution of operations.
 tasks_marshalled = partial(_tristate_armed, _marshal_tasks)
 """
 Like :func:`set_marshal_tasks()` as a context-manager, resetting back to old value.
+
+.. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
 is_marshal_tasks = partial(_getter, _marshal_tasks)
 """see :func:`set_marshal_tasks()`"""
@@ -195,6 +211,8 @@ inputs & outputs with :mod:`dill`,  which might help for pickling problems.
 operations_endured = partial(_tristate_armed, _endure_operations)
 """
 Like :func:`set_endure_operations()` as a context-manager, resetting back to old value.
+
+.. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
 is_endure_operations = partial(_getter, _endure_operations)
 """see :func:`set_endure_operations()`"""
@@ -215,6 +233,8 @@ Enable/disable globally :term:`endurance` to keep executing even if some operati
 operations_reschedullled = partial(_tristate_armed, _reschedule_operations)
 """
 Like :func:`set_reschedule_operations()` as a context-manager, resetting back to old value.
+
+.. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
 is_reschedule_operations = partial(_getter, _reschedule_operations)
 """see :func:`set_reschedule_operations()`"""

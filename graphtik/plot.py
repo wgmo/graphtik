@@ -332,12 +332,13 @@ class Theme:
 
     .. theme-warn-start
     .. Attention::
-        All ``Theme`` *class* attributes are deep-copied when constructing new instances,
+        All :class:`Theme` *class* attributes are deep-copied when constructing new instances,
         to avoid modifying them by mistake, while attempting to update
         *instance* attributes instead
-        (hint: allmost all class attributes are containers).
+        (hint: allmost all its attributes are containers i.e. dicts).
 
-        Therefore it is recommended to use other means for :ref:`plot-customizations`.
+        Therefore it is recommended to use other means for :ref:`plot-customizations`
+        instead of modifying directly theme's class-attributes.
     .. theme-warn-end
 
     """

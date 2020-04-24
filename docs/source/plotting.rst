@@ -333,7 +333,7 @@ Configurations
 
 Plot customizations
 ~~~~~~~~~~~~~~~~~~~~
-:term:`plotter`\s` & theme constants
+:term:`plotter`\s` & :term:`plot theme`
    Rendering of plots is performed by :class:`.plot.Plotter` instances.
    All `Graphviz`_ styling attributes are defined on :class:`.plot.Theme`
    class, which if not overridden, it is the instance in the :attr:`.Plotter.default_theme`
@@ -348,6 +348,10 @@ Plot customizations
 
       This is the most invasive method, affecting all *FUTURE ONLY(!)* themes and
       and plotter instances (past and future) during a python session.
+
+      .. include:: ../../graphtik/plot.py
+         :start-after: .. theme-warn-start
+         :end-before: .. theme-warn-end
 
    1. Modify the :attr:`.default_theme` attribute of the :term:`default active plotter`,
       like that::
