@@ -4,12 +4,14 @@
 Plotting of graph graphs handled by :term:`active plotter` (see also :mod:`.base`).
 
 Separate from `graphtik.base` to avoid too many imports too early.
-from contextlib import contextmanager
 
-# Workaround sphinx-doc/sphinx#6590
->>> from graphtik.plot import *
->>> __name__ = "graphtik.plot"
+.. doctest::
+    :hide:
 
+    .. Workaround sphinx-doc/sphinx#6590
+
+    >>> from graphtik.plot import *
+    >>> __name__ = "graphtik.plot"
 """
 import html
 import inspect

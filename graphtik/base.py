@@ -3,10 +3,13 @@
 """
 Generic utilities, or :mod:`.plot` API but without polluting imports.
 
-.. testsetup::
+.. doctest::
+    :hide:
 
-    from graphtik.base import *
-    __name__ = "graphtik.base"
+    .. Workaround sphinx-doc/sphinx#6590
+
+    >>> from graphtik.base import *
+    >>> __name__ = "graphtik.base"
 """
 
 import abc

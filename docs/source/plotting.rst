@@ -106,6 +106,11 @@ their `:name:` option(see :ref:`sphinxext-examples` below).
 
    .. code-block:: rst
 
+   .. doctest::
+      :hide:
+
+      .. Workaround sphinx-doc/sphinx#6590
+
       >> from <this.module> import *
       >> __name__ = "<this.module>"
 
