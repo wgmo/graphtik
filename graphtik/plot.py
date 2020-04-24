@@ -318,11 +318,13 @@ class Theme:
     The poor man's css-like :term:`plot theme` (see also :class:`.StyleStack`).
 
     .. theme-warn-begin
-    .. NOTE::
-        Changing class attributes AFTER the module has loaded WON'T change themes
-        becuase they are deep-copied on cstor.
-        Either patch directly the :attr:`Plotter.default_theme` of the :term:`active plotter`,
-        or pass a new theme to a plotter, as described in :ref:`plot-customizations`.
+    .. Attention::
+        All ``Theme`` *class* attributes are deep-copied when constructing new instances,
+        to avoid modifying them by mistake, while attempting to update
+        *instance* attributes instead
+        (hint: allmost all class attributes are containers).
+
+        Therefore it is recommended to use other means for :ref:`plot-customizations`.
     .. theme-warn-end
     """
 
@@ -519,13 +521,12 @@ class Theme:
         "target": "_top",
     }
 
-    def __init__(self, _prototype: "Theme" = None, **kw):
+    def __init__(self, *, _prototype: "Theme" = None, **kw):
         """
-        Deep-copy public class-attributes (or prototype) and apply user-overrides,
+        Deep-copy public class-attributes of prototype and apply user-overrides,
 
         :param _prototype:
-            If given, class-attributes are ignored, deep-copying "public" properties
-            only from this instance (and apply on top any `kw`).
+            Deep-copy its :func:`vars()`, and apply on top any `kw`
 
         Don't forget to resolve any :class:`Ref` on my self when used.
         """
@@ -659,7 +660,7 @@ def remerge(*containers, source_map: list = None):
 class StylesStack(NamedTuple):
     """A mergeable stack of dicts with their provenance, resolved from a :class:`Theme`."""
 
-    #: current item's plot data
+    #: current item's plot data with at least :attr:`.PlotArgs.theme` attribute. ` `
     plot_args: PlotArgs
     #: A list of 2-tuples: (name, dict) containing the actual styles
     #: along with their provenance.
