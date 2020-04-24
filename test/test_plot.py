@@ -345,40 +345,41 @@ def test_plotter_customizations(pipeline, monkeypatch):
     #
     url = Theme.kw_legend["URL"]
     dot = str(pipeline.plot())
-    assert url in dot
+    assert url in dot, dot
 
     ## New active_plotter
     #
     with active_plotter_plugged(Plotter(theme=Theme(kw_legend={"URL": None}))):
         dot = str(pipeline.plot())
-        assert url not in dot
+        assert "legend" not in dot, dot
+        assert url not in dot, dot
 
         ## URL --> plotter in args
         #
         url1 = "http://example.1.org"
         dot = str(pipeline.plot(plotter=Plotter(theme=Theme(kw_legend={"URL": url1}))))
-        assert url1 in dot
-        assert url not in dot
+        assert url1 in dot, dot
+        assert url not in dot, dot
     dot = str(pipeline.plot())
-    assert url in dot
+    assert url in dot, dot
 
     url2 = "http://example.2.org"
     with active_plotter_plugged(Plotter(theme=Theme(kw_legend={"URL": url2}))):
         dot = str(pipeline.plot())
-        assert url2 in dot
-        assert url not in dot
+        assert url2 in dot, dot
+        assert url not in dot, dot
     dot = str(pipeline.plot())
-    assert url in dot
-    assert url1 not in dot
+    assert url in dot, dot
+    assert url1 not in dot, dot
 
     ## URL --> plotter in args
     #
     dot = str(pipeline.plot(plotter=Plotter(theme=Theme(kw_legend={"URL": None}))))
-    assert url not in dot
+    assert "legend" not in dot, dot
 
     dot = str(pipeline.plot(plotter=Plotter(theme=Theme(kw_legend={"URL": url2}))))
-    assert url2 in dot
-    assert url not in dot
+    assert url2 in dot, dot
+    assert url not in dot, dot
 
 
 def test_plotter_customizations_ignore_class(pipeline, monkeypatch):
@@ -387,8 +388,8 @@ def test_plotter_customizations_ignore_class(pipeline, monkeypatch):
     url_ignore = "http://foo.com"
     monkeypatch.setitem(Theme.kw_legend, "URL", url_ignore)
     dot = str(pipeline.plot())
-    assert url in dot
-    assert url_ignore not in dot
+    assert url in dot, dot
+    assert url_ignore not in dot, dot
 
 
 @pytest.mark.xfail(reason="jinja2 template fails pickling")
