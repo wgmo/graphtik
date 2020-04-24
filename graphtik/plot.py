@@ -291,10 +291,13 @@ def _escape_or_none(context: jinja2.environment.EvalContext, x, escaper):
 #: Environmane to append out own jinja2 filters.
 _jinja2_env = jinja2.Environment()
 
-#: Default `escape` filter breaks Nones for xmlattr.
+#: Like default escape filter ``e``, but Nones/empties evaluate to false.
+#:
+#: Needed because the default `escape` filter breaks `xmlattr` filter with Nones .
 _jinja2_env.filters["ee"] = jinja2.evalcontextfilter(
     partial(_escape_or_none, escaper=html.escape)
 )
+#: Escape for when writting inside HTML-strings.
 _jinja2_env.filters["eee"] = jinja2.evalcontextfilter(
     partial(_escape_or_none, escaper=quote_html_tooltips)
 )
@@ -305,6 +308,19 @@ _jinja2_env.filters["hrefer"] = _drop_gt_lt
 
 
 def make_template(s):
+    """
+    Makes dedented jinja2 templates supporting extra escape filters for `Graphviz`_:
+
+    ``ee``
+        Like default escape filter ``e``, but Nones/empties evaluate to false.
+        Needed because the default `escape` filter breaks `xmlattr` filter with Nones .
+    ``eee``
+        Escape for when writting inside HTML-strings.
+        Collapses nones/empties (unlike default ``e``).
+    ``hrefer``
+        Dubious escape for when writting URLs inside Graphviz attributes.
+        Does NOT collapse nones/empties (like default ``e``)
+    """
     return _jinja2_env.from_string(textwrap.dedent(s).strip())
 
 
@@ -355,7 +371,8 @@ class Theme:
     overwrite_color = "SkyBlue"
     steps_color = "#00bbbb"
     evicted = "#006666"
-    #: See :meth:`.Plotter._make_py_item_link()`.
+    #: If given, makes links from op & fn rows of operation-nodes
+    #: (see :meth:`.Plotter._make_py_item_link()``).
     py_item_url_format: Union[str, Callable[[str], str]] = None
     #: the url to the architecture section explaining *graphtik* glossary,
     #: linked by legend.
@@ -445,9 +462,6 @@ class Theme:
     }
     kw_op_failed = {"fillcolor": Ref("failed_color"), "tooltip": "(failed)"}
     kw_op_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": "(canceled)"}
-    #: Applied only if :attr:`py_item_url_format` defined, or
-    #: ``"_op_link_target"`` in nx_node-attributes.
-
     #: Try to mimic a regular `Graphviz`_ node attributes
     #: (see examples in ``test.test_plot.test_op_template_full()`` for params).
     #: TODO: fix jinja2 template is un-picklable!
