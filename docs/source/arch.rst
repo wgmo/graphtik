@@ -444,14 +444,19 @@ Architecture
         comes pre-configured with, ie, when no *plot-customizations* have yet happened.
 
     plot theme
-        The attributes of :class:`.plot.Theme` class, in use or in general.
+    theme expansion
+        The mergeable and auto-expandable attributes of :class:`.plot.Theme` instances in use.
 
         The actual theme in-use is the :attr:`.Plotter.default_theme` attribute of
         the `active plotter`, unless overridden with the :obj:`theme` parameter when
-        calling :meth:`.Plottable.plot()`.
+        calling :meth:`.Plottable.plot()` (conveyed internally as the value of the
+        :attr:`.PlotArgs.theme` attribute).
+
+        The following **expansions** apply in the attribute-values of ``Theme``
+        instances:
 
         .. include:: ../../graphtik/plot.py
-            :start-after: .. theme-warn-begin
+            :start-after: .. theme-expansions-start
             :end-before: .. theme-warn-end
 
 .. default-role:: obj

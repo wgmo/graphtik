@@ -317,7 +317,20 @@ class Theme:
     """
     The poor man's css-like :term:`plot theme` (see also :class:`.StyleStack`).
 
-    .. theme-warn-begin
+    To use the values contained in theme-instances, stack them in a :class:`.StylesStack`,
+    in order to apply the following :term:`theme expansion`\\s when calling
+    :meth:`.StylesStack.merge`.
+
+    .. theme-expansions-start
+
+    - Any lists will be merged (important for multi-valued `Graphviz`_ attributes
+      like ``style``).
+    - Any :class:`.Ref` instances will be resolved against the attributes
+      of the current theme.
+    - Any *jinja2* templates will be rendered, using as template-arguments
+      all the attributes of the :class:`plot_args <.PlotArgs>` instance in use.
+
+    .. theme-warn-start
     .. Attention::
         All ``Theme`` *class* attributes are deep-copied when constructing new instances,
         to avoid modifying them by mistake, while attempting to update
@@ -326,6 +339,7 @@ class Theme:
 
         Therefore it is recommended to use other means for :ref:`plot-customizations`.
     .. theme-warn-end
+
     """
 
     ##########
@@ -703,7 +717,7 @@ class StylesStack(NamedTuple):
         Recursively merge stack and process styles, in particular:
 
         - merge stack of styles, with their provenance if DEBUG (see :func:`remerge()`);
-        - resolve any :class:`Ref`\\s in styles (see :meth:`_expand_styles()`);
+        - resolve any :class:`Ref`\\s (see :meth:`_expand_styles()`);
         - render jinja2 templates (see :meth:`_expand_styles()`);
         - workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
 
