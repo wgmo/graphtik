@@ -485,7 +485,7 @@ class Plottable(abc.ABC):
             the :term:`plottable` that ordered the plotting.
             Automatically set downstreams to one of::
 
-                netop | net | plan | solution | <missing>
+                op | netop | net | plan | solution | <missing>
 
             :seealso: :attr:`.PlotArgs.plottable`
         :param plotter:

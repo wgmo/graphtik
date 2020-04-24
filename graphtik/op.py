@@ -17,6 +17,7 @@ from .base import (
     UNSET,
     Items,
     MultiValueError,
+    PlotArgs,
     Plottable,
     aslist,
     astuple,
@@ -112,7 +113,7 @@ class Operation(abc.ABC):
         """
 
 
-class FunctionalOperation(Operation):
+class FunctionalOperation(Operation, Plottable):
     """
     An :term:`operation` performing a callable (ie a function, a method, a lambda).
 
@@ -529,6 +530,25 @@ class FunctionalOperation(Operation):
 
     def __call__(self, *args, **kwargs):
         return self.fn(*args, **kwargs)
+
+    def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
+        """Delegate to a provisional network with a single op . """
+        from .netop import compose
+        from .plot import graphviz_html_string
+
+        is_user_label = bool(plot_args.graph and plot_args.graph.get("label"))
+        plottable = compose(self.name, self)
+        plot_args = plot_args.with_defaults(name=self.name)
+        plot_args = plottable.prepare_plot_args(plot_args)
+        assert plot_args.graph, plot_args
+
+        ## Operations don't need another name visible.
+        #
+        if not is_user_label:
+            del plot_args.graph.graph["label"]
+        plot_args = plot_args._replace(plottable=self)
+
+        return plot_args
 
 
 class operation:

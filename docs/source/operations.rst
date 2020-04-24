@@ -105,17 +105,12 @@ annotating `needs` with :class:`.kw` `modifiers` (see docs) or with *aliases*
 on the `provides` side:
 
    >>> op = operation(str,
+   ...                name="`provides` with `aliases`",
    ...                needs="anything",
    ...                provides="real thing",
    ...                aliases=("real thing", "phony"))()
 
 .. graphtik::
-   :hide:
-
-
-   >>> sample = compose("aliased provides", op)
-
-   .. TODO: make operations plottables
 
 Instantiating operations
 ------------------------

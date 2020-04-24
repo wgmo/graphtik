@@ -32,6 +32,7 @@ solution of the last computation, calling methods with arguments like this::
 
 The same :meth:`.Plottable.plot()` method applies also for:
 
+- :class:`.FunctionalOperation`
 - :class:`.NetworkOperation`
 - :class:`.Network`
 - :class:`.ExecutionPlan`
@@ -164,8 +165,9 @@ Directives
 
       the variable name containing what to render, which it can be:
 
-      - an instance of :class:`.Plottable` (such as :class:`.NetworkOperation`,
-         :class:`.Network`, :class:`.ExecutionPlan` or :class:`.Solution`);
+      - an instance of :class:`.Plottable` (such as :class:`.FunctionalOperation`,
+        :class:`.NetworkOperation`, :class:`.Network`, :class:`.ExecutionPlan` or
+        :class:`.Solution`);
 
       - an already plotted |pydot.Dot|_ instance, ie, the result of
         a :meth:`.Plottable.plot()` call

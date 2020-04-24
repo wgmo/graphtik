@@ -406,8 +406,9 @@ Architecture
 
     plottable
         Objects that can plot their graph network, such as those inheriting :class:`.Plottable`,
-        (:class:`.NetworkOperation`, :class:`.Network`, :class:`.ExecutionPlan`, :class:`.Solution`)
-        or a |pydot.Dot|_ instance (the result of the :meth:`.Plottable.plot()` method).
+        (:class:`.FunctionalOperation`, :class:`.NetworkOperation`, :class:`.Network`,
+        :class:`.ExecutionPlan`, :class:`.Solution`) or a |pydot.Dot|_ instance
+        (the result of the :meth:`.Plottable.plot()` method).
 
         Such objects may render as SVG in *Jupter notebooks* (through their ``plot()`` method)
         and can render in a Sphinx site with with the :rst:dir:`graphtik` *RsT directive*.

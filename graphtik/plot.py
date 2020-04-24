@@ -392,6 +392,7 @@ class Theme:
     }
     #: styles per plot-type
     kw_graph_plottable_type = {
+        "FunctionalOperation": {},
         "NetworkOperation": {},
         "Network": {},
         "ExecutionPlan": {},
