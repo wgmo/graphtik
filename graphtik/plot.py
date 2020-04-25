@@ -44,7 +44,8 @@ from boltons.iterutils import default_enter, default_visit, get_path, remap
 
 from .base import PlotArgs, func_name, func_source
 from .config import is_debug
-from .modifiers import optional
+from .modifiers import kw as keyword
+from .modifiers import optional, sideffect
 from .netop import NetworkOperation
 from .network import ExecutionPlan, Network, Solution, _EvictInstruction
 from .op import Operation
@@ -416,12 +417,19 @@ class Theme:
         2: {"shape": "house"},  # Out
         3: {"shape": "hexagon"},  # Inp/Out
     }
+    kw_data_keyword_modifier = {
+        "label": make_template("{{nx_item}} \n(fn_need: {{nx_item.fn_arg | pprint}})")
+    }
+
     kw_data_pruned = {
         "fontcolor": Ref("pruned_color"),
         "color": Ref("pruned_color"),
         "tooltip": "(pruned)",
     }
-    kw_data_sideffect = {"color": "blue", "fontcolor": "blue"}
+    kw_data_sideffect = {
+        "color": "blue",
+        "fontcolor": "blue",
+    }
     kw_data_to_evict = {
         "color": Ref("evicted"),
         "fontcolor": Ref("evicted"),
@@ -925,6 +933,9 @@ class Plotter:
             styles = self._new_styles_stack(plot_args)
 
             styles.add("kw_data")
+
+            ## Data-kind
+            #
             styles.add("node-name", {"name": quote_node_id(nx_node)})
 
             io_choice = _merge_conditions(
@@ -934,12 +945,10 @@ class Plotter:
                 f"kw_data_io_choice: {io_choice}", theme.kw_data_io_choice[io_choice]
             )
 
-            ## Data-kind
-            #
-            if any(d for _, _, d in graph.out_edges(nx_node, "sideffect")) or any(
-                d for _, _, d in graph.in_edges(nx_node, "sideffect")
-            ):
+            if isinstance(nx_node, sideffect):
                 styles.add("kw_data_sideffect")
+            elif isinstance(nx_node, keyword) and nx_node.fn_arg is not None:
+                styles.add("kw_data_keyword_modifier")
 
             ## Data-state
             #
