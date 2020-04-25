@@ -296,21 +296,21 @@ def test_as_renames(inp, exp):
     [
         (
             operation(str, aliases={"a": 1}),
-            r"The `aliases` for ('a',) rename ['a'], not found in provides ()!",
+            r"The `aliases` for ['a'] rename ['a'], not found in op_provides []!",
         ),
         (
             operation(str, name="t", provides="a", aliases={"a": 1, "b": 2}),
-            r"The `aliases` for ('a', 'b') rename ['b'], not found in provides ('a',)!",
+            r"The `aliases` for ['a', 'b'] rename ['b'], not found in op_provides ['a']!",
         ),
         (
             operation(
                 str, name="t", provides=sideffect("a"), aliases={sideffect("a"): 1}
             ),
-            r"must not contain `sideffects`",
+            "must not contain `sideffects",
         ),
         (
             operation(str, name="t", provides="a", aliases={"a": sideffect("AA")}),
-            r"must not contain `sideffects`",
+            "must not contain `sideffects",
         ),
     ],
 )
@@ -321,7 +321,7 @@ def test_provides_aliases_BAD(opbuilder, ex):
 
 def test_provides_aliases():
     op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})()
-    assert op.provides == {"a", "aa"}
+    assert op._op_provides == {"a", "aa"}
     assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}
 
 

@@ -38,6 +38,9 @@ def as_renames(i, argname):
     """
     Parses a list of (source-->destination) from dict, list-of-2-items, single 2-tuple.
 
+    :return:
+        a (possibly empty)list-of-pairs
+
     .. Note::
         The same `source` may be repeatedly renamed to multiple `destinations`.
     """
@@ -65,12 +68,17 @@ def as_renames(i, argname):
     return i
 
 
-def reparse_operation_data(name, needs, provides):
+def reparse_operation_data(
+    name, needs, provides
+) -> Tuple[cabc.Hashable, cabc.Collection, cabc.Collection]:
     """
     Validate & reparse operation data as lists.
 
-    As a separate function to be reused by client code
-    when building operations and detect errors early.
+    :return:
+        name, needs, provides,
+
+    As a separate function to be reused by client building operations,
+    to detect errors early.
     """
 
     if not isinstance(name, cabc.Hashable):
@@ -150,22 +158,32 @@ class FunctionalOperation(Operation, Plottable):
             it will be prefixed by `parents`.
         .. attribute:: FunctionalOperation.needs
 
-            Names of input data objects this operation requires.
+            The  :term:`needs` as given by the user
+            (with sideffects & non-singular sideffected)
+        .. attribute:: FunctionalOperation._op_needs
+
+            Value names for solving the graph
+            (with sideffects & singular sideffected).
+        .. attribute:: FunctionalOperation._fn_needs
+
+            Value names the underlying function requires (WITHOUT sideffects).
         .. attribute:: FunctionalOperation.provides
 
-            Names of the **real output values** the underlying function provides
-            (without `aliases`, with(!) `sideffects`)
+            The  :term:`provides` as given by the user
+            (WITHOUT aliases, with sideffects & non-singular sideffected)
+        .. attribute:: FunctionalOperation._op_provides
 
-            NOTE that the instance attribute eventually includes aliases & sideffects.
-        .. attribute:: FunctionalOperation.fn_provides
+            Value names for solving the graph
+            (with aliases, sideffects & singular sideffecteds).
+        .. attribute:: FunctionalOperation._fn_provides
 
-            Value names the underlying function provides (without aliases, with(!) sideffects).
-
-            FIXME: `fn_provides` not sure what it does with sideffects.
+            Value names the underlying function produces (WITHOUT aliases & sideffects).
         .. attribute:: FunctionalOperation.aliases
 
-            an optional mapping of real `provides` to additional ones, together
+            an optional mapping of `fn_provides` to additional ones, together
             comprising this operations :term:`provides`.
+
+            You cannot alias an :term:`alias`.
         .. attribute:: FunctionalOperation.parents
 
             a tuple wth the names of the parents, prefixing `name`,
@@ -199,6 +217,7 @@ class FunctionalOperation(Operation, Plottable):
             :meth:`.NetworkOperation.withset()`.
             Also plot-rendering affected if they match `Graphviz` properties,
             unless they start with underscore(``_``).
+
         """
         super().__init__()
         node_props = node_props = node_props if node_props else {}
@@ -214,38 +233,51 @@ class FunctionalOperation(Operation, Plottable):
                 f"Operation `node_props` must be a dict, was {type(node_props).__name__!r}: {node_props}"
             )
 
-        ## Overwrite reparsed op-data.
         if name is None:
             name = func_name(fn, None, mod=0, fqdn=0, human=0)
         name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
+        ## Overwrite reparsed op-data.
         name, needs, provides = reparse_operation_data(name, needs, provides)
-        fn_needs, op_needs = needs, needs
-        fn_provides, op_provides = provides, provides
+
+        op_needs, _fn_needs = needs, needs
+        op_provides, _fn_provides = provides, provides
 
         if aliases:
             aliases = as_renames(aliases, "aliases")
+            if any(1 for src, dst in aliases if dst in op_provides):
+                bad = ", ".join(
+                    f"{src} -> {dst}" for src, dst in aliases if dst in op_provides
+                )
+                raise ValueError(
+                    f"The `aliases` ({bad}) clash with existing provides {list(op_provides)}!"
+                )
+
             alias_src, alias_dst = list(zip(*aliases))
             if not set(alias_src) <= set(op_provides):
                 raise ValueError(
-                    f"The `aliases` for {alias_src} rename {list(iset(alias_src) - op_provides)}"
-                    f", not found in provides {op_provides}!"
+                    f"The `aliases` for {list(alias_src)} rename {list(iset(alias_src) - op_provides)}"
+                    f", not found in op_provides {list(op_provides)}!"
                 )
-            if any(isinstance(i, sideffect) for i in alias_src) or any(
-                isinstance(i, sideffect) for i in alias_dst
-            ):
+            sfx_aliases = [
+                f"{src} -> {dst}"
+                for src, dst in aliases
+                if isinstance(src, sideffect) or isinstance(dst, sideffect)
+            ]
+            if sfx_aliases:
                 raise ValueError(
-                    f"Operation `aliases` must not contain `sideffects`: {aliases}"
+                    f"The `aliases` must not contain `sideffects` {sfx_aliases}"
                     "\n  Simply add any extra `sideffects` in the `provides`."
                 )
             op_provides = iset(itt.chain(op_provides, alias_dst))
-        else:
-            op_provides = fn_provides
 
         self.fn = fn
         self.name = name
-        self.needs = op_needs
-        self.provides = op_provides
-        self.fn_provides = fn_provides
+        self.needs = needs
+        self.provides = provides
+        self._op_needs = op_needs
+        self._op_provides = op_provides
+        self._fn_needs = _fn_needs
+        self._fn_provides = _fn_provides
         self.aliases = aliases
         self.parents = parents
         self.rescheduled = rescheduled
@@ -290,15 +322,10 @@ class FunctionalOperation(Operation, Plottable):
         """
         Make a clone with the some values replaced.
 
-        .. ATTENTION::
-            Using :meth:`.namedtuple._replace()` would not pass through cstor,
-            so would not get a nested `name` with `parents`, not arguments validation.
         """
-        kw2 = vars(self).copy()
-        kw2["provides"] = kw2.pop("fn_provides")
-        kw2.update(kw)
-
-        return FunctionalOperation(**kw2)
+        me = {k: v for k, v in vars(self).items() if not k.startswith("_")}
+        me.update(kw)
+        return FunctionalOperation(**me)
 
     def _prepare_match_inputs_error(
         self,
@@ -499,7 +526,9 @@ class FunctionalOperation(Operation, Plottable):
             results_fn = self.fn(*positional, *vararg_vals, **kwargs)
 
             # TODO: rename op jetsam (real_)provides --> fn_expected
-            provides = iset(n for n in self.fn_provides if not isinstance(n, sideffect))
+            provides = iset(
+                n for n in self._fn_provides if not isinstance(n, sideffect)
+            )
             results_op = self._zip_results_with_provides(results_fn, provides)
 
             if outputs:

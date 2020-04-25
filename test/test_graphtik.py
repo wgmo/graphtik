@@ -394,9 +394,13 @@ def test_network_merge_in_doctests():
 
 
 def test_aliases(exemethod):
+    aliased = operation(lambda: "A", name="op1", provides="a", aliases={"a": "b"})()
+    assert aliased.provides == ("a",)
+    assert aliased._op_provides == ("a", "b")
+
     op = compose(
         "test_net",
-        operation(lambda: "A", name="op1", provides="a", aliases={"a": "b"})(),
+        aliased,
         operation(lambda x: x * 2, name="op2", needs="b", provides="c")(),
         parallel=exemethod,
     )
