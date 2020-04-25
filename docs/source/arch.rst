@@ -74,91 +74,19 @@ Architecture
 
         Plans may abort their execution by setting the `abort run` global flag.
 
-    parallel
-    parallel execution
-    execution pool
-    task
-        `execute` `operation`\s *in parallel*, with a `thread pool` or `process pool`
-        (instead of `sequential`).
-        Operations and `netop` are marked as such on construction, or enabled globally
-        from `configurations`.
+    net
+    network
+        the :class:`.Network` contains a `graph` of `operation`\s and can
+        `compile` (and cache) `execution plan`\s, or `prune` a cloned *network* for
+        given `inputs`/`outputs`/`node predicate`.
 
-        Note a `sideffects` are not expected to function with *process pools*,
-        certainly not when `marshalling` is enabled.
+    plan
+    execution plan
+        Class :class:`.ExecutionPlan` perform the `execution` phase which contains
+        the `dag` and the `steps`.
 
-    process pool
-        When the :class:`multiprocessing.pool.Pool` class is used for `parallel` execution,
-        the `task`\s  must be communicated to/from the worker process, which requires
-        `pickling <https://docs.python.org/library/pickle.html>`_, and that may fail.
-        With pickling failures you may try `marshalling` with *dill* library,
-        and see if that helps.
-
-        Note that `sideffects` are not expected to function at all.
-        certainly not when `marshalling` is enabled.
-
-    thread pool
-        When the :func:`multiprocessing.dummy.Pool` class is used for `parallel` execution,
-        the `task`\s are run *in process*, so no `marshalling` is needed.
-
-    marshalling
-        Pickling `parallel` `operation`\s and their `inputs`/`outputs` using
-        the :mod:`dill` module. It is `configured <configurations>` either globally
-        with :func:`.set_marshal_tasks()` or set with a flag on each
-        operation / `netop`.
-
-        Note that `sideffects` do not work when this is enabled.
-
-    configurations
-    graphtik configuration
-        The functions controlling `compile` & `execution` globally  are defined
-        in :mod:`.config` module and +1 in :mod:`graphtik.plot` module;
-        the underlying global data are stored in :class:`contextvars.ContextVar` instances,
-        to allow for nested control.
-
-        All *boolean* configuration flags are **tri-state** (``None, False, True``),
-        allowing to "force" all operations, when they are not set to the ``None``
-        value.  All of them default to ``None`` (false).
-
-    graph
-    network graph
-        A graph of `operation`\s linked by their `dependencies <dependency>` forming a `pipeline`.
-
-        The :attr:`.Network.graph` (currently a DAG) contains all :class:`.FunctionalOperation`
-        and :class:`._DataNode` nodes of a `netop`
-
-        They are layed out and connected by repeated calls of
-        :meth:`.Network._append_operation()` by Network constructor during `composition`.
-
-        This graph is then `prune`\d to extract the `dag`, and the `execution steps`
-        are calculated, all ingredients for a new :class:`.ExecutionPlan`.
-
-    dag
-    execution dag
-    solution dag
-        There are 2 *directed-acyclic-graphs* instances used:
-
-        - the :attr:`.ExecutionPlan.dag`,  in the `execution plan`, which contains
-          the `prune`\d  nodes, used to decide the `execution steps`;
-        - the :attr:`.Solution.dag` in the `solution`, which derives the
-          `canceled operation`\s due to `reschedule`\d/failed operations upstream.
-
-    steps
-    execution steps
-        The :attr:`.ExecutionPlan.steps` contains a list of the operation-nodes only
-        from the `dag`, topologically sorted, and interspersed with
-        *instruction steps* needed to `compute` the asked `outputs` from the given `inputs`.
-
-        It is built by :meth:`.Network._build_execution_steps()` based on
-        the subgraph `dag`.
-
-        The only *instruction* step is for performing `evictions`.
-
-    evictions
-        A memory footprint optimization where intermediate `inputs` & `outputs`
-        are erased from `solution` as soon as they are not needed further down the `dag`.
-
-        *Evictions* are pre-calculated during `compilation`, where :class:`._EvictInstruction`
-        `steps` are inserted in the `execution plan`.
+        `compile`\ed *execution plans* are cached in :attr:`.Network._cached_plans`
+        across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     solution
         A :class:`.Solution` instance created internally by :meth:`.NetworkOperation.compute()`
@@ -181,24 +109,69 @@ Architecture
             operations into some *netop* - furthermore, it wouldn't be very useful
             to get back the given inputs in case of `overwrites`.
 
+    graph
+    network graph
+        A graph of `operation`\s linked by their `dependencies <dependency>` forming a `pipeline`.
+
+        The :attr:`.Network.graph` (currently a DAG) contains all :class:`.FunctionalOperation`
+        and :class:`._DataNode` nodes of a `netop`
+
+        They are layed out and connected by repeated calls of
+        :meth:`.Network._append_operation()` by Network constructor during `composition`.
+
+        This graph is then `prune`\d to extract the `dag`, and the `execution steps`
+        are calculated, all ingredients for a new :class:`.ExecutionPlan`.
+
+    prune
+    pruning
+        A subphase of `compilation` performed by method :meth:`.Network._prune_graph()`,
+        which extracts a subgraph `dag` that does not contain any `unsatisfied operation`\s.
+
+        It topologically sorts the `graph`, and *prunes* based on given `inputs`,
+        asked `outputs`, `node predicate` and `operation` `needs` & `provides`.
+
+    unsatisfied operation
+        The core of `pruning` & `rescheduling`, performed by
+        :func:`.network._unsatisfied_operations()` function, which collects
+        all `operation`\s with unreachable `dependencies <dependency>`:
+
+        - they have `needs` that do not correspond to any of the given `inputs` or
+          the intermediately `compute`\d `outputs` of the `solution`;
+        - all their `provides` are NOT needed by any other operation, nor are asked
+          as *outputs*.
+
+    dag
+    execution dag
+    solution dag
+        There are 2 *directed-acyclic-graphs* instances used:
+
+        - the :attr:`.ExecutionPlan.dag`,  in the `execution plan`, which contains
+          the `prune`\d  nodes, used to decide the `execution steps`;
+        - the :attr:`.Solution.dag` in the `solution`, which derives the
+          `canceled operation`\s due to `reschedule`\d/failed operations upstream.
+
+    steps
+    execution steps
+        The `plan` contains a list of the operation-nodes only from the `dag`,
+        topologically sorted, and interspersed with *instruction steps* needed to
+        `compute` the asked `outputs` from the given `inputs`.
+
+        They are built by :meth:`.Network._build_execution_steps()` based on
+        the subgraph `dag`.
+
+        The only *instruction* step is for performing `evictions`.
+
+    evictions
+        A memory footprint optimization where intermediate `inputs` & `outputs`
+        are erased from `solution` as soon as they are not needed further down the `dag`.
+
+        *Evictions* are pre-calculated during `compilation`, where :class:`._EvictInstruction`
+        `steps` are inserted in the `execution plan`.
+
     overwrites
         Values in the `solution` that have been written by more than one `operation`\s,
         accessed by :attr:`.Solution.overwrites`.
         Note that `sideffected` dependencies are, by definition, *overwrites*.
-
-    net
-    network
-        the :class:`.Network` contains a `graph` of `operation`\s and can
-        `compile` (and cache) `execution plan`\s, or `prune` a cloned *network* for
-        given `inputs`/`outputs`/`node predicate`.
-
-    plan
-    execution plan
-        Class :class:`.ExecutionPlan` perform the `execution` phase which contains
-        the `dag` and the `steps`.
-
-        `compile`\ed *execution plans* are cached in :attr:`.Network._cached_plans`
-        across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     inputs
         The named input values that are fed into an `operation` (or `netop`)
@@ -345,24 +318,6 @@ Architecture
         All *sideffected* `outputs` are, by definition, `overwrites`.
         Annotated with :class:`.sideffected` class.
 
-    prune
-    pruning
-        A subphase of `compilation` performed by method :meth:`.Network._prune_graph()`,
-        which extracts a subgraph `dag` that does not contain any `unsatisfied operation`\s.
-
-        It topologically sorts the `graph`, and *prunes* based on given `inputs`,
-        asked `outputs`, `node predicate` and `operation` `needs` & `provides`.
-
-    unsatisfied operation
-        The core of `pruning` & `rescheduling`, performed by
-        :func:`.network._unsatisfied_operations()` function, which collects
-        all `operation`\s with unreachable `dependencies <dependency>`:
-
-        - they have `needs` that do not correspond to any of the given `inputs` or
-          the intermediately `compute`\d `outputs` of the `solution`;
-        - all their `provides` are NOT needed by any other operation, nor are asked
-          as *outputs*.
-
     reschedule
     rescheduling
     partial outputs
@@ -403,6 +358,40 @@ Architecture
         It is reset automatically on every call of :meth:`.NetworkOperation.compute()`
         (after a successful intermediate :term:`compilation`), or manually,
         by calling :func:`.reset_abort()`.
+
+    parallel
+    parallel execution
+    execution pool
+    task
+        `execute` `operation`\s *in parallel*, with a `thread pool` or `process pool`
+        (instead of `sequential`).
+        Operations and `netop` are marked as such on construction, or enabled globally
+        from `configurations`.
+
+        Note a `sideffects` are not expected to function with *process pools*,
+        certainly not when `marshalling` is enabled.
+
+    process pool
+        When the :class:`multiprocessing.pool.Pool` class is used for `parallel` execution,
+        the `task`\s  must be communicated to/from the worker process, which requires
+        `pickling <https://docs.python.org/library/pickle.html>`_, and that may fail.
+        With pickling failures you may try `marshalling` with *dill* library,
+        and see if that helps.
+
+        Note that `sideffects` are not expected to function at all.
+        certainly not when `marshalling` is enabled.
+
+    thread pool
+        When the :func:`multiprocessing.dummy.Pool` class is used for `parallel` execution,
+        the `task`\s are run *in process*, so no `marshalling` is needed.
+
+    marshalling
+        Pickling `parallel` `operation`\s and their `inputs`/`outputs` using
+        the :mod:`dill` module. It is `configured <configurations>` either globally
+        with :func:`.set_marshal_tasks()` or set with a flag on each
+        operation / `netop`.
+
+        Note that `sideffects` do not work when this is enabled.
 
     plottable
         Objects that can plot their graph network, such as those inheriting :class:`.Plottable`,
@@ -456,6 +445,18 @@ Architecture
         .. include:: ../../graphtik/plot.py
             :start-after: .. theme-expansions-start
             :end-before: .. theme-warn-end
+
+    configurations
+    graphtik configuration
+        The functions controlling `compile` & `execution` globally  are defined
+        in :mod:`.config` module and +1 in :mod:`graphtik.plot` module;
+        the underlying global data are stored in :class:`contextvars.ContextVar` instances,
+        to allow for nested control.
+
+        All *boolean* configuration flags are **tri-state** (``None, False, True``),
+        allowing to "force" all operations, when they are not set to the ``None``
+        value.  All of them default to ``None`` (false).
+
 
 .. default-role:: obj
 .. |v410-flowchart| raw:: html
