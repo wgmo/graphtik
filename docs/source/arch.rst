@@ -114,7 +114,7 @@ Architecture
         A graph of `operation`\s linked by their `dependencies <dependency>` forming a `pipeline`.
 
         The :attr:`.Network.graph` (currently a DAG) contains all :class:`.FunctionalOperation`
-        and :class:`._DataNode` nodes of a `netop`
+        and data-nodes (string or `modifier`) of a `netop`.
 
         They are layed out and connected by repeated calls of
         :meth:`.Network._append_operation()` by Network constructor during `composition`.
@@ -399,7 +399,7 @@ Architecture
         :class:`.ExecutionPlan`, :class:`.Solution`) or a |pydot.Dot|_ instance
         (the result of the :meth:`.Plottable.plot()` method).
 
-        Such objects may render as SVG in *Jupter notebooks* (through their ``plot()`` method)
+        Such objects may render as SVG in *Jupiter notebooks* (through their ``plot()`` method)
         and can render in a Sphinx site with with the :rst:dir:`graphtik` *RsT directive*.
         You may control the rendered image as explained in the *tip*  of
         the :ref:`plotting` section.

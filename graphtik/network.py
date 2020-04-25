@@ -117,7 +117,7 @@ def _unsatisfied_operations(dag, inputs: Collection) -> List:
                 else:
                     # Prune operations with partial inputs.
                     unsatisfied.append(node)
-        elif isinstance(node, (_DataNode, str)):  # `str` are givens
+        elif isinstance(node, str):  # `str` are givens
             if node in ok_data:
                 # mark satisfied-needs on all future operations
                 for future_op in dag.adj[node]:
@@ -348,17 +348,6 @@ class Solution(ChainMap, Plottable):
         return plot_args
 
 
-class _DataNode(str):
-    """
-    Dag node naming a data-value produced or required by an operation.
-    """
-
-    __slots__ = ()  # avoid __dict__ on instances
-
-    def __repr__(self):
-        return f"DataNode('{self}')"
-
-
 class _EvictInstruction(str):
     """
     A step in the ExecutionPlan to evict a computed value from the `solution`.
@@ -376,7 +365,7 @@ class _EvictInstruction(str):
 
 def _yield_datanodes(nodes):
     """May scan dag nodes."""
-    return (n for n in nodes if isinstance(n, _DataNode))
+    return (n for n in nodes if isinstance(n, str))
 
 
 def yield_ops(nodes):
@@ -392,14 +381,11 @@ def yield_node_names(nodes):
 def _optionalized(graph, data):
     """Retain optionality of a `data` node based on all `needs` edges."""
     all_optionals = all(e[2] for e in graph.out_edges(data, "optional", False))
-    sideffector = graph.nodes(data="sideffect")
     return (
         optional(data)
         if all_optionals
-        # Nodes are _DataNode instances, not `optional` or `sideffect`
-        # TODO: Unify _DataNode + modifiers to avoid ugly hack `net.collect_requirements()`.
-        else sideffect(data)
-        if sideffector[data]
+        else data  # sideffect
+        if isinstance(data, sideffect)
         else str(data)  # un-optionalize
     )
 
@@ -409,8 +395,7 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
     operations = list(yield_ops(graph))
     provides = iset(p for op in operations for p in op.provides)
     needs = iset(_optionalized(graph, n) for op in operations for n in op.needs)
-    # TODO: Unify _DataNode + modifiers to avoid ugly hack `net.collect_requirements()`.
-    provides = iset(str(n) if not isinstance(n, sideffect) else n for n in provides)
+    provides = iset(provides)
     return needs, provides
 
 
@@ -1001,8 +986,8 @@ class Network(Plottable):
                 ekw["optional"] = True
             if isinstance(n, sideffect):
                 ekw["sideffect"] = nkw["sideffect"] = True
-            needs.append((_DataNode(n), nkw))
-            needs_edges.append((_DataNode(n), operation, ekw))
+            needs.append((n, nkw))
+            needs_edges.append((n, operation, ekw))
         graph.add_nodes_from(needs)
         graph.add_node(operation, **operation.node_props)
         graph.add_edges_from(needs_edges)
@@ -1019,13 +1004,13 @@ class Network(Plottable):
             kw = {}
             if isinstance(n, sideffect):
                 kw["sideffect"] = True
-                graph.add_node(_DataNode(n), sideffect=True)
+                graph.add_node(n, sideffect=True)
 
             if n in alias_sources:
                 src_provide = alias_sources[n]
                 kw["_alias_of"] = src_provide
 
-            graph.add_edge(operation, _DataNode(n), **kw)
+            graph.add_edge(operation, n, **kw)
 
     def _topo_sort_nodes(self, dag) -> List:
         """Topo-sort dag respecting operation-insertion order to break ties."""
@@ -1136,7 +1121,7 @@ class Network(Plottable):
             # unrelated nodes further up the dag.
             ending_in_outputs = set()
             for output_name in outputs:
-                ending_in_outputs.add(_DataNode(output_name))
+                ending_in_outputs.add(output_name)
                 ending_in_outputs.update(nx.ancestors(dag, output_name))
             broken_dag = broken_dag.subgraph(ending_in_outputs)
             if log.isEnabledFor(logging.INFO) and len(broken_dag) != len(dag):
@@ -1258,7 +1243,7 @@ class Network(Plottable):
 
             else:
                 assert isinstance(
-                    node, _DataNode
+                    node, str
                 ), f"Unrecognized network graph node {node}: {type(node).__name__!r}"
 
         return steps
