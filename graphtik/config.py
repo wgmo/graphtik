@@ -77,7 +77,11 @@ set_debug = partial(_tristate_set, _debug)
 """
 When true, increase details on string-representation of network objects and errors.
 
-Specifically:
+:param enabled:
+    - ``None, False, string(0, false, off, no)``: Disabled
+    - anything else: Enable ALL ``DEBUG_XXX``
+
+Affected behavior:
 
 + net objects print details recursively;
 + plotted SVG diagrams include style-provenance as tooltips;
