@@ -52,8 +52,8 @@ separately with your OS tools)::
    pip install graphtik[plot]
 
 
-Let's build a *graphtik* computation graph that produces x3 outputs
-out of 2 inputs `a` and `b`:
+Let's build a *graphtik* computation :term:`pipeline` that produces x3 :term:`outputs`
+out of 2 :term:`inputs` `a` and `b`:
 
 .. math::
 
@@ -75,7 +75,7 @@ out of 2 inputs `a` and `b`:
    ...    return abs(a) ** 3
 
 Compose the ``abspow`` function along with ``mul`` & ``sub``  built-ins
-into a computation graph:
+into a computation :term:`graph`:
 
    >>> graphop = compose("graphop",
    ...    operation(needs=["a", "b"], provides=["ab"])(mul),
@@ -103,7 +103,7 @@ Run the graph-operation and request all of the outputs:
    >>> sol
    {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
-Solutions are :term:`plottable` as well:
+:term:`Solutions <solution>` are :term:`plottable` as well:
 
    >>> solution.plot('solution.svg')      # doctest: +SKIP
 
