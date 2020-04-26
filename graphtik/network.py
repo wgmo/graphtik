@@ -27,7 +27,7 @@ from .config import (
     is_skip_evictions,
     is_solid_true,
 )
-from .modifiers import optional, sideffect, vararg, varargs
+from .modifiers import mapped, optional, sideffect, vararg, varargs
 from .op import Operation
 
 NodePredicate = Callable[[Any, Mapping], bool]
@@ -988,6 +988,8 @@ class Network(Plottable):
                 ekw["optional"] = True
             if isinstance(n, sideffect):
                 ekw["sideffect"] = nkw["sideffect"] = True
+            if isinstance(n, mapped) and n.fn_arg is not None:
+                ekw["_fn_arg"] = n.fn_arg
             needs.append((n, nkw))
             needs_edges.append((n, operation, ekw))
         graph.add_nodes_from(needs)

@@ -417,14 +417,7 @@ class Theme:
         2: {"shape": "house"},  # Out
         3: {"shape": "hexagon"},  # Inp/Out
     }
-    kw_data_mapped = {
-        "label": make_template(
-            """
-            <{{ nx_item | eee }}<br/>
-            (<I>fn_need:</I> {{ nx_item.fn_arg | eee }})>
-            """
-        )
-    }
+    kw_data_mapped = {"label": make_template("<{{ nx_item | eee }}>")}
 
     kw_data_pruned = {
         "fontcolor": Ref("pruned_color"),
@@ -539,10 +532,14 @@ class Theme:
     kw_edge_sideffect = {"color": "blue"}
     #: Added conditionally if `_alias_of` found in edge-attrs.
     kw_edge_alias = {
-        "fontsize": 10,  # default: 14
+        "fontsize": 11,  # default: 14
         "label": make_template(
             "<<I>(alias of)</I><BR/>{{ nx_attrs['_alias_of'] | eee }}>"
         ),
+    }
+    kw_edge_mapping_fn_arg = {
+        "fontsize": 11,  # default: 14
+        "label": make_template("<<I>(fn_arg)</I><BR/>{{ nx_attrs['_fn_arg'] | eee }}>"),
     }
     kw_edge_pruned = {"color": Ref("pruned_color")}
     kw_edge_rescheduled = {"style": ["dashed"]}
@@ -1192,6 +1189,9 @@ class Plotter:
             styles.add("kw_edge_sideffect")
         if edge_attrs.get("_alias_of"):
             styles.add("kw_edge_alias")
+        fn_arg = edge_attrs.get("_fn_arg")
+        if fn_arg is not None:
+            styles.add("kw_edge_mapping_fn_arg")
 
         if getattr(src, "rescheduled", None):
             styles.add("kw_edge_rescheduled")
