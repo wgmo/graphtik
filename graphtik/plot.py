@@ -985,19 +985,20 @@ class Plotter:
                     styles.add("kw_data_to_evict")
 
                 if solution is not None:
-                    if nx_node in solution:
-                        data_tooltip = self._make_data_value_tooltip(plot_args)
-                        if data_tooltip:
-                            styles.add("node-code", {"tooltip": data_tooltip})
+                    if not isinstance(nx_node, sideffect):
+                        if nx_node in solution:
+                            data_tooltip = self._make_data_value_tooltip(plot_args)
+                            if data_tooltip:
+                                styles.add("node-code", {"tooltip": data_tooltip})
 
-                        styles.add("kw_data_in_solution")
-                        if nx_node in solution.overwrites:
-                            styles.add("kw_data_overwritten")
+                            styles.add("kw_data_in_solution")
+                            if nx_node in solution.overwrites:
+                                styles.add("kw_data_overwritten")
 
-                    elif nx_node not in steps:
-                        styles.add("kw_data_canceled")
-                    else:
-                        styles.add("kw_data_evicted")
+                        elif nx_node not in steps:
+                            styles.add("kw_data_canceled")
+                        else:
+                            styles.add("kw_data_evicted")
 
             styles.add("user-overrides", _pub_props(node_attrs))
 
