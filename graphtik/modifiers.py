@@ -285,8 +285,8 @@ class sideffect(str):
         ...         provides="body")(lambda: "TaDa!")
         ... )
         >>> graph
-        NetworkOperation('strip ease', needs=['sideffect(lights off)'],
-                         provides=['sideffect(lights off)', 'body'],
+        NetworkOperation('strip ease', needs=['sideffect: lights off'],
+                         provides=['sideffect: lights off', 'body'],
                          x2 ops: close_the_lights, undress)
 
     .. graphtik::
@@ -299,8 +299,7 @@ class sideffect(str):
         m = re.match(r"sideffect\((.*)\)", name)
         if m:
             name = m.group(1)
-        # TODO: repr('name)' in sideffect str.
-        return super().__new__(cls, f"sideffect({name})")
+        return super().__new__(cls, f"sideffect: {name}")
 
 
 class sol_sideffect(sideffect):
