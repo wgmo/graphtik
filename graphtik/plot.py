@@ -45,7 +45,7 @@ from boltons.iterutils import default_enter, default_visit, get_path, remap
 from .base import PlotArgs, func_name, func_source
 from .config import is_debug
 from .modifiers import kw as keyword
-from .modifiers import optional, sideffect
+from .modifiers import optional, sideffect, sol_sideffect
 from .netop import NetworkOperation
 from .network import ExecutionPlan, Network, Solution, _EvictInstruction
 from .op import Operation
@@ -429,6 +429,12 @@ class Theme:
     kw_data_sideffect = {
         "color": "blue",
         "fontcolor": "blue",
+    }
+    kw_data_sol_sideffect = {
+        "label": make_template(
+            "{{ nx_item.sideffected }}&#10;"
+            "(sideffect: {{ nx_item.sideffects | join(', ') }})"
+        ),
     }
     kw_data_to_evict = {
         "color": Ref("evicted"),
@@ -947,6 +953,8 @@ class Plotter:
 
             if isinstance(nx_node, sideffect):
                 styles.add("kw_data_sideffect")
+                if isinstance(nx_node, sol_sideffect):
+                    styles.add("kw_data_sol_sideffect")
             elif isinstance(nx_node, keyword) and nx_node.fn_arg is not None:
                 styles.add("kw_data_keyword_modifier")
 

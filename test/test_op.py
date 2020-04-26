@@ -321,7 +321,7 @@ def test_provides_aliases_BAD(opbuilder, ex):
 
 def test_provides_aliases():
     op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})()
-    assert op._op_provides == {"a", "aa"}
+    assert op.op_provides == {"a", "aa"}
     assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}
 
 

@@ -20,6 +20,7 @@ Module: `op`
 .. automodule:: graphtik.op
      :members:
      :undoc-members:
+     :private-members:
 
 Module: `modifiers`
 ====================

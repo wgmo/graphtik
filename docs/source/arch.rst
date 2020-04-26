@@ -171,7 +171,7 @@ Architecture
     overwrites
         Values in the `solution` that have been written by more than one `operation`\s,
         accessed by :attr:`.Solution.overwrites`.
-        Note that `sideffected` dependencies are, by definition, *overwrites*.
+        Note that `solution sideffect` `dependency` produce, almost always, *overwrites*.
 
     inputs
         The named input values that are fed into an `operation` (or `netop`)
@@ -235,7 +235,6 @@ Architecture
           These matchings are affected by `modifier`\s.
 
     needs
-    op_needs
     fn_needs
         The list of `dependency` names an `operation` requires from `solution` as `inputs`,
 
@@ -245,7 +244,7 @@ Architecture
         from *solution* by these names, and matches them against function arguments,
         mostly by their positional order.
         Whenever this matching is not 1-to-1, and function-arguments  differ from
-        the regular *needs* (**op_needs**), `modifier`\s must be used.
+        the regular *needs*, `modifier`\s must be used.
 
     provides
     op_provides
@@ -258,7 +257,7 @@ Architecture
         with the `output <outputs>` values produced when the `operation`'s
         function is called.
         Whenever this "zipping" is not 1-to-1, and function-results  differ from
-        the regular *operation* (**op_needs**) (or results are not a list),
+        the regular *operation* (**op_provides**) (or results are not a list),
         it is possible to:
 
         - mark the *operation* that its function `returns dictionary`,
@@ -306,17 +305,19 @@ Architecture
         - An *abstract sideffect* (annotated with :class:`.sideffect` modifier)
           describing modifications taking place beyond the scope of the solution.
 
-        - The `sideffected` modifier (annotated with :class:`.sideffected` modifier)
-          denoting modifications on existing *dependencies*.
+        - The `solution sideffect` (annotated with :class:`.sol_sideffect` modifier)
+          denoting modifications on *dependencies* that are read and written in `solution`.
           .
 
+    solution sideffect
     sideffected
-        A `modifier` that annotates an existing `dependency` with `sideffects`, ...
+        A `modifier` that denotes `sideffects` on a `dependency` that exists in `solution`, ...
 
-        allowing to declare an `operation` that both `needs` and `provides` this *dependency*.
+        allowing to declare an `operation` that both `needs` and `provides` that
+        *sideffected dependency*.
 
-        All *sideffected* `outputs` are, by definition, `overwrites`.
-        Annotated with :class:`.sideffected` class.
+        All *solution sideffect* `outputs` produce, by definition, `overwrites`.
+        It is annotated with :class:`.sol_sideffect` class.
 
     reschedule
     rescheduling

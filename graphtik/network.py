@@ -393,8 +393,10 @@ def _optionalized(graph, data):
 def collect_requirements(graph) -> Tuple[iset, iset]:
     """Collect & split datanodes in (possibly overlapping) `needs`/`provides`."""
     operations = list(yield_ops(graph))
-    provides = iset(p for op in operations for p in op._op_provides)
-    needs = iset(_optionalized(graph, n) for op in operations for n in op._op_needs)
+    provides = iset(
+        p for op in operations for p in getattr(op, "op_provides", op.provides)
+    )
+    needs = iset(_optionalized(graph, n) for op in operations for n in op.needs)
     provides = iset(provides)
     return needs, provides
 
@@ -980,7 +982,7 @@ class Network(Plottable):
         #
         needs = []
         needs_edges = []
-        for n in getattr(operation, "_op_needs", operation.needs):
+        for n in operation.needs:
             nkw, ekw = {}, {}
             if isinstance(n, (optional, vararg, varargs)):
                 ekw["optional"] = True
@@ -1000,7 +1002,7 @@ class Network(Plottable):
 
         ## Provides
         #
-        for n in getattr(operation, "_op_provides", operation.provides):
+        for n in getattr(operation, "op_provides", operation.provides):
             kw = {}
             if isinstance(n, sideffect):
                 kw["sideffect"] = True

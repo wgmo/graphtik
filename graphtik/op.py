@@ -8,7 +8,7 @@ import logging
 import textwrap
 from collections import abc as cabc
 from collections import namedtuple
-from typing import Any, Callable, List, Mapping, Tuple, Union
+from typing import Any, Callable, List, Mapping, Set, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
@@ -25,7 +25,7 @@ from .base import (
     jetsam,
 )
 from .config import is_debug, is_reschedule_operations, is_solid_true
-from .modifiers import kw, optional, sideffect, vararg, varargs
+from .modifiers import kw, optional, sideffect, sol_sideffect, vararg, varargs
 
 log = logging.getLogger(__name__)
 
@@ -121,6 +121,60 @@ class Operation(abc.ABC):
         """
 
 
+def _spread_sideffects(
+    deps: cabc.Collection,
+) -> Tuple[cabc.Collection, cabc.Collection]:
+    """
+    Build fn/op dependencies from user ones by stripping or singularizing any :term:`sideffects`.
+
+    :return:
+        the given `deps` duplicated as ``(fn_deps,  op_deps)``, where any instances of
+        :class:`.sideffects` and :class:`.sol_sideffect` are processed like this:
+
+        `fn_deps`
+            - :class:`.sol_sideffect` are replaced by the pure :attr:`.sol_sideffect.sideffected`
+              consumed/produced by underlying functions, in the order it is first met
+              (the rest duplicate `sideffected` are discarded).
+            - :class:`.sideffects` are simply dropped;
+
+        `op_deps`
+            :class:`.sol_sideffect` are replaced by a sequence of "singular" `sol_sideffect`
+            instances, one for each item in their :attr:`.sol_sideffect.sideffects` attribute,
+            in the order they are first met
+            (any duplicates are discarded, order is irrelevant, since they don't reach
+            the function);
+    """
+
+    def singularize_sol_sideffects(dep):
+        return (
+            (sol_sideffect(dep.sideffected, s) for s in dep.sideffects)
+            if isinstance(dep, sol_sideffect)
+            else (dep,)
+        )
+
+    #: To drop dupe `sideffected` from `op_deps`.
+    seen_sideffecteds: Set[str] = set()
+
+    def strip_sideffects(dep):
+        if isinstance(dep, sol_sideffect):
+            sideffected = dep.sideffected
+            if not sideffected in seen_sideffecteds:
+                seen_sideffecteds.add(sideffected)
+                return (sideffected,)
+        elif not isinstance(dep, sideffect):
+            return (dep,)
+        return ()
+
+    assert deps is not None
+
+    if deps:
+        op_deps = iset(nn for n in deps for nn in singularize_sol_sideffects(n))
+        fn_deps = tuple(nn for n in deps for nn in strip_sideffects(n))
+        return op_deps, fn_deps
+    else:
+        return deps, deps
+
+
 class FunctionalOperation(Operation, Plottable):
     """
     An :term:`operation` performing a callable (ie a function, a method, a lambda).
@@ -150,74 +204,8 @@ class FunctionalOperation(Operation, Plottable):
         """
         Build a new operation out of some function and its requirements.
 
-        See :class:`.operation` for the full documentation of parameters.
-
-        .. attribute:: FunctionalOperation.name
-
-            a name for the operation (e.g. `'conv1'`, `'sum'`, etc..);
-            it will be prefixed by `parents`.
-        .. attribute:: FunctionalOperation.needs
-
-            The  :term:`needs` as given by the user
-            (with sideffects & non-singular sideffected)
-        .. attribute:: FunctionalOperation._op_needs
-
-            Value names for solving the graph
-            (with sideffects & singular sideffected).
-        .. attribute:: FunctionalOperation._fn_needs
-
-            Value names the underlying function requires (WITHOUT sideffects).
-        .. attribute:: FunctionalOperation.provides
-
-            The  :term:`provides` as given by the user
-            (WITHOUT aliases, with sideffects & non-singular sideffected)
-        .. attribute:: FunctionalOperation._op_provides
-
-            Value names for solving the graph
-            (with aliases, sideffects & singular sideffecteds).
-        .. attribute:: FunctionalOperation._fn_provides
-
-            Value names the underlying function produces (WITHOUT aliases & sideffects).
-        .. attribute:: FunctionalOperation.aliases
-
-            an optional mapping of `fn_provides` to additional ones, together
-            comprising this operations :term:`provides`.
-
-            You cannot alias an :term:`alias`.
-        .. attribute:: FunctionalOperation.parents
-
-            a tuple wth the names of the parents, prefixing `name`,
-            but also kept for equality/hash check.
-        .. attribute:: FunctionalOperation.rescheduled
-
-            If true, underlying *callable* may produce a subset of `provides`,
-            and the :term:`plan` must then :term:`reschedule` after the operation
-            has executed.  In that case, it makes more sense for the *callable*
-            to `returns_dict`.
-        .. attribute:: FunctionalOperation.endured
-
-            If true, even if *callable* fails, solution will :term:`reschedule`;
-            ignored if :term:`endurance` enabled globally.
-        .. attribute:: FunctionalOperation.parallel
-
-            execute in :term:`parallel`
-        .. attribute:: FunctionalOperation.marshalled
-
-            If true, operation will be :term:`marshalled <marshalling>` while computed,
-            along with its `inputs` & `outputs`.
-            (usefull when run in `parallel` with a :term:`process pool`).
-        .. attribute:: FunctionalOperation.returns_dict
-
-            if true, it means the `fn` returns a dictionary with all `provides`,
-            and no further processing is done on them
-            (i.e. the returned output-values are not zipped with `provides`)
-        .. attribute:: FunctionalOperation.node_props
-
-            Added as-is into NetworkX graph, and you may filter operations by
-            :meth:`.NetworkOperation.withset()`.
-            Also plot-rendering affected if they match `Graphviz` properties,
-            unless they start with underscore(``_``).
-
+        See :class:`.operation` for the full documentation of parameters,
+        study the code for attributes (or read them from  rendered sphinx site).
         """
         super().__init__()
         node_props = node_props = node_props if node_props else {}
@@ -239,8 +227,8 @@ class FunctionalOperation(Operation, Plottable):
         ## Overwrite reparsed op-data.
         name, needs, provides = reparse_operation_data(name, needs, provides)
 
-        op_needs, _fn_needs = needs, needs
-        op_provides, _fn_provides = provides, provides
+        needs, _fn_needs = _spread_sideffects(needs)
+        op_provides, _fn_provides = _spread_sideffects(provides)
 
         if aliases:
             aliases = as_renames(aliases, "aliases")
@@ -268,23 +256,59 @@ class FunctionalOperation(Operation, Plottable):
                     f"The `aliases` must not contain `sideffects` {sfx_aliases}"
                     "\n  Simply add any extra `sideffects` in the `provides`."
                 )
+            provides = op_provides
             op_provides = iset(itt.chain(op_provides, alias_dst))
 
         self.fn = fn
+        #: a name for the operation (e.g. `'conv1'`, `'sum'`, etc..);
+        #: it will be prefixed by `parents`.
         self.name = name
+        #: The  :term:`needs` roughly as given by the user,
+        #: ready to :term:`prune` the graph
+        #: (with sideffects & singular sol_sideffects)
         self.needs = needs
-        self.provides = provides
-        self._op_needs = op_needs
-        self._op_provides = op_provides
+        #: Value names the underlying function requires
+        #: (without sideffects, with stripped `sideffected` dependencies).
         self._fn_needs = _fn_needs
+        #: The :term:`provides` roughly as given by the user
+        #: (without aliases, with sideffects & singular sol_sideffects)
+        self.provides = provides
+        #: Value names ready to :term:`prune` the graph
+        #: (WITH aliases, sideffects & singular sol_sideffects).
+        self.op_provides = op_provides
+        #: Value names the underlying function produces
+        #: (without aliases & sideffects, with stripped `sideffected` dependencies).
         self._fn_provides = _fn_provides
+        #: an optional mapping of `fn_provides` to additional ones, together
+        #: comprising this operations :term:`op_provides`.
+        #:
+        #: You cannot alias an :term:`alias`.
         self.aliases = aliases
+        #: a tuple wth the names of the parents, prefixing `name`,
+        #: but also kept for equality/hash check.
         self.parents = parents
+        #: If true, underlying *callable* may produce a subset of `provides`,
+        #: and the :term:`plan` must then :term:`reschedule` after the operation
+        #: has executed.  In that case, it makes more sense for the *callable*
+        #: to `returns_dict`.
         self.rescheduled = rescheduled
+        #: If true, even if *callable* fails, solution will :term:`reschedule`;
+        #: ignored if :term:`endurance` enabled globally.
         self.endured = endured
+        #: execute in :term:`parallel`
         self.parallel = parallel
+        #: If true, operation will be :term:`marshalled <marshalling>` while computed,
+        #: along with its `inputs` & `outputs`.
+        #: (usefull when run in `parallel` with a :term:`process pool`).
         self.marshalled = marshalled
+        #: if true, it means the `fn` returns a dictionary with all `provides`,
+        #: and no further processing is done on them
+        #: (i.e. the returned output-values are not zipped with `provides`)
         self.returns_dict = returns_dict
+        #: Added as-is into NetworkX graph, and you may filter operations by
+        #: :meth:`.NetworkOperation.withset()`.
+        #: Also plot-rendering affected if they match `Graphviz` properties,
+        #: unless they start with underscore(``_``).
         self.node_props = node_props
 
     def __eq__(self, other):
@@ -313,9 +337,26 @@ class FunctionalOperation(Operation, Plottable):
         endured = "!" if self.endured else ""
         parallel = "|" if self.parallel else ""
         marshalled = "$" if self.marshalled else ""
+        if is_debug():
+            deps = f", {', '.join(self.deps.splitlines())}"
+        else:
+            deps = ""
         return (
             f"FunctionalOperation{endured}{resched}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}{aliases}, fn{returns_dict_marker}={fn_name!r}{nprops})"
+            f"provides={provides!r}{aliases}{deps}, fn{returns_dict_marker}={fn_name!r}{nprops})"
+        )
+
+    @property
+    def deps(self) -> str:
+        """Human-readable representation of :term:`dependency` names, both `op_` & `fn_`."""
+
+        def join_deps(d):
+            # Join repr (not str), to compress NLs.
+            return ", ".join(repr(i) for i in d)
+
+        return (
+            f"needs=({join_deps(self.needs)}), op_provides=({join_deps(self.op_provides)})\n"
+            f"fn_needs=({join_deps(self._fn_needs)}), fn_provides=({join_deps(self._fn_provides)})"
         )
 
     def withset(self, **kw) -> "FunctionalOperation":
@@ -323,7 +364,11 @@ class FunctionalOperation(Operation, Plottable):
         Make a clone with the some values replaced.
 
         """
-        me = {k: v for k, v in vars(self).items() if not k.startswith("_")}
+        me = {
+            k: v
+            for k, v in vars(self).items()
+            if not k.startswith("_") and k != "op_provides"
+        }
         me.update(kw)
         return FunctionalOperation(**me)
 
@@ -422,7 +467,9 @@ class FunctionalOperation(Operation, Plottable):
                 results = [results]
                 ngot = 1
 
-            else:  # nexpected > 1; nexpected == 0 was the very 1st check.
+            else:
+                # nexpected == 0 was method's 1st check.
+                assert nexpected > 1, nexpected
                 if isinstance(results, (str, bytes)) or not isinstance(
                     results, cabc.Iterable
                 ):
@@ -474,7 +521,8 @@ class FunctionalOperation(Operation, Plottable):
             positional, vararg_vals = [], []
             kwargs = {}
             errors, missing, varargs_bad = [], [], []
-            for n in self.needs:
+            for n in self._fn_needs:
+                assert not isinstance(n, sideffect), locals()
                 try:
                     if n not in named_inputs:
                         if not isinstance(n, (optional, vararg, varargs, sideffect)):
@@ -502,11 +550,8 @@ class FunctionalOperation(Operation, Plottable):
                         else:
                             vararg_vals.extend(i for i in inp_value)
 
-                    elif isinstance(n, sideffect):
-                        pass  # ignored as function argument.
-
                     else:
-                        positional.append(named_inputs[n])
+                        positional.append(inp_value)
 
                 except Exception as nex:
                     log.debug(
@@ -526,9 +571,7 @@ class FunctionalOperation(Operation, Plottable):
             results_fn = self.fn(*positional, *vararg_vals, **kwargs)
 
             # TODO: rename op jetsam (real_)provides --> fn_expected
-            provides = iset(
-                n for n in self._fn_provides if not isinstance(n, sideffect)
-            )
+            provides = self._fn_provides
             results_op = self._zip_results_with_provides(results_fn, provides)
 
             if outputs:

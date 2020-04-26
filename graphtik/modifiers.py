@@ -7,8 +7,10 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 :term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
 """
 import re
+from typing import Tuple
 
 
+# TODO: rename `kw modifiers --. `mapped`.
 class kw(str):
     """
     Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
@@ -27,27 +29,26 @@ class kw(str):
     `inputs` (or just because the name in the `inputs` is not a valid argument-name),
     you may *map* it with the 2nd argument of :class:`.kw` (or :class:`.optional`):
 
-        >>> from graphtik import operation, compose, kw, debug_enabled
+        >>> from graphtik import operation, compose, kw
 
-        >>> def myadd(a, *, b):
+        >>> @operation(needs=['a', kw("name-in-inputs", "b")], provides="sum")
+        ... def myadd(a, *, b):
         ...    return a + b
+        >>> myadd
+        FunctionalOperation(name='myadd',
+                            needs=['a', kw('name-in-inputs'-->'b')],
+                            provides=['sum'],
+                            fn='myadd')
 
-        >>> graph = compose('mygraph',
-        ...     operation(name='myadd',
-        ...               needs=['a', kw("name-in-inputs", "b")],
-        ...               provides="sum")(myadd)
-        ... )
-        >>> with debug_enabled(True):
-        ...     graph
-        NetworkOperation('mygraph', needs=['a', 'name-in-inputs'], provides=['sum'], x1 ops:
-          +--FunctionalOperation(name='myadd',
-                                 needs=['a',
-                                 kw('name-in-inputs'-->'b')],
-                                 provides=['sum'],
-                                 fn='myadd'))
-        >>> graph.compute({"a": 5, "name-in-inputs": 4})['sum']
+        >>> graph = compose('mygraph', myadd)
+        >>> graph
+        NetworkOperation('mygraph', needs=['a', 'name-in-inputs'], provides=['sum'], x1 ops: myadd)
+
+        >>> sol = graph.compute({"a": 5, "name-in-inputs": 4})['sum']
+        >>> sol
         9
 
+        .. graphtik::
     """
 
     __slots__ = ("fn_arg",)  # avoid __dict__ on instances
@@ -55,13 +56,19 @@ class kw(str):
     fn_arg: str
 
     def __new__(cls, inp_key: str, fn_arg: str = None) -> "optional":
-        obj = str.__new__(cls, inp_key)
-        obj.fn_arg = fn_arg
+        obj = super().__new__(cls, inp_key)
+        obj.__init__(inp_key, str(fn_arg))
         return obj
 
+    def __init__(self, _inp_key: str, fn_arg: str = None):
+        self.fn_arg = fn_arg
+
     def __repr__(self):
-        inner = self if self.fn_arg is None else f"{self}'-->'{self.fn_arg}"
-        return f"kw('{inner}')"
+        return (
+            str.__repr__(self)
+            if self.fn_arg is None
+            else f"kw({str.__repr__(self)}-->{self.fn_arg!r})"
+        )
 
 
 class optional(kw):
@@ -76,16 +83,15 @@ class optional(kw):
 
         >>> from graphtik import operation, compose, optional
 
-        >>> def myadd(a, b=0):
+        >>> @operation(name='myadd',
+        ...            needs=["a", optional("b")],
+        ...            provides="sum")
+        ... def myadd(a, b=0):
         ...    return a + b
 
-    Annotate ``b`` as optional argument (and notice it's default value ``0``):
+    Notice the default value ``0`` to the ``b`` annotated as optional argument:
 
-        >>> graph = compose('mygraph',
-        ...     operation(name='myadd',
-        ...               needs=["a", optional("b")],
-        ...               provides="sum")(myadd)
-        ... )
+        >>> graph = compose('mygraph', myadd)
         >>> graph
         NetworkOperation('mygraph',
                          needs=['a', optional('b')],
@@ -103,24 +109,22 @@ class optional(kw):
 
     Like :class:`.kw` you may map input-name to a different function-argument:
 
-        >>> from graphtik import debug_enabled
+        >>> operation(needs=['a', optional("quasi-real", "b")],
+        ...           provides="sum"
+        ... )(myadd.fn)  # Cannot wrap an operation, its `fn` only.
+        FunctionalOperation(name='myadd',
+                            needs=['a', optional('quasi-real'-->'b')],
+                            provides=['sum'],
+                            fn='myadd')
 
-        >>> graph = compose('mygraph',
-        ...     operation(name='myadd',
-        ...               needs=['a', optional("quasi-real", "b")],
-        ...               provides="sum")(myadd)
-        ... )
-        >>> with debug_enabled(True):
-        ...     graph
-        NetworkOperation('mygraph', needs=['a', optional('quasi-real')], provides=['sum'], x1 ops:
-          +--FunctionalOperation(name='myadd', needs=['a', optional('quasi-real'-->'b')], provides=['sum'], fn='myadd'))
-        >>> graph.compute({"a": 5, "quasi-real": 4})['sum']
-        9
     """
 
     def __repr__(self):
-        inner = self if self.fn_arg is None else f"{self}'-->'{self.fn_arg}"
-        return f"optional('{inner}')"
+        return (
+            f"optional({str.__repr__(self)})"
+            if self.fn_arg is None
+            else f"optional({str.__repr__(self)}-->{self.fn_arg!r})"
+        )
 
 
 class vararg(str):
@@ -133,28 +137,21 @@ class vararg(str):
 
     **Example:**
 
-        >>> from graphtik import operation, compose, vararg, debug_enabled
+    We designate ``b`` & ``c`` as `vararg` arguments:
 
-        >>> def addall(a, *b):
-        ...    return a + sum(b)
+        >>> from graphtik import operation, compose, vararg
 
-    Designate ``b`` & ``c`` as an `vararg` arguments:
-
-        >>> graph = compose(
-        ...     'mygraph',
-        ...     operation(
-        ...               name='addall',
-        ...               needs=['a', vararg('b'), vararg('c')],
-        ...               provides='sum'
-        ...     )(addall)
+        >>> @operation(
+        ...     needs=['a', vararg('b'), vararg('c')],
+        ...     provides='sum'
         ... )
-        >>> with debug_enabled(True):
-        ...     graph
-        NetworkOperation('mygraph',
-                         needs=['a', optional('b'), optional('c')],
-                         provides=['sum'],
-                         x1 ops:
-          +--FunctionalOperation(name='addall', needs=['a', vararg('b'), vararg('c')], provides=['sum'], fn='addall'))
+        ... def addall(a, *b):
+        ...    return a + sum(b)
+        >>> addall
+        FunctionalOperation(name='addall', needs=['a', vararg('b'), vararg('c')], provides=['sum'], fn='addall')
+
+
+        >>> graph = compose('mygraph', addall)
 
     .. graphtik::
 
@@ -237,7 +234,7 @@ class varargs(str):
 
 class sideffect(str):
     """
-    :term:`sideffects` dependencies participates in the graph but not exchanged with functions.
+    Abstract :term:`sideffects` take part in the graph but not when calling functions.
 
     Both `needs` & `provides` may be designated as *sideffects* using this modifier.
     They work as usual while solving the graph (:term:`compilation`) but
@@ -248,75 +245,51 @@ class sideffect(str):
     - output sideffects are NOT expected from the function;
     - output sideffects are stored in the :term:`solution`.
 
-    Their purpose is to describe operations that modify the internal state of
-    some of their arguments ("side-effects").
+    Their purpose is to describe operations that modify some internal state
+    not expressed in solution's the inputs/outputs ("side-effects").
 
-    **Example:**
+    .. hint::
+        If modifications involve some input/output, prefer the :class:`.sol_sideffect`
+        modifier.
 
-    A typical use-case is to signify columns required to produce new ones in
-    pandas dataframes:
+        You may still convey this relationships simply by including the dependency name
+        in the string - in the end, it's just a string - but no enforcement of any kind
+        will happen from *graphtik*, like:
 
-
-        >>> from graphtik import operation, compose, sideffect
-
-        >>> # Function appending a new dataframe column from two pre-existing ones.
-        >>> def addcolumns(df):
-        ...    df['sum'] = df['a'] + df['b']
-
-    Designate ``a``, ``b`` & ``sum`` column names as an sideffect arguments:
-
-        >>> graph = compose('mygraph',
-        ...     operation(
-        ...         name='addcolumns',
-        ...         needs=['df', sideffect('df.b')],  # sideffect names can be anything
-        ...         provides=[sideffect('df.sum')])(addcolumns)
-        ... )
-        >>> graph
-        NetworkOperation('mygraph', needs=['df', 'sideffect(df.b)'],
-                         provides=['sideffect(df.sum)'], x1 ops: addcolumns)
-
-    .. graphtik::
-
-        >>> df = pd.DataFrame({'a': [5, 0], 'b': [2, 1]})   # doctest: +SKIP
-        >>> graph({'df': df})['df']                         # doctest: +SKIP
-        	a	b
-        0	5	2
-        1	0	1
-
-    We didn't get the ``sum`` column because the ``b`` sideffect was unsatisfied.
-    We have to add its key to the inputs (with *any* value):
-
-        >>> graph({'df': df, sideffect("df.b"): 0})['df']   # doctest: +SKIP
-        	a	b	sum
-        0	5	2	7
-        1	0	1	1
-
-    Note that regular data in `needs` and `provides` do not match same-named `sideffects`.
-    That is, in the following operation, the ``prices`` input is different from
-    the ``sideffect(prices)`` output:
-
-        >>> def upd_prices(sales_df, prices):
-        ...     sales_df["Prices"] = prices
-
-        >>> operation(fn=upd_prices,
-        ...           name="upd_prices",
-        ...           needs=["sales_df", "price"],
-        ...           provides=[sideffect("price")])
-        operation(name='upd_prices', needs=['sales_df', 'price'],
-                  provides=['sideffect(price)'], fn='upd_prices')
+        >>> sideffect("price[sales_df]")  # doctest: +SKIP
+        'sideffect(price[sales_df])'
 
     .. note::
         An `operation` with *sideffects* outputs only, have functions that return
         no value at all (like the one above).  Such operation would still be called for
         their side-effects, if requested in `outputs`.
 
-    .. tip::
-        You may associate sideffects with other data to convey their relationships,
-        simply by including their names in the string - in the end, it's just a string -
-        but no enforcement will happen from *graphtik*, like:
 
-        >>> sideffect("price[sales_df]")
-        'sideffect(price[sales_df])'
+    **Example:**
+
+    A typical use-case is to signify changes in some "global" context,
+    outside `solution`:
+
+
+        >>> from graphtik import operation, compose, sideffect
+
+        >>> @operation(provides=sideffect("lights off"))  # sideffect names can be anything
+        ... def close_the_lights():
+        ...    pass
+
+        >>> graph = compose('strip ease',
+        ...     close_the_lights,
+        ...     operation(
+        ...         name='undress',
+        ...         needs=[sideffect("lights off")],
+        ...         provides="body")(lambda: "TaDa!")
+        ... )
+        >>> graph
+        NetworkOperation('strip ease', needs=['sideffect(lights off)'],
+                         provides=['sideffect(lights off)', 'body'],
+                         x2 ops: close_the_lights, undress)
+
+    .. graphtik::
 
     """
 
@@ -326,4 +299,94 @@ class sideffect(str):
         m = re.match(r"sideffect\((.*)\)", name)
         if m:
             name = m.group(1)
+        # TODO: repr('name)' in sideffect str.
         return super().__new__(cls, f"sideffect({name})")
+
+
+class sol_sideffect(sideffect):
+    r"""
+    Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
+
+    Like :class:`.sideffect` but annotating the function's :term:`dependency` it relates to,
+    allowing that dependency to be present both in :term:`needs` and :term:`provides`
+    of the function.
+
+    .. Note::
+        When declaring `operation`s with *sideffected* dependencies, it is important
+        not to put the actual :attr:`sideffected` in the `needs` & `provides`,
+        or else, "cycles" will form, and network will not :term:`compile`.
+
+    **Example:**
+
+    A typical use-case is to signify columns required to produce new ones in
+    pandas dataframes:
+
+
+        >>> from graphtik import operation, compose, sol_sideffect
+
+        >>> @operation(needs="order_items", provides=sol_sideffect("ORDER", "Items"))
+        ... def new_order(items):
+        ...     return pd.DataFrame(items, columns=["items"])
+
+        >>> @operation(
+        ...     needs=[sol_sideffect("ORDER", "Items"), "vat"],
+        ...     provides=sol_sideffect("ORDER", "Prices", "Vat", "Totals")
+        ... )
+        ... def fill_in_prices(order: "pd.DataFrame", vat: float):
+        ...     order['prices'] = ...  # beyond our example
+        ...     order['VAT'] = order['prices'] * vat
+        ...     order['totals'] = order['prices'] + order['VAT']
+        ...     return order
+
+    To view the internal differences, enable DEBUG in :term:`configurations`:
+
+        >>> from graphtik import debug_enabled
+
+        >>> with debug_enabled(True):
+        ...     fill_in_prices
+        FunctionalOperation(name='fill_in_prices',
+                            needs=["sol_sideffect('ORDER'<--'Items'", 'vat'],
+                            provides=["sol_sideffect('ORDER'<--'Prices, Vat, Totals'"],
+                            needs=("sol_sideffect('ORDER'<--'Items'", 'vat'),
+                            op_provides=("sol_sideffect('ORDER'<--'Prices'",
+                                         "sol_sideffect('ORDER'<--'Vat'",
+                                         "sol_sideffect('ORDER'<--'Totals'"),
+                            fn_needs=('ORDER', 'vat'),
+                            fn_provides=('ORDER'),
+                            fn='fill_in_prices')
+
+        Notice how the `fn_needs` & `fn_provides` differ from `needs` & `op_provides
+        on the 2nd operation, due to the `sol_sideffect` dependencies:
+
+        >>> proc_order = compose('process order', new_order, fill_in_prices)
+
+    .. graphtik::
+        :height: 360
+        :width: 100%
+
+    Notice how declaring a single *solution sideffect* with multiple *sideffects* on it,
+    results into multiple  *"singular"* ``sol_sideffect`` dependencies in the network.
+    """
+
+    __slots__ = (
+        "sideffected",
+        "sideffects",
+    )  # avoid __dict__ on instances
+
+    #: An existing `dependency` in `solution` that sustain (must have sustained)
+    #: the :term:`sideffects` by(for) the underlying function.
+    sideffected: str
+    #: At least one name(s) denoting the :term:`sideffects` modification(s) on
+    #: the :term:`sideffected`, performed/required by the operation.
+    sideffects: Tuple[str]
+
+    def __new__(cls, sideffected, sideffect0, *sideffects):
+        sideffects = (sideffect0,) + sideffects
+        sfx_str = ", ".join(str(i) for i in sideffects)
+        obj = str.__new__(cls, f"sol_sideffect({sideffected!r}<--{sfx_str!r}")
+        obj.__init__(sideffected, sideffects)
+        return obj
+
+    def __init__(self, sideffected, *sideffects):
+        self.sideffected = sideffected
+        self.sideffects = sideffects
