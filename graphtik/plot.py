@@ -418,7 +418,12 @@ class Theme:
         3: {"shape": "hexagon"},  # Inp/Out
     }
     kw_data_mapped = {
-        "label": make_template("{{nx_item}} \n(fn_need: {{nx_item.fn_arg | pprint}})")
+        "label": make_template(
+            """
+            <{{ nx_item | eee }}<br/>
+            (<I>fn_need:</I> {{ nx_item.fn_arg | eee }})>
+            """
+        )
     }
 
     kw_data_pruned = {
@@ -432,8 +437,10 @@ class Theme:
     }
     kw_data_sol_sideffect = {
         "label": make_template(
-            "{{ nx_item.sideffected }}&#10;"
-            "(sideffect: {{ nx_item.sideffects | join(', ') }})"
+            """
+            <{{ nx_item.sideffected | eee }}<br/>
+            (<I>sideffect:</I> {{ nx_item.sideffects | join(', ') | eee }})>
+            """
         ),
     }
     kw_data_to_evict = {
