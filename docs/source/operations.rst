@@ -191,6 +191,4 @@ by creating an operation "builder pattern":
 
 Modifiers on `operation` `needs` and `provides`
 -----------------------------------------------
-.. automodule:: graphtik.modifiers
-   :members:
-   :noindex:
+see `mod:`.modifiers`.
