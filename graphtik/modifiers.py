@@ -10,8 +10,7 @@ import re
 from typing import Tuple
 
 
-# TODO: rename `kw modifiers --. `mapped`.
-class kw(str):
+class mapped(str):
     """
     Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
 
@@ -27,16 +26,16 @@ class kw(str):
 
     In case the name of the function arguments is different from the name in the
     `inputs` (or just because the name in the `inputs` is not a valid argument-name),
-    you may *map* it with the 2nd argument of :class:`.kw` (or :class:`.optional`):
+    you may *map* it with the 2nd argument of :class:`.mapped` (or :class:`.optional`):
 
-        >>> from graphtik import operation, compose, kw
+        >>> from graphtik import operation, compose, mapped
 
-        >>> @operation(needs=['a', kw("name-in-inputs", "b")], provides="sum")
+        >>> @operation(needs=['a', mapped("name-in-inputs", "b")], provides="sum")
         ... def myadd(a, *, b):
         ...    return a + b
         >>> myadd
         FunctionalOperation(name='myadd',
-                            needs=['a', kw('name-in-inputs'-->'b')],
+                            needs=['a', mapped('name-in-inputs'-->'b')],
                             provides=['sum'],
                             fn='myadd')
 
@@ -67,11 +66,11 @@ class kw(str):
         return (
             str.__repr__(self)
             if self.fn_arg is None
-            else f"kw({str.__repr__(self)}-->{self.fn_arg!r})"
+            else f"mapped({str.__repr__(self)}-->{self.fn_arg!r})"
         )
 
 
-class optional(kw):
+class optional(mapped):
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
@@ -107,7 +106,7 @@ class optional(kw):
         >>> graph(a=5)
         {'a': 5, 'sum': 5}
 
-    Like :class:`.kw` you may map input-name to a different function-argument:
+    Like :class:`.mapped` you may map input-name to a different function-argument:
 
         >>> operation(needs=['a', optional("quasi-real", "b")],
         ...           provides="sum"
