@@ -289,23 +289,32 @@ def _escape_or_none(context: jinja2.environment.EvalContext, x, escaper):
     return x and jinja2.Markup(escaper(str(x)))
 
 
-#: Environmane to append out own jinja2 filters.
-_jinja2_env = jinja2.Environment()
+def _format_exception(ex):
+    """Printout ``type(msg)``. """
+    if ex:
+        return f"{type(ex).__name__}: {ex}"
 
-#: Like default escape filter ``e``, but Nones/empties evaluate to false.
-#:
-#: Needed because the default `escape` filter breaks `xmlattr` filter with Nones .
-_jinja2_env.filters["ee"] = jinja2.evalcontextfilter(
-    partial(_escape_or_none, escaper=html.escape)
-)
-#: Escape for when writting inside HTML-strings.
-_jinja2_env.filters["eee"] = jinja2.evalcontextfilter(
-    partial(_escape_or_none, escaper=quote_html_tooltips)
-)
-_jinja2_env.filters["slug"] = jinja2.evalcontextfilter(
-    partial(_escape_or_none, escaper=as_identifier)
-)
-_jinja2_env.filters["hrefer"] = _drop_gt_lt
+
+def _make_jinja2_environment() -> jinja2.Environment:
+    env = jinja2.Environment()
+
+    env.filters["ee"] = jinja2.evalcontextfilter(
+        partial(_escape_or_none, escaper=html.escape)
+    )
+    env.filters["eee"] = jinja2.evalcontextfilter(
+        partial(_escape_or_none, escaper=quote_html_tooltips)
+    )
+    env.filters["slug"] = jinja2.evalcontextfilter(
+        partial(_escape_or_none, escaper=as_identifier)
+    )
+    env.filters["hrefer"] = _drop_gt_lt
+    env.filters["ex"] = _format_exception
+
+    return env
+
+
+#: Environment to append our own jinja2 filters.
+_jinja2_env = _make_jinja2_environment()
 
 
 def make_template(s):
@@ -431,7 +440,7 @@ class Theme:
     kw_data_sol_sideffect = {
         "label": make_template(
             """
-            <{{ nx_item.sideffected | eee }}<br/>
+            <{{ nx_item.sideffected | eee }}<BR/>
             (<I>sideffect:</I> {{ nx_item.sideffects | join(', ') | eee }})>
             """
         ),
@@ -475,7 +484,10 @@ class Theme:
         "style": ["dashed"],
         "tooltip": "(rescheduled)",
     }
-    kw_op_failed = {"fillcolor": Ref("failed_color"), "tooltip": "(failed)"}
+    kw_op_failed = {
+        "fillcolor": Ref("failed_color"),
+        "tooltip": make_template("{{ solution.executed[nx_item] if solution | ex }}"),
+    }
     kw_op_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": "(canceled)"}
     #: Try to mimic a regular `Graphviz`_ node attributes
     #: (see examples in ``test.test_plot.test_op_template_full()`` for params).
