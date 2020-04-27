@@ -288,7 +288,12 @@ class sideffect(str):
                          provides=['sideffect: lights off', 'body'],
                          x2 ops: close_the_lights, undress)
 
+        >>> sol = graph()
+        >>> sol
+        {'body': 'TaDa!'}
+
     .. graphtik::
+        :name: sideffect
 
     """
 
@@ -317,53 +322,78 @@ class sol_sideffect(sideffect):
     **Example:**
 
     A typical use-case is to signify columns required to produce new ones in
-    pandas dataframes:
+    pandas dataframes (:gray:`emulated with dictionaries`):
 
 
         >>> from graphtik import operation, compose, sol_sideffect
 
-        >>> @operation(needs="order_items", provides=sol_sideffect("ORDER", "Items"))
-        ... def new_order(items):
-        ...     return pd.DataFrame(items, columns=["items"])
-
-        >>> @operation(
-        ...     needs=[sol_sideffect("ORDER", "Items"), "vat"],
-        ...     provides=sol_sideffect("ORDER", "Prices", "Vat", "Totals")
-        ... )
-        ... def fill_in_prices(order: "pd.DataFrame", vat: float):
-        ...     order['prices'] = ...  # beyond our example
-        ...     order['VAT'] = order['prices'] * vat
-        ...     order['totals'] = order['prices'] + order['VAT']
+        >>> @operation(needs="order_items",
+        ...            provides=sol_sideffect("ORDER", "Items", "Prices"))
+        ... def new_order(items: list) -> "pd.DataFrame":
+        ...     order = {"items": items}
+        ...     # Pretend we get the prices from sales.
+        ...     order['prices'] = list(range(1, len(order['items']) + 1))
         ...     return order
 
-    To view the internal differences, enable DEBUG in :term:`configurations`:
+        >>> @operation(
+        ...     needs=[sol_sideffect("ORDER", "Items"), "vat rate"],
+        ...     provides=sol_sideffect("ORDER", "VAT")
+        ... )
+        ... def fill_in_vat(order: "pd.DataFrame", vat: float):
+        ...     order['VAT'] = [i * vat for i in order['prices']]
+        ...     return order
+
+        >>> @operation(
+        ...     needs=[sol_sideffect("ORDER", "Prices", "VAT")],
+        ...     provides=sol_sideffect("ORDER", "Totals")
+        ... )
+        ... def finalize_prices(order: "pd.DataFrame"):
+        ...     order['totals'] = [p + v for p, v in zip(order['prices'], order['VAT'])]
+        ...     return order
+
+    To view all internal :term:`dependencies <dependency>`, enable DEBUG
+    in :term:`configurations`:
 
         >>> from graphtik import debug_enabled
 
         >>> with debug_enabled(True):
-        ...     fill_in_prices
-        FunctionalOperation(name='fill_in_prices',
-                            needs=["sol_sideffect('ORDER'<--'Items'", 'vat'],
-                            provides=["sol_sideffect('ORDER'<--'Prices, Vat, Totals'"],
-                            needs=("sol_sideffect('ORDER'<--'Items'", 'vat'),
-                            op_provides=("sol_sideffect('ORDER'<--'Prices'",
-                                         "sol_sideffect('ORDER'<--'Vat'",
-                                         "sol_sideffect('ORDER'<--'Totals'"),
-                            fn_needs=('ORDER', 'vat'),
-                            fn_provides=('ORDER'),
-                            fn='fill_in_prices')
+        ...     finalize_prices
+        FunctionalOperation(name='finalize_prices',
+                            needs=["sol_sideffect('ORDER'<--'Prices'",
+                                   "sol_sideffect('ORDER'<--'VAT'"],
+                            provides=["sol_sideffect('ORDER'<--'Totals'"],
+                            op_provides=["sol_sideffect('ORDER'<--'Totals'"],
+                            fn_needs=['ORDER'],
+                            fn_provides=['ORDER'],
+                            fn='finalize_prices')
 
-        Notice how the `fn_needs` & `fn_provides` differ from `needs` & `op_provides
-        on the 2nd operation, due to the `sol_sideffect` dependencies:
+    - Notice that although the function consumes & produces ``ORDER``
+      (check ``fn_needs`` & ``fn_provides``, above), which would have :red:`created a cycle`,
+      the wrapping operation :term:`needs` and :term:`provides` different
+      `sol_sideffects`, breaking thus the cycle.
 
-        >>> proc_order = compose('process order', new_order, fill_in_prices)
+    - Notice also that declaring a single *solution sideffect* with multiple *sideffects*,
+      expands into multiple  *"singular"* ``sol_sideffect`` dependencies in the network
+      (check ``needs``, above).
+
+        >>> proc_order = compose('process order', new_order, fill_in_vat, finalize_prices)
+        >>> sol = proc_order.compute({
+        ...      "order_items": ["toilet-paper", "soap"],
+        ...      "vat rate": 0.18,
+        ... })
+        >>> sol
+        {'order_items': ['toilet-paper', 'soap'],
+         'vat rate': 0.18,
+         'ORDER': {'items': ['toilet-paper', 'soap'],
+                   'prices': [1, 2],
+                   'VAT': [0.18, 0.36],
+                   'totals': [1.18, 2.36]}}
 
     .. graphtik::
         :height: 360
         :width: 100%
+        :name: solution-sideffects
 
-    Notice how declaring a single *solution sideffect* with multiple *sideffects* on it,
-    results into multiple  *"singular"* ``sol_sideffect`` dependencies in the network.
     """
 
     __slots__ = (

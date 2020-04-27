@@ -155,7 +155,7 @@ def _spread_sideffects(
     #: To drop dupe `sideffected` from `op_deps`.
     seen_sideffecteds: Set[str] = set()
 
-    def strip_sideffects(dep):
+    def strip_sideffecteds(dep):
         if isinstance(dep, sol_sideffect):
             sideffected = dep.sideffected
             if not sideffected in seen_sideffecteds:
@@ -169,7 +169,7 @@ def _spread_sideffects(
 
     if deps:
         op_deps = iset(nn for n in deps for nn in singularize_sol_sideffects(n))
-        fn_deps = tuple(nn for n in deps for nn in strip_sideffects(n))
+        fn_deps = tuple(nn for n in deps for nn in strip_sideffecteds(n))
         return op_deps, fn_deps
     else:
         return deps, deps
@@ -337,26 +337,36 @@ class FunctionalOperation(Operation, Plottable):
         endured = "!" if self.endured else ""
         parallel = "|" if self.parallel else ""
         marshalled = "$" if self.marshalled else ""
+
         if is_debug():
-            deps = f", {', '.join(self.deps.splitlines())}"
+            deps = (
+                f", op_provides={list(self.op_provides)}, "
+                f"fn_needs={list(self._fn_needs)}, "
+                f"fn_provides={list(self._fn_provides)}"
+            )
         else:
             deps = ""
         return (
             f"FunctionalOperation{endured}{resched}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}{aliases}{deps}, fn{returns_dict_marker}={fn_name!r}{nprops})"
+            f"provides={provides!r}{deps},{aliases} fn{returns_dict_marker}={fn_name!r}{nprops})"
         )
 
     @property
     def deps(self) -> str:
         """Human-readable representation of :term:`dependency` names, both `op_` & `fn_`."""
 
-        def join_deps(d):
-            # Join repr (not str), to compress NLs.
-            return ", ".join(repr(i) for i in d)
-
-        return (
-            f"needs=({join_deps(self.needs)}), op_provides=({join_deps(self.op_provides)})\n"
-            f"fn_needs=({join_deps(self._fn_needs)}), fn_provides=({join_deps(self._fn_provides)})"
+        return "\n".join(
+            f"{k}: {list(v)}"
+            for k, v in zip(
+                "needs fn_needs provides op_provides fn_provides".split(),
+                (
+                    self.needs,
+                    self._fn_needs,
+                    self.provides,
+                    self.op_provides,
+                    self._fn_provides,
+                ),
+            )
         )
 
     def withset(self, **kw) -> "FunctionalOperation":

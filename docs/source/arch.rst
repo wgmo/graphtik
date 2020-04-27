@@ -295,7 +295,9 @@ Architecture
 
         - The `solution sideffect` (annotated with :class:`.sol_sideffect` modifier)
           denoting modifications on *dependencies* that are read and written in `solution`.
-          .
+
+        .. Attention::
+            *Sideffects* are not compatible with `optionals` and `partial outputs`.
 
     solution sideffect
     sideffected
@@ -323,6 +325,10 @@ Architecture
 
         the *solution* must then *reschedule* the remaining operations downstream,
         and possibly *cancel* some of those ( assigned in :attr:`.Solution.canceled`).
+
+        Operations with *partial outputs* are incompatible with `solution sideffect`\s,
+        i.e. they cannot control which of their sideffects they have produced,
+        it's either all or nothing.
 
     endurance
     endured

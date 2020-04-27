@@ -9,12 +9,14 @@ import sys
 import time
 import types
 from functools import partial
+from itertools import cycle
 from multiprocessing import Pool, cpu_count
 from multiprocessing import dummy as mp_dummy
 from multiprocessing import get_context
 from operator import add, floordiv, mul, sub
 from pprint import pprint
 from unittest.mock import MagicMock
+from typing import Tuple
 
 import pytest
 
@@ -32,11 +34,9 @@ from graphtik import (
     operation,
     operations_endured,
     operations_reschedullled,
-    optional,
-    sideffect,
     tasks_marshalled,
-    vararg,
 )
+from graphtik.modifiers import optional, sideffect, sol_sideffect, vararg
 from graphtik.netop import NetworkOperation
 from graphtik.network import Solution
 from graphtik.op import Operation
@@ -1000,6 +1000,89 @@ def test_sideffect_NO_RESULT(caplog):
     netop.compute({}, outputs=sfx)
     for record in caplog.records:
         assert record.levelname != "WARNING"
+
+
+@pytest.fixture
+def calc_prices_pipeline():
+    @operation(needs="order_items", provides=sol_sideffect("ORDER", "Items", "Prices"))
+    def new_order(items: list) -> "pd.DataFrame":
+        order = {"items": items}
+        # Pretend we get the prices from sales.
+        order["prices"] = list(range(1, len(order["items"]) + 1))
+        return order
+
+    @operation(
+        needs=[sol_sideffect("ORDER", "Items"), "vat rate"],
+        provides=sol_sideffect("ORDER", "VAT rates"),
+    )
+    def fill_in_vat_ratios(order: "pd.DataFrame", base_vat: float) -> "pd.DataFrame":
+        order["VAT_rates"] = [
+            v for _, v in zip(order["prices"], cycle((base_vat, 2 * base_vat)))
+        ]
+        return order
+
+    @operation(
+        needs=[sol_sideffect("ORDER", "Prices"), sol_sideffect("ORDER", "VAT rates")],
+        provides=[sol_sideffect("ORDER", "VAT", "Totals"), "vat owed"],
+    )
+    def finalize_prices(order: "pd.DataFrame") -> Tuple["pd.DataFrame", float]:
+        if "VAT_rates" in order:
+            order["VAT"] = [p * v for p, v in zip(order["prices"], order["VAT_rates"])]
+            order["totals"] = [p + v for p, v in zip(order["prices"], order["VAT"])]
+            vat_to_pay = sum(order["VAT"])
+        else:
+            order["totals"] = order["prices"][::]
+        return order, vat_to_pay
+
+    proc_order = compose(
+        "process order", new_order, fill_in_vat_ratios, finalize_prices
+    )
+    return proc_order
+
+
+def test_solution_sideffects_ok(calc_prices_pipeline):
+    sol = calc_prices_pipeline.compute(
+        {"order_items": "milk babylino toilet-paper".split(), "vat rate": 0.18}
+    )
+    print(sol)
+    assert sol == {
+        "order_items": ["milk", "babylino", "toilet-paper"],
+        "vat rate": 0.18,
+        "ORDER": {
+            "items": ["milk", "babylino", "toilet-paper"],
+            "prices": [1, 2, 3],
+            "VAT_rates": [0.18, 0.36, 0.18],
+            "VAT": [0.18, 0.72, 0.54],
+            "totals": [1.18, 2.7199999999999998, 3.54],
+        },
+        "vat owed": 1.44,
+    }
+
+
+def test_solution_sideffects_endured(calc_prices_pipeline):
+    ## Break `fill_in_vat_ratios()`.
+    #
+    @operation(
+        needs=[sol_sideffect("ORDER", "Items"), "vat rate"],
+        provides=sol_sideffect("ORDER", "VAT rates"),
+        endured=True,
+    )
+    def fill_in_vat_ratios(order: "pd.DataFrame", base_vat: float) -> "pd.DataFrame":
+        raise ValueError("EC transactions have no VAT!")
+
+    calc_prices_pipeline = compose(
+        calc_prices_pipeline.name, fill_in_vat_ratios, calc_prices_pipeline, merge=True
+    )
+
+    sol = calc_prices_pipeline.compute(
+        {"order_items": "milk babylino toilet-paper".split(), "vat rate": 0.18}
+    )
+    print(sol)
+    assert sol == {
+        "order_items": ["milk", "babylino", "toilet-paper"],
+        "vat rate": 0.18,
+        "ORDER": {"items": ["milk", "babylino", "toilet-paper"], "prices": [1, 2, 3]},
+    }
 
 
 def test_optional_per_function_with_same_output(exemethod):
