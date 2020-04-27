@@ -610,11 +610,6 @@ def test_pruning_multiouts_not_override_intermediates1(exemethod):
     assert "SkyBlue" not in str(solution.plot())
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 6),
-    reason="PY3.5- have unstable dicts."
-    "E.g. https://travis-ci.org/ankostis/graphtik/jobs/595841023",
-)
 def test_pruning_multiouts_not_override_intermediates2(exemethod):
     # Test #25: v.1.2.4 overrides intermediate data when a previous operation
     # must run for its other outputs (outputs asked or not)
@@ -1033,11 +1028,6 @@ def test_sideffect_NO_RESULT(caplog):
         assert record.levelname != "WARNING"
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 6),
-    reason="PY3.5- have unstable dicts."
-    "E.g. https://travis-ci.org/ankostis/graphtik/jobs/595793872",
-)
 def test_optional_per_function_with_same_output(exemethod):
     # Test that the same need can be both optional and not on different operations.
     #
