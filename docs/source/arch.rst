@@ -94,20 +94,8 @@ Architecture
         It is based on a :class:`collections.ChainMap`, to keep one dictionary
         for each `operation` executed +1 for inputs.
 
-        The results of the last operation executed "wins" in the final *outputs* produced,
-        BUT while executing, the `needs` of each operation receive the *solution* values
-        in **reversed order**, that is, the 1st operation result (or given input) wins
-        for some *needs* name.
-
-        Rational:
-
-            During execution we want stability (the same input value used by all operations),
-            and that is most important when consuming input values - otherwise,
-            we would use (possibly *overwritten* and thus changing)) intermediate ones.
-
-            But at the end we want to affect the calculation results by adding
-            operations into some *netop* - furthermore, it wouldn't be very useful
-            to get back the given inputs in case of `overwrites`.
+        The results of the last operation executed "wins" in the *outputs* produced,
+        and the base (least precedence) is the *inputs* given when the `execution` started.
 
     graph
     network graph

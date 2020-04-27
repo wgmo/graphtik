@@ -153,7 +153,13 @@ class Solution(ChainMap, Plottable):
     """
 
     def __init__(self, plan, input_values: dict):
-        super().__init__(input_values)
+        #: An ordered mapping of plan-operations to their results
+        #: (initially empty dicts).
+        #: The result dictionaries pre-populate this (self) chainmap,
+        #: with the 1st map (wins all reads) the last operation,
+        #: the last one the `input_values` dict.
+        self._layers = {op: {} for op in yield_ops(reversed(plan.steps))}
+        super().__init__(*self._layers.values(), input_values)
 
         self.plan = plan
         self.executed = {}
@@ -161,13 +167,6 @@ class Solution(ChainMap, Plottable):
         self.finalized = False
         self.elapsed_ms = {}
         self.solid = "%X" % random.randint(0, 2 ** 16)
-
-        #: An ordered mapping of plan-operations to their results
-        #: (initially empty dicts).
-        #: The result dictionaries pre-populate this (self) chainmap,
-        #: appended after the given `input_values` dict.
-        self._layers = {op: {} for op in yield_ops(plan.steps)}
-        self.maps.extend(self._layers.values())
 
         ## Cache context-var flags.
         #
@@ -279,7 +278,6 @@ class Solution(ChainMap, Plottable):
         """invoked only once, after all ops have been executed"""
         # Invert solution so that last value wins
         if not self.finalized:
-            self.maps = self.maps[::-1]
             self.finalized = True
 
     def __delitem__(self, key):
