@@ -5,7 +5,7 @@
 import logging
 import re
 from collections import abc
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Collection, List, Mapping
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -160,6 +160,11 @@ class NetworkOperation(Operation, Plottable):
             else ", ".join(s.name for s in ops)
         )
         return f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{len(ops)} ops: {steps})"
+
+    @property
+    def ops(self) -> List[Operation]:
+        """All :term:`operation`\\s contained."""
+        return list(yield_ops(self.net.graph))
 
     def withset(
         self,

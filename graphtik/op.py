@@ -8,7 +8,7 @@ import logging
 import textwrap
 from collections import abc as cabc
 from collections import namedtuple
-from typing import Any, Callable, List, Mapping, Set, Tuple, Union
+from typing import Any, Callable, Collection, List, Mapping, Set, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
@@ -352,11 +352,15 @@ class FunctionalOperation(Operation, Plottable):
         )
 
     @property
-    def deps(self) -> str:
-        """Human-readable representation of :term:`dependency` names, both `op_` & `fn_`."""
+    def deps(self) -> Mapping[str, Collection]:
+        """
+        All :term:`dependency` names, including `op_` & internal `_fn_`.
 
-        return "\n".join(
-            f"{k}: {list(v)}"
+        if not DEBUG, all deps are converted into lists, ready to be printed.
+        """
+
+        return {
+            k: v if is_debug() else list(v)
             for k, v in zip(
                 "needs fn_needs provides op_provides fn_provides".split(),
                 (
@@ -367,7 +371,7 @@ class FunctionalOperation(Operation, Plottable):
                     self._fn_provides,
                 ),
             )
-        )
+        }
 
     def withset(self, **kw) -> "FunctionalOperation":
         """
