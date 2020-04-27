@@ -111,6 +111,9 @@ v6.3.0 (XX Apr 2020, @ankostis): arg-->kw-modifier, ops act like functions
 
   + FEAT: now `operations` are also :term:`plottable`.
 
+  + FEAT: Operation BADGES to distinguish endured, rescheduled, parallel, marshalled,
+    returns_dict.
+
   + FIX: Cancel/Evict styles were misclassified.
 
   + feat(plot): change label in sol_sideffects; add exceptions as tooltips on

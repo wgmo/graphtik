@@ -72,6 +72,8 @@ def _striplines(s):
 
 
 def test_op_label_template_full():
+    theme_op_badges = plot.Theme.op_badge_styles
+    avail_badges = theme_op_badges["badge_styles"]
     kw = dict(
         op_name="the op",
         fn_name="the fn",
@@ -85,6 +87,8 @@ def test_op_label_template_full():
         fn_url='http://fn_url.com/quoto"and',
         fn_tooltip="<fn\ntooltip>",
         fn_link_target="_top",
+        badges=list(avail_badges),  # cspell: disable-line
+        **theme_op_badges,
     )
     got = plot._render_template(plot.Theme.op_template, **kw)
     print(got)
@@ -93,16 +97,28 @@ def test_op_label_template_full():
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
                 ><FONT COLOR="blue"><B>OP:</B> <I>the op</I></FONT></TD>
+                <TD BORDER="1" SIDES="b"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                        <TR><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#04277d" TITLE="endured(!)" TARGET="_self"
+                            ><FONT FACE="monospace" COLOR="white"><B>E</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#fc89ac" TITLE="rescheduled(?)" TARGET="_self"
+                            ><FONT FACE="monospace" COLOR="white"><B>R</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#b1ce9a" TITLE="parallel(|)" TARGET="_self"
+                            ><FONT FACE="monospace" COLOR="white"><B>P</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#4e3165" TITLE="marshalled($)" TARGET="_self"
+                            ><FONT FACE="monospace" COLOR="white"><B>M</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict({})" TARGET="_self"
+                            ><FONT FACE="monospace" COLOR="white"><B>D</B></FONT></TD></TR>
+                    </TABLE></TD>
             </TR><TR>
-                <TD ALIGN="left" TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
+                <TD COLSPAN="2" ALIGN="left" TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
                 ><FONT COLOR="blue"><B>FN:</B> the fn</FONT></TD>
             </TR>
         </TABLE>>
         """
 
     assert _striplines(got) == _striplines(exp)
+
+    ## Check
     for k, v in [
-        (k, v) for k, v in kw.items() if "tooltip" not in k and "url" not in k
+        (k, v)
+        for k, v in kw.items()
+        if "tooltip" not in k and "url" not in k and "badge" not in k
     ]:
         assert v in got, (k, v)
 
@@ -115,6 +131,7 @@ def test_op_label_template_empty():
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ></TD>
+                <TD BORDER="1" SIDES="b"></TD>
             </TR>
         </TABLE>>
         """
@@ -129,8 +146,9 @@ def test_op_label_template_fn_empty():
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ><B>OP:</B> <I>op</I></TD>
+                <TD BORDER="1" SIDES="b"></TD>
             </TR><TR>
-                <TD ALIGN="left" TARGET=""
+                <TD COLSPAN="2" ALIGN="left" TARGET=""
                 ><B>FN:</B> fn</TD>
             </TR>
         </TABLE>>
@@ -159,6 +177,7 @@ def test_op_label_template_nones():
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ></TD>
+                <TD BORDER="1" SIDES="b"></TD>
             </TR>
         </TABLE>>
         """
@@ -458,8 +477,9 @@ def test_node_dot_str0(dot_str_pipeline):
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET=""
                 ><B>OP:</B> <I>node</I></TD>
+                <TD BORDER="1" SIDES="b"></TD>
             </TR><TR>
-                <TD ALIGN="left" TOOLTIP="Same as a + b." TARGET=""
+                <TD COLSPAN="2" ALIGN="left" TOOLTIP="Same as a + b." TARGET=""
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
@@ -468,8 +488,9 @@ def test_node_dot_str0(dot_str_pipeline):
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET=""
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
+                <TD BORDER="1" SIDES="b"></TD>
             </TR><TR>
-                <TD ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET=""
+                <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET=""
                 ><B>FN:</B> test.test_plot.func</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
@@ -510,8 +531,9 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
+                <TD BORDER="1" SIDES="b"></TD>
             </TR><TR>
-                <TD ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
+                <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
                 ><B>FN:</B> test.test_plot.func</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];

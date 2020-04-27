@@ -414,6 +414,7 @@ class Theme:
 
     ##########
     ## DATA node
+    ##
 
     #: Reduce margins, since sideffects take a lost of space
     #: (default margin: x=0.11, y=0.055O)
@@ -427,12 +428,6 @@ class Theme:
         3: {"shape": "hexagon"},  # Inp/Out
     }
     kw_data_mapped = {"label": make_template("<{{ nx_item | eee }}>")}
-
-    kw_data_pruned = {
-        "fontcolor": Ref("pruned_color"),
-        "color": Ref("pruned_color"),
-        "tooltip": "(pruned)",
-    }
     kw_data_sideffect = {
         "color": "blue",
         "fontcolor": "blue",
@@ -451,6 +446,14 @@ class Theme:
         "style": ["dashed"],
         "tooltip": "(to evict)",
     }
+    ##
+    ## data STATE
+    ##
+    kw_data_pruned = {
+        "fontcolor": Ref("pruned_color"),
+        "color": Ref("pruned_color"),
+        "tooltip": "(pruned)",
+    }
     kw_data_in_solution = {"style": ["filled"], "fillcolor": Ref("fill_color")}
     kw_data_evicted = {"penwidth": "3", "tooltip": "(evicted)"}
     kw_data_overwritten = {"style": ["filled"], "fillcolor": Ref("overwrite_color")}
@@ -462,6 +465,7 @@ class Theme:
 
     ##########
     ## OPERATION node
+    ##
 
     #: Keys to ignore from operation styles & node-attrs,
     #: because they are handled internally by HTML-Label, and/or
@@ -472,23 +476,47 @@ class Theme:
     kw_op = {}
     #: props only for HTML-Table label
     kw_op_label = {}
-    kw_op_pruned = {"color": Ref("pruned_color"), "fontcolor": Ref("pruned_color")}
     kw_op_executed = {"fillcolor": Ref("fill_color")}
     kw_op_endured = {
         "penwidth": Ref("resched_thickness"),
         "style": ["dashed"],
-        "tooltip": "(rescheduled)",
+        "tooltip": "(endured)",
+        "badges": ["E"],
     }
     kw_op_rescheduled = {
         "penwidth": Ref("resched_thickness"),
         "style": ["dashed"],
         "tooltip": "(rescheduled)",
+        "badges": ["R"],
     }
+    kw_op_parallel = {"badges": ["P"]}
+    kw_op_marshalled = {"badges": ["M"]}
+    kw_op_returns_dict = {"badges": ["D"]}
+    ##
+    ## op STATE
+    ##
+    kw_op_pruned = {"color": Ref("pruned_color"), "fontcolor": Ref("pruned_color")}
     kw_op_failed = {
         "fillcolor": Ref("failed_color"),
         "tooltip": make_template("{{ solution.executed[nx_item] if solution | ex }}"),
     }
     kw_op_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": "(canceled)"}
+    #: Operation styles may specify one or more "letters"
+    #: in a `badges` list item, as long as the "letter" is contained in the dictionary
+    #: below.
+    op_badge_styles = {
+        "badge_styles": {
+            "E": {"tooltip": "endured(!)", "bgcolor": "#04277d", "color": "white"},
+            "R": {"tooltip": "rescheduled(?)", "bgcolor": "#fc89ac", "color": "white"},
+            "P": {"tooltip": "parallel(|)", "bgcolor": "#b1ce9a", "color": "white"},
+            "M": {"tooltip": "marshalled($)", "bgcolor": "#4e3165", "color": "white"},
+            "D": {
+                "tooltip": "returns_dict({})",
+                "bgcolor": "#cc5500",
+                "color": "white",
+            },
+        }
+    }
     #: Try to mimic a regular `Graphviz`_ node attributes
     #: (see examples in ``test.test_plot.test_op_template_full()`` for params).
     #: TODO: fix jinja2 template is un-picklable!
@@ -512,10 +540,24 @@ class Theme:
                     {{- '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name -}}
                     {%- if fontcolor -%}</FONT>{%- endif -%}
                 </TD>
+                <TD BORDER="1" SIDES="b">
+                {%- if badges -%}
+                    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                        <TR>
+                        {%- for badge in badges -%}
+                            <TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor }}" TITLE="{{ badge_styles[badge].tooltip | e }}" TARGET="_self"
+                            ><FONT FACE="monospace" COLOR="{{ badge_styles[badge].color }}"><B>
+                                {{- badge -}}
+                            </B></FONT></TD>
+                        {%- endfor -%}
+                        </TR>
+                    </TABLE>
+                {%- endif -%}
+                </TD>
             </TR>
             {%- if fn_name -%}
             <TR>
-                <TD ALIGN="left"
+                <TD COLSPAN="2" ALIGN="left"
                   {{- {
                   'TOOLTIP': fn_tooltip | truncate | eee,
                   'HREF': fn_url | hrefer | ee,
@@ -538,6 +580,7 @@ class Theme:
 
     ##########
     ## EDGE
+    ##
 
     kw_edge = {}
     kw_edge_optional = {"style": ["dashed"]}
@@ -560,6 +603,7 @@ class Theme:
 
     ##########
     ## Other
+    ##
 
     include_steps = False
     kw_step = {
@@ -1035,6 +1079,12 @@ class Plotter:
                 label_styles.add("kw_op_rescheduled")
             if nx_node.endured:
                 label_styles.add("kw_op_endured")
+            if nx_node.parallel:
+                label_styles.add("kw_op_parallel")
+            if nx_node.marshalled:
+                label_styles.add("kw_op_marshalled")
+            if nx_node.returns_dict:
+                label_styles.add("kw_op_returns_dict")
 
             ## Op-state
             #
@@ -1059,6 +1109,8 @@ class Plotter:
                     "fn_link_target": fn_link_target,
                 },
             )
+
+            label_styles.add("op_badge_styles")
 
             label_styles.add("user-overrides", _pub_props(node_attrs))
 
