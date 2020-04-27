@@ -292,31 +292,29 @@ def test_as_renames(inp, exp):
 
 
 @pytest.mark.parametrize(
-    "opbuilder, ex",
+    "op_kw, ex",
     [
         (
-            operation(str, aliases={"a": 1}),
+            dict(aliases={"a": 1}),
             r"The `aliases` for ['a'] rename ['a'], not found in op_provides []!",
         ),
         (
-            operation(str, name="t", provides="a", aliases={"a": 1, "b": 2}),
+            dict(name="t", provides="a", aliases={"a": 1, "b": 2}),
             r"The `aliases` for ['a', 'b'] rename ['b'], not found in op_provides ['a']!",
         ),
         (
-            operation(
-                str, name="t", provides=sideffect("a"), aliases={sideffect("a"): 1}
-            ),
+            dict(name="t", provides=sideffect("a"), aliases={sideffect("a"): 1}),
             "must not contain `sideffects",
         ),
         (
-            operation(str, name="t", provides="a", aliases={"a": sideffect("AA")}),
+            dict(name="t", provides="a", aliases={"a": sideffect("AA")}),
             "must not contain `sideffects",
         ),
     ],
 )
-def test_provides_aliases_BAD(opbuilder, ex):
+def test_provides_aliases_BAD(op_kw, ex):
     with pytest.raises(ValueError, match=re.escape(ex)):
-        opbuilder()
+        operation(str, **op_kw)()
 
 
 def test_provides_aliases():
@@ -498,7 +496,13 @@ def test_netop_conveys_attr_to_ops(attr, value):
 
 
 @pytest.mark.parametrize(
-    "op", [Operation, FunctionalOperation, operation(str)(), operation(lambda: None)()]
+    "op_fact",
+    [
+        lambda: Operation,
+        lambda: FunctionalOperation,
+        lambda: operation(str)(),
+        lambda: operation(lambda: None)(),
+    ],
 )
-def test_dill_ops(op):
-    dill.loads(dill.dumps(op))
+def test_dill_ops(op_fact):
+    dill.loads(dill.dumps(op_fact()))
