@@ -2,9 +2,66 @@
 Graphtik Changelog
 ##################
 
-TODOs
-%%%%%
-+ See :gg:`1`.
+..
+  TODOs
+  %%%%%
+
+
+  Merge back to GraphKIT
+  ======================
+  Aborted.
+
+  - [-] start-node/end-node to group inputs/outputs
+  - [-] DROP sideffects
+  - [x] Drop _Jetsam
+  - [x] Simpler jetsam
+  - [x] support *args 1-1 mapping in the jetsam() signature
+  - [x] FIX(sideffects): DIFFER from regular DATA...
+  - [x] FIX shared `executed` (no Solution class)
+  - [x] typo(test): overridden-->overriDDen
+  - [ ] `graphop` in docs
+
+  Tasks
+  =====
+  - [x] jetsam tasks
+  - [x] narrowed() --> withset()
+  - [x] reset abort on new `netop.compute()`
+  - [x] raise if rescheduled/endured ops
+  - [x] define sideffects on target "sideffected" needs
+
+  - plot:
+
+    - [x] plot red partial outs/failures
+    - [x] plot graphs with Graphviz sphinx-extension
+    - [x] HTML-table op-nodes to allow decorations
+    - [x] plottable Operations
+
+    - [ ] Op-node TABLE-decorations
+    - [ ] Merged operation clusters
+    - [ ] update legend (or generate it dynamically)
+
+  - doc:
+
+    - [x] explain rescheduled & endured in tutorial.
+    - [x] `aliases` in tutorial & terms
+
+  - [ ] Operations behave like a regular decorator when fn given in front
+  - [ ] Allow for Optional `solution sideffect`
+  - [ ] modifiers inherit a single class (to allow combinations)
+  - [ ] break cycles with dijkstra
+  - [ ] weights
+  - [ ] Merge tutorial (operations + composition)
+  - [ ] alias compose() <-- NetOp
+  - [ ] Merge Op+FuncOp+OpBuilder; rename NetOp -> graphkit | pipeline
+
+  - Dropped:
+
+    - [-] `solution.executed` pre-populated with all operations
+    - [-] parallel batches restart from last position in steps
+    - [-] covert custom op classes & modifiers directly into mergeable networkx graphs;
+      DROPPED bc foreign function would not work with merged deps.
+
+  + See :gg:`1`.
 
 
 GitHub Releases
@@ -14,6 +71,77 @@ https://github.com/pygraphkit/graphtik/releases
 
 Changelog
 %%%%%%%%%
+
+
+v6.3.0 (XX Apr 2020, @ankostis): arg-->kw-modifier, ops act like functions
+==========================================================================
++ BREAK: stacking of solution results changed to the more natural "chronological" one
+  (outputs written later in the solution override previous ones).
+
+  Previously it was the opposite during `execution` while reading intermediate
+  solution values (1st result or user-inputs won), and it was "reversed" to regular
+  chronological right before the solution was finalized.
+
++ FEAT(op, netop): add ``__name__`` attribute to operations, to disguise as functions.
+
++ MODIFIERS:
+
+  + BREAK: rename `arg --> mapping``, which conveys the correct meaning.
+
+  + FEAT: Introduced :term:`solution sideffect`\s, to allow for certain dependencies
+    to be produced & consumed by function to apply "sideffects, without creating
+    "cycles":
+
+    + feat(op): introduce ``_fn_needs``, ``op_needs`` & ``op_provides`` on
+      :class:`.FunctionalOperation`, used when matching Inps/Outs and when pruning
+      graph.
+    + FEAT(op): print detailed deps when DEBUG enabled.
+
++ PLOT:
+
+  + ENH: recursively merge Graphviz-styles attributes, with expanding jinja2-template
+    and extending lists while preserving theme-provenance, for debugging.
+
+  + BREAK: rename class & attributes related to ``Style --> Theme``,
+    to distinguish them from styles (stacks of dictionaries).
+
+  + UPD: dot no plot Steps by default;  use this :ref:`plot-customizations` to re-enable them::
+
+        plottable.plot(plotter=Plotter(include_steps=True))
+
+  + FEAT: now `operations` are also :term:`plottable`.
+
+  + FIX: Cancel/Evict styles were misclassified.
+
+  + feat(plot): change label in sol_sideffects; add exceptions as tooltips on
+    failed operations, etc.
+
+  + enh: improve plot theme, e.g. prunes are all grey, sideffects all blue,
+    "evictions" are colored closer to steps, etc.  Add many neglected styles.
+
++ Sphinx extension:
+
+  + enh: Save DOTs if DEBUG;  save it before...
+  + fix: save debug-DOT  before rendering images, to still get those files
+    as debug aid in case of errors.
+  + fix: workaround missing *lineno* on doctest failures, an incomplete solution
+    introduced upstream by sphinx-doc/sphinx#4584.
+
++ DROP(NET): ``_DataNode`` and use str +  modifier-classes as data-nodes;
+
++ Configurations:
+
+  + BREAK: rename context-manager configuration function `debug --> debug_enabled`.
+  + FEAT: respect :envvar:`GRAPHTIK_DEBUG` for enabling `is_debug()` configuration.
+
++ DOC:
+
+  + feat: new sections about composing pipelines with :term:`reschedule` / :term:`endured`
+    operations & :term:`alias`\es.
+  + enh: Clarified relation and duties of the new term :term:`dependency`.
+  + enh: Linked many terms from quick-start section.
+  + enh(site): support for `Sphinx's standard colored-text
+    <https://stackoverflow.com/a/61389938/548792>`_ roles.
 
 
 v6.2.0 (19 Apr 2020, @ankostis): plotting fixes & more styles, net find util methods
@@ -42,7 +170,7 @@ v6.2.0 (19 Apr 2020, @ankostis): plotting fixes & more styles, net find util met
 + FEAT(net): add :meth:`.Network.find_ops()` & :meth:`.Network.find_op_by_name()`
   utility methods.
 
-+ enh(build, site, doc): graft Build Ver/Date as gotten from Git in PyPilanding-page.
++ enh(build, site, doc): graft Build Ver/Date as gotten from Git in PyPi landing-page.
 
 
 v6.1.0 (14 Apr 2020, @ankostis): config plugs & fix styles
@@ -51,7 +179,7 @@ Should have been a MAJOR BUMP due to breaking renames, but...no clients yet
 (and just out of to 5.x --> 6.x major bump).
 
 + REFACT/BREAK(plot): rename ``installed_plotter --> active_plotter``.
-+ REFACT/BREAK(congfig): denote context-manager functions by adding a ``"_plugged"`` suffix.
++ REFACT/BREAK(config): denote context-manager functions by adding a ``"_plugged"`` suffix.
 + FEAT(plot): offer ``with_XXX()`` cloning methods on Plotter/Style instances.
 + FIX(plot): Style cstor were had his methods broken due to eager copying them
   from its parent class.
