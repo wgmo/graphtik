@@ -183,14 +183,14 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         # NO old-stuff Operation(fn=_jetsamed_fn, name="test", needs="['a']", provides=[]),
         (
             lambda: fnt.partial(
-                operation(_scream, name="test")().compute, named_inputs=None
+                operation(_scream, name="test").compute, named_inputs=None
             ),
             "outputs provides aliases results_fn results_op operation args".split(),
         ),
         (
             lambda: fnt.partial(
                 network.ExecutionPlan(*([None] * 6))._handle_task,
-                op=operation(_scream, name="Ah!")(),
+                op=operation(_scream, name="Ah!"),
                 solution=Solution(MagicMock(), {}),
                 future=_OpTask(_ScreamingOperation(), {}, "solid"),
             ),
@@ -204,7 +204,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         ),
         (
             lambda: fnt.partial(
-                NetworkOperation([operation(str)()], "name").compute,
+                NetworkOperation([operation(str)], "name").compute,
                 named_inputs=None,
                 outputs="bad",
             ),

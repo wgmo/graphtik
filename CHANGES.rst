@@ -203,7 +203,7 @@ v6.0.0 (13 Apr 2020, @ankostis): New Plotting Device...
 
       >>> from graphtik import operation, varargs
       >>> from graphtik.plot import get_active_plotter
-      >>> op = operation(print, name='print-something', needs=varargs("any"), provides="str")()
+      >>> op = operation(print, name='print-something', needs=varargs("any"), provides="str")
       >>> dot = op.plot(plotter=get_active_plotter().with_styles(kw_legend=None))
 
   + ENH: Convey graph, node & edge ("non-private") attributes from the *networkx* graph
@@ -704,7 +704,7 @@ The first non pre-release for 2.x train.
 + break(jetsam): drop "graphtik_` prefix from annotated attribute
 
 + ENH(op): now ``operation()`` supported the "builder pattern" with
-  :meth:`.operation.withset()`.
+  ``.operation.withset()`` method.
 
 + REFACT: renamed internal package `functional --> nodes` and moved classes around,
   to break cycles easier, (``base`` works as supposed to), not to import early  everything,

@@ -157,7 +157,7 @@ class NetworkOperation(Operation, Plottable):
         steps = (
             "".join(f"\n  +--{s}" for s in ops)
             if is_debug()
-            else ", ".join(s.name for s in ops)
+            else ", ".join(str(s.name) for s in ops)
         )
         return f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{len(ops)} ops: {steps})"
 

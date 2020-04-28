@@ -1,100 +1,79 @@
 Operations
 ==========
 
-At a high level, an operation is a node in a computation graph.
-Graphtik uses an :class:`.Operation` class to abstractly represent these computations.
-The class specifies the *requirements* for a function to participate
-in a computation graph; those are its input-data **needs**, and the output-data
-it **provides**.
+At a high level, an :term:`operation` is a function in a computation :term:`pipeline`,
+abstractly represented by the :class:`.Operation` class.
+This class specifies the :term:`dependencies <dependency>` of the *operation*
+in the *pipeline*.
 
-The :class:`.FunctionalOperation` provides a lightweight wrapper
-around an arbitrary function to define those specifications.
+The :class:`.FunctionalOperation` provides a concrete lightweight wrapper
+around any arbitrary function to define those *dependencies*.
+Instead of constructing it directly, prefer to instantiate it by calling
+the :func:`.operation()` factory.
 
-.. autoclass:: graphtik.op.FunctionalOperation
-   :members: __init__, __call__, compute
-   :noindex:
-
-The ``operation`` builder factory
----------------------------------
-
-There is a better way to instantiate an ``FunctionalOperation`` than simply constructing it:
-use the ``operation`` builder class:
-
-.. autoclass:: graphtik.operation
-   :members:  withset, __call__
-   :special-members:
-   :noindex:
 
 Operations are just functions
 ------------------------------
 
-At the heart of each ``operation`` is just a function, any arbitrary function.
-Indeed, you can instantiate an ``operation`` with a function and then call it
+At the heart of each `operation` is just a function, any arbitrary function.
+Indeed, you can wrap an existing function into an `operation`, and then call it
 just like the original function, e.g.:
 
    >>> from operator import add
    >>> from graphtik import operation
 
-   >>> add_op = operation(name='add_op', needs=['a', 'b'], provides=['a_plus_b'])(add)
+   >>> add_op = operation(add,
+   ...                    needs=['a', 'b'],
+   ...                    provides=['a_plus_b'])
+   >>> add_op
+   FunctionalOperation(name='add', needs=['a', 'b'], provides=['a_plus_b'], fn='add')
 
    >>> add_op(3, 4) == add(3, 4)
    True
+
+   But ``__call__()`` is just to facilitate quick experimentation - it does not
+   perform any checks or matching of *needs*/*provides* to function arguments
+   & results (which happen when :term:`pipeline`\s :term:`compute`).
+
+   The way Graphtik works is by invoking their :meth:`.Operation.compute()` method,
+   which, among others, allow to specify what results you desire to receive back
+   (read more on :ref:`graph-computations`).
 
 
 Specifying graph structure: ``provides`` and ``needs``
 ------------------------------------------------------
 
-Of course, each ``operation`` is more than just a function.
-It is a node in a computation graph, depending on other nodes in the graph for input data and
-supplying output data that may be used by other nodes in the graph (or as a graph output).
-This graph structure is specified via the ``provides`` and ``needs`` arguments
-to the ``operation`` constructor.  Specifically:
+Each :term:`operation` is a node in a computation :term:`graph`,
+depending and supplying data from and to other nodes (via the :term:`solution`),
+in order to :term:`compute`.
 
-* ``provides``: this argument names the outputs (i.e. the returned values) of a given ``operation``.
-  If multiple outputs are specified by ``provides``, then the return value of the function
-  comprising the ``operation`` must return an iterable.
+This graph structure is specified (mostly) via the ``provides`` and ``needs`` arguments
+to the :func:`.operation` factory, specifically:
 
-* ``needs``: this argument names data that is needed as input by a given ``operation``.
-  Each piece of data named in needs may either be provided by another ``operation``
-  in the same graph (i.e. specified in the ``provides`` argument of that ``operation``),
-  or it may be specified as a named input to a graph computation
-  (more on graph computations :ref:`here <graph-computations>`).
+``needs``
+   this argument names the list of (positionally ordered) :term:`inputs` data the `operation`
+   requires to receive from *solution*.
+   The list corresponds, roughly, to the arguments of the underlying function
+   (plus any :term:`sideffects`).
 
-When many operations are composed into a computation graph (see :ref:`graph-composition` for more on that),
-Graphtik matches up the values in their ``needs`` and ``provides`` to form the edges of that graph.
+   It can be a single string, in which case a 1-element iterable is assumed.
 
-Let's look again at the operations from the script in :ref:`quick-start`,
-for example:
+   :seealso: :term:`needs`, :term:`modifier`, :attr:`.FunctionalOperation.needs`,
+      :attr:`.FunctionalOperation.op_needs`, :attr:`.FunctionalOperation._fn_needs`
 
-   >>> from operator import mul, sub
-   >>> from functools import partial
-   >>> from graphtik import compose, operation
+``provides``
+   this argument names the list of (positionally ordered) :term:`outputs` data
+   the operation provides into the *solution*.
+   The list corresponds, roughly, to the returned values of the `fn`
+   (plus any :term:`sideffects` & :term:`alias`\es).
 
-   >>> # Computes |a|^p.
-   >>> def abspow(a, p):
-   ...   c = abs(a) ** p
-   ...   return c
+   It can be a single string, in which case a 1-element iterable is assumed.
 
-   >>> # Compose the mul, sub, and abspow operations into a computation graph.
-   >>> graphop = compose("graphop",
-   ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-   ...    operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
-   ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
-   ...    (partial(abspow, p=3))
-   ... )
+   If they are more than one, the underlying function must return an iterable
+   with same number of elements (unless it :term:`returns dictionary`).
 
-.. Tip::
-   Notice the use of :func:`functools.partial()` to set parameter ``p`` to a constant value.
-
-The ``needs`` and ``provides`` arguments to the operations in this script define
-a computation graph that looks like this (where the oval are *operations*,
-squares/houses are *data*):
-
-.. graphtik::
-
-.. Tip::
-  See :ref:`plotting` on how to make diagrams like this.
-
+   :seealso: :term:`provides`, :term:`modifier`, :attr:`.FunctionalOperation.provides`,
+      :attr:`.FunctionalOperation.op_provides`, :attr:`.FunctionalOperation._fn_provides`
 
 .. _aliases:
 
@@ -110,14 +89,89 @@ on the `provides` side:
    ...                name="`provides` with `aliases`",
    ...                needs="anything",
    ...                provides="real thing",
-   ...                aliases=("real thing", "phony"))()
+   ...                aliases=("real thing", "phony"))
 
 .. graphtik::
 
-Instantiating operations
-------------------------
 
-There are several ways to instantiate an ``operation``, each of which might be more suitable for different scenarios.
+Considerations for when building pipelines
+------------------------------------------
+When many operations are composed into a computation graph, Graphtik matches up
+the values in their *needs* and *provides* to form the edges of that graph
+(see :ref:`graph-composition` for more on that), like the operations from the script
+in :ref:`quick-start`:
+
+   >>> from operator import mul, sub
+   >>> from functools import partial
+   >>> from graphtik import compose, operation
+
+   >>> def abspow(a, p):
+   ...   """Compute |a|^p. """
+   ...   c = abs(a) ** p
+   ...   return c
+
+   >>> # Compose the mul, sub, and abspow operations into a computation graph.
+   >>> graphop = compose("graphop",
+   ...    operation(mul, needs=["a", "b"], provides=["ab"]),
+   ...    operation(sub, needs=["a", "ab"], provides=["a_minus_ab"]),
+   ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
+   ...    (partial(abspow, p=3))
+   ... )
+   >>> graphop
+   NetworkOperation('graphop',
+                    needs=['a', 'b', 'ab', 'a_minus_ab'],
+                    provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed'],
+                    x3 ops: mul, sub, abspow1)
+
+
+- Notice that if ``name`` is not given, it is deduced from the function name.
+- Notice the use of :func:`functools.partial()` to set parameter ``p`` to a constant value.
+- And this is done by calling once more the returned "decorator* from :func:`operation()`,
+  when called without a functions.
+
+The ``needs`` and ``provides`` arguments to the operations in this script define
+a computation graph that looks like this:
+
+.. graphtik::
+.. Tip::
+  See :ref:`plotting` on how to make diagrams like this.
+
+Builder pattern
+^^^^^^^^^^^^^^^
+There 2 ways to instantiate an :class:`.FunctionalOperation`\s, each one suitable
+for different scenarios, and so far we have only seen the 1st one:
+
+We've seen that calling manually :func:`.operation()` allows putting into a pipeline
+functions that are defined elsewhere (e.g. in another module, or are system functions).
+
+But that method is also useful if you want to create multiple operation instances
+with similar attributes, e.g. ``needs``:
+
+   >>> op_factory = operation(needs=['a'])
+
+Notice that we specified a `fn`, in order to get back a :class:`.FunctionalOperation`
+instance (and not a decorator).
+
+   >>> from functools import partial
+
+   >>> def mypow(a, p=2):
+   ...    return a ** p
+
+   >>> pow_op2 = op_factory.withset(fn=mypow, provides="^2")
+   >>> pow_op3 = op_factory.withset(fn=partial(mypow, p=3), name='pow_3', provides='^3')
+   >>> pow_op0 = op_factory.withset(fn=lambda a: 1, name='pow_0', provides='^0')
+
+   >>> graphop = compose('powers', pow_op2, pow_op3, pow_op0)
+   >>> graphop
+   NetworkOperation('powers', needs=['a'], provides=['^2', '^3', '^0'], x3 ops:
+      mypow, pow_3, pow_0)
+
+
+   >>> graphop(a=2)
+   {'a': 2, '^2': 4, '^3': 8, '^0': 1}
+
+.. graphtik::
+
 
 Decorator specification
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -138,59 +192,10 @@ Here's an example:
 .. graphtik::
 
 
-Functional specification
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-If the functions underlying your computation graph operations are defined elsewhere
-than the script in which your graph itself is defined (e.g. they are defined in another module,
-or they are system functions), you can use the functional specification of ``operation`` instances:
-
-   >>> from operator import add, mul
-   >>> from graphtik import operation, compose
-
-   >>> add_op = operation(name='add_op', needs=['a', 'b'], provides='sum')(add)
-   >>> mul_op = operation(name='mul_op', needs=['c', 'sum'], provides='product')(mul)
-
-   >>> graphop = compose('add_mul_graph', add_op, mul_op)
-
-.. graphtik::
-
-
-The functional specification is also useful if you want to create multiple ``operation``
-instances from the same function, perhaps with different parameter values, e.g.:
-
-   >>> from functools import partial
-
-   >>> def mypow(a, p=2):
-   ...    return a ** p
-
-   >>> pow_op1 = operation(name='pow_op1', needs=['a'], provides='a_squared')(mypow)
-   >>> pow_op2 = operation(name='pow_op2', needs=['a'], provides='a_cubed')(partial(mypow, p=3))
-
-   >>> graphop = compose('two_pows_graph', pow_op1, pow_op2)
-
-A slightly different approach can be used here to accomplish the same effect
-by creating an operation "builder pattern":
-
-   >>> def mypow(a, p=2):
-   ...    return a ** p
-
-   >>> pow_op_factory = operation(mypow, needs=['a'], provides='a_squared')
-
-   >>> pow_op1 = pow_op_factory(name='pow_op1')
-   >>> pow_op2 = pow_op_factory.withset(name='pow_op2', provides='a_cubed')(partial(mypow, p=3))
-   >>> pow_op3 = pow_op_factory(lambda a: 1, name='pow_op3')
-
-   >>> graphop = compose('two_pows_graph', pow_op1, pow_op2, pow_op3)
-   >>> graphop(a=2)
-   {'a': 2, 'a_squared': 4, 'a_cubed': 1}
-
-.. Note::
-   You cannot call again the factory to overwrite the *function*,
-   you have to use either the ``fn=`` keyword with ``withset()`` method or
-   call once more.
-
 
 Modifiers on `operation` `needs` and `provides`
 -----------------------------------------------
-see `mod:`.modifiers`.
+Annotations on a `dependency` such as `optionals` & `sideffects` modify their behavior,
+and eventually the :term:`pipeline`.
+
+Read `mod:`.modifiers` for more.

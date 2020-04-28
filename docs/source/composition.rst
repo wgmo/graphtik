@@ -267,7 +267,7 @@ Operations with partial outputs (*rescheduled*)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In case the actually produce `outputs` depend on some condition in the `inputs`,
 the `solution` has to :term:`reschedule` the plan amidst execution, and consider the
-actual `provides` delivered.
+actual `provides` delivered:
 
 
     >>> @operation(rescheduled=1,

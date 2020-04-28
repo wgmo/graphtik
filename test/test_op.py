@@ -45,12 +45,51 @@ def test_repr_smoke(opname, opneeds, opprovides):
 
 def test_repr_returns_dict():
     assert (
-        str(operation(lambda: None, name="", returns_dict=True)())
+        str(operation(lambda: None, name="", returns_dict=True))
         == "FunctionalOperation(name='', needs=[], provides=[], fn{}='<lambda>')"
     )
     assert (
-        str(operation(lambda: None, name="myname")())
+        str(operation(lambda: None, name="myname"))
         == "FunctionalOperation(name='myname', needs=[], provides=[], fn='<lambda>')"
+    )
+
+
+def test_builder_pattern():
+    opb = operation()
+    assert not isinstance(opb, FunctionalOperation)
+    assert str(opb).startswith("<function FunctionalOperation.withset at")
+
+    assert (
+        str(opb(sum))
+        == "FunctionalOperation(name='sum', needs=[], provides=[], fn='sum')"
+    )
+
+    assert (
+        str(opb(name="K"))
+        == "FunctionalOperation(name='K', needs=[], provides=[], fn=None)"
+    )
+
+    op = opb.withset(needs=["a", "b"])
+    assert isinstance(op, FunctionalOperation)
+    assert (
+        str(op)
+        == "FunctionalOperation(name=None, needs=['a', 'b'], provides=[], fn=None)"
+    )
+    with pytest.raises(
+        ValueError, match=f"Operation was not yet provided with a callable `fn`!"
+    ):
+        op.compute({})
+
+    op = op.withset(provides="SUM", fn=sum, name=None)
+    assert (
+        str(op)
+        == "FunctionalOperation(name='sum', needs=['a', 'b'], provides=['SUM'], fn='sum')"
+    )
+
+    op = op.withset(provides="s", needs="a", fn=str)
+    assert (
+        str(op)
+        == "FunctionalOperation(name='sum', needs=['a'], provides=['s'], fn='str')"
     )
 
 
@@ -126,10 +165,10 @@ def test_returns_dict(result, dictres):
     if dictres is ...:
         dictres = result
 
-    op = operation(lambda: result, provides=dictres.keys(), returns_dict=True)()
+    op = operation(lambda: result, provides=dictres.keys(), returns_dict=True)
     assert op.compute({}) == dictres
 
-    op = operation(lambda: result, provides="a", returns_dict=False)()
+    op = operation(lambda: result, provides="a", returns_dict=False)
     assert op.compute({})["a"] == result
 
 
@@ -140,13 +179,13 @@ def asked_outputs(request):
 
 @pytest.mark.parametrize("result", [(), None, {}, {"a"}, "b", "ab", "abc", ""])
 def test_results_sequence_1_provides_ok(result, asked_outputs):
-    op = operation(lambda: result, provides=["a"])()
+    op = operation(lambda: result, provides=["a"])
     sol = op.compute({}, outputs=asked_outputs)
     assert sol["a"] == result
 
 
 def test_results_sequence_lt_1_provides(asked_outputs):
-    op = operation(lambda: NO_RESULT, provides=["a"])()
+    op = operation(lambda: NO_RESULT, provides=["a"])
     with pytest.raises(ValueError, match=f"Got -1 fewer results, while expected x1"):
         op.compute({}, outputs=asked_outputs)
 
@@ -155,7 +194,7 @@ def test_results_sequence_lt_1_provides(asked_outputs):
     "result, nfewer", [((), -2), ({}, -2), (NO_RESULT, -2), ({"a"}, -1)]
 )
 def test_results_sequence_lt_many_provides(result, nfewer, asked_outputs):
-    op = operation(lambda: result, provides=["a", "b"])()
+    op = operation(lambda: result, provides=["a", "b"])
     with pytest.raises(
         ValueError, match=f"Got {nfewer} fewer results, while expected x2"
     ):
@@ -165,14 +204,14 @@ def test_results_sequence_lt_many_provides(result, nfewer, asked_outputs):
 
 @pytest.mark.parametrize("result", ["", "a", "ab", "foobar", 3.14, None])
 def test_results_validation_bad_iterable(result, asked_outputs):
-    op = operation(lambda: result, provides=["a", "b"])()
+    op = operation(lambda: result, provides=["a", "b"])
     with pytest.raises(ValueError, match=f"Expected x2 ITERABLE results, got"):
         op.compute({}, outputs=asked_outputs)
 
 
 @pytest.mark.parametrize("result", [None, 3.14, [], "foo", ["b", "c", "e"], {"a", "b"}])
 def test_dict_results_validation_BAD(result, asked_outputs):
-    op = operation(lambda: result, provides=["a", "b"], returns_dict=True)()
+    op = operation(lambda: result, provides=["a", "b"], returns_dict=True)
     with pytest.raises(ValueError, match="Expected results as mapping,"):
         op.compute({}, outputs=asked_outputs)
 
@@ -182,7 +221,7 @@ def test_dict_results_validation_BAD(result, asked_outputs):
     [({}, 2), ({"a": 1}, 1), ({"a": 1, "c": 3}, 1), ({"aa": 1, "bb": 2}, 2)],
 )
 def test_dict_results_validation_MISMATCH(result, nmiss, asked_outputs):
-    op = operation(lambda: result, provides=["a", "b"], returns_dict=True)()
+    op = operation(lambda: result, provides=["a", "b"], returns_dict=True)
     with pytest.raises(ValueError, match=f"mismatched -{nmiss} provides"):
         op.compute({}, outputs=asked_outputs)
 
@@ -203,7 +242,7 @@ def test_varargs():
             optional("c"),
         ],
         provides="sum",
-    )()
+    )
 
     exp = sum(range(8))
     assert op.compute(dict(a=1, arg1=2, arg2=3, args=[4, 5], b=6, c=7))["sum"] == exp
@@ -216,18 +255,16 @@ def test_varargs():
 
 
 def test_op_node_props_bad():
-    op_factory = operation(lambda: None, name="a", node_props="SHOULD BE DICT")
     with pytest.raises(ValueError, match="`node_props` must be"):
-        op_factory()
+        operation(lambda: None, name="a", node_props="SHOULD BE DICT")
 
 
 def test_op_node_props():
     op_factory = operation(lambda: None, name="a", node_props=())
-    assert op_factory.node_props == ()
-    assert op_factory().node_props == {}
+    assert op_factory.node_props == {}
 
     np = {"a": 1}
-    op = operation(lambda: None, name="a", node_props=np)()
+    op = operation(lambda: None, name="a", node_props=np)
     assert op.node_props == np
 
 
@@ -240,8 +277,8 @@ def _collect_op_props(netop):
 
 
 def test_netop_node_props():
-    op1 = operation(lambda: None, name="a", node_props={"a": 11, "b": 0, "bb": 2})()
-    op2 = operation(lambda: None, name="b", node_props={"a": 3, "c": 4})()
+    op1 = operation(lambda: None, name="a", node_props={"a": 11, "b": 0, "bb": 2})
+    op2 = operation(lambda: None, name="b", node_props={"a": 3, "c": 4})
     netop = compose("n", op1, op2, node_props={"bb": 22, "c": 44})
 
     exp = {"a": {"a": 11, "b": 0, "bb": 22, "c": 44}, "b": {"a": 3, "bb": 22, "c": 44}}
@@ -255,10 +292,10 @@ def test_netop_node_props():
 
 
 def test_netop_merge_node_props():
-    op1 = operation(lambda: None, name="a", node_props={"a": 1})()
+    op1 = operation(lambda: None, name="a", node_props={"a": 1})
     netop1 = compose("n1", op1)
-    op2 = operation(lambda: None, name="a", node_props={"a": 11, "b": 0, "bb": 2})()
-    op3 = operation(lambda: None, name="b", node_props={"a": 3, "c": 4})()
+    op2 = operation(lambda: None, name="a", node_props={"a": 11, "b": 0, "bb": 2})
+    op3 = operation(lambda: None, name="b", node_props={"a": 3, "c": 4})
     netop2 = compose("n2", op2, op3)
 
     netop = compose("n", netop1, netop2, node_props={"bb": 22, "c": 44}, merge=False)
@@ -318,7 +355,7 @@ def test_provides_aliases_BAD(op_kw, ex):
 
 
 def test_provides_aliases():
-    op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})()
+    op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})
     assert op.op_provides == {"a", "aa"}
     assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}
 
@@ -327,7 +364,7 @@ def test_provides_aliases():
 def test_reschedule_more_outs(rescheduled, caplog):
     op = operation(
         lambda: [1, 2, 3], name="t", provides=["a", "b"], rescheduled=rescheduled
-    )()
+    )
     op.compute({})
     assert "+1 more results, while expected x2" in caplog.text
 
@@ -335,7 +372,7 @@ def test_reschedule_more_outs(rescheduled, caplog):
 def test_reschedule_unknown_dict_outs(caplog):
     op = operation(
         lambda: {"b": "B"}, name="t", provides=["a"], rescheduled=1, returns_dict=1
-    )()
+    )
     caplog.set_level(logging.INFO)
     op.compute({})
     assert "contained +1 unknown provides['b']" in caplog.text
@@ -347,88 +384,72 @@ def test_reschedule_unknown_dict_outs(caplog):
         provides=["a"],
         rescheduled=1,
         returns_dict=1,
-    )()
+    )
     op.compute({})
     assert "contained +1 unknown provides['BAD']" in caplog.text
 
 
 def test_rescheduled_op_repr():
     op = operation(str, name="t", provides=["a"], rescheduled=True)
-    assert str(op) == "operation?(name='t', needs=[], provides=['a'], fn='str')"
     assert (
-        str(op())
-        == "FunctionalOperation?(name='t', needs=[], provides=['a'], fn='str')"
+        str(op) == "FunctionalOperation?(name='t', needs=[], provides=['a'], fn='str')"
     )
 
 
 def test_endured_op_repr():
     op = operation(str, name="t", provides=["a"], endured=True)
-    assert str(op) == "operation!(name='t', needs=[], provides=['a'], fn='str')"
     assert (
-        str(op())
-        == "FunctionalOperation!(name='t', needs=[], provides=['a'], fn='str')"
+        str(op) == "FunctionalOperation!(name='t', needs=[], provides=['a'], fn='str')"
     )
 
 
 def test_endured_rescheduled_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1)
-    assert str(op) == "operation!?(name='t', needs=[], provides=[], fn='str')"
-    assert (
-        str(op()) == "FunctionalOperation!?(name='t', needs=[], provides=[], fn='str')"
-    )
+    assert str(op) == "FunctionalOperation!?(name='t', needs=[], provides=[], fn='str')"
 
 
 def test_parallel_op_repr():
     op = operation(str, name="t", provides=["a"], parallel=True)
-    assert str(op) == "operation|(name='t', needs=[], provides=['a'], fn='str')"
     assert (
-        str(op())
-        == "FunctionalOperation|(name='t', needs=[], provides=['a'], fn='str')"
+        str(op) == "FunctionalOperation|(name='t', needs=[], provides=['a'], fn='str')"
     )
 
 
 def test_marshalled_op_repr():
     op = operation(str, name="t", provides=["a"], marshalled=True)
-    assert str(op) == "operation$(name='t', needs=[], provides=['a'], fn='str')"
-    assert (
-        str(op())
-        == "FunctionalOperation$(name='t', needs=[], provides=['a'], fn='str')"
+    assert str(op) == (
+        "FunctionalOperation$(name='t', needs=[], provides=['a'], fn='str')"
     )
 
 
 def test_marshalled_parallel_op_repr():
     op = operation(str, name="t", parallel=1, marshalled=1)
-    assert str(op) == "operation|$(name='t', needs=[], provides=[], fn='str')"
-    assert (
-        str(op()) == "FunctionalOperation|$(name='t', needs=[], provides=[], fn='str')"
-    )
+    assert str(op) == "FunctionalOperation|$(name='t', needs=[], provides=[], fn='str')"
 
 
 def test_ALL_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1, parallel=1, marshalled=1)
-    assert str(op) == "operation!?|$(name='t', needs=[], provides=[], fn='str')"
     assert (
-        str(op())
-        == "FunctionalOperation!?|$(name='t', needs=[], provides=[], fn='str')"
+        str(op) == "FunctionalOperation!?|$(name='t', needs=[], provides=[], fn='str')"
     )
 
 
 def test_reschedule_outputs():
     op = operation(
         lambda: ["A", "B"], name="t", provides=["a", "b", "c"], rescheduled=True
-    )()
+    )
     assert op.compute({}) == {"a": "A", "b": "B"}
 
     # NOTE that for a single return item, it must be a collection.
-    op = operation(lambda: ["AA"], name="t", provides=["a", "b"], rescheduled=True)()
+    op = operation(lambda: ["AA"], name="t", provides=["a", "b"], rescheduled=True)
     assert op.compute({}) == {"a": "AA"}
 
-    op = operation(lambda: NO_RESULT, name="t", provides=["a", "b"], rescheduled=True)()
+    op = operation(lambda: NO_RESULT, name="t", provides=["a", "b"], rescheduled=True)
     assert op.compute({}) == {}
 
     op = operation(
         lambda: {"b": "B"}, name="t", provides=["a", "b"], rescheduled=1, returns_dict=1
-    )()
+    )
     assert op.compute({}) == {"b": "B"}
 
     op = operation(
@@ -438,13 +459,13 @@ def test_reschedule_outputs():
         aliases={"a": "aa", "b": "bb"},
         rescheduled=1,
         returns_dict=1,
-    )()
+    )
     assert op.compute({}) == {"b": "B", "bb": "B"}
 
 
 @pytest.mark.parametrize("attr, value", [("outputs", [1]), ("predicate", lambda: None)])
 def test_netop_narrow_attributes(attr, value):
-    netop = compose("1", operation(str, name="op1")())
+    netop = compose("1", operation(str, name="op1"))
     assert getattr(netop.withset(**{attr: value}), attr) == value
 
 
@@ -467,7 +488,7 @@ _attr_values = [
 @pytest.mark.parametrize("attr, value", _attr_values)
 def test_op_withset_conveys_attr(attr, value):
     kw = {attr: value}
-    op1 = operation(str)()
+    op1 = operation(str)
     assert getattr(op1, attr) is None
 
     op2 = op1.withset(**kw)
@@ -485,11 +506,9 @@ def test_netop_conveys_attr_to_ops(attr, value):
         assert all(v == value for v in vals)
 
     kw = {attr: value}
-    _opsattrs(compose("1", operation(str)(), **kw).net.graph, attr, value)
+    _opsattrs(compose("1", operation(str), **kw).net.graph, attr, value)
     _opsattrs(
-        compose(
-            "2", operation(str, name=1)(), operation(str, name=2)(), **kw
-        ).net.graph,
+        compose("2", operation(str, name=1), operation(str, name=2), **kw).net.graph,
         attr,
         value,
     )
@@ -500,8 +519,8 @@ def test_netop_conveys_attr_to_ops(attr, value):
     [
         lambda: Operation,
         lambda: FunctionalOperation,
-        lambda: operation(str)(),
-        lambda: operation(lambda: None)(),
+        lambda: operation(str),
+        lambda: operation(lambda: None),
     ],
 )
 def test_dill_ops(op_fact):

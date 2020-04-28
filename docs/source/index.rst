@@ -78,8 +78,8 @@ Compose the ``abspow`` function along with ``mul`` & ``sub``  built-ins
 into a computation :term:`graph`:
 
    >>> graphop = compose("graphop",
-   ...    operation(needs=["a", "b"], provides=["ab"])(mul),
-   ...    operation(sub, needs=["a", "ab"], provides=["a_minus_ab"])(),
+   ...    operation(mul, needs=["a", "b"], provides=["ab"]),
+   ...    operation(sub, needs=["a", "ab"], provides=["a_minus_ab"]),
    ...    abs_qubed,
    ... )
    >>> graphop

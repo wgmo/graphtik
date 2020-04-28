@@ -167,7 +167,9 @@ def test_smoke_test():
     # Sum operation, early-bind compute function
     sum_op_factory = operation(add)
 
-    sum_op3 = sum_op_factory(name="sum_op3", needs=["a", "b"], provides="sum_ab2")
+    sum_op3 = sum_op_factory.withset(
+        name="sum_op3", needs=["a", "b"], provides="sum_ab2"
+    )
 
     # sum_op3 is callable
     assert sum_op3(5, 6) == 11
@@ -394,14 +396,14 @@ def test_network_merge_in_doctests():
 
 
 def test_aliases(exemethod):
-    aliased = operation(lambda: "A", name="op1", provides="a", aliases={"a": "b"})()
+    aliased = operation(lambda: "A", name="op1", provides="a", aliases={"a": "b"})
     assert aliased.provides == ("a",)
     assert aliased.op_provides == ("a", "b")
 
     op = compose(
         "test_net",
         aliased,
-        operation(lambda x: x * 2, name="op2", needs="b", provides="c")(),
+        operation(lambda x: x * 2, name="op2", needs="b", provides="c"),
         parallel=exemethod,
     )
     assert op() == {"a": "A", "b": "A", "c": "AA"}
@@ -980,7 +982,7 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
 
 def test_sideffect_NO_RESULT(caplog):
     sfx = sideffect("b")
-    op = operation(lambda: NO_RESULT, provides=sfx)()
+    op = operation(lambda: NO_RESULT, provides=sfx)
     netop = compose("t", op)
     sol = netop.compute({}, outputs=sfx)
     assert sol == {}
@@ -989,14 +991,14 @@ def test_sideffect_NO_RESULT(caplog):
     ## If NO_RESULT were not translated,
     #  a warning of unknown out might have emerged.
     caplog.clear()
-    netop = compose("t", operation(lambda: 1, provides=sfx)())
+    netop = compose("t", operation(lambda: 1, provides=sfx))
     netop.compute({}, outputs=sfx)
     for record in caplog.records:
         if record.levelname == "WARNING":
             assert "Ignoring result(1) because no `provides`" in record.message
 
     caplog.clear()
-    netop = compose("t", operation(lambda: NO_RESULT, provides=sfx)())
+    netop = compose("t", operation(lambda: NO_RESULT, provides=sfx))
     netop.compute({}, outputs=sfx)
     for record in caplog.records:
         assert record.levelname != "WARNING"
@@ -1211,8 +1213,8 @@ def test_execution_endurance(exemethod, endurance, endured):
         opb = operation(
             scream, needs=["a", "b"], provides=["a+b", "c"], endured=endured
         )
-        scream1 = opb(name="scream1")
-        scream2 = opb(name="scream2")
+        scream1 = opb.withset(name="scream1")
+        scream2 = opb.withset(name="scream2")
         add1 = operation(name="add1", needs=["a", "b"], provides=["a+b"])(add)
         add2 = operation(name="add2", needs=["a+b", "b"], provides=["a+2b"])(add)
         canceled = operation(name="canceled", needs=["c"], provides="cc")(identity)
@@ -1249,18 +1251,18 @@ def test_execution_endurance(exemethod, endurance, endured):
     "resched, rescheduled", [(None, True), (True, None), (None, True), (1, 1)]
 )
 def test_rescheduling(exemethod, resched, rescheduled):
-    canc = operation(lambda: None, name="canc", needs=["b"], provides="cc")()
+    canc = operation(lambda: None, name="canc", needs=["b"], provides="cc")
     op = compose(
         "netop",
-        operation(lambda: [1], name="op1", provides=["a", "b"], rescheduled=1)(),
+        operation(lambda: [1], name="op1", provides=["a", "b"], rescheduled=1),
         canc,
-        operation(lambda: NO_RESULT, name="op2", provides=["c"], rescheduled=1)(),
+        operation(lambda: NO_RESULT, name="op2", provides=["c"], rescheduled=1),
         operation(
             lambda *args: sum(args),
             name="op3",
             needs=["a", optional("b"), optional("c")],
             provides=["d"],
-        )(),
+        ),
         parallel=exemethod,
     )
     sol = op()
@@ -1278,8 +1280,8 @@ def test_rescheduling(exemethod, resched, rescheduled):
 
 
 def test_rescheduling_NO_RESULT(exemethod):
-    partial = operation(lambda: NO_RESULT, name="op1", provides=["a"], rescheduled=1)()
-    canc = operation(lambda: None, name="canc", needs="a", provides="b")()
+    partial = operation(lambda: NO_RESULT, name="op1", provides=["a"], rescheduled=1)
+    canc = operation(lambda: None, name="canc", needs="a", provides="b")
     op = compose("netop", partial, canc, parallel=exemethod)
     sol = op()
     assert canc in sol.canceled

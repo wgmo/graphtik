@@ -49,8 +49,7 @@ Architecture
         corresponding `network`\s.
 
         .. Tip::
-            - Use :class:`.operation` builder class to construct
-              :class:`.FunctionalOperation` instances.
+            - Use :func:`.operation` factory to construct :class:`.FunctionalOperation` instances.
             - Use :func:`~.graphtik.compose()` factory to prepare the `net` internally,
               and build :class:`.NetworkOperation` instances.
 

@@ -8,6 +8,7 @@ import logging
 import textwrap
 from collections import abc as cabc
 from collections import namedtuple
+from functools import wraps
 from typing import Any, Callable, Collection, List, Mapping, Set, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
@@ -30,8 +31,8 @@ from .modifiers import mapped, optional, sideffect, sol_sideffect, vararg, varar
 log = logging.getLogger(__name__)
 
 
-def _dict_without(kw, *todel):
-    return {k: v for k, v in kw.items() if k not in todel}
+def _dict_without(kw, *to_skip):
+    return {k: v for k, v in kw.items() if k not in to_skip}
 
 
 def as_renames(i, argname):
@@ -152,7 +153,8 @@ def _spread_sideffects(
             else (dep,)
         )
 
-    #: To drop dupe `sideffected` from `op_deps`.
+    #: The only dupes that are dropped from `fn_deps` are any `sideffected`,
+    #: to facilitate copy-pasting singularized ones from the console.
     seen_sideffecteds: Set[str] = set()
 
     def strip_sideffecteds(dep):
@@ -180,15 +182,14 @@ class FunctionalOperation(Operation, Plottable):
     An :term:`operation` performing a callable (ie a function, a method, a lambda).
 
     .. Tip::
-        Use :class:`operation()` builder class to build instances of this class instead.
+        - Use :func:`.operation()` factory to build instances of this class instead.
+        - Call :meth:`withset()` on existing instances to re-configure new clones.
     """
 
     def __init__(
         self,
-        # def __new__(
-        # cls,
-        fn: Callable,
-        name,
+        fn: Callable = None,
+        name=None,
         needs: Items = None,
         provides: Items = None,
         aliases: Mapping = None,
@@ -204,13 +205,13 @@ class FunctionalOperation(Operation, Plottable):
         """
         Build a new operation out of some function and its requirements.
 
-        See :class:`.operation` for the full documentation of parameters,
+        See :func:`.operation` for the full documentation of parameters,
         study the code for attributes (or read them from  rendered sphinx site).
         """
         super().__init__()
         node_props = node_props = node_props if node_props else {}
 
-        if not fn or not callable(fn):
+        if fn and not callable(fn):
             raise ValueError(f"Operation was not provided with a callable: {fn}")
         if parents and not isinstance(parents, tuple):
             raise ValueError(
@@ -221,9 +222,10 @@ class FunctionalOperation(Operation, Plottable):
                 f"Operation `node_props` must be a dict, was {type(node_props).__name__!r}: {node_props}"
             )
 
-        if name is None:
+        if name is None and fn:
             name = func_name(fn, None, mod=0, fqdn=0, human=0)
-        name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
+        if name is not None:
+            name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
         ## Overwrite reparsed op-data.
         name, needs, provides = reparse_operation_data(name, needs, provides)
 
@@ -269,27 +271,27 @@ class FunctionalOperation(Operation, Plottable):
         #: The :term:`needs` almost as given by the user
         #: (which may contain MULTI-sol_sideffects and dupes),
         #: roughly morphed into `_fn_provides` + sideffects
-        #: (dupes preserved, with sideffects & SINGULARIZED sol_sideffects).
+        #: (dupes preserved, with sideffects & SINGULARIZED :term:`solution sideffect`\s).
         #: It is stored for builder functionality to work.
         self.needs = needs
         #: Value names ready to lay the graph for :term:`pruning`
-        #: (NO dupes, WITH aliases & sideffects, and SINGULAR sol_sideffects).
+        #: (NO dupes, WITH aliases & sideffects, and SINGULAR :term:`solution sideffect`\s).
         self.op_needs = op_needs
         #: Value names the underlying function requires
-        #: (dupes preserved, without sideffects, with stripped `sideffected` dependencies).
+        #: (dupes preserved, without sideffects, with stripped :term:`sideffected` dependencies).
         self._fn_needs = _fn_needs
 
-        #: The :term:`provides` almost as given by the user,
+        #: The :term:`provides` almost as given by the user
         #: (which may contain MULTI-sol_sideffects and dupes),
         #: roughly morphed into `_fn_provides` + sideffects
-        #: (dupes preserved, without aliases, with sideffects & SINGULARIZED sol_sideffects).
+        #: (dupes preserved, without aliases, with sideffects & SINGULARIZED :term:`solution sideffect`\s).
         #: It is stored for builder functionality to work.
         self.provides = provides
         #: Value names ready to lay the graph for :term:`pruning`
         #: (NO dupes, WITH aliases & sideffects, and SINGULAR sol_sideffects).
         self.op_provides = op_provides
         #: Value names the underlying function produces
-        #: (dupes preserved, without aliases & sideffects, with stripped `sideffected` dependencies).
+        #: (dupes preserved, without aliases & sideffects, with stripped :term:`sideffected` dependencies).
         self._fn_provides = _fn_provides
         #: an optional mapping of `fn_provides` to additional ones, together
         #: comprising this operations :term:`op_provides`.
@@ -386,11 +388,8 @@ class FunctionalOperation(Operation, Plottable):
             )
         }
 
-    def withset(self, **kw) -> "FunctionalOperation":
-        """
-        Make a clone with the some values replaced.
-
-        """
+    def withset(self, fn: Callable = None, **kw,) -> "FunctionalOperation":
+        """Make a *clone* with the some values replaced. """
         ## Exclude calculated dep-fields.
         #
         me = {
@@ -398,6 +397,8 @@ class FunctionalOperation(Operation, Plottable):
             for k, v in vars(self).items()
             if not k.startswith("_") and not k.startswith("op_")
         }
+        if fn:
+            me["fn"] = fn
         me.update(kw)
         return FunctionalOperation(**me)
 
@@ -547,6 +548,12 @@ class FunctionalOperation(Operation, Plottable):
 
     def compute(self, named_inputs, outputs=None) -> dict:
         try:
+            if self.fn is None:
+                raise ValueError(
+                    f"Operation was not yet provided with a callable `fn`!"
+                )
+            assert self.name is not None, self
+
             positional, vararg_vals = [], []
             kwargs = {}
             errors, missing, varargs_bad = [], [], []
@@ -630,6 +637,11 @@ class FunctionalOperation(Operation, Plottable):
             raise
 
     def __call__(self, *args, **kwargs):
+        """
+        Although may return results like :meth:`compute()`, does no checks, and
+
+        it it passes args/kw as user desires.
+        """
         return self.fn(*args, **kwargs)
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
@@ -652,30 +664,74 @@ class FunctionalOperation(Operation, Plottable):
         return plot_args
 
 
-class operation:
-    """
-    A builder for graph-operations wrapping functions.
+def operation(
+    fn: Callable = None,
+    name=None,
+    needs: Items = None,
+    provides: Items = None,
+    aliases: Mapping = None,
+    *,
+    rescheduled=None,
+    endured=None,
+    parallel=None,
+    marshalled=None,
+    returns_dict=None,
+    node_props: Mapping = None,
+):
+    r"""
+    An :term:`operation` factory that can function as a decorator.
 
     :param fn:
-        The callable underlying this operation.  This does not need to be
-        specified when the operation object is instantiated and can instead
-        be set via ``__call__`` later.
+        The callable underlying this operation.
+        If given, it builds the operation right away (along with any other arguments).
+
+        If not given, it returns a "fancy decorator" that still supports all arguments
+        here AND the ``withset()`` method.
+
+        .. hint::
+            This is a twisted way for `"fancy decorators"
+            <https://realpython.com/primer-on-python-decorators/#both-please-but-never-mind-the-bread>`_.
+
+        After all that, you can always call :meth:`FunctionalOperation.withset()`
+        on existing operation, to obtain a re-configured clone.
     :param str name:
         The name of the operation in the computation graph.
+        If not given, deduce from any `fn` given.
+
     :param needs:
-        The list of (positionally ordered) names of the data needed by the `operation`
+        the list of (positionally ordered) names of the data needed by the `operation`
         to receive as :term:`inputs`, roughly corresponding to the arguments of
-        the underlying `fn`.
+        the underlying `fn` (plus any :term:`sideffects`).
 
-        See also :term:`needs` & :term:`modifier`.
+        It can be a single string, in which case a 1-element iterable is assumed.
+
+        .. seealso::
+            - :term:`needs`
+            - :term:`modifier`
+            - :attr:`.FunctionalOperation.needs`
+            - :attr:`.FunctionalOperation.op_needs`
+            - :attr:`.FunctionalOperation._fn_needs`
+
+
     :param provides:
-        Names of output data this operation provides, which must correspond
-        to the returned values of the `fn`.
-        If more than one given, those must be returned in an iterable,
-        unless `returns_dict` is true, in which case a dictionary with (at least)
-        as many elements must be returned.
+        the list of (positionally ordered) output data this operation provides,
+        which must, roughly, correspond to the returned values of the `fn`
+        (plus any :term:`sideffects` & :term:`alias`\es).
 
-        See also :term:`provides` & :term:`modifier`.
+        It can be a single string, in which case a 1-element iterable is assumed.
+
+        If they are more than one, the underlying function must return an iterable
+        with same number of elements, unless param `returns_dict` :term:`is true
+        <returns dictionary>`, in which case must return a dictionary that containing
+        (at least) those named elements.
+
+        .. seealso::
+            - :term:`provides`
+            - :term:`modifier`
+            - :attr:`.FunctionalOperation.provides`
+            - :attr:`.FunctionalOperation.op_provides`
+            - :attr:`.FunctionalOperation._fn_provides`
+
     :param aliases:
         an optional mapping of `provides` to additional ones
     :param rescheduled:
@@ -702,154 +758,63 @@ class operation:
         unless they start with underscore(``_``)
 
     :return:
-        when called, it returns a :class:`.FunctionalOperation`
+        when called with `fn`, it returns a :class:`.FunctionalOperation`,
+        otherwise it returns a decorator function that accepts `fn` as the 1st argument.
+
+        .. Note::
+            Actually the returned decorator is the :meth:`.FunctionalOperation.withset()`
+            method and accepts all arguments, monkeypatched to support calling a virtual
+            ``withset()`` method on it, not to interrupt the builder-pattern,
+            but only that - besides that trick, it is just a bound method.
 
     **Example:**
 
     This is an example of its use, based on the "builder pattern":
 
-        >>> from graphtik import operation
+        >>> from graphtik import operation, varargs
 
-        >>> opb = operation(name='add_op')
-        >>> opb.withset(needs=['a', 'b'])
-        operation(name='add_op', needs=['a', 'b'], provides=[], fn=None)
-        >>> opb.withset(provides='SUM', fn=sum)
-        operation(name='add_op', needs=['a', 'b'], provides=['SUM'], fn='sum')
+        >>> op = operation()
+        >>> op
+        <function FunctionalOperation.withset at ...
 
-    You may keep calling ``withset()`` till you invoke a final ``__call__()``
-    on the builder;  then you get the actual :class:`.FunctionalOperation` instance:
+    That's a "fancy decorator".
 
-        >>> # Create `Operation` and overwrite function at the last moment.
-        >>> opb(sum)
-        FunctionalOperation(name='add_op', needs=['a', 'b'], provides=['SUM'], fn='sum')
+        >>> op = op.withset(needs=['a', 'b'])
+        >>> op
+        FunctionalOperation(name=None, needs=['a', 'b'], provides=[], fn=None)
 
-    .. Tip::
-        Remember to call once more the builder class at the end, to get the actual
-        operation instance.
+    If you call an operation with `fn` un-initialized, it will scream:
 
+        >>> op.compute({"a":1, "b": 2})
+        Traceback (most recent call last):
+        ValueError: Operation was not yet provided with a callable `fn`!
+
+    You may keep calling ``withset()`` until a valid operation instance is returned,
+    and compute it:
+
+        >>> op = op.withset(needs=['a', 'b'],
+        ...                 provides='SUM', fn=lambda a, b: a + b)
+        >>> op
+        FunctionalOperation(name='<lambda>', needs=['a', 'b'], provides=['SUM'], fn='<lambda>')
+        >>> op.compute({"a":1, "b": 2})
+        {'SUM': 3}
+
+        >>> op.withset(fn=lambda a, b: a * b).compute({'a': 2, 'b': 5})
+        {'SUM': 10}
     """
+    kw = {k: v for k, v in locals().items() if v is not None and k != "self"}
+    op = FunctionalOperation(**kw)
 
-    def __init__(
-        self,
-        fn: Callable = None,
-        *,
-        name=None,
-        needs: Items = None,
-        provides: Items = None,
-        aliases: Mapping = None,
-        rescheduled=None,
-        endured=None,
-        parallel=None,
-        marshalled=None,
-        returns_dict=None,
-        node_props: Mapping = None,
-    ):
-        kw = _dict_without(locals(), "self")
-        vars(self).update(kw)
-        # To check `fn` callable.
-        self.withset(**kw)
+    if "fn" in kw:
+        # Either used as a "naked" decorator (without any arguments)
+        # or not used as decorator at all (manually called and passed in `fn`) .
+        return op
 
-    def withset(
-        self,
-        *,
-        fn: Callable = None,
-        name=None,
-        needs: Items = None,
-        provides: Items = None,
-        aliases: Mapping = None,
-        rescheduled=None,
-        endured=None,
-        parallel=None,
-        marshalled=None,
-        returns_dict=None,
-        node_props: Mapping = None,
-    ) -> "operation":
-        """See :class:`operation` for arguments here."""
-        if fn is not None:
-            if not callable(fn):
-                raise ValueError(
-                    f"`fn` arg must be callable, was {type(fn).__name__}!"
-                    f"\n  did you mean? operation(name={fn}, ..."
-                )
-            self.fn = fn
-        if name is not None:
-            self.name = name
-        if needs is not None:
-            self.needs = needs
-        if provides is not None:
-            self.provides = provides
-        if aliases is not None:
-            self.aliases = aliases
-        if rescheduled is not None:
-            self.rescheduled = rescheduled
-        if endured is not None:
-            self.endured = endured
-        if parallel is not None:
-            self.parallel = parallel
-        if marshalled is not None:
-            self.marshalled = marshalled
-        if returns_dict is not None:
-            self.returns_dict = returns_dict
-        if node_props is not None:
-            self.node_props = node_props
+    @wraps(op.withset)
+    def decorator(*args, **kw):
+        return op.withset(*args, **kw)
 
-        return self
+    # Allow the decorator to support the builder-pattern.
+    decorator.withset = op.withset
 
-    def __call__(
-        self,
-        fn: Callable = None,
-        *,
-        name=None,
-        needs: Items = None,
-        provides: Items = None,
-        aliases: Mapping = None,
-        rescheduled=None,
-        endured=None,
-        parallel=None,
-        marshalled=None,
-        returns_dict=None,
-        node_props: Mapping = None,
-    ) -> FunctionalOperation:
-        """
-        This enables ``operation`` to act as a decorator or as a functional
-        operation, for example::
-
-            @operator(name='myadd1', needs=['a', 'b'], provides=['c'])
-            def myadd(a, b):
-                return a + b
-
-        or::
-
-            def myadd(a, b):
-                return a + b
-            operator(name='myadd1', needs=['a', 'b'], provides=['c'])(myadd)
-
-        :param fn:
-            The function to be used by this ``operation``.
-
-        :return:
-            Returns an operation class that can be called as a function or
-            composed into a computation graph.
-        """
-        self.withset(**_dict_without(locals(), "self"))
-
-        return FunctionalOperation(**vars(self))
-
-    def __repr__(self):
-        """
-        Display more informative names for the Operation class
-        """
-        needs = aslist(self.needs, "needs")
-        provides = aslist(self.provides, "provides")
-        aliases = aslist(self.aliases, "aliases")
-        aliases = f", aliases={aliases!r}" if aliases else ""
-        fn_name = self.fn and func_name(self.fn, None, mod=0, fqdn=0, human=0)
-        nprops = f", x{len(self.node_props)}props" if self.node_props else ""
-        resched = "?" if self.rescheduled else ""
-        endured = "!" if self.endured else ""
-        parallel = "|" if self.parallel else ""
-        marshalled = "$" if self.marshalled else ""
-        return (
-            f"operation{endured}{resched}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}{aliases}, fn={fn_name!r}{nprops})"
-        )
+    return decorator
