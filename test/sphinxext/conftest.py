@@ -26,3 +26,7 @@ def _initialize_test_directory(session):
 
 def pytest_sessionstart(session):
     _initialize_test_directory(session)
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "sphinx: parametrized sphinx test-launches")
