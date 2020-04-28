@@ -168,9 +168,9 @@ def _spread_sideffects(
     assert deps is not None
 
     if deps:
-        op_deps = iset(nn for n in deps for nn in singularize_sol_sideffects(n))
+        deps = tuple(nn for n in deps for nn in singularize_sol_sideffects(n))
         fn_deps = tuple(nn for n in deps for nn in strip_sideffecteds(n))
-        return op_deps, fn_deps
+        return deps, fn_deps
     else:
         return deps, deps
 
@@ -228,23 +228,24 @@ class FunctionalOperation(Operation, Plottable):
         name, needs, provides = reparse_operation_data(name, needs, provides)
 
         needs, _fn_needs = _spread_sideffects(needs)
-        op_provides, _fn_provides = _spread_sideffects(provides)
+        provides, _fn_provides = _spread_sideffects(provides)
+        op_needs = iset(needs)
 
         if aliases:
             aliases = as_renames(aliases, "aliases")
-            if any(1 for src, dst in aliases if dst in op_provides):
+            if any(1 for src, dst in aliases if dst in provides):
                 bad = ", ".join(
-                    f"{src} -> {dst}" for src, dst in aliases if dst in op_provides
+                    f"{src} -> {dst}" for src, dst in aliases if dst in provides
                 )
                 raise ValueError(
-                    f"The `aliases` ({bad}) clash with existing provides {list(op_provides)}!"
+                    f"The `aliases` ({bad}) clash with existing provides {list(provides)}!"
                 )
 
             alias_src, alias_dst = list(zip(*aliases))
-            if not set(alias_src) <= set(op_provides):
+            if not set(alias_src) <= set(provides):
                 raise ValueError(
-                    f"The `aliases` for {list(alias_src)} rename {list(iset(alias_src) - op_provides)}"
-                    f", not found in op_provides {list(op_provides)}!"
+                    f"The `aliases` for {list(alias_src)} rename {list(iset(alias_src) - provides)}"
+                    f", not found in provides {list(provides)}!"
                 )
             sfx_aliases = [
                 f"{src} -> {dst}"
@@ -256,28 +257,39 @@ class FunctionalOperation(Operation, Plottable):
                     f"The `aliases` must not contain `sideffects` {sfx_aliases}"
                     "\n  Simply add any extra `sideffects` in the `provides`."
                 )
-            provides = op_provides
-            op_provides = iset(itt.chain(op_provides, alias_dst))
+        else:
+            alias_dst = ()
+        op_provides = iset(itt.chain(provides, alias_dst))
 
         self.fn = fn
         #: a name for the operation (e.g. `'conv1'`, `'sum'`, etc..);
         #: it will be prefixed by `parents`.
         self.name = name
-        #: The  :term:`needs` roughly as given by the user,
-        #: ready to :term:`prune` the graph
-        #: (with sideffects & singular sol_sideffects)
+
+        #: The :term:`needs` almost as given by the user
+        #: (which may contain MULTI-sol_sideffects and dupes),
+        #: roughly morphed into `_fn_provides` + sideffects
+        #: (dupes preserved, with sideffects & SINGULARIZED sol_sideffects).
+        #: It is stored for builder functionality to work.
         self.needs = needs
+        #: Value names ready to lay the graph for :term:`pruning`
+        #: (NO dupes, WITH aliases & sideffects, and SINGULAR sol_sideffects).
+        self.op_needs = op_needs
         #: Value names the underlying function requires
-        #: (without sideffects, with stripped `sideffected` dependencies).
+        #: (dupes preserved, without sideffects, with stripped `sideffected` dependencies).
         self._fn_needs = _fn_needs
-        #: The :term:`provides` roughly as given by the user
-        #: (without aliases, with sideffects & singular sol_sideffects)
+
+        #: The :term:`provides` almost as given by the user,
+        #: (which may contain MULTI-sol_sideffects and dupes),
+        #: roughly morphed into `_fn_provides` + sideffects
+        #: (dupes preserved, without aliases, with sideffects & SINGULARIZED sol_sideffects).
+        #: It is stored for builder functionality to work.
         self.provides = provides
-        #: Value names ready to :term:`prune` the graph
-        #: (WITH aliases, sideffects & singular sol_sideffects).
+        #: Value names ready to lay the graph for :term:`pruning`
+        #: (NO dupes, WITH aliases & sideffects, and SINGULAR sol_sideffects).
         self.op_provides = op_provides
         #: Value names the underlying function produces
-        #: (without aliases & sideffects, with stripped `sideffected` dependencies).
+        #: (dupes preserved, without aliases & sideffects, with stripped `sideffected` dependencies).
         self._fn_provides = _fn_provides
         #: an optional mapping of `fn_provides` to additional ones, together
         #: comprising this operations :term:`op_provides`.
@@ -339,16 +351,16 @@ class FunctionalOperation(Operation, Plottable):
         marshalled = "$" if self.marshalled else ""
 
         if is_debug():
-            deps = (
-                f", op_provides={list(self.op_provides)}, "
-                f"fn_needs={list(self._fn_needs)}, "
-                f"fn_provides={list(self._fn_provides)}"
+            debug_needs = (
+                f", op_needs={list(self.op_needs)}, fn_needs={list(self._fn_needs)}"
             )
+            debug_provides = f", op_provides={list(self.op_provides)}, fn_provides={list(self._fn_provides)}"
         else:
-            deps = ""
+            debug_needs = debug_provides = ""
         return (
-            f"FunctionalOperation{endured}{resched}{parallel}{marshalled}(name={self.name!r}, needs={needs!r}, "
-            f"provides={provides!r}{deps},{aliases} fn{returns_dict_marker}={fn_name!r}{nprops})"
+            f"FunctionalOperation{endured}{resched}{parallel}{marshalled}(name={self.name!r}, "
+            f"needs={needs!r}{debug_needs}, provides={provides!r}{debug_provides}{aliases}, "
+            f"fn{returns_dict_marker}={fn_name!r}{nprops})"
         )
 
     @property
@@ -362,9 +374,10 @@ class FunctionalOperation(Operation, Plottable):
         return {
             k: v if is_debug() else list(v)
             for k, v in zip(
-                "needs fn_needs provides op_provides fn_provides".split(),
+                "needs op_needs fn_needs provides op_provides fn_provides".split(),
                 (
                     self.needs,
+                    self.op_needs,
                     self._fn_needs,
                     self.provides,
                     self.op_provides,
@@ -378,10 +391,12 @@ class FunctionalOperation(Operation, Plottable):
         Make a clone with the some values replaced.
 
         """
+        ## Exclude calculated dep-fields.
+        #
         me = {
             k: v
             for k, v in vars(self).items()
-            if not k.startswith("_") and k != "op_provides"
+            if not k.startswith("_") and not k.startswith("op_")
         }
         me.update(kw)
         return FunctionalOperation(**me)

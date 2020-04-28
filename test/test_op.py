@@ -296,11 +296,11 @@ def test_as_renames(inp, exp):
     [
         (
             dict(aliases={"a": 1}),
-            r"The `aliases` for ['a'] rename ['a'], not found in op_provides []!",
+            r"The `aliases` for ['a'] rename ['a'], not found in provides []!",
         ),
         (
             dict(name="t", provides="a", aliases={"a": 1, "b": 2}),
-            r"The `aliases` for ['a', 'b'] rename ['b'], not found in op_provides ['a']!",
+            r"The `aliases` for ['a', 'b'] rename ['b'], not found in provides ['a']!",
         ),
         (
             dict(name="t", provides=sideffect("a"), aliases={sideffect("a"): 1}),

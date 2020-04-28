@@ -361,9 +361,11 @@ class sol_sideffect(sideffect):
         FunctionalOperation(name='finalize_prices',
                             needs=["sol_sideffect('ORDER'<--'Prices'",
                                    "sol_sideffect('ORDER'<--'VAT'"],
+                            op_needs=["sol_sideffect('ORDER'<--'Prices'",
+                                      "sol_sideffect('ORDER'<--'VAT'"],
+                            fn_needs=['ORDER'],
                             provides=["sol_sideffect('ORDER'<--'Totals'"],
                             op_provides=["sol_sideffect('ORDER'<--'Totals'"],
-                            fn_needs=['ORDER'],
                             fn_provides=['ORDER'],
                             fn='finalize_prices')
 

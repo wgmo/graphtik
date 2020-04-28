@@ -980,7 +980,7 @@ class Network(Plottable):
         #
         needs = []
         needs_edges = []
-        for n in operation.needs:
+        for n in getattr(operation, "op_needs", operation.needs):
             nkw, ekw = {}, {}
             if isinstance(n, (optional, vararg, varargs)):
                 ekw["optional"] = True
