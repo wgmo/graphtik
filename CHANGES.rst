@@ -35,8 +35,8 @@ Graphtik Changelog
     - [x] plot graphs with Graphviz sphinx-extension
     - [x] HTML-table op-nodes to allow decorations
     - [x] plottable Operations
+    - [x] Op-node badges
 
-    - [ ] Op-node TABLE-decorations
     - [ ] Merged operation clusters
     - [ ] update legend (or generate it dynamically)
 
@@ -45,14 +45,14 @@ Graphtik Changelog
     - [x] explain rescheduled & endured in tutorial.
     - [x] `aliases` in tutorial & terms
 
-  - [ ] Operations behave like a regular decorator when fn given in front
-  - [ ] Allow for Optional `solution sideffect`
+  - [ ] Operations behave like a regular decorator when fn given in 1st call.
+        Merge FuncOp+OpBuilder.
+  - [ ] Rename NetOp -> graphkit | pipeline
   - [ ] modifiers inherit a single class (to allow combinations)
-  - [ ] break cycles with dijkstra
-  - [ ] weights
+  - [ ] Allow for Optional `solution sideffect`
+  - [ ] break cycles with dijkstra; weights
   - [ ] Merge tutorial (operations + composition)
   - [ ] alias compose() <-- NetOp
-  - [ ] Merge Op+FuncOp+OpBuilder; rename NetOp -> graphkit | pipeline
 
   - Dropped:
 
@@ -73,8 +73,8 @@ Changelog
 %%%%%%%%%
 
 
-v6.3.0 (XX Apr 2020, @ankostis): arg-->kw-modifier, ops act like functions
-==========================================================================
+v7.0.0 (28 Apr 2020, @ankostis): In-solution sideffects, unified OpBuilder, plot badges
+=======================================================================================
 + BREAK: stacking of solution results changed to the more natural "chronological" one
   (outputs written later in the solution override previous ones).
 
@@ -83,6 +83,18 @@ v6.3.0 (XX Apr 2020, @ankostis): arg-->kw-modifier, ops act like functions
   chronological right before the solution was finalized.
 
 + FEAT(op, netop): add ``__name__`` attribute to operations, to disguise as functions.
+
++ BREAK(op): The :func:`.operation` factory function (used to be *class*) now behave
+  like a regular decorator when `fn` given in the first call, and constructs
+  the :class:`.FunctionalOperation` without a need to call again the factory.
+
+  Specifically the last empty call at the end ``()`` is not needed (or possible)::
+
+      operation(str, name=...)()
+
+  became simply like that::
+
+      operation(str, name=...)
 
 + MODIFIERS:
 
