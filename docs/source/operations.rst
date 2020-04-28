@@ -96,12 +96,14 @@ squares/houses are *data*):
   See :ref:`plotting` on how to make diagrams like this.
 
 
+.. _aliases:
+
 Aliased `provides`
 ^^^^^^^^^^^^^^^^^^
 Sometimes, you need to interface operations where they name some :term:`dependency`
 differently.
 This is doable without introducing "pipe-through" interface operation, either by
-annotating `needs` with :class:`.kw` `modifiers` (see docs) or with *aliases*
+annotating `needs` with :class:`.kw` `modifiers` (see docs) or with :term:`alias`\es
 on the `provides` side:
 
    >>> op = operation(str,

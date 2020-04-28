@@ -255,7 +255,7 @@ Architecture
     alias
         Map an existing name in `fn_provides` into a duplicate, artificial one in `op_provides` .
 
-        You cannot alias an *alias*.
+        You cannot alias an *alias*.  See :ref:`aliases`
 
     returns dictionary
         When an `operation` is marked with this flag, the underlying function is not
@@ -330,6 +330,8 @@ Architecture
         i.e. they cannot control which of their sideffects they have produced,
         it's either all or nothing.
 
+        See :ref:`rescheduled`
+
     endurance
     endured
         Keep executing as many `operation`\s as possible, even if some of them fail.
@@ -340,6 +342,8 @@ Architecture
         You may interrogate :attr:`.Solution.executed` to discover the status
         of each executed operations or call one of :meth:`.check_if_incomplete()`
         or :meth:`.scream_if_incomplete()`.
+
+        See :ref:`endured`
 
     predicate
     node predicate

@@ -207,6 +207,8 @@ As always, we can run computations with this graph by simply calling it:
 
 Advanced pipelines
 ------------------
+.. _endured:
+
 Resilience on errors (*endured*)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 It is possible for pipeline persist executing operations, even if some of them
@@ -258,6 +260,8 @@ You may then optionally abort on failures, by raising an appropriate exception:
     Not completed x2 operations ['exercise', 'get_out'] due to x1 failures and x0 partial-ops:
       +--get_out: ValueError('Quarantined!')
 
+
+.. _rescheduled:
 
 Operations with partial outputs (*rescheduled*)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
