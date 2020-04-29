@@ -28,6 +28,8 @@ Graphtik Changelog
   - [x] reset abort on new `netop.compute()`
   - [x] raise if rescheduled/endured ops
   - [x] define sideffects on target "sideffected" needs
+  - [x] Operations behave like a regular decorator when fn given in 1st call.
+        Merge FuncOp+OpBuilder.
 
   - plot:
 
@@ -45,8 +47,6 @@ Graphtik Changelog
     - [x] explain rescheduled & endured in tutorial.
     - [x] `aliases` in tutorial & terms
 
-  - [ ] Operations behave like a regular decorator when fn given in 1st call.
-        Merge FuncOp+OpBuilder.
   - [ ] Rename NetOp -> graphkit | pipeline
   - [ ] modifiers inherit a single class (to allow combinations)
   - [ ] Allow for Optional `solution sideffect`
@@ -96,67 +96,68 @@ v7.0.0 (28 Apr 2020, @ankostis): In-solution sideffects, unified OpBuilder, plot
 
       operation(str, name=...)
 
-+ MODIFIERS:
-
-  + BREAK: rename `arg --> mapping``, which conveys the correct meaning.
-
-  + FEAT: Introduced :term:`solution sideffect`\s, to allow for certain dependencies
-    to be produced & consumed by function to apply "sideffects, without creating
-    "cycles":
-
-    + feat(op): introduce ``_fn_needs``, ``op_needs`` & ``op_provides`` on
-      :class:`.FunctionalOperation`, used when matching Inps/Outs and when pruning
-      graph.
-    + FEAT(op): print detailed deps when DEBUG enabled.
-
-+ PLOT:
-
-  + ENH: recursively merge Graphviz-styles attributes, with expanding jinja2-template
-    and extending lists while preserving theme-provenance, for debugging.
-
-  + BREAK: rename class & attributes related to ``Style --> Theme``,
-    to distinguish them from styles (stacks of dictionaries).
-
-  + UPD: dot no plot Steps by default;  use this :ref:`plot-customizations` to re-enable them::
-
-        plottable.plot(plotter=Plotter(include_steps=True))
-
-  + FEAT: now `operations` are also :term:`plottable`.
-
-  + FEAT: Operation BADGES to distinguish endured, rescheduled, parallel, marshalled,
-    returns_dict.
-
-  + FIX: Cancel/Evict styles were misclassified.
-
-  + feat(plot): change label in sol_sideffects; add exceptions as tooltips on
-    failed operations, etc.
-
-  + enh: improve plot theme, e.g. prunes are all grey, sideffects all blue,
-    "evictions" are colored closer to steps, etc.  Add many neglected styles.
-
-+ Sphinx extension:
-
-  + enh: Save DOTs if DEBUG;  save it before...
-  + fix: save debug-DOT  before rendering images, to still get those files
-    as debug aid in case of errors.
-  + fix: workaround missing *lineno* on doctest failures, an incomplete solution
-    introduced upstream by sphinx-doc/sphinx#4584.
-
 + DROP(NET): ``_DataNode`` and use str +  modifier-classes as data-nodes;
 
-+ Configurations:
+MODIFIERS:
+----------
++ BREAK: rename `arg --> mapping``, which conveys the correct meaning.
 
-  + BREAK: rename context-manager configuration function `debug --> debug_enabled`.
-  + FEAT: respect :envvar:`GRAPHTIK_DEBUG` for enabling `is_debug()` configuration.
++ FEAT: Introduced :term:`solution sideffect`\s, to allow for certain dependencies
+  to be produced & consumed by function to apply "sideffects, without creating
+  "cycles":
 
-+ DOC:
+  + feat(op): introduce ``_fn_needs``, ``op_needs`` & ``op_provides`` on
+    :class:`.FunctionalOperation`, used when matching Inps/Outs and when pruning
+    graph.
+  + FEAT(op): print detailed deps when DEBUG enabled.
 
-  + feat: new sections about composing pipelines with :term:`reschedule` / :term:`endured`
-    operations & :term:`alias`\es.
-  + enh: Clarified relation and duties of the new term :term:`dependency`.
-  + enh: Linked many terms from quick-start section.
-  + enh(site): support for `Sphinx's standard colored-text
-    <https://stackoverflow.com/a/61389938/548792>`_ roles.
+PLOT:
+-----
++ ENH: recursively merge Graphviz-styles attributes, with expanding jinja2-template
+  and extending lists while preserving theme-provenance, for debugging.
+
++ BREAK: rename class & attributes related to ``Style --> Theme``,
+  to distinguish them from styles (stacks of dictionaries).
+
++ UPD: dot no plot Steps by default;  use this :ref:`plot-customizations` to re-enable them::
+
+      plottable.plot(plotter=Plotter(include_steps=True))
+
++ FEAT: now `operations` are also :term:`plottable`.
+
++ FEAT: Operation BADGES to distinguish endured, rescheduled, parallel, marshalled,
+  returns_dict.
+
++ FIX: Cancel/Evict styles were misclassified.
+
++ feat(plot): change label in sol_sideffects; add exceptions as tooltips on
+  failed operations, etc.
+
++ enh: improve plot theme, e.g. prunes are all grey, sideffects all blue,
+  "evictions" are colored closer to steps, etc.  Add many neglected styles.
+
+Sphinx extension:
+-----------------
+
++ enh: Save DOTs if DEBUG;  save it before...
++ fix: save debug-DOT  before rendering images, to still get those files
+  as debug aid in case of errors.
++ fix: workaround missing *lineno* on doctest failures, an incomplete solution
+  introduced upstream by sphinx-doc/sphinx#4584.
+
+Configurations:
+---------------
++ BREAK: rename context-manager configuration function `debug --> debug_enabled`.
++ FEAT: respect :envvar:`GRAPHTIK_DEBUG` for enabling `is_debug()` configuration.
+
+DOC:
+----
++ feat: new sections about composing pipelines with :term:`reschedule` / :term:`endured`
+  operations & :term:`alias`\es.
++ enh: Clarified relation and duties of the new term :term:`dependency`.
++ enh: Linked many terms from quick-start section.
++ enh(site): support for `Sphinx's standard colored-text
+  <https://stackoverflow.com/a/61389938/548792>`_ roles.
 
 
 v6.2.0 (19 Apr 2020, @ankostis): plotting fixes & more styles, net find util methods

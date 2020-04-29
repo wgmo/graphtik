@@ -195,7 +195,7 @@ Here's an example:
 
 Modifiers on `operation` `needs` and `provides`
 -----------------------------------------------
-Annotations on a `dependency` such as `optionals` & `sideffects` modify their behavior,
-and eventually the :term:`pipeline`.
+Annotations on a `dependency` such as :term:`optionals` & :term:`sideffects` modify
+their behavior, and eventually the :term:`pipeline`.
 
-Read `mod:`.modifiers` for more.
+Read :mod:`.modifiers` for more.

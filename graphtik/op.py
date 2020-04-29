@@ -814,7 +814,8 @@ def operation(
     def decorator(*args, **kw):
         return op.withset(*args, **kw)
 
-    # Allow the decorator to support the builder-pattern.
+    # Dress decorator to support the builder-pattern.
+    # even when called as regular function (without `@`) without `fn`.
     decorator.withset = op.withset
 
     return decorator
