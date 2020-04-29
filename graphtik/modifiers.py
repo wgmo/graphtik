@@ -315,9 +315,10 @@ class sol_sideffect(sideffect):
     of the function.
 
     .. Note::
-        When declaring `operation`s with *sideffected* dependencies, it is important
+
+        When declaring an `operation` with *sideffected* dependency, it is important
         not to put the actual :attr:`sideffected` in the `needs` & `provides`,
-        or else, "cycles" will form, and network will not :term:`compile`.
+        or else, dependency cycles will form, and network will not :term:`compile`.
 
     **Example:**
 
@@ -370,7 +371,7 @@ class sol_sideffect(sideffect):
                             fn='finalize_prices')
 
     - Notice that although the function consumes & produces ``ORDER``
-      (check ``fn_needs`` & ``fn_provides``, above), which would have :red:`created a cycle`,
+      (check ``fn_needs`` & ``fn_provides``, above), which :orange:`would have created a cycle`,
       the wrapping operation :term:`needs` and :term:`provides` different
       `sol_sideffects`, breaking thus the cycle.
 
@@ -392,7 +393,7 @@ class sol_sideffect(sideffect):
                    'totals': [1.18, 2.36]}}
 
     .. graphtik::
-        :height: 360
+        :height: 640
         :width: 100%
         :name: solution-sideffects
 

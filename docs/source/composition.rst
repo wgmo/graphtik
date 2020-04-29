@@ -209,6 +209,16 @@ Advanced pipelines
 ------------------
 .. _endured:
 
+Dependencies on sideffects
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autoclass:: graphtik.modifiers.sideffect
+   :noindex:
+
+Modifying existing values in solutions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autoclass:: graphtik.modifiers.sol_sideffect
+   :noindex:
+
 Resilience on errors (*endured*)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 It is possible for pipeline persist executing operations, even if some of them
