@@ -266,6 +266,15 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
 
         node = graphtik_node(graphvar=options.get("graphvar"), img_format=img_format)
         node.source, node.line = location
+        ## Decide a unique filename (and id).
+        #
+        name = options.get("name") or ""
+        if name:
+            name = nodes.fully_normalize_name(name)
+        targetname = (
+            f"graphtik-{self.env.docname}-{name}-{self.env.new_serialno('graphtik')}"
+        )
+        node["filename"] = targetname
         node += original_nodes
 
         figure = nodes.figure()
@@ -277,8 +286,8 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         figure["classes"].extend(options.get("figclass", "").split())
         node += figure
 
-        img_attrs = {k: v for k, v in options.items() if k in _img_options}
         # TODO: emulate sphinx-processing for image width & height attrs.
+        img_attrs = {k: v for k, v in options.items() if k in _img_options}
         image = dynaimage(**img_attrs)
         image.source, image.line = location
         image["classes"].extend(options.get("class", "").split())
@@ -309,11 +318,8 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
             #
             name = options.pop("name")
             if not caption:
-                caption = _("plottable: ``%s``") % name
-            name = nodes.fully_normalize_name(name)
-            targetname = f"graphtik-{name}-{self.env.new_serialno('graphtik')}"
+                caption = name
             figure["names"].append(targetname)
-            self.state.document.note_explicit_target(figure, figure)
             ## adapted from: sphinx.domains.std.Target directive.
             #
             std = cast(StandardDomain, self.env.get_domain("std"))

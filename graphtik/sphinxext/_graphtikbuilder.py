@@ -145,42 +145,33 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         :raises:
             any exception from Graphviz program
         """
-        ## Derrive image-filename from graph contents.
-        #  TODO: don't derrive image-filename from sha1 contents!
-        #        copy from http://www.sphinx-doc.org/en/stable/extdev/tutorial.html
-        #  TODO: delete old images (see event todo-tutorial)
-        hasher = sha1()
-        hasher.update(str(dot).encode())
-        fname = f"graphtik-{hasher.hexdigest()}.{img_format}"
+        fname = f"{node['filename']}.{img_format}"
         abs_fpath = Path(self.outdir, self.imagedir, fname)
+        log.info(__("Rendering '%s'..."), abs_fpath)
 
         save_dot_files = self.config.graphtik_save_dot_files
         if save_dot_files is None:
             save_dot_files = is_debug()
 
-        ## Do not re-write images, that have content-named path,
-        #  so they are never out-of-date.
+        abs_fpath.parent.mkdir(parents=True, exist_ok=True)
+
+        ## Save dot-file before rendering,
+        #  to still have it in case of errors.
         #
-        self.env.graphtik_image_purgatory.register_doc_fpath(
-            self.env.docname, abs_fpath
-        )
         if save_dot_files:
             self.env.graphtik_image_purgatory.register_doc_fpath(
                 self.env.docname, abs_fpath.with_suffix(".txt")
             )
+            with open(abs_fpath.with_suffix(".txt"), "w") as f:
+                f.write(str(dot))
 
-        if not abs_fpath.is_file():
-            abs_fpath.parent.mkdir(parents=True, exist_ok=True)
-            ## Save dot-file before rendering,
-            #  to still have it in case of errors.
-            # #
-            if save_dot_files:
-                with open(abs_fpath.with_suffix(".txt"), "w") as f:
-                    f.write(str(dot))
-            dot.write(abs_fpath, format=img_format)
-            if img_format == "png":
-                cmap = dot.create(format="cmapx", encoding="utf-8").decode("utf-8")
-                node.cmap = cmap
+        self.env.graphtik_image_purgatory.register_doc_fpath(
+            self.env.docname, abs_fpath
+        )
+        dot.write(abs_fpath, format=img_format)
+        if img_format == "png":
+            cmap = dot.create(format="cmapx", encoding="utf-8").decode("utf-8")
+            node.cmap = cmap
 
         ## XXX: used to work till active-builder attributes were transfered to self.
         # rel_fpath = Path(self.imgpath, fname)

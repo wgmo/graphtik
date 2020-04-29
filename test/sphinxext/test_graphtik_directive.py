@@ -57,7 +57,7 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
     fname = app.outdir / fname
     print(fname)
 
-    ## Clean outdir from previou build to enact re-build.
+    ## Clean outdir from previous build to enact re-build.
     #
     try:
         app.outdir.rmtree(ignore_errors=True)
@@ -74,7 +74,7 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
         img_format = "svg"
 
     image_files = image_dir.listdir()
-    n_expected = 7
+    n_expected = 8
     if img_format == "png":
         # x2 files for image-maps file.
         tag = "img"
