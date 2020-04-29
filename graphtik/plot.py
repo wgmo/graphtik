@@ -774,6 +774,8 @@ class StylesStack(NamedTuple):
     #: A list of 2-tuples: (name, dict) containing the actual styles
     #: along with their provenance.
     named_styles: List[Tuple[str, dict]]
+    #: When true, keep merging despite expansion errors.
+    ignore_errors: bool = False
 
     def add(self, name, kw=None):
         """
@@ -806,9 +808,11 @@ class StylesStack(NamedTuple):
             return True
         except Exception as ex:
             path = f'{"/".join(path)}/{k}'
-            raise ValueError(
-                f"Failed expanding {visit_type} @ '{path}' = {v!r} due to: {type(ex).__name__}({ex})"
-            ) from ex
+            msg = f"Failed expanding {visit_type} @ '{path}' = {v!r} due to: {type(ex).__name__}({ex})"
+            if self.ignore_errors:
+                log.warning(msg)
+            else:
+                raise ValueError(msg) from ex
 
     def merge(self, debug=None) -> dict:
         """
@@ -878,8 +882,8 @@ class Plotter:
         """
         return type(self)(self.default_theme.with_set(**kw))
 
-    def _new_styles_stack(self, plot_args: PlotArgs):
-        return StylesStack(plot_args, [])
+    def _new_styles_stack(self, plot_args: PlotArgs, ignore_errors=None):
+        return StylesStack(plot_args, [], ignore_errors=ignore_errors)
 
     def plot(self, plot_args: PlotArgs):
         plot_args = plot_args.with_defaults(
