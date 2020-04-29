@@ -593,7 +593,7 @@ class ExecutionPlan(
 
                 if is_solid_true(global_parallel, op.parallel):
                     if not pool:
-                        raise ValueError(
+                        raise RuntimeError(
                             "With `parallel` you must `set_execution_pool().`"
                         )
 
@@ -908,7 +908,7 @@ class Network(Plottable):
             graph = nx.DiGraph()
         else:
             if not isinstance(graph, nx.Graph):
-                raise ValueError(f"Must be a NetworkX graph, was: {graph}")
+                raise TypeError(f"Must be a NetworkX graph, was: {graph}")
 
         #: The :mod:`networkx` (Di)Graph containing all operations and dependencies,
         #: prior to :term:`compilation`.

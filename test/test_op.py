@@ -106,14 +106,14 @@ def test_builder_pattern():
         (((), (), None), ((), (), ())),
         (((), [], None), ((), [], ())),
         (("", object(), None), ValueError("Cannot tuple-ize needs")),
-        (("", [None], None), ValueError("All `needs` must be str")),
-        (("", [()], None), ValueError("All `needs` must be str")),
+        (("", [None], None), TypeError("All `needs` must be str")),
+        (("", [()], None), TypeError("All `needs` must be str")),
         ## Check provides
         (((), "a", ()), ((), ("a",), ())),
         (((), "a", []), ((), ("a",), [])),
         (("", "a", object()), ValueError("Cannot tuple-ize provides")),
-        (("", "a", (None,)), ValueError("All `provides` must be str")),
-        (("", "a", [()]), ValueError("All `provides` must be str")),
+        (("", "a", (None,)), TypeError("All `provides` must be str")),
+        (("", "a", [()]), TypeError("All `provides` must be str")),
     ],
 )
 def test_func_op_validation(opargs, exp):
@@ -131,17 +131,17 @@ def test_func_op_validation(opargs, exp):
         (
             (),
             {"node_props": 3.14},
-            ValueError("node_props` must be a dict, was 'float':"),
+            TypeError("node_props` must be a dict, was 'float':"),
         ),
         (
             (),
             {"node_props": "ab"},
-            ValueError("node_props` must be a dict, was 'str':"),
+            TypeError("node_props` must be a dict, was 'str':"),
         ),
         ((), {"parents": []}, None),
-        ((), {"parents": ["gg"]}, ValueError("parents` must be tuple, was 'list':")),
-        ((), {"parents": 3.14}, ValueError("parents` must be tuple, was 'float':")),
-        ((), {"parents": "gg"}, ValueError("parents` must be tuple, was 'str':")),
+        ((), {"parents": ["gg"]}, TypeError("parents` must be tuple, was 'list':")),
+        ((), {"parents": 3.14}, TypeError("parents` must be tuple, was 'float':")),
+        ((), {"parents": "gg"}, TypeError("parents` must be tuple, was 'str':")),
     ],
 )
 def test_func_op_init(args, kw, exp):
@@ -205,7 +205,7 @@ def test_results_sequence_lt_many_provides(result, nfewer, asked_outputs):
 @pytest.mark.parametrize("result", ["", "a", "ab", "foobar", 3.14, None])
 def test_results_validation_bad_iterable(result, asked_outputs):
     op = operation(lambda: result, provides=["a", "b"])
-    with pytest.raises(ValueError, match=f"Expected x2 ITERABLE results, got"):
+    with pytest.raises(TypeError, match=f"Expected x2 ITERABLE results, got"):
         op.compute({}, outputs=asked_outputs)
 
 
@@ -255,7 +255,7 @@ def test_varargs():
 
 
 def test_op_node_props_bad():
-    with pytest.raises(ValueError, match="`node_props` must be"):
+    with pytest.raises(TypeError, match="`node_props` must be"):
         operation(lambda: None, name="a", node_props="SHOULD BE DICT")
 
 

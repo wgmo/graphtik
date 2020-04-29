@@ -676,7 +676,7 @@ class Plottable(abc.ABC):
         from .plot import Plotter, get_active_plotter
 
         if plotter and not isinstance(plotter, Plotter):
-            raise ValueError(f"Invalid `plotter` argument given: {plotter}")
+            raise TypeError(f"Invalid `plotter` argument given: {plotter}")
         plot_args = plot_args._replace(plotter=plotter or get_active_plotter())
 
         plot_args = self.prepare_plot_args(plot_args)

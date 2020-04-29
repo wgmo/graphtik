@@ -1548,7 +1548,7 @@ def active_plotter_plugged(plotter: Plotter) -> None:
     Like :func:`set_active_plotter()` as a context-manager, resetting back to old value.
     """
     if not isinstance(plotter, Plotter):
-        raise ValueError(f"Cannot install invalid plotter: {plotter}")
+        raise TypeError(f"Cannot install invalid plotter: {plotter}")
     resetter = _active_plotter.set(plotter)
     try:
         yield
@@ -1566,14 +1566,13 @@ def set_active_plotter(plotter: Plotter):
         the :class:`plotter` instance to install
     """
     if not isinstance(plotter, Plotter):
-        raise ValueError(f"Cannot install invalid plotter: {plotter}")
+        raise TypeError(f"Cannot install invalid plotter: {plotter}")
     return _active_plotter.set(plotter)
 
 
 def get_active_plotter() -> Plotter:
     """Get the previously active  :class:`.plotter` instance or default one."""
     plotter = _active_plotter.get()
-    if not isinstance(plotter, Plotter):
-        raise ValueError(f"Missing or invalid active plotter: {plotter}")
+    assert isinstance(plotter, Plotter), plotter
 
     return plotter

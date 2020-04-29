@@ -433,7 +433,7 @@ def compose(
     """
     operations = (op1,) + operations
     if not all(isinstance(op, Operation) for op in operations):
-        raise ValueError(f"Non-Operation instances given: {operations}")
+        raise TypeError(f"Non-Operation instances given: {operations}")
 
     return NetworkOperation(
         operations,

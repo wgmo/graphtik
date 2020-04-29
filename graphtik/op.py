@@ -57,7 +57,7 @@ def as_renames(i, argname):
     if isinstance(i, tuple) and len(i) == 2:
         i = [i]
     elif not isinstance(i, cabc.Collection):
-        raise ValueError(
+        raise TypeError(
             f"Argument {argname} must be a list of 2-element items, was: {i!r}"
         ) from None
     elif not is_list_of_2(i):
@@ -83,17 +83,17 @@ def reparse_operation_data(
     """
 
     if not isinstance(name, cabc.Hashable):
-        raise ValueError(f"Operation `name` must be hashable, got: {name}")
+        raise TypeError(f"Operation `name` must be hashable, got: {name}")
 
     # Allow single string-value for needs parameter
     needs = astuple(needs, "needs", allowed_types=cabc.Collection)
     if not all(isinstance(i, str) for i in needs):
-        raise ValueError(f"All `needs` must be str, got: {needs!r}")
+        raise TypeError(f"All `needs` must be str, got: {needs!r}")
 
     # Allow single value for provides parameter
     provides = astuple(provides, "provides", allowed_types=cabc.Collection)
     if not all(isinstance(i, str) for i in provides):
-        raise ValueError(f"All `provides` must be str, got: {provides!r}")
+        raise TypeError(f"All `provides` must be str, got: {provides!r}")
 
     return name, needs, provides
 
@@ -212,13 +212,13 @@ class FunctionalOperation(Operation, Plottable):
         node_props = node_props = node_props if node_props else {}
 
         if fn and not callable(fn):
-            raise ValueError(f"Operation was not provided with a callable: {fn}")
+            raise TypeError(f"Operation was not provided with a callable: {fn}")
         if parents and not isinstance(parents, tuple):
-            raise ValueError(
+            raise TypeError(
                 f"Operation `parents` must be tuple, was {type(parents).__name__!r}: {parents}"
             )
         if node_props is not None and not isinstance(node_props, cabc.Mapping):
-            raise ValueError(
+            raise TypeError(
                 f"Operation `node_props` must be a dict, was {type(node_props).__name__!r}: {node_props}"
             )
 
@@ -556,7 +556,7 @@ class FunctionalOperation(Operation, Plottable):
                 if isinstance(results, (str, bytes)) or not isinstance(
                     results, cabc.Iterable
                 ):
-                    raise ValueError(
+                    raise TypeError(
                         f"Expected x{nexpected} ITERABLE results, "
                         f"got {type(results).__name__!r}: {results}\n  {self}"
                     )
