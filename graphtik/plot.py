@@ -349,24 +349,27 @@ class Theme:
 
     .. theme-expansions-start
 
-    - Any lists will be merged (important for multi-valued `Graphviz`_ attributes
+    - Any lists are merged (important for multi-valued `Graphviz`_ attributes
       like ``style``).
-    - Any :class:`.Ref` instances will be resolved against the attributes
+    - Any :class:`.Ref` instances are resolved against the attributes
       of the current theme.
-    - Any *jinja2* templates will be rendered, using as template-arguments
+    - Any *jinja2* templates are rendered, using as template-arguments
       all the attributes of the :class:`plot_args <.PlotArgs>` instance in use.
-    - Any *callables* will be given the :class:`plot_args <.PlotArgs>` instance in use
+    - Any *callables* are given the :class:`plot_args <.PlotArgs>` instance in use
       and replaced by their result.
 
     .. theme-warn-start
     .. Attention::
-        All :class:`Theme` *class* attributes are deep-copied when constructing new instances,
-        to avoid modifying them by mistake, while attempting to update
-        *instance* attributes instead
-        (hint: allmost all its attributes are containers i.e. dicts).
-
-        Therefore it is recommended to use other means for :ref:`plot-customizations`
+        It is recommended to use other means for :ref:`plot-customizations`
         instead of modifying directly theme's class-attributes.
+
+        All :class:`Theme` *class-attributes* are deep-copied when constructing
+        new instances, to avoid modifications by mistake, while attempting to update
+        *instance-attributes* instead
+        (*hint:* allmost all its attributes are containers i.e. dicts).
+        Therefore any class-attributes modification will be ignored, until a new
+        ``Theme`` instance from the patched class is used .
+
     .. theme-warn-end
 
     """
@@ -1058,6 +1061,7 @@ class Plotter:
                                 styles.add("kw_data_overwritten")
 
                         elif nx_node not in steps:
+                            # FIXME: is canceled correct?
                             styles.add("kw_data_canceled")
                         else:
                             styles.add("kw_data_evicted")

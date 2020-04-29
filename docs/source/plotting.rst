@@ -87,6 +87,74 @@ You may increase the height of the SVG cell output with something like this::
 See :data:`.default_jupyter_render` for those defaults and recommendations.
 
 
+.. _plot-customizations:
+
+Plot customizations
+^^^^^^^^^^^^^^^^^^^
+Rendering of plots is performed by the :term:`active plotter` (class :class:`.plot.Plotter`).
+All `Graphviz`_ styling attributes are controlled by the *active* :term:`plot theme`,
+which is the :class:`.plot.Theme` instance installed in its :attr:`.Plotter.default_theme`
+attribute.
+
+The following :term:`expansions <theme expansion>` apply in the attribute-values
+of ``Theme`` instances:
+
+.. include:: ../../graphtik/plot.py
+   :start-after: .. theme-expansions-start
+   :end-before: .. theme-warn-start
+
+You may customize the theme and/or *plotter* behavior with various strategies,
+ordered by breadth of the effects (most broadly effecting method at the top):
+
+0. :orange:`(zeroth, because it is discouraged!)`
+
+   Modify in-place :class:`.Theme` class attributes, and monkeypatch :class:`.Plotter` methods.
+
+   This is the most invasive method, affecting all past and future plotter instances,
+   and *future only(!)* themes used during a Python session.
+
+.. include:: ../../graphtik/plot.py
+   :start-after: .. theme-warn-start
+   :end-before: .. theme-warn-end
+
+1. Modify the :attr:`.default_theme` attribute of the :term:`default active plotter`,
+   like that::
+
+      get_active_plotter().default_theme.kw_op["fillcolor"] = "purple"
+
+   This will affect all :meth:`.Plottable.plot()` calls for a Python session.
+
+2. Create a new :class:`.Plotter` with customized :attr:`.Plotter.default_theme`, or
+   clone and customize the theme of an existing plotter by the use of
+   its :meth:`.Plotter.with_styles` method, and make that the new *active plotter*.
+
+   - This will affect all calls in :class:`context <contextvars.ContextVar>`.
+   - If customizing theme constants is not enough, you may subclass and install
+     a new ``Plotter`` class in context.
+
+3. Pass `theme` or `plotter` arguments when calling :meth:`.Plottable.plot()`::
+
+      netop.plot(plotter=Plotter(kw_legend=None))
+      netop.plot(theme=Theme(include_steps=True)
+
+   You may clone and customize an existing plotter, to preserve any pre-existing
+   customizations::
+
+      active_plotter = get_active_plotter()
+      netop.plot(theme=active_plotter.default_theme.with_set(include_steps=True))
+
+   ... OR::
+
+      netop.plot(plotter=active_plotter.with_styles(kw_legend=None))
+
+   You may create a new class to override Plotter's methods that way.
+
+   .. hint::
+      This project dogfoods (3) in its own :file:`docs/source/conf.py` sphinx file.
+      In particular, it configures the base-url of operation node links
+      (by default, nodes do not link to any url).
+
+
 Sphinx-generated sites
 ^^^^^^^^^^^^^^^^^^^^^^
 This library contains a new Sphinx extension (adapted from the :mod:`sphinx.ext.doctest`)
@@ -175,6 +243,11 @@ Directives
       If missing, it renders the last variable in the doctest code assigned with
       the above types.
 
+      .. Attention::
+         If no ``:graphvar:`` is given and the doctest code fails, it will still
+         render any *plottable* created from code that has run previously,
+         without any warnings!
+
    .. rst:directive:option:: graph-format: png | svg | svgz | pdf | `None`
       :type: choice, default: `None`
 
@@ -261,6 +334,9 @@ Configurations
    If a builder does not match to any key, and no format given in the directive,
    no graphtik plot is rendered; so by default, it only generates plots for html & latex.
 
+   .. Warning::
+      Latex is probably  not working :-(
+
 .. confval:: graphtik_zoomable_svg
 
    - type: `bool`
@@ -303,8 +379,8 @@ Configurations
    - type: `bool`, `None`
    - default: ``None``
 
-   For debugging purposes, stores another :file:`<img>.txt` file next to each image file
-   with the DOT text that produced it.
+    For debugging purposes, if enabled, store another :file:`<img>.txt` file
+    next to each image file with the DOT text that produced it.
 
    When ``none`` (default), controlled by :func:`.config.is_debug` from
    :term:`configurations` (which by default obeys to :envvar:`GRAPHTIK_DEBUG`
@@ -331,70 +407,6 @@ Configurations
    .. Attention::
       This means that in the rendered site, options-in-comments like ``# doctest: +SKIP``
       and ``<BLACKLINE>`` artifacts will be visible.
-
-
-.. _plot-customizations:
-
-Plot customizations
-~~~~~~~~~~~~~~~~~~~~
-:term:`plotter`\s` & :term:`plot theme`
-   Rendering of plots is performed by :class:`.plot.Plotter` instances.
-   All `Graphviz`_ styling attributes are defined on the *active* :class:`.plot.Theme`
-   class, which is the instance in the :attr:`.Plotter.default_theme` attribute.
-
-   The following :term:`expansions <theme expansion>` apply in the attribute-values
-   of ``Theme`` instances:
-
-   .. include:: ../../graphtik/plot.py
-      :start-after: .. theme-expansions-start
-      :end-before: .. theme-warn-start
-
-   You may customize the theme and/or *plotter* behavior with various methods,
-   ordered by breadth of the effects (most broadly effecting method at the top):
-
-   0. (*zero because it is discouraged!*)
-
-      Modify in-place :class:`.Theme` class attributes, monkeypatch :class:`.Plotter` methods.
-
-      This is the most invasive method, affecting all *FUTURE ONLY(!)* themes and
-      and plotter instances (past and future) during a python session.
-
-      .. include:: ../../graphtik/plot.py
-         :start-after: .. theme-warn-start
-         :end-before: .. theme-warn-end
-
-   1. Modify the :attr:`.default_theme` attribute of the :term:`default active plotter`,
-      like that::
-
-         get_active_plotter().default_theme.kw_op["fillcolor"] = "purple"
-
-      This will affect all :meth:`.Plottable.plot()` calls for a python session.
-
-   2. Create a new :class:`.Plotter` with customized :attr:`.Plotter.default_theme`, or
-      clone and customize the theme of an existing plotter by the use of
-      its :meth:`.Plotter.with_styles` method, and make that the new *active plotter*.
-
-      - This will affect all calls in :class:`context <contextvars.ContextVar>`.
-      - If customizing theme constants is not enough, you may subclass and install
-        a new ``Plotter`` class.
-
-   3. Pass `theme` or `plotter` arguments when calling :meth:`.Plottable.plot()`:
-
-         netop.plot(plotter=Plotter(kw_legend=None))
-         netop.plot(theme=Theme(include_steps=True)
-
-      You may inherit and override Plotter's methods that way.
-
-      Alternatively, you may clone and customize an existing plotter, to preserve
-      its pre-existing customizations::
-
-         netop.plot(theme=some_theme.with_set(include_steps=True))
-         netop.plot(plotter=get_active_plotter().with_styles(kw_legend=None))
-
-
-   This project dogfoods (3) in its own :file:`docs/source/conf.py` sphinx file.
-   In particular, it configures the base-url of operation node links
-   (by default, nodes do not link to any url).
 
 
 .. _sphinxext-examples:
