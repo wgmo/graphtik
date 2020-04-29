@@ -136,6 +136,13 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
 
         return plottable
 
+    def _fill_graph_url(self, dot: pydot.Dot, fname: str) -> None:
+        """Add a link on the graph to open in new tab, if Dot has no URL."""
+        if "URL" not in dot.get_attributes():
+            dot.set_URL(fname)
+            if "target" not in dot.get_attributes():
+                dot.set_target("_blank")
+
     def _render_dot_image(
         self, img_format, dot: pydot.Dot, node: graphtik_node
     ) -> Path:
@@ -146,6 +153,9 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
             any exception from Graphviz program
         """
         fname = f"{node['filename']}.{img_format}"
+        ## So that when clicked, a new tab opens
+        self._fill_graph_url(dot, fname)
+
         abs_fpath = Path(self.outdir, self.imagedir, fname)
         log.info(__("Rendering '%s'..."), abs_fpath)
 
@@ -173,7 +183,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
             cmap = dot.create(format="cmapx", encoding="utf-8").decode("utf-8")
             node.cmap = cmap
 
-        ## XXX: used to work till active-builder attributes were transfered to self.
+        ## XXX: used to work till active-builder attributes were transferred to self.
         # rel_fpath = Path(self.imgpath, fname)
         rel_fpath = Path(self.imagedir, fname)
 
