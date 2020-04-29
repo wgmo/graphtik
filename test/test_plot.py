@@ -10,12 +10,15 @@ from operator import add
 import dill
 import networkx as nx
 import pytest
+from jinja2 import Template
 
 from graphtik import base, compose, network, operation, plot
+from graphtik.base import PlotArgs
 from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
 from graphtik.plot import (
     Plotter,
+    StylesStack,
     Theme,
     active_plotter_plugged,
     get_active_plotter,
@@ -378,6 +381,33 @@ def test_Plotter_with_styles():
     p3 = p.with_styles(include_steps=True)
     assert p3.default_theme.include_steps
     assert not p.default_theme.include_steps
+
+
+def test_StylesStack_expantion():
+    plot_args = PlotArgs(
+        name="Jack",
+        theme=Theme(
+            test_style1={
+                "alist": [{"callable": lambda plot_args: f"{plot_args.name} hi"}]
+            },
+            test_style2={
+                "alist": [{"callable": lambda plot_args: f"hi {plot_args.name}"}]
+            },
+            test_style3={"alist": [Template("hi {{ name }} hi")]},
+        ),
+    )
+    styles = StylesStack(plot_args, [])
+    styles.add("test_style1")
+    styles.add("test_style2")
+    styles.add("test_style3")
+    kw = styles.merge()
+
+    print(kw["alist"])
+    assert kw["alist"] == [
+        {"callable": "Jack hi"},
+        {"callable": "hi Jack"},
+        "hi Jack hi",
+    ]
 
 
 def test_plotter_customizations(pipeline, monkeypatch):

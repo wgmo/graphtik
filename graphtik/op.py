@@ -429,6 +429,59 @@ class FunctionalOperation(Operation, Plottable):
         msg = textwrap.indent("\n".join(errors), " " * 4)
         raise MultiValueError(f"Failed preparing needs: \n{msg}", *exceptions)
 
+    def _match_inputs_with_fn_needs(self, named_inputs) -> Tuple[list, list, dict]:
+        positional, vararg_vals = [], []
+        kwargs = {}
+        errors, missing, varargs_bad = [], [], []
+        for n in self._fn_needs:
+            assert not isinstance(n, sideffect), locals()
+            try:
+                if n not in named_inputs:
+                    if not isinstance(n, (optional, vararg, varargs, sideffect)):
+                        # It means `inputs` < compulsory `needs`.
+                        # Compilation should have ensured all compulsories existed,
+                        # but ..?
+                        ##
+                        missing.append(n)
+                    continue
+
+                ## TODO: augment modifiers with "retrievers" from `inputs`.
+                inp_value = named_inputs[n]
+
+                if isinstance(n, mapped):  # includes `optionals`
+                    kwargs[n if n.fn_arg is None else n.fn_arg] = inp_value
+
+                elif isinstance(n, vararg):
+                    vararg_vals.append(inp_value)
+
+                elif isinstance(n, varargs):
+                    if isinstance(inp_value, str) or not isinstance(
+                        inp_value, cabc.Iterable
+                    ):
+                        varargs_bad.append(n)
+                    else:
+                        vararg_vals.extend(i for i in inp_value)
+
+                else:
+                    positional.append(inp_value)
+
+            except Exception as nex:
+                log.debug(
+                    "Cannot prepare op(%s) need(%s) due to: %s",
+                    self.name,
+                    n,
+                    nex,
+                    exc_info=nex,
+                )
+                errors.append((n, nex))
+
+        if errors or missing or varargs_bad:
+            raise self._prepare_match_inputs_error(
+                errors, missing, varargs_bad, named_inputs
+            )
+
+        return positional, vararg_vals, kwargs
+
     def _zip_results_with_provides(self, results, fn_expected: iset) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
         rescheduled = is_solid_true(is_reschedule_operations(), self.rescheduled)
@@ -554,61 +607,9 @@ class FunctionalOperation(Operation, Plottable):
                 )
             assert self.name is not None, self
 
-            positional, vararg_vals = [], []
-            kwargs = {}
-            errors, missing, varargs_bad = [], [], []
-            for n in self._fn_needs:
-                assert not isinstance(n, sideffect), locals()
-                try:
-                    if n not in named_inputs:
-                        if not isinstance(n, (optional, vararg, varargs, sideffect)):
-                            # It means `inputs` < compulsory `needs`.
-                            # Compilation should have ensured all compulsories existed,
-                            # but ..?
-                            ##
-                            missing.append(n)
-                        continue
-
-                    ## TODO: augment modifiers with "retrievers" from `inputs`.
-                    inp_value = named_inputs[n]
-
-                    if isinstance(n, mapped):  # includes `optionals`
-                        kwargs[n if n.fn_arg is None else n.fn_arg] = inp_value
-
-                    elif isinstance(n, vararg):
-                        vararg_vals.append(inp_value)
-
-                    elif isinstance(n, varargs):
-                        if isinstance(inp_value, str) or not isinstance(
-                            inp_value, cabc.Iterable
-                        ):
-                            varargs_bad.append(n)
-                        else:
-                            vararg_vals.extend(i for i in inp_value)
-
-                    else:
-                        positional.append(inp_value)
-
-                except Exception as nex:
-                    log.debug(
-                        "Cannot prepare op(%s) need(%s) due to: %s",
-                        self.name,
-                        n,
-                        nex,
-                        exc_info=nex,
-                    )
-                    errors.append((n, nex))
-
-            if errors or missing or varargs_bad:
-                raise self._prepare_match_inputs_error(
-                    errors, missing, varargs_bad, named_inputs
-                )
-
-            results_fn = self.fn(*positional, *vararg_vals, **kwargs)
-
-            # TODO: rename op jetsam (real_)provides --> fn_expected
-            provides = self._fn_provides
-            results_op = self._zip_results_with_provides(results_fn, provides)
+            positional, varargs, kwargs = self._match_inputs_with_fn_needs(named_inputs)
+            results_fn = self.fn(*positional, *varargs, **kwargs)
+            results_op = self._zip_results_with_provides(results_fn, self._fn_provides)
 
             if outputs:
                 outputs = set(n for n in outputs if not isinstance(n, sideffect))
@@ -624,13 +625,12 @@ class FunctionalOperation(Operation, Plottable):
                 locals(),
                 "outputs",
                 "aliases",
-                "provides",
                 "results_fn",
                 "results_op",
                 operation="self",
                 args=lambda locs: {
                     "positional": locs.get("positional"),
-                    "varargs": locs.get("vararg_vals"),
+                    "varargs": locs.get("varargs"),
                     "kwargs": locs.get("kwargs"),
                 },
             )

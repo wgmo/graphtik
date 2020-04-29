@@ -339,9 +339,15 @@ Plot customizations
 ~~~~~~~~~~~~~~~~~~~~
 :term:`plotter`\s` & :term:`plot theme`
    Rendering of plots is performed by :class:`.plot.Plotter` instances.
-   All `Graphviz`_ styling attributes are defined on :class:`.plot.Theme`
-   class, which if not overridden, it is the instance in the :attr:`.Plotter.default_theme`
-   attribute.
+   All `Graphviz`_ styling attributes are defined on the *active* :class:`.plot.Theme`
+   class, which is the instance in the :attr:`.Plotter.default_theme` attribute.
+
+   The following :term:`expansions <theme expansion>` apply in the attribute-values
+   of ``Theme`` instances:
+
+   .. include:: ../../graphtik/plot.py
+      :start-after: .. theme-expansions-start
+      :end-before: .. theme-warn-start
 
    You may customize the theme and/or *plotter* behavior with various methods,
    ordered by breadth of the effects (most broadly effecting method at the top):
@@ -489,7 +495,6 @@ with the following properties, as a debug aid:
  'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream'),
  'outputs': None,
  'plan': ExecutionPlan(needs=['a'], provides=['foo'], x1 steps: screamer),
- 'provides': None,
  'results_fn': None,
  'results_op': None,
  'solution': {'a': None},

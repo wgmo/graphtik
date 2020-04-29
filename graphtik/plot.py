@@ -355,6 +355,8 @@ class Theme:
       of the current theme.
     - Any *jinja2* templates will be rendered, using as template-arguments
       all the attributes of the :class:`plot_args <.PlotArgs>` instance in use.
+    - Any *callables* will be given the :class:`plot_args <.PlotArgs>` instance in use
+      and replaced by their result.
 
     .. theme-warn-start
     .. Attention::
@@ -786,7 +788,7 @@ class StylesStack(NamedTuple):
         self, path, k, v,
     ):
         """
-        A :func:`.remap()` visit-cb to resolve :class:`.Ref`\\s and render jinja2-templates.
+        A :func:`.remap()` visit-cb to resolve :class:`.Ref`, render templates & call callables.
         """
         try:
             if isinstance(v, Ref):
@@ -795,12 +797,15 @@ class StylesStack(NamedTuple):
             elif isinstance(v, jinja2.Template):
                 visit_type = "template"
                 return (k, v.render(**self.plot_args._asdict()))
+            elif callable(v):
+                visit_type = "callable"
+                return (k, v(self.plot_args))
             return True
         except Exception as ex:
-            path = f'{"/".join(path)}.{k}'
+            path = f'{"/".join(path)}/{k}'
             raise ValueError(
-                f"Failed expanding {visit_type} @ '{path}': {v} due to: {ex}"
-            )
+                f"Failed expanding {visit_type} @ '{path}' = {v!r} due to: {type(ex).__name__}({ex})"
+            ) from ex
 
     def merge(self, debug=None) -> dict:
         """
@@ -809,6 +814,7 @@ class StylesStack(NamedTuple):
         - merge stack of styles, with their provenance if DEBUG (see :func:`remerge()`);
         - resolve any :class:`Ref`\\s (see :meth:`_expand_styles()`);
         - render jinja2 templates (see :meth:`_expand_styles()`);
+        - call *callables* with current :class:`plot_args <.PlotArgs>`.
         - workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
 
         :param debug:

@@ -152,7 +152,7 @@ class _ScreamingOperation(op.Operation):
                 operation(name="test", needs=["a"], provides=["b"])(_scream).compute,
                 named_inputs={"a": 1},
             ),
-            "outputs provides aliases results_fn results_op operation args".split(),
+            "outputs aliases results_fn results_op operation args".split(),
         ),
         (
             lambda: fnt.partial(
@@ -185,7 +185,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
             lambda: fnt.partial(
                 operation(_scream, name="test").compute, named_inputs=None
             ),
-            "outputs provides aliases results_fn results_op operation args".split(),
+            "outputs aliases results_fn results_op operation args".split(),
         ),
         (
             lambda: fnt.partial(
