@@ -83,10 +83,14 @@ When true, increase details on string-representation of network objects and erro
 
 Affected behavior:
 
+.. debug-behavior-start
+
 + net objects print details recursively;
 + plotted SVG diagrams include style-provenance as tooltips;
 + Sphinx extension also saves the original DOT file next to each image
   (see :confval:`graphtik_save_dot_files`).
+
+.. debug-behavior-end
 
 .. Note::
     The default is controlled with :envvar:`GRAPHTIK_DEBUG` environment variable.

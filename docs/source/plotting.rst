@@ -475,17 +475,27 @@ Errors & debugging
 Graphs may become arbitrary deep.  Launching a debugger-session to inspect
 deeply nested stacks is notoriously hard
 
-As an aid, you may either increase the logging verbosity, enable the :func:`.set_debug()`
-:term:`configurations` function, or both.
+Logging
+^^^^^^^
+Increase the logging verbosity; logging statements have been placed melticulously
+to describe the :term:`execution` flow (but not :term:`compilation` :-().
 
-   .. Tip::
-      The various :mod:`.network` objects & exceptions print augmented string-representations
-      when :func:`.config.set_debug` flag, which you may enable it with :envvar:`GRAPHTIK_DEBUG`
-      environment variable.
+``DEBUG`` flag
+^^^^^^^^^^^^^^
+Enable the :func:`.set_debug()` in :term:`configurations`, or externally,
+by setting the :envvar:`GRAPHTIK_DEBUG` environment variable,
+to enact the following:
 
-      From code you may wrap the code you are interested in with :func:`.config.debug_enabled`
-      "context-manager", to get augmented print-outs for selected code-paths only.
+.. include:: ../../graphtik/config.py
+   :start-after: .. debug-behavior-start
+   :end-before: .. debug-behavior-end
 
+.. Tip::
+   From code you may wrap the code you are interested in with :func:`.config.debug_enabled`
+   "context-manager", to get augmented print-outs for selected code-paths only.
+
+Jetsam on exceptions
+^^^^^^^^^^^^^^^^^^^^
 Additionally, when some operation fails, the original exception gets annotated
 with the following properties, as a debug aid:
 
@@ -554,8 +564,12 @@ The following annotated attributes *might* have meaningful value on an exception
 
 Of course you may use many of the above "jetsam" values when plotting.
 
-.. note::
-   The :ref:`plotting` capabilities, along with the above annotation of exceptions
-   with the internal state of plan/operation often renders a debugger session
-   unnecessary.  But since the state of the annotated values might be incomplete,
-   you may not always avoid one.
+Debugger
+^^^^^^^^
+The :ref:`plotting` capabilities, along with the above annotation of exceptions
+with the internal state of plan/operation often renders a debugger session
+unnecessary.  But since the state of the annotated values might be incomplete,
+you may not always avoid one.
+
+Your best shot is to enable "`post mortem debugging
+<https://docs.python.org/3/library/pdb.html>`_".
