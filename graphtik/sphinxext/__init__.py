@@ -311,7 +311,7 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
             if not caption:
                 caption = _("plottable: ``%s``") % name
             name = nodes.fully_normalize_name(name)
-            targetname = f"graphtik-{name}"
+            targetname = f"graphtik-{name}-{self.env.new_serialno('graphtik')}"
             figure["names"].append(targetname)
             self.state.document.note_explicit_target(figure, figure)
             ## adapted from: sphinx.domains.std.Target directive.
