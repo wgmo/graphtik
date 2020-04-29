@@ -627,7 +627,7 @@ class Theme:
         "style": "filled",
         "fillcolor": "yellow",
         "URL": "https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg",
-        "target": "_top",
+        "target": "_blank",
     }
 
     def __init__(self, *, _prototype: "Theme" = None, **kw):
@@ -1297,11 +1297,11 @@ class Plotter:
 
     def _add_legend_icon(self, plot_args: PlotArgs):
         """Optionally add an icon to diagrams linking to legend (if url given)."""
-        kw_legend = plot_args.theme.kw_legend
-        if kw_legend and plot_args.theme.kw_legend.get("URL"):
-            styles = self._new_styles_stack(plot_args)
-            styles.add("kw_legend")
-            plot_args.dot.add_node(pydot.Node(**styles.merge()))
+        styles = self._new_styles_stack(plot_args)
+        styles.add("kw_legend")
+        kw = styles.merge()
+        if kw.get("URL"):
+            plot_args.dot.add_node(pydot.Node(**kw))
 
     def _skip_no_plot_nodes(
         self, graph: nx.Graph, steps: Collection

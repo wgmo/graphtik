@@ -554,7 +554,7 @@ def test_node_dot_str0(dot_str_pipeline):
         <digraph&#58; strict> -> <cu&#58;sto&#58;m>;
         <node> -> <&lt;graph&gt;>;
         <cu&#58;sto&#58;m> -> <&lt;graph&gt;>;
-        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_top];
+        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
         }
         """
 
@@ -596,7 +596,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         <edge> -> <cu&#58;sto&#58;m>;
         <digraph&#58; strict> -> <cu&#58;sto&#58;m>;
         <cu&#58;sto&#58;m> -> <&lt;graph&gt;>;
-        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_top];
+        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
         }
         """
 
