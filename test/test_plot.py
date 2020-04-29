@@ -18,6 +18,7 @@ from graphtik.modifiers import optional
 from graphtik.netop import NetworkOperation
 from graphtik.plot import (
     Plotter,
+    Ref,
     StylesStack,
     Theme,
     active_plotter_plugged,
@@ -383,17 +384,16 @@ def test_Plotter_with_styles():
     assert not p.default_theme.include_steps
 
 
-def test_StylesStack_expantion():
+def test_StylesStack_expansion_ok():
     plot_args = PlotArgs(
-        name="Jack",
+        name="James",
         theme=Theme(
-            test_style1={
-                "alist": [{"callable": lambda plot_args: f"{plot_args.name} hi"}]
-            },
+            surname="Bond",
+            test_style1={"a_list": [{"ref": Ref("surname")}]},
             test_style2={
-                "alist": [{"callable": lambda plot_args: f"hi {plot_args.name}"}]
+                "a_list": [{"callable": lambda plot_args: f"{plot_args.name}"}]
             },
-            test_style3={"alist": [Template("hi {{ name }} hi")]},
+            test_style3={"a_list": [Template("{{ name }} {{theme.surname}}")]},
         ),
     )
     styles = StylesStack(plot_args, [])
@@ -402,12 +402,36 @@ def test_StylesStack_expantion():
     styles.add("test_style3")
     kw = styles.merge()
 
-    print(kw["alist"])
-    assert kw["alist"] == [
-        {"callable": "Jack hi"},
-        {"callable": "hi Jack"},
-        "hi Jack hi",
+    print(kw["a_list"])
+    assert kw["a_list"] == [
+        {"ref": "Bond"},
+        {"callable": "James"},
+        "James Bond",
     ]
+
+
+def test_StylesStack_expansion_skip_item():
+    plot_args = PlotArgs(theme=Theme(test_style={"foo": lambda pa: ...}))
+    styles = StylesStack(plot_args, [])
+    styles.add("test_style")
+    kw = styles.merge()
+    assert kw == {}
+
+
+@pytest.mark.parametrize(
+    "style, exp",
+    [
+        (Ref("BAD_REF"), "BAD_REF"),
+        (Template("{{ BAD_VAR.WORSE }}"), "BAD_VAR"),
+        (lambda pa: BAD_CALL, "BAD_CALL"),  # pylint: disable=undefined-variable
+    ],
+)
+def test_StylesStack_expansion_BAD(style, exp):
+    plot_args = PlotArgs(theme=Theme(test_style={"foo": style}))
+    styles = StylesStack(plot_args, [])
+    styles.add("test_style")
+    with pytest.raises(ValueError, match=exp):
+        styles.merge()
 
 
 def test_plotter_customizations(pipeline, monkeypatch):

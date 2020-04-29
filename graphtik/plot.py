@@ -799,12 +799,13 @@ class StylesStack(NamedTuple):
             if isinstance(v, Ref):
                 visit_type = "theme-ref"
                 return (k, v.resolve(self.plot_args.theme))
-            elif isinstance(v, jinja2.Template):
+            if isinstance(v, jinja2.Template):
                 visit_type = "template"
                 return (k, v.render(**self.plot_args._asdict()))
-            elif callable(v):
+            if callable(v):
                 visit_type = "callable"
-                return (k, v(self.plot_args))
+                v = v(self.plot_args)
+                return False if v is ... else (k, v)
             return True
         except Exception as ex:
             path = f'{"/".join(path)}/{k}'
