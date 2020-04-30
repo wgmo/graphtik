@@ -39,16 +39,22 @@ Graphtik Changelog
     - [x] plottable Operations
     - [x] Op-node badges
 
+    - [ ] sphinxext: derive filename early, to allow xrefs and links early
+    - [ ] Link to SVG image in a new window
     - [ ] Merged operation clusters
     - [ ] update legend (or generate it dynamically)
+    - [ ] sphinxext: extend standard `doctest` module (instead of sphinx-builder)
+    - [ ] fix(sphinxext): deprecated sphinx.add_object()
 
   - doc:
 
     - [x] explain rescheduled & endured in tutorial.
     - [x] `aliases` in tutorial & terms
 
+  - [ ] Optional sol_sideffects
   - [ ] Rename NetOp -> graphkit | pipeline
   - [ ] modifiers inherit a single class (to allow combinations)
+  - [ ] sphinx: autodoc pipelines
   - [ ] Allow for Optional `solution sideffect`
   - [ ] break cycles with dijkstra; weights
   - [ ] Merge tutorial (operations + composition)
@@ -71,6 +77,17 @@ https://github.com/pygraphkit/graphtik/releases
 
 Changelog
 %%%%%%%%%
+
+
+v7.1.0 (30 Apr 2020, @ankostis): Theme-ize & expand everything
+==============================================================
++ break(plot): rename graph/node/edge control attribute ``_no_plot --> no_plot``.
++ break(plot): pass verbatim any `nx-attrs` starting with ``'graphviz.'`` into
+  plotting process (instead of passing everything but private attributes).
++ break: raise ``TypeError`` instead of ``ValueError`` wherever it must.
++ ENH(plot): expand callables (beyond Refs and templates).
++ ENH(sphinxext): clicking on an SVG opens the diagram in a new tab.
++ fix(sphinxext): don't choke on duplicate ``:name:`` in :rst:dir:`graphtik`` directives.
 
 
 v7.0.0 (28 Apr 2020, @ankostis): In-solution sideffects, unified OpBuilder, plot badges
