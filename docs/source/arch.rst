@@ -442,6 +442,9 @@ Architecture
 
         .. include:: ../../graphtik/plot.py
             :start-after: .. theme-expansions-start
+            :end-before: .. theme-expansions-end
+        .. include:: ../../graphtik/plot.py
+            :start-after: .. theme-warn-start
             :end-before: .. theme-warn-end
 
     configurations

@@ -101,7 +101,7 @@ of ``Theme`` instances:
 
 .. include:: ../../graphtik/plot.py
    :start-after: .. theme-expansions-start
-   :end-before: .. theme-warn-start
+   :end-before: .. theme-expansions-end
 
 You may customize the theme and/or *plotter* behavior with various strategies,
 ordered by breadth of the effects (most broadly effecting method at the top):
@@ -152,7 +152,27 @@ ordered by breadth of the effects (most broadly effecting method at the top):
    .. hint::
       This project dogfoods (3) in its own :file:`docs/source/conf.py` sphinx file.
       In particular, it configures the base-url of operation node links
-      (by default, nodes do not link to any url).
+      (by default, nodes do not link to any url)::
+
+         ## Plot graphtik SVGs with links to docs.
+         #
+         def _make_py_item_url(fn):
+            if not inspect.isbuiltin(fn):
+               fn_name = base.func_name(fn, None, mod=1, fqdn=1, human=0)
+               if fn_name:
+                     return f"../reference.html#{fn_name}"
+
+
+         plotter = plot.get_active_plotter()
+         plot.set_active_plotter(
+            plot.get_active_plotter().with_styles(
+               kw_op_label={
+                     **plotter.default_theme.kw_op_label,
+                     "op_url": lambda plot_args: _make_py_item_url(plot_args.nx_item),
+                     "fn_url": lambda plot_args: _make_py_item_url(plot_args.nx_item.fn),
+               }
+            )
+         )
 
 
 Sphinx-generated sites

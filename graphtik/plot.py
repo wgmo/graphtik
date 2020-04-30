@@ -351,6 +351,27 @@ def _render_template(tpl: jinja2.Template, **kw) -> str:
     return tpl.render(**{k: v for k, v in kw.items() if v})
 
 
+def make_data_value_tooltip(plot_args: PlotArgs):
+    """Called on datanodes, when solution exists. """
+    node = plot_args.nx_item
+    if node in plot_args.solution:
+        val = plot_args.solution.get(node)
+        tooltip = "(None)" if val is None else f"({type(val).__name__}) {val}"
+        return quote_html_tooltips(tooltip)
+
+
+def make_op_tooltip(plot_args: PlotArgs):
+    """the string-representation of an operation (name, needs, provides)"""
+    return plot_args.nx_attrs.get("_op_tooltip", str(plot_args.nx_item))
+
+
+def make_fn_tooltip(plot_args: PlotArgs):
+    """the sources of the operation-function"""
+    if "_fn_tooltip" in plot_args.nx_attrs:
+        return plot_args.nx_attrs["_fn_tooltip"]
+    return func_source(plot_args.nx_item.fn, None, human=1)
+
+
 class Theme:
     """
     The poor man's css-like :term:`plot theme` (see also :class:`.StyleStack`).
@@ -358,17 +379,6 @@ class Theme:
     To use the values contained in theme-instances, stack them in a :class:`.StylesStack`,
     in order to apply the following :term:`theme expansion`\\s when calling
     :meth:`.StylesStack.merge`.
-
-    .. theme-expansions-start
-
-    - Any lists are merged (important for multi-valued `Graphviz`_ attributes
-      like ``style``).
-    - Any :class:`.Ref` instances are resolved against the attributes
-      of the current theme.
-    - Any *jinja2* templates are rendered, using as template-arguments
-      all the attributes of the :class:`plot_args <.PlotArgs>` instance in use.
-    - Any *callables* are given the :class:`plot_args <.PlotArgs>` instance in use
-      and replaced by their result.
 
     .. theme-warn-start
     .. Attention::
@@ -398,9 +408,6 @@ class Theme:
     overwrite_color = "SkyBlue"
     steps_color = "#00bbbb"
     evicted = "#006666"
-    #: If given, makes links from op & fn rows of operation-nodes
-    #: (see :meth:`.Plotter._make_py_item_link()``).
-    py_item_url_format: Union[str, Callable[[str], str]] = None
     #: the url to the architecture section explaining *graphtik* glossary,
     #: linked by legend.
     arch_url = "https://graphtik.readthedocs.io/en/latest/arch.html"
@@ -471,7 +478,11 @@ class Theme:
         "color": Ref("pruned_color"),
         "tooltip": "(pruned)",
     }
-    kw_data_in_solution = {"style": ["filled"], "fillcolor": Ref("fill_color")}
+    kw_data_in_solution = {
+        "style": ["filled"],
+        "fillcolor": Ref("fill_color"),
+        "tooltip": make_data_value_tooltip,
+    }
     kw_data_evicted = {"penwidth": "3", "tooltip": "(evicted)"}
     kw_data_overwritten = {"style": ["filled"], "fillcolor": Ref("overwrite_color")}
     kw_data_canceled = {
@@ -488,11 +499,14 @@ class Theme:
     #: because they are handled internally by HTML-Label, and/or
     #: interact badly with that label.
     op_bad_html_label_keys = {"shape", "label", "style"}
-    op_link_target = fn_link_target = "_top"
     #: props for operation node (outside of label))
-    kw_op = {}
-    #: props only for HTML-Table label
-    kw_op_label = {}
+    kw_op = {
+        "name": lambda pa: quote_node_id(pa.nx_item.name),
+        "shape": "plain",  # dictated by Graphviz docs
+        # Set some base tooltip, or else, "TABLE" shown...
+        "tooltip": lambda pa: graphviz_html_string(pa.nx_item.name),
+    }
+
     kw_op_executed = {"fillcolor": Ref("fill_color")}
     kw_op_endured = {
         "penwidth": Ref("resched_thickness"),
@@ -534,6 +548,18 @@ class Theme:
             },
         }
     }
+    #: props of the HTML-Table label for Operations
+    kw_op_label = {
+        "op_name": lambda pa: pa.nx_item.name,
+        "fn_name": lambda pa: pa.nx_item
+        and func_name(pa.nx_item.fn, mod=1, fqdn=1, human=1),
+        "op_tooltip": make_op_tooltip,
+        "fn_tooltip": make_fn_tooltip,
+        "op_url": Ref("op_url", default=None),
+        "op_link_target": "_top",
+        "fn_url": Ref("fn_url", default=None),
+        "fn_link_target": "_top",
+    }
     #: Try to mimic a regular `Graphviz`_ node attributes
     #: (see examples in ``test.test_plot.test_op_template_full()`` for params).
     #: TODO: fix jinja2 template is un-picklable!
@@ -548,7 +574,7 @@ class Theme:
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left"
                   {{- {
-                  'TOOLTIP': (tooltip or op_tooltip) | truncate | eee,
+                  'TOOLTIP': op_tooltip | truncate | eee,
                   'HREF': op_url | hrefer | ee,
                   'TARGET': op_link_target | e
                   } | xmlattr }}
@@ -656,13 +682,18 @@ class Theme:
         else:
             assert isinstance(_prototype, Theme), _prototype
 
-        class_attrs = {
-            k: v
-            for k, v in vars(type(self)).items()
-            if not callable(v) and not k.startswith("_")
-        }
+        class_attrs = Theme.theme_attributes(type(self))
         class_attrs.update(kw)
         vars(self).update(remap(class_attrs))
+
+    @staticmethod
+    def theme_attributes(obj) -> dict:
+        """Extract public data attributes of a :class:`Theme` instance. """
+        return {
+            k: v
+            for k, v in vars(obj).items()
+            if not callable(v) and not k.startswith("_")
+        }
 
     def with_set(self, **kw) -> "Theme":
         """Returns a deep-clone modified by `kw`."""
@@ -802,7 +833,33 @@ def remerge(*containers, source_map: list = None):
 
 
 class StylesStack(NamedTuple):
-    """A mergeable stack of dicts with their provenance, resolved from a :class:`Theme`."""
+    """
+    A mergeable stack of dicts with their provenance, resolved from a :class:`Theme`.
+
+    .. theme-expansions-start
+
+    - Any :class:`.Ref` instances are resolved against the attributes
+      of the current theme.
+
+    - Merge stack of styles, with their provenance if DEBUG (see :func:`remerge()`);
+      Any lists are merged (important for multi-valued `Graphviz`_ attributes
+      like ``style``).
+
+    - Resolve any :class:`Ref`\\s (see :meth:`_expand_styles()`);
+
+    - Render jinja2 templates (see :meth:`_expand_styles()`)
+      with template-arguments all the attributes of the :class:`plot_args <.PlotArgs>`
+      instance in use.
+
+    - Call *callables* with current :class:`plot_args <.PlotArgs>` and replace them
+      by their result.
+
+    - Any Nones above are discarded.
+
+    - Workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
+
+    .. theme-expansions-end
+    """
 
     #: current item's plot data with at least :attr:`.PlotArgs.theme` attribute. ` `
     plot_args: PlotArgs
@@ -830,35 +887,39 @@ class StylesStack(NamedTuple):
         """
         A :func:`.remap()` visit-cb to resolve :class:`.Ref`, render templates & call callables.
         """
+        visit_type = type(v).__name__
         try:
             if isinstance(v, Ref):
-                visit_type = "theme-ref"
-                return (k, v.resolve(self.plot_args.nx_attrs, self.plot_args.theme))
-            if isinstance(v, jinja2.Template):
-                visit_type = "template"
-                return (k, v.render(**self.plot_args._asdict()))
-            if callable(v):
-                visit_type = "callable"
+                v = v.resolve(self.plot_args.nx_attrs, self.plot_args.theme)
+            elif isinstance(v, jinja2.Template):
+                v = v.render(**self.plot_args._asdict())
+            elif callable(v):
                 v = v(self.plot_args)
-                return False if v is ... else (k, v)
-            return True
+            else:
+                return False if v in (..., None) else True
+            return False if v in (None, ...) else (k, v)
         except Exception as ex:
             path = f'{"/".join(path)}/{k}'
             msg = f"Failed expanding {visit_type} @ '{path}' = {v!r} due to: {type(ex).__name__}({ex})"
             if self.ignore_errors:
                 log.warning(msg)
+                return False
             else:
                 raise ValueError(msg) from ex
 
+    def expand(self, style: dict) -> dict:
+        """Apple :term:`theme expansion`\\s."""
+        style = remap(style, visit=self._expand_styles)
+
+        graphviz_style = style.get("style")
+        if isinstance(graphviz_style, (list, tuple)):
+            style["style"] = ",".join(str(i) for i in set(graphviz_style))
+
+        return style
+
     def merge(self, debug=None) -> dict:
         """
-        Recursively merge stack and process styles, in particular:
-
-        - merge stack of styles, with their provenance if DEBUG (see :func:`remerge()`);
-        - resolve any :class:`Ref`\\s (see :meth:`_expand_styles()`);
-        - render jinja2 templates (see :meth:`_expand_styles()`);
-        - call *callables* with current :class:`plot_args <.PlotArgs>`.
-        - workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
+        Recursively merge stack and :meth:`.expand` styles:
 
         :param debug:
             When not `None`, override :func:`config.is_debug` flag.
@@ -874,7 +935,7 @@ class StylesStack(NamedTuple):
             from itertools import count
 
             styles_provenance = {}
-            d = remerge(*self.named_styles, source_map=styles_provenance)
+            style = remerge(*self.named_styles, source_map=styles_provenance)
 
             ## Append debug info
             #
@@ -882,19 +943,13 @@ class StylesStack(NamedTuple):
                 {".".join(k): v for k, v in styles_provenance.items()}, indent=2
             )
             tooltip = f"- styles: {provenance_str}\n- extra_attrs: {pformat(self.plot_args.nx_attrs)}"
-            d["tooltip"] = graphviz_html_string(tooltip)
+            style["tooltip"] = graphviz_html_string(tooltip)
 
         else:
-            d = remerge(*(style_dict for _name, style_dict in self.named_styles))
-        assert isinstance(d, dict), (d, self.named_styles)
+            style = remerge(*(style_dict for _name, style_dict in self.named_styles))
+        assert isinstance(style, dict), (style, self.named_styles)
 
-        d = remap(d, visit=self._expand_styles)
-
-        graphviz_style = d.get("style")
-        if isinstance(graphviz_style, (list, tuple)):
-            d["style"] = ",".join(str(i) for i in set(graphviz_style))
-
-        return d
+        return self.expand(style)
 
 
 class Plotter:
@@ -950,7 +1005,6 @@ class Plotter:
         graph, steps = self._skip_no_plot_nodes(plot_args.graph, plot_args.steps)
         plot_args = plot_args._replace(graph=graph, steps=steps)
 
-        # TODO: build a proper PlotArgs for edges and, move to new method.
         styles = self._new_styles_stack(plot_args._replace(nx_attrs=graph.graph))
 
         styles.add("kw_graph")
@@ -1092,11 +1146,8 @@ class Plotter:
                 if solution is not None:
                     if not isinstance(nx_node, sideffect):
                         if nx_node in solution:
-                            data_tooltip = self._make_data_value_tooltip(plot_args)
-                            if data_tooltip:
-                                styles.add("node-code", {"tooltip": data_tooltip})
-
                             styles.add("kw_data_in_solution")
+
                             if nx_node in solution.overwrites:
                                 styles.add("kw_data_overwritten")
 
@@ -1109,19 +1160,9 @@ class Plotter:
             styles.add("user-overrides", _pub_props(node_attrs))
 
         else:  # OPERATION
-            op_name = nx_node.name
             label_styles = self._new_styles_stack(plot_args)
 
             label_styles.add("kw_op_label")
-            label_styles.add(
-                "node-code",
-                {
-                    "op_name": op_name,
-                    "fn_name": func_name(nx_node.fn, mod=1, fqdn=1, human=1),
-                    "op_tooltip": self._make_op_tooltip(plot_args),
-                    "fn_tooltip": self._make_fn_tooltip(plot_args),
-                },
-            )
 
             ## Op-kind
             #
@@ -1148,33 +1189,17 @@ class Plotter:
                 elif nx_node in solution.canceled:
                     label_styles.add("kw_op_canceled")
 
-            (op_url, op_link_target) = self._make_op_link(plot_args)
-            (fn_url, fn_link_target) = self._make_fn_link(plot_args)
-            label_styles.add(
-                "tooltip-code",
-                {
-                    "op_url": op_url,
-                    "op_link_target": op_link_target,
-                    "fn_url": fn_url,
-                    "fn_link_target": fn_link_target,
-                },
-            )
-
-            label_styles.add("op_badge_styles")
-
             label_styles.add("user-overrides", _pub_props(node_attrs))
+
+            # TODO: Optimize and merge badge_styles once!
+            label_styles.add("op_badge_styles")
 
             kw = label_styles.merge()
             styles = self._new_styles_stack(plot_args)
+            styles.add("kw_op")
             styles.add(
-                "init",
-                {
-                    "name": quote_node_id(nx_node.name),
-                    "shape": "plain",
-                    "label": _render_template(theme.op_template, **kw,),
-                    # Set some base tooltip, or else, "TABLE" shown...
-                    "tooltip": graphviz_html_string(op_name),
-                },
+                "op_label_template",
+                {"label": _render_template(theme.op_template, **kw,)},
             )
 
             # Graphviz node attributes interacting badly with HTML-Labels.
@@ -1187,81 +1212,6 @@ class Plotter:
 
         kw = styles.merge()
         return pydot.Node(**kw)
-
-    def _make_op_link(self, plot_args: PlotArgs) -> Tuple[Optional[str], Optional[str]]:
-        return self._make_py_item_link(plot_args, plot_args.nx_item, "op")
-
-    def _make_fn_link(self, plot_args: PlotArgs) -> Tuple[Optional[str], Optional[str]]:
-        return self._make_py_item_link(plot_args, plot_args.nx_item.fn, "fn")
-
-    def _make_py_item_link(
-        self, plot_args: PlotArgs, item, prefix
-    ) -> Tuple[Optional[str], Optional[str]]:
-        """
-        Deduce fn's url (e.g. docs) from theme, or from override in  `node_attrs`.
-
-        :return:
-            Search and return, in this order, any pair with truthy "url" element:
-
-            1. node-attrs: ``(_{prefix}_url, _{prefix}_link_target)``
-            2. theme-attributes: ``({prefix}_url, {prefix}_link_target)``
-            3. fallback: ``(None, None)``
-
-            An existent link-target from (1) still applies even if (2) is selected.
-        """
-        node_attrs = plot_args.nx_attrs
-        if f"_{prefix}_url" in node_attrs:
-            return (
-                node_attrs[f"_{prefix}_url"],
-                node_attrs.get(f"_{prefix}_link_target"),
-            )
-
-        fn_link = (None, None)
-        url_format = plot_args.theme.py_item_url_format
-        if url_format:
-            dot_path = func_name(plot_args.nx_item.fn, None, mod=1, fqdn=1, human=0)
-            if dot_path:
-                url_data = {
-                    "dot_path": dot_path,
-                    "posix_path": dot_path.replace(".", "/"),
-                }
-
-                fn_url = (
-                    url_format(url_data)
-                    if callable(url_format)
-                    else url_format % url_data
-                )
-                fn_link = (
-                    fn_url,
-                    node_attrs.get(
-                        f"_{prefix}_link_target", plot_args.theme.fn_link_target
-                    ),
-                )
-
-        return fn_link
-
-    def _make_data_value_tooltip(self, plot_args: PlotArgs):
-        """Called on datanodes, when solution exists. """
-        node = plot_args.nx_item
-        if node in plot_args.solution:
-            val = plot_args.solution.get(node)
-            tooltip = "(None)" if val is None else f"({type(val).__name__}) {val}"
-            return quote_html_tooltips(tooltip)
-
-    def _make_op_tooltip(self, plot_args: PlotArgs):
-        """the string-representation of an operation (name, needs, provides)"""
-        return plot_args.nx_attrs.get("_op_tooltip", str(plot_args.nx_item))
-
-    def _make_fn_tooltip(self, plot_args: PlotArgs):
-        """the sources of the operation-function"""
-        if "_fn_tooltip" in plot_args.nx_attrs:
-            return plot_args.nx_attrs["_fn_tooltip"]
-
-        fn_source = func_source(plot_args.nx_item.fn, None, human=1)
-        if fn_source:
-            fn_source = fn_source
-
-        return fn_source
 
     def _append_or_cluster_node(self, plot_args: PlotArgs) -> None:
         """Add dot-node in dot now, or "cluster" it, to be added later. """
@@ -1441,14 +1391,18 @@ class Plotter:
         """
         if theme is None:
             theme = self.default_theme
-        class_attrs = {
-            k: v
-            for k, v in vars(type(theme)).items()
-            if not callable(v) and not k.startswith("_")
+
+        # Expand all Theme styles
+        #
+        plot_args = PlotArgs(
+            name="legend", plotter=self, theme=theme, solution={}, nx_attrs={}
+        )
+        ss = self._new_styles_stack(plot_args, ignore_errors=True)
+        theme_styles = {
+            attr: ss.expand(d) if isinstance(d, dict) else d
+            for attr, d in Theme.theme_attributes(theme).items()
         }
-        styles = self._new_styles_stack(PlotArgs(theme=theme))
-        styles.add("class_attributes", class_attrs)
-        theme_kw = styles.merge()
+
         ## From https://stackoverflow.com/questions/3499056/making-a-legend-key-in-graphviz
         # Render it manually with these python commands, and remember to update result in git:
         #
@@ -1528,7 +1482,7 @@ class Plotter:
             }
         }
         """ % {
-            **theme_kw,
+            **theme_styles,
         }
 
         dot = pydot.graph_from_dot_data(dot_text)[0]

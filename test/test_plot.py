@@ -546,22 +546,22 @@ def test_node_dot_str0(dot_str_pipeline):
         <digraph&#58; strict> [margin="0.02,0.02", shape=invhouse];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET=""
+                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET="_top"
                 ><B>OP:</B> <I>node</I></TD>
                 <TD BORDER="1" SIDES="b"></TD>
             </TR><TR>
-                <TD COLSPAN="2" ALIGN="left" TOOLTIP="Same as a + b." TARGET=""
+                <TD COLSPAN="2" ALIGN="left" TOOLTIP="Same as a + b." TARGET="_top"
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
         <&lt;graph&gt;> [margin="0.02,0.02", shape=house];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET=""
+                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
                 <TD BORDER="1" SIDES="b"></TD>
             </TR><TR>
-                <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET=""
+                <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET="_top"
                 ><B>FN:</B> test.test_plot.func</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
@@ -600,11 +600,11 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         <&lt;graph&gt;> [fillcolor=SkyBlue, margin="0.02,0.02", shape=house, style=filled, tooltip="(None)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
             <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
+                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
                 <TD BORDER="1" SIDES="b"></TD>
             </TR><TR>
-                <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" HREF="abc#{&#x27;dot_path&#x27;: &#x27;test.test_plot.func&#x27;, &#x27;posix_path&#x27;: &#x27;test/test_plot/func&#x27;}" TARGET="bad"
+                <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET="_top"
                 ><B>FN:</B> test.test_plot.func</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
@@ -622,12 +622,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     sol = dot_str_pipeline.compute({"edge": 1, "digraph: strict": 2})
     dot_str = str(
         sol.plot(
-            graph=overlay,
-            theme=Theme(
-                py_item_url_format="abc#%s",
-                op_link_target="_self",
-                fn_link_target="bad",
-            ),
+            graph=overlay, theme=Theme(op_link_target="_self", fn_link_target="bad",),
         )
     )
 
@@ -641,20 +636,9 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         sol.plot(
             graph=overlay,
             plotter=get_active_plotter().with_styles(
-                py_item_url_format="abc#%s",
-                op_link_target="_self",
-                fn_link_target="bad",
+                op_link_target="_self", fn_link_target="bad",
             ),
         )
     )
-    assert _striplines(dot_str) == _striplines(exp)
-    assert "<node>" not in dot_str
-
-    ## (last one) Patch theme directly on default active-plotter.
-    #
-    theme = get_active_plotter().default_theme
-    monkeypatch.setattr(theme, "py_item_url_format", "abc#%s")
-    monkeypatch.setattr(theme, "op_link_target", "_self")
-    monkeypatch.setattr(theme, "fn_link_target", "bad")
     assert _striplines(dot_str) == _striplines(exp)
     assert "<node>" not in dot_str

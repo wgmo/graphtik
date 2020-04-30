@@ -513,12 +513,13 @@ class Plottable(abc.ABC):
             - "private" attributes: those starting with underscore(``_``),
               handled by :term:`plotter`:
 
-              - ``_fn_link_target`` & ``_fn_link_target`` *(node)*: if truthy,
-                override result 2-tuple of :meth:`_get_fn_link()`.
-              - ``_op_tooltip`` & ``_fn_tooltip`` *(node)*: if truthy,
-                override those derrived from :meth:`_make_op_tooltip()` &
-                :meth:`_make_op_tooltip()`.
-              - ``_no_plot``: nodes and/or edges skipped from plotting
+              - ``_op_tooltip`` & ``_fn_tooltip`` *(node-attributes)*: if truthy,
+                override those derrived from :meth:`.make_op_tooltip()` &
+                :meth:`.make_op_tooltip()`.
+              - ``_op_fop_url`` & ``_fn_url`` *(node-attributes)*: if truthy,
+                override those derrived from :meth:`.make_fn_url()` &
+                :meth:`.make_op_url()`.
+              - ``_no_plot`` *(node/edge attribute)*: element skipped from plotting
                 (see *"Examples:"* section, below)
 
             - "public" attributes: reaching `Graphviz`_ as-is, e.g.
