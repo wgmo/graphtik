@@ -332,24 +332,27 @@ def test_as_renames(inp, exp):
     "op_kw, ex",
     [
         (
-            dict(aliases={"a": 1}),
+            lambda: dict(aliases={"a": 1}),
             r"The `aliases` for ['a'] rename ['a'], not found in provides []!",
         ),
         (
-            dict(name="t", provides="a", aliases={"a": 1, "b": 2}),
+            lambda: dict(name="t", provides="a", aliases={"a": 1, "b": 2}),
             r"The `aliases` for ['a', 'b'] rename ['b'], not found in provides ['a']!",
         ),
         (
-            dict(name="t", provides=sideffect("a"), aliases={sideffect("a"): 1}),
+            lambda: dict(
+                name="t", provides=sideffect("a"), aliases={sideffect("a"): 1}
+            ),
             "must not contain `sideffects",
         ),
         (
-            dict(name="t", provides="a", aliases={"a": sideffect("AA")}),
+            lambda: dict(name="t", provides="a", aliases={"a": sideffect("AA")}),
             "must not contain `sideffects",
         ),
     ],
 )
 def test_provides_aliases_BAD(op_kw, ex):
+    op_kw = op_kw()
     with pytest.raises(ValueError, match=re.escape(ex)):
         operation(str, **op_kw)()
 
