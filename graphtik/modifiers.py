@@ -258,12 +258,6 @@ class sideffect(str):
         >>> sideffect("price[sales_df]")  # doctest: +SKIP
         'sideffect(price[sales_df])'
 
-    .. note::
-        An `operation` with *sideffects* outputs only, have functions that return
-        no value at all (like the one above).  Such operation would still be called for
-        their side-effects, if requested in `outputs`.
-
-
     **Example:**
 
     A typical use-case is to signify changes in some "global" context,
@@ -294,6 +288,15 @@ class sideffect(str):
 
     .. graphtik::
         :name: sideffect
+
+    .. note::
+        Something has to provide a sideffect for a function needing it to execute -
+        this could be another operation, like above, or the user-inputs;
+        just specify some dummy value for the sideffect:
+
+            >>> sol = graph.compute({sideffect("lights off"): True})
+
+        .. graphtik::
 
     """
 
