@@ -259,7 +259,9 @@ class NetworkOperation(Operation, Plottable):
         plot_args = plottable.prepare_plot_args(plot_args)
         assert plot_args.graph, plot_args
 
-        plot_args.graph.graph.setdefault("label", graphviz_html_string(self.name))
+        plot_args.graph.graph.setdefault(
+            "graphviz.label", graphviz_html_string(self.name)
+        )
         plot_args = plot_args._replace(plottable=self)
 
         return plot_args

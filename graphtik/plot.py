@@ -261,11 +261,6 @@ def as_identifier(s):
     return s
 
 
-def _pub_props(*d, **kw) -> None:
-    """Keep kv-pairs from dictionaries whose keys do not start with underscore(``_``)."""
-    return {k: v for k, v in dict(*d, *kw).items() if not str(k).startswith("_")}
-
-
 class Ref:
     """Deferred attribute reference :meth:`resolve`\\d  on a some object(s)."""
 
@@ -832,6 +827,12 @@ def remerge(*containers, source_map: list = None):
     return ret
 
 
+#: Any nx-attributes starting with this prefix
+#: are appended verbatim as graphviz attributes,
+#: by :meth:`.stack_user_style()`.
+USER_STYLE_PREFFIX = "graphviz."
+
+
 class StylesStack(NamedTuple):
     """
     A mergeable stack of dicts preserving provenance and :term:`theme expansion`.
@@ -883,6 +884,19 @@ class StylesStack(NamedTuple):
             kw = getattr(self.plot_args.theme, name)  # will scream early
         if kw:
             self.named_styles.append((name, kw))
+
+    def stack_user_style(self, nx_attrs: dict, skip=()):
+        """
+        Appends keys in `nx_attrs` starting with :data:`USER_STYLE_PREFFIX` into the stack.
+        """
+        if nx_attrs:
+            kw = {
+                k.lstrip(USER_STYLE_PREFFIX): v
+                for k, v in nx_attrs.items()
+                if k.startswith(USER_STYLE_PREFFIX) and k not in skip
+            }
+
+            self.add("user-overrides", kw)
 
     def expand(self, style: dict) -> dict:
         """
@@ -1042,7 +1056,7 @@ class Plotter:
             ),
         )
 
-        styles.add("user-overrides", _pub_props(graph.graph))
+        styles.stack_user_style(graph.graph)
 
         kw = styles.merge()
         dot = pydot.Dot(**kw)
@@ -1182,7 +1196,7 @@ class Plotter:
                         else:
                             styles.add("kw_data_evicted")
 
-            styles.add("user-overrides", _pub_props(node_attrs))
+            styles.stack_user_style(node_attrs)
 
         else:  # OPERATION
             label_styles = self._new_styles_stack(plot_args)
@@ -1214,7 +1228,7 @@ class Plotter:
                 elif nx_node in solution.canceled:
                     label_styles.add("kw_op_canceled")
 
-            label_styles.add("user-overrides", _pub_props(node_attrs))
+            label_styles.stack_user_style(node_attrs)
 
             # TODO: Optimize and merge badge_styles once!
             label_styles.add("op_badge_styles")
@@ -1227,13 +1241,8 @@ class Plotter:
                 {"label": _render_template(theme.op_template, **kw,)},
             )
 
-            # Graphviz node attributes interacting badly with HTML-Labels.
-            #
-            bad_props = theme.op_bad_html_label_keys
-            styles.add(
-                "user-overrides",
-                {k: v for k, v in _pub_props(node_attrs).items() if k not in bad_props},
-            )
+            # Exclude Graphviz node attributes interacting badly with HTML-Labels.
+            styles.stack_user_style(node_attrs, skip=theme.op_bad_html_label_keys)
 
         kw = styles.merge()
         return pydot.Node(**kw)
@@ -1299,7 +1308,7 @@ class Plotter:
         ):
             styles.add("kw_edge_broken")
 
-        styles.add("user-overrides", _pub_props(edge_attrs))
+        styles.stack_user_style(edge_attrs)
         kw = styles.merge()
         edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
 

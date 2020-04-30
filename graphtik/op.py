@@ -649,7 +649,7 @@ class FunctionalOperation(Operation, Plottable):
         from .netop import compose
         from .plot import graphviz_html_string
 
-        is_user_label = bool(plot_args.graph and plot_args.graph.get("label"))
+        is_user_label = bool(plot_args.graph and plot_args.graph.get("graphviz.label"))
         plottable = compose(self.name, self)
         plot_args = plot_args.with_defaults(name=self.name)
         plot_args = plottable.prepare_plot_args(plot_args)
@@ -657,8 +657,8 @@ class FunctionalOperation(Operation, Plottable):
 
         ## Operations don't need another name visible.
         #
-        if not is_user_label:
-            del plot_args.graph.graph["label"]
+        if is_user_label:
+            del plot_args.graph.graph["graphviz.label"]
         plot_args = plot_args._replace(plottable=self)
 
         return plot_args

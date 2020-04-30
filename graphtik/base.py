@@ -508,28 +508,21 @@ class Plottable(abc.ABC):
             (optional) A :class:`nx.Digraph` with overrides to merge with the graph provided
             by underlying plottables (translated by the :term:`active plotter`).
 
-            It may contain "public" or "private *graph*, *node* & *edge* attributes:
+            It may contain *graph*, *node* & *edge* attributes for any usage,
+            but these conventions apply:
 
-            - "private" attributes: those starting with underscore(``_``),
-              handled by :term:`plotter`:
+            ``'graphviz.xxx'`` *(graph/node/edge attributes)*
+                Any "user-overrides" with this prefix are sent verbatim a `Graphviz`_
+                attributes.
 
-              - ``_op_tooltip`` & ``_fn_tooltip`` *(node-attributes)*: if truthy,
-                override those derrived from :meth:`.make_op_tooltip()` &
-                :meth:`.make_op_tooltip()`.
-              - ``_op_fop_url`` & ``_fn_url`` *(node-attributes)*: if truthy,
-                override those derrived from :meth:`.make_fn_url()` &
-                :meth:`.make_op_url()`.
-              - ``_no_plot`` *(node/edge attribute)*: element skipped from plotting
+                .. Note::
+
+                    Remember to escape those values as `Graphviz`_ HTML-Like strings
+                    (use :func:`.plot.graphviz_html_string()`).
+
+            ``_no_plot`` *(node/edge attribute)*
+                element skipped from plotting
                 (see *"Examples:"* section, below)
-
-            - "public" attributes: reaching `Graphviz`_ as-is, e.g.
-              to set ``spline -> ortho`` on the graph attributes
-              (this can also be achieved by modified :term:`plot theme`).
-
-              .. Note::
-
-                Remember to escape those values as `Graphviz`_ HTML-Like strings
-                (use :func:`.plot.graphviz_html_string()`).
 
             :seealso: :attr:`.PlotArgs.graph`
         :param inputs:

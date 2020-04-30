@@ -587,7 +587,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     overlay = nx.DiGraph()
     hidden_op = dot_str_pipeline.net.find_op_by_name("node")
     overlay.add_node(hidden_op, _no_plot=True)
-    overlay.graph["splines"] = "ortho"
+    overlay.graph["graphviz.splines"] = "ortho"
 
     exp = """
         digraph solution_x5_nodes {
