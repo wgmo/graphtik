@@ -7,14 +7,175 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 :term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
 """
 import re
-from typing import Tuple
+import enum
+from typing import Tuple, Union
 
 
-class mapped(str):
+class _Optionals(enum.Enum):
+    optional = 1
+    vararg = 2
+    varargs = 3
+
+    @property
+    def varargish(self):
+        return self.value > 1
+
+
+class Dependency(str):
+    # avoid __dict__ on instances
+    __slots__ = (
+        "fn_kwarg",
+        "optional",
+        "sideffected",
+        "sideffects",
+        "_repr",
+    )
+
+    #: Map my name in `needs` into this kw-argument of the function.
+    fn_kwarg: str
+    #: required = None, regular optional or varargish?
+    optional: _Optionals
+    #: An existing `dependency` in `solution` that sustain (must have sustained)
+    #: the :term:`sideffects` by(for) the underlying function.
+    sideffected: str
+    #: At least one name(s) denoting the :term:`sideffects` modification(s) on
+    #: the :term:`sideffected`, performed/required by the operation.
+    #: If it is an empty tuple`, it is an abstract sideffect.
+    sideffects: Tuple[Union[str, None]]
+    #: pre-calculcated representation
+    _repr: str
+
+    def __new__(
+        cls,
+        name: str,
+        fn_kwarg: str = None,
+        optional: _Optionals = None,
+        sideffects: Tuple[Union[str, None]] = None,
+    ) -> "Dependency":
+        sideffected = _repr = None
+        ## Sanity checks and decide
+        #  - string-name on sideffects and
+        #  - repr for all
+        #
+        if optional and optional.varargish:
+            assert not fn_kwarg and not sideffects, (
+                "Varargish cannot map `fn_kwargs` or sideffects:",
+                name,
+                fn_kwarg,
+                optional,
+                optional,
+                sideffects,
+            )
+            _repr = f"{optional.name}({name!r})"
+        else:
+            if sideffects is not None:
+                if sideffects == ():
+                    assert fn_kwarg is None, (
+                        "Pure sideffects cannot map `fn_kwarg`:",
+                        name,
+                        fn_kwarg,
+                        optional,
+                        sideffects,
+                    )
+
+                    # m = re.match(r"sideffect\((.*)\)", name)
+                    # if m:
+                    #     name = m.group(1)
+                    name = f"sideffect: {name}"
+                    _repr = name  # avoid quotes around whole repr
+                else:  # sol_sideffect
+                    sideffected = name
+                    sfx_str = ", ".join(str(i) for i in sideffects)
+                    qmark = "?" if optional else ""
+                    name = f"sol_sideffect{qmark}({name!r}<--{sfx_str!r})"
+                    if fn_kwarg:
+                        name = f"{name[:-1]}, fn_kwarg={fn_kwarg!r})"
+                    _repr = name  # avoid quotes around whole repr
+            elif optional or fn_kwarg:
+                kwarg_str = f"-->{fn_kwarg!r}" if fn_kwarg else ""
+                # TODO: Use qmark for optional
+                _repr = f"{'optional' if optional else 'mapped'}({name!r}{kwarg_str})"
+
+        obj = str.__new__(cls, name)
+
+        obj._repr = str(_repr) if _repr is not None else None
+        obj.fn_kwarg = fn_kwarg
+        obj.optional = optional
+        obj.sideffected = sideffected
+        obj.sideffects = sideffects
+
+        return obj
+
+    @property
+    def fn_arg(self):
+        # TODO: DROPPPPP renamed fn_arg
+        return self.fn_kwarg
+
+    def __repr__(self):
+        return super().__repr__() if self._repr is None else self._repr
+
+
+def is_mapped(dep) -> bool:
+    try:
+        return bool(dep.fn_kwarg)
+    except Exception:
+        return False
+
+
+def is_optional(dep) -> bool:
+    try:
+        return bool(dep.optional)
+    except Exception:
+        return False
+
+
+def is_vararg(dep) -> bool:
+    try:
+        return dep.optional is _Optionals.vararg
+    except Exception:
+        return False
+
+
+def is_varargs(dep) -> bool:
+    try:
+        return dep.optional is _Optionals.varargs
+    except Exception:
+        return False
+
+
+def is_varargish(dep) -> bool:
+    try:
+        return dep.optional.varargish
+    except Exception:
+        return False
+
+
+def is_sideffect(dep) -> bool:
+    try:
+        return dep.sideffects is not None
+    except Exception:
+        return False
+
+
+def is_pure_sideffect(dep) -> bool:
+    try:
+        return dep.sideffects == ()
+    except Exception:
+        return False
+
+
+def is_sol_sideffect(dep) -> bool:
+    try:
+        return bool(dep.sideffected)
+    except Exception:
+        return False
+
+
+def mapped(name: str, fn_kwarg: str):
     """
     Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
 
-    :param fn_arg:
+    :param fn_kwarg:
         The argument-name corresponding to this named-input.
 
         .. Note::
@@ -49,28 +210,10 @@ class mapped(str):
 
         .. graphtik::
     """
-
-    __slots__ = ("fn_arg",)  # avoid __dict__ on instances
-
-    fn_arg: str
-
-    def __new__(cls, inp_key: str, fn_arg: str = None) -> "optional":
-        obj = super().__new__(cls, inp_key)
-        obj.__init__(inp_key, str(fn_arg))
-        return obj
-
-    def __init__(self, _inp_key: str, fn_arg: str = None):
-        self.fn_arg = fn_arg
-
-    def __repr__(self):
-        return (
-            str.__repr__(self)
-            if self.fn_arg is None
-            else f"mapped({str.__repr__(self)}-->{self.fn_arg!r})"
-        )
+    return Dependency(name, fn_kwarg=fn_kwarg)
 
 
-class optional(mapped):
+def optional(name: str, fn_kwarg: str = None):
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
@@ -117,16 +260,10 @@ class optional(mapped):
                             fn='myadd')
 
     """
-
-    def __repr__(self):
-        return (
-            f"optional({str.__repr__(self)})"
-            if self.fn_arg is None
-            else f"optional({str.__repr__(self)}-->{self.fn_arg!r})"
-        )
+    return Dependency(name, fn_kwarg=fn_kwarg, optional=_Optionals.optional)
 
 
-class vararg(str):
+def vararg(name: str):
     """
     Annotate :term:`optionals` `needs` to  be fed as op-function's ``*args`` when present in inputs.
 
@@ -164,14 +301,10 @@ class vararg(str):
         {'a': 5, 'sum': 5}
 
     """
-
-    __slots__ = ()  # avoid __dict__ on instances
-
-    def __repr__(self):
-        return "vararg('%s')" % self
+    return Dependency(name, optional=_Optionals.vararg)
 
 
-class varargs(str):
+def varargs(name: str):
     """
     Like :class:`vararg`, naming an :term:`optional <optionals>` *iterable* value in the inputs.
 
@@ -225,13 +358,10 @@ class varargs(str):
 
     """
 
-    __slots__ = ()  # avoid __dict__ on instances
-
-    def __repr__(self):
-        return "varargs('%s')" % self
+    return Dependency(name, optional=_Optionals.varargs)
 
 
-class sideffect(str):
+def sideffect(name, optional: bool = None):
     """
     Abstract :term:`sideffects` take part in the graph but not when calling functions.
 
@@ -299,17 +429,18 @@ class sideffect(str):
         .. graphtik::
 
     """
-
-    __slots__ = ()  # avoid __dict__ on instances
-
-    def __new__(cls, name):
-        m = re.match(r"sideffect\((.*)\)", name)
-        if m:
-            name = m.group(1)
-        return super().__new__(cls, f"sideffect: {name}")
+    return Dependency(
+        name, optional=_Optionals.optional if optional else None, sideffects=()
+    )
 
 
-class sol_sideffect(sideffect):
+def sol_sideffect(
+    sideffected: str,
+    sideffect0: str,
+    *sideffects: str,
+    optional: bool = None,
+    fn_kwarg: str = None,
+):
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
 
@@ -401,26 +532,10 @@ class sol_sideffect(sideffect):
         :name: solution-sideffects
 
     """
-
-    __slots__ = (
-        "sideffected",
-        "sideffects",
-    )  # avoid __dict__ on instances
-
-    #: An existing `dependency` in `solution` that sustain (must have sustained)
-    #: the :term:`sideffects` by(for) the underlying function.
-    sideffected: str
-    #: At least one name(s) denoting the :term:`sideffects` modification(s) on
-    #: the :term:`sideffected`, performed/required by the operation.
-    sideffects: Tuple[str]
-
-    def __new__(cls, sideffected, sideffect0, *sideffects):
-        sideffects = (sideffect0,) + sideffects
-        sfx_str = ", ".join(str(i) for i in sideffects)
-        obj = str.__new__(cls, f"sol_sideffect({sideffected!r}<--{sfx_str!r}")
-        obj.__init__(sideffected, sideffects)
-        return obj
-
-    def __init__(self, sideffected, *sideffects):
-        self.sideffected = sideffected
-        self.sideffects = sideffects
+    sideffects = (sideffect0,) + sideffects
+    return Dependency(
+        sideffected,
+        sideffects=sideffects,
+        optional=_Optionals.optional if optional else None,
+        fn_kwarg=fn_kwarg,
+    )
