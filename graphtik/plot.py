@@ -834,7 +834,7 @@ def remerge(*containers, source_map: list = None):
 
 class StylesStack(NamedTuple):
     """
-    A mergeable stack of dicts with their provenance, resolved from a :class:`Theme`.
+    A mergeable stack of dicts preserving provenance and :term:`theme expansion`.
 
     .. theme-expansions-start
 
@@ -884,35 +884,54 @@ class StylesStack(NamedTuple):
         if kw:
             self.named_styles.append((name, kw))
 
-    def _expand_styles(
-        self, path, k, v,
-    ):
-        """
-        A :func:`.remap()` visit-cb to resolve :class:`.Ref`, render templates & call callables.
-        """
-        visit_type = type(v).__name__
-        try:
-            if isinstance(v, Ref):
-                v = v.resolve(self.plot_args.nx_attrs, self.plot_args.theme)
-            elif isinstance(v, jinja2.Template):
-                v = v.render(**self.plot_args._asdict())
-            elif callable(v):
-                v = v(self.plot_args)
-            else:
-                return False if v in (..., None) else True
-            return False if v in (None, ...) else (k, v)
-        except Exception as ex:
-            path = f'{"/".join(path)}/{k}'
-            msg = f"Failed expanding {visit_type} @ '{path}' = {v!r} due to: {type(ex).__name__}({ex})"
-            if self.ignore_errors:
-                log.warning(msg)
-                return False
-            else:
-                raise ValueError(msg) from ex
-
     def expand(self, style: dict) -> dict:
-        """Apple :term:`theme expansion`\\s."""
-        style = remap(style, visit=self._expand_styles)
+        """
+        Apply :term:`theme expansion`\\s on an already merged style.
+
+        .. theme-expansions-start
+
+        - Any :class:`.Ref` instances are resolved, first against the current *nx_attrs*
+          and then against the attributes of the current theme.
+
+        - Render jinja2 templates (see :meth:`_expand_styles()`)
+          with template-arguments all the attributes of the :class:`plot_args <.PlotArgs>`
+          instance in use.
+
+        - Call *callables* with current :class:`plot_args <.PlotArgs>` and replace them
+          by their result.
+
+        - Any Nones above are discarded.
+
+        - Workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
+
+        .. theme-expansions-end
+        """
+
+        def expand_visitor(path, k, v):
+            """
+            A :func:`.remap()` visit-cb to resolve :class:`.Ref`, render templates & call callables.
+            """
+            visit_type = type(v).__name__
+            try:
+                if isinstance(v, Ref):
+                    v = v.resolve(self.plot_args.nx_attrs, self.plot_args.theme)
+                elif isinstance(v, jinja2.Template):
+                    v = v.render(**self.plot_args._asdict())
+                elif callable(v):
+                    v = v(self.plot_args)
+                else:
+                    return False if v in (..., None) else True
+                return False if v in (None, ...) else (k, v)
+            except Exception as ex:
+                path = f'{"/".join(path)}/{k}'
+                msg = f"Failed expanding {visit_type} @ '{path}' = {v!r} due to: {type(ex).__name__}({ex})"
+                if self.ignore_errors:
+                    log.warning(msg)
+                    return False
+                else:
+                    raise ValueError(msg) from ex
+
+        style = remap(style, visit=expand_visitor)
 
         graphviz_style = style.get("style")
         if isinstance(graphviz_style, (list, tuple)):
