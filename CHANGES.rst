@@ -217,7 +217,7 @@ v6.0.0 (13 Apr 2020, @ankostis): New Plotting Device...
       >>> from graphtik import operation, varargs
       >>> from graphtik.plot import get_active_plotter
       >>> op = operation(print, name='print-something', needs=varargs("any"), provides="str")
-      >>> dot = op.plot(plotter=get_active_plotter().with_styles(kw_legend=None))
+      >>> dot = op.plot(plotter=get_active_plotter().with_styles(kw_legend={}))
 
   + ENH: Convey graph, node & edge ("non-private") attributes from the *networkx* graph
     given to the :term:`plotter`.
