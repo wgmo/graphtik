@@ -520,7 +520,7 @@ class Plottable(abc.ABC):
                     Remember to escape those values as `Graphviz`_ HTML-Like strings
                     (use :func:`.plot.graphviz_html_string()`).
 
-            ``_no_plot`` *(node/edge attribute)*
+            ``no_plot`` *(node/edge attribute)*
                 element skipped from plotting
                 (see *"Examples:"* section, below)
 
@@ -644,7 +644,7 @@ class Plottable(abc.ABC):
 
         >>> g = nx.DiGraph()  # the overlay
         >>> to_hide = netop.net.find_op_by_name("sub")
-        >>> g.add_node(to_hide, _no_plot=True)
+        >>> g.add_node(to_hide, no_plot=True)
         >>> dot = netop.plot(graph=g)
         >>> assert "<sub>" not in str(dot), str(dot)
 

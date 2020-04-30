@@ -1326,21 +1326,17 @@ class Plotter:
         self, graph: nx.Graph, steps: Collection
     ) -> Tuple[nx.Graph, Collection]:
         """
-        Drop any nodes, steps & edges with "_no_plot" attribute.
+        Drop any nodes, steps & edges with "no_plot" attribute.
 
         :param graph:
             modifies it(!) by removing those items
         """
-        nodes_to_del = {n for n, no_plot in graph.nodes.data("_no_plot") if no_plot}
+        nodes_to_del = {n for n, no_plot in graph.nodes.data("no_plot") if no_plot}
         graph.remove_nodes_from(nodes_to_del)
         if steps:
             steps = [s for s in steps if s not in nodes_to_del]
         graph.remove_edges_from(
-            [
-                (src, dst)
-                for src, dst, no_plot in graph.edges.data("_no_plot")
-                if no_plot
-            ]
+            [(src, dst) for src, dst, no_plot in graph.edges.data("no_plot") if no_plot]
         )
 
         return graph, steps
