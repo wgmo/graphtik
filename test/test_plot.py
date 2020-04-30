@@ -355,8 +355,15 @@ def test_style_Ref():
     class C:
         arch_url = "1"
 
-    s = s.resolve(C)
-    assert str(s) == "1"
+    class C2:
+        arch_url = "2"
+
+    ss = s.resolve(C)
+    assert str(ss) == "1"
+    ss = s.resolve(C, C2)
+    assert str(ss) == "1"
+    ss = s.resolve(C2, C)
+    assert str(ss) == "2"
 
     r = plot.Ref("resched_thickness")  # int target
     str(r)  # should not scream

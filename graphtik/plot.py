@@ -267,18 +267,21 @@ def _pub_props(*d, **kw) -> None:
 
 
 class Ref:
-    """Deferred attribute reference, :meth:`resolve`\\d when a `base` is given."""
+    """Deferred attribute reference :meth:`resolve`\\d  on a some object(s)."""
 
     __slots__ = ("ref",)
 
-    def __init__(self, ref, base=None):
+    def __init__(self, ref):
         self.ref = ref
 
-    def resolve(self, base, default=...):
+    def resolve(self, *objects, default=...):
         """Makes re-based clone to the given class/object."""
+        ref = self.ref
+        for b in objects:
+            if hasattr(b, ref):
+                return getattr(b, ref)
         if default is ...:
-            return getattr(base, self.ref)
-        return getattr(base, self.ref, default)
+            raise AttributeError(f"Reference {ref!r} not found in {objects}")
 
     def __repr__(self):
         return f"Ref('{self.ref}')"
@@ -826,7 +829,7 @@ class StylesStack(NamedTuple):
         try:
             if isinstance(v, Ref):
                 visit_type = "theme-ref"
-                return (k, v.resolve(self.plot_args.theme))
+                return (k, v.resolve(self.plot_args.nx_attrs, self.plot_args.theme))
             if isinstance(v, jinja2.Template):
                 visit_type = "template"
                 return (k, v.render(**self.plot_args._asdict()))
