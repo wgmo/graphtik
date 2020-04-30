@@ -21,7 +21,7 @@ import logging
 import os
 import re
 import textwrap
-from collections import namedtuple
+from collections import abc, namedtuple
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import partial
@@ -40,7 +40,12 @@ from typing import (
 import jinja2
 import networkx as nx
 import pydot
-from boltons.iterutils import default_enter, default_visit, get_path, remap
+from boltons.iterutils import (
+    default_enter,
+    default_exit,
+    get_path,
+    remap,
+)
 
 from .base import PlotArgs, func_name, func_source
 from .config import is_debug
@@ -659,7 +664,10 @@ class Theme:
 
 def remerge(*containers, source_map: list = None):
     """
-    Merge recursively dicts or lists with :func:`boltons.iterutils.remap()`.
+    Merge recursively dicts and extend lists with :func:`boltons.iterutils.remap()` ...
+
+    screaming on type conflicts, ie, a list needs a list, etc, unless one of them
+    is None, which is ignored.
 
     :param containers:
         a list of dicts or lists to merge; later ones take precedence
@@ -679,6 +687,7 @@ def remerge(*containers, source_map: list = None):
         returns a new, merged top-level container.
 
     - Adapted from https://gist.github.com/mahmoud/db02d16ac89fa401b968
+      but for lists and dicts only, ignoring Nones and screams on incompatible types.
     - Discusson in: https://gist.github.com/pleasantone/c99671172d95c3c18ed90dc5435ddd57
 
 
@@ -719,49 +728,68 @@ def remerge(*containers, source_map: list = None):
      ('subdict', 'overridden_key2'): 'overrides'}
     """
 
-    if source_map is None:
-        containers = [(id(t), t) for t in containers]
-
     ret = None
 
-    def remerge_enter(path, key, value):
-        new_parent, new_items = default_enter(path, key, value)
+    def remerge_enter(path, key, old_parent):
+        new_parent, new_items = default_enter(path, key, old_parent)
+        if new_items is False:
+            # Drop strings and non-iterables.
+            return new_parent, new_items
+
         if ret and not path and key is None:
             new_parent = ret
         try:
-            cur_val = get_path(ret, path + (key,))
+            # TODO: type check?
+            new_parent = get_path(ret, path + (key,))
         except KeyError:
             pass
-        else:
-            # TODO: type check?
-            new_parent = cur_val
 
-        if isinstance(value, list):
-            # lists are purely additive. See https://github.com/mahmoud/boltons/issues/81
-            new_parent.extend(value)
-            new_items = []
+        if new_parent is not None:
+            if (isinstance(old_parent, list) ^ isinstance(new_parent, list)) or (
+                isinstance(old_parent, dict) ^ isinstance(new_parent, dict)
+            ):
+                raise TypeError(
+                    f"Incompatible types {type(old_parent)} <-- {type(new_parent)}!"
+                )
+            if isinstance(old_parent, list):
+                new_parent.extend(old_parent)
+                # lists are purely additive, stop recursion.
+                new_items = ()
+        else:
+            if isinstance(old_parent, list):
+                new_parent = [*old_parent]
+                # lists are purely additive, stop recursion.
+                new_items = ()
 
         return new_parent, new_items
 
-    for t_name, cont in containers:
-        if source_map is not None:
+    def remerge_exit(path, key, old_parent, new_parent, items):
+        if new_parent is None:
+            return old_parent  # FIXME: not cloned?
+        return default_exit(path, key, old_parent, new_parent, items)
 
-            def remerge_visit(path, key, value):
-                full_path = path + (key,)
-                if isinstance(value, list):
-                    old = source_map.get(full_path)
-                    if old:
-                        old.append(t_name)
-                    else:
-                        source_map[full_path] = [t_name]
+    if source_map is not None:
+
+        def remerge_visit(path, key, value):
+            full_path = path + (key,)
+            if isinstance(value, list):
+                old = source_map.get(full_path)
+                if old:
+                    old.append(t_name)
                 else:
-                    source_map[full_path] = t_name
-                return True
+                    source_map[full_path] = [t_name]
+            else:
+                source_map[full_path] = t_name
+            return True
 
-        else:
-            remerge_visit = default_visit
+        for t_name, cont in containers:
+            ret = remap(
+                cont, enter=remerge_enter, visit=remerge_visit, exit=remerge_exit
+            )
 
-        ret = remap(cont, enter=remerge_enter, visit=remerge_visit)
+    else:
+        for cont in containers:
+            ret = remap(cont, enter=remerge_enter, exit=remerge_exit)
 
     return ret
 

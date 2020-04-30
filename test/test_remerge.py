@@ -3,6 +3,8 @@
 # Standard Library
 from pprint import pprint
 
+import pytest
+
 # Gitlab Project Configurator Modules
 # from gpc.helpers.remerge import remerge
 from graphtik.plot import remerge
@@ -155,3 +157,56 @@ def test_complex_dict():
     assert merged["subdict"]["second_subdict"]["integer_to_override"] == 3333
     assert merged["added_in_first_override"] == "some_string"
     assert merged["list_to_append"] == [{"a": 1}, {"b": 2}]
+
+
+_xfail = pytest.mark.xfail(reason="Brittle remerge()...")
+
+
+@pytest.mark.parametrize(
+    "inp, reverse, exp",
+    [
+        pytest.param(({1: None}, {}), 0, {}, marks=_xfail),
+        (({1: None}, {1: {}}), 0, {1: {}}),
+        (({1: None}, {1: []}), 0, {1: []}),
+        (({1: None}, {1: 33}), 0, {1: 33}),
+        pytest.param(({1: None}, {}), 1, {}, marks=_xfail),
+        pytest.param(({1: None}, {1: {}}), 1, {1: {}}, marks=_xfail),
+        pytest.param(({1: None}, {1: []}), 1, {1: []}, marks=_xfail),
+        pytest.param(({1: None}, {1: 33}), 1, {1: 33}, marks=_xfail),
+    ],
+)
+def test_none_values(inp, reverse, exp):
+    if reverse:
+        inp = reversed(inp)
+    assert remerge(*inp) == exp
+
+    ## Test one level deeper
+    #
+    inp = tuple({"a": i} for i in inp)
+    exp = {"a": exp}
+    assert remerge(*inp) == exp
+
+
+@pytest.mark.parametrize(
+    "inp",
+    [
+        ## <don't collapse>
+        ({1: []}, {1: {}}),
+        ({1: {}}, {1: []}),
+        pytest.param(({1: []}, {1: "a"}), marks=_xfail),
+        pytest.param(({1: {}}, {1: "a"}), marks=_xfail),
+    ],
+)
+def test_incompatible_containers(inp):
+    with pytest.raises(TypeError, match="Incompatible types"):
+        remerge(*inp)
+    with pytest.raises(TypeError, match="Incompatible types"):
+        remerge(*reversed(inp))
+
+    ## Test one level deeper
+    #
+    inp = tuple({"A": i} for i in inp)
+    with pytest.raises(TypeError, match="Incompatible types"):
+        remerge(*inp)
+    with pytest.raises(TypeError, match="Incompatible types"):
+        remerge(*reversed(inp))
