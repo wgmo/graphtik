@@ -424,7 +424,7 @@ class DocFilesPurgatory:
                     log.debug(
                         "Deleting outdated image '%s' of doc %r...", docname, fpath
                     )
-                    fpath.unlink(missing_ok=True)
+                    fpath.unlink()
                 except Exception as ex:
                     log.warning(
                         "Ignoring error while deleting outdated fpath '%s': %s",
