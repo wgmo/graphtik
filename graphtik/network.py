@@ -131,25 +131,6 @@ def _unsatisfied_operations(dag, inputs: Collection) -> List:
 class Solution(ChainMap, Plottable):
     """
     A chain-map collecting :term:`solution` outputs and execution state (eg :term:`overwrites`)
-
-    .. attribute:: plan
-
-        the plan that produced this solution
-    .. attribute:: executed
-
-        A dictionary with keys the operations executed, and values their status:
-
-        - no key: not executed yet
-        - value None: execution ok
-        - value Exception: execution failed
-
-    .. attribute:: canceled
-
-        A sorted set of :term:`canceled operation`\\s due to upstream failures.
-    .. attribute:: finalized
-
-        a flag denoting that this instance cannot accept more results
-        (after the :meth:`finalized` has been invoked)
     """
 
     def __init__(self, plan, input_values: dict):
@@ -161,9 +142,18 @@ class Solution(ChainMap, Plottable):
         self._layers = {op: {} for op in yield_ops(reversed(plan.steps))}
         super().__init__(*self._layers.values(), input_values)
 
+        #: the plan that produced this solution
         self.plan = plan
+        #: A dictionary with keys the operations executed, and values their status:
+        #:
+        #: - no key: not executed yet
+        #: - value None: execution ok
+        #: - value Exception: execution failed
         self.executed = {}
+        #: A sorted set of :term:`canceled operation`\\s due to upstream failures.
         self.canceled = iset()  # not iterated, order not important, but ...
+        #: a flag controlled by `plan` (by invoking :meth:`finalized` is invoked)
+        #: which becomes `True` when this instance has finished accepting results.
         self.finalized = False
         self.elapsed_ms = {}
         self.solid = "%X" % random.randint(0, 2 ** 16)
@@ -196,15 +186,14 @@ class Solution(ChainMap, Plottable):
         return clone
 
     def __repr__(self):
-        items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
         if is_debug():
             return self.debugstr()
         else:
+            items = ", ".join(f"{k!r}: {v!r}" for k, v in self.items())
             return f"{{{items}}}"
 
     def debugstr(self):
-        # TODO: augment Solution.__repr__() when DEBUG-log enabled.
-        return f"{type(self).__name__}({dict(self)}, {self.plan})"
+        return f"{type(self).__name__}({dict(self)}, {self.plan}, {self.executed}, {self._layers})"
 
     def operation_executed(self, op, outputs):
         """
