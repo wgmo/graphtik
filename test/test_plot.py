@@ -369,6 +369,16 @@ def test_style_Ref():
     str(r)  # should not scream
     assert r.resolve(Theme) == 4
 
+    ## Test default
+    s = plot.Ref("bad")
+    ss = s.resolve(C, C2, default=4)
+    assert ss == 4
+    s = plot.Ref("bad", default=5)
+    ss = s.resolve(C, C2, default=4)
+    assert ss == 4
+    ss = s.resolve(C, C2)
+    assert ss == 5
+
 
 def test_Theme_with_set():
     p = Theme()

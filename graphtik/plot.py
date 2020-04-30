@@ -269,10 +269,11 @@ def _pub_props(*d, **kw) -> None:
 class Ref:
     """Deferred attribute reference :meth:`resolve`\\d  on a some object(s)."""
 
-    __slots__ = ("ref",)
+    __slots__ = ("ref", "default")
 
-    def __init__(self, ref):
+    def __init__(self, ref, default=...):
         self.ref = ref
+        self.default = default
 
     def resolve(self, *objects, default=...):
         """Makes re-based clone to the given class/object."""
@@ -281,7 +282,10 @@ class Ref:
             if hasattr(b, ref):
                 return getattr(b, ref)
         if default is ...:
+            default = self.default
+        if default is ...:
             raise AttributeError(f"Reference {ref!r} not found in {objects}")
+        return default
 
     def __repr__(self):
         return f"Ref('{self.ref}')"
