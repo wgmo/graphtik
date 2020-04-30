@@ -428,24 +428,34 @@ Architecture
         The **default** *active plotter* is the plotter instance that this project
         comes pre-configured with, ie, when no *plot-customizations* have yet happened.
 
-    plot theme
-    theme expansion
-        The mergeable and auto-expandable attributes of :class:`.plot.Theme` instances in use.
+        .. include:: ../../graphtik/plot.py
+            :start-after: .. theme-warn-start
+            :end-before: .. theme-warn-end
 
-        The actual theme in-use is the :attr:`.Plotter.default_theme` attribute of
+    plot theme
+    current theme
+        The mergeable and `expandable styles <style>` contained in a :class:`.plot.Theme` instance.
+
+        The **current theme in-use** is the :attr:`.Plotter.default_theme` attribute of
         the `active plotter`, unless overridden with the :obj:`theme` parameter when
         calling :meth:`.Plottable.plot()` (conveyed internally as the value of the
         :attr:`.PlotArgs.theme` attribute).
 
-        The following **expansions** apply in the attribute-values of ``Theme``
-        instances:
+    style
+    style expansion
+        A *style* is an attribute of a `plot theme`, either a scalar value or a dictionary.
+
+        *Styles* are collected in :class:`stacks <.StylesStack>` and are :meth:`merged
+        <.StylesStack.merge>` into a single dictionary after performing the following
+        :meth:`expansions <.StylesStack.expand>`:
 
         .. include:: ../../graphtik/plot.py
             :start-after: .. theme-expansions-start
             :end-before: .. theme-expansions-end
-        .. include:: ../../graphtik/plot.py
-            :start-after: .. theme-warn-start
-            :end-before: .. theme-warn-end
+
+        .. tip::
+            if :meth:`DEBUG <is_debug>` is enabled, the provenance of all style values
+            appears in the tooltips of plotted graphs.
 
     configurations
     graphtik configuration

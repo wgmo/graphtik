@@ -96,7 +96,7 @@ All `Graphviz`_ styling attributes are controlled by the *active* :term:`plot th
 which is the :class:`.plot.Theme` instance installed in its :attr:`.Plotter.default_theme`
 attribute.
 
-The following :term:`expansions <theme expansion>` apply in the attribute-values
+The following :term:`style expansion`\\s apply in the attribute-values
 of ``Theme`` instances:
 
 .. include:: ../../graphtik/plot.py

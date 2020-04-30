@@ -372,8 +372,7 @@ class Theme:
     The poor man's css-like :term:`plot theme` (see also :class:`.StyleStack`).
 
     To use the values contained in theme-instances, stack them in a :class:`.StylesStack`,
-    in order to apply the following :term:`theme expansion`\\s when calling
-    :meth:`.StylesStack.merge`.
+    and :meth:`.StylesStack.merge` them with :term:`style expansion`\\s.
 
     .. theme-warn-start
     .. Attention::
@@ -835,31 +834,15 @@ USER_STYLE_PREFFIX = "graphviz."
 
 class StylesStack(NamedTuple):
     """
-    A mergeable stack of dicts preserving provenance and :term:`theme expansion`.
+    A mergeable stack of dicts preserving provenance and :term:`style expansion`.
 
-    .. theme-expansions-start
+    The :meth:`.merge()` method joins the collected stack of styles into a single
+    dictionary, and if DEBUG (see :func:`.remerge()`) insert their provenance in
+    a ``'tooltip'`` attribute;
+    Any lists are merged (important for multi-valued `Graphviz`_ attributes
+    like ``style``).
 
-    - Any :class:`.Ref` instances are resolved against the attributes
-      of the current theme.
-
-    - Merge stack of styles, with their provenance if DEBUG (see :func:`remerge()`);
-      Any lists are merged (important for multi-valued `Graphviz`_ attributes
-      like ``style``).
-
-    - Resolve any :class:`Ref`\\s (see :meth:`_expand_styles()`);
-
-    - Render jinja2 templates (see :meth:`_expand_styles()`)
-      with template-arguments all the attributes of the :class:`plot_args <.PlotArgs>`
-      instance in use.
-
-    - Call *callables* with current :class:`plot_args <.PlotArgs>` and replace them
-      by their result.
-
-    - Any Nones above are discarded.
-
-    - Workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
-
-    .. theme-expansions-end
+    Then they are :meth:`expanded <expand>`.
     """
 
     #: current item's plot data with at least :attr:`.PlotArgs.theme` attribute. ` `
@@ -900,21 +883,21 @@ class StylesStack(NamedTuple):
 
     def expand(self, style: dict) -> dict:
         """
-        Apply :term:`theme expansion`\\s on an already merged style.
+        Apply :term:`style expansion`\\s on an already merged style.
 
         .. theme-expansions-start
 
-        - Any :class:`.Ref` instances are resolved, first against the current *nx_attrs*
+        - Resolve any :class:`.Ref` instances, first against the current *nx_attrs*
           and then against the attributes of the current theme.
 
-        - Render jinja2 templates (see :meth:`_expand_styles()`)
-          with template-arguments all the attributes of the :class:`plot_args <.PlotArgs>`
-          instance in use.
+        - Render jinja2 templates (see :meth:`_expand_styles()`) with template-arguments
+          all the attributes of the :class:`plot_args <.PlotArgs>` instance in use
+          (hence much more flexible than :class:`.Ref`).
 
-        - Call *callables* with current :class:`plot_args <.PlotArgs>` and replace them
-          by their result.
+        - Call any *callables* with current :class:`plot_args <.PlotArgs>` and
+          replace them by their result (even more flexible than templates).
 
-        - Any Nones above are discarded.
+        - Any Nones results above are discarded.
 
         - Workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
 
