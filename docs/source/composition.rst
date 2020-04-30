@@ -294,12 +294,12 @@ actual `provides` delivered:
                          needs=['quarantine'],
                          provides=['space', 'time'],
                          fn{}='get_out_or_stay_home')
-    >>> @operation(needs="space", provides="fun")
+    >>> @operation(needs="space", provides=["fun", "body"])
     ... def exercise(where):
-    ...     return "refreshed"
-    >>> @operation(needs="time", provides="fun")
+    ...     return "refreshed", "strong feet"
+    >>> @operation(needs="time", provides=["fun", "brain"])
     ... def read_book(for_how_long):
-    ...     return "relaxed"
+    ...     return "relaxed", "popular physics"
 
     >>> netop = compose("covid19", get_out_or_stay_home, exercise, read_book)
 
