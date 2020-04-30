@@ -323,7 +323,22 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
             ## adapted from: sphinx.domains.std.Target directive.
             #
             std = cast(StandardDomain, self.env.get_domain("std"))
-            std.add_object("graphtik", name, self.env.docname, targetname)
+            ## Suppress warning on duplicates (replaced with INFO).
+            #  Duplicates occur either by include directives
+            #  or because :noindex: in autoclass is ignored here.
+            #
+            objtype = "graphtik"
+            if (objtype, name) in std.objects:
+                docname = std.objects[objtype, name][0]
+                log.info(
+                    __("Skipping duplicate %s description of %s, other instance in %s"),
+                    objtype,
+                    name,
+                    docname,
+                    location=location,
+                )
+            else:
+                std.note_object(objtype, name, targetname, figure)
 
         ## See sphinx.ext.graphviz:figure_wrapper(),
         #  and <sphinx.git>/tests/roots/test-add_enumerable_node/enumerable_node.py:MyFigure
