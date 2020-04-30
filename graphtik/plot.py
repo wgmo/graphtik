@@ -869,17 +869,20 @@ class StylesStack(NamedTuple):
     #: When true, keep merging despite expansion errors.
     ignore_errors: bool = False
 
-    def add(self, name, kw=None):
+    def add(self, name, kw=...):
         """
         Adds a style by name from style-attributes, or provenanced explicitly, or fail early.
 
         :param name:
             Either the provenance name when the `kw` styles is given,
             OR just an existing attribute of :attr:`style` instance.
+        :param kw:
+            if given and is None/empty, ignored.
         """
-        if kw is None:
+        if kw is ...:
             kw = getattr(self.plot_args.theme, name)  # will scream early
-        self.named_styles.append((name, kw))
+        if kw:
+            self.named_styles.append((name, kw))
 
     def _expand_styles(
         self, path, k, v,
@@ -919,16 +922,19 @@ class StylesStack(NamedTuple):
 
     def merge(self, debug=None) -> dict:
         """
-        Recursively merge stack and :meth:`.expand` styles:
+        Recursively merge :attr:`named_styles` and :meth:`.expand` the result style.
 
         :param debug:
             When not `None`, override :func:`config.is_debug` flag.
             When debug is enabled, tooltips are overridden with provenance
-            & user-attributes.
+            & nx_attrs.
 
         :return:
             the merged styles
         """
+
+        if not self.named_styles:
+            return {}
 
         if (debug is None and is_debug()) or debug:
             from pprint import pformat
