@@ -15,8 +15,8 @@ from multiprocessing import dummy as mp_dummy
 from multiprocessing import get_context
 from operator import add, floordiv, mul, sub
 from pprint import pprint
-from unittest.mock import MagicMock
 from typing import Tuple
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -1045,8 +1045,7 @@ def calc_prices_pipeline(request):
     ops = [new_order, fill_in_vat_ratios, finalize_prices]
     if request.param:
         ops = reversed(ops)
-    proc_order = compose("process order", *ops)
-    return proc_order
+    return compose("process order", *ops)
 
 
 def test_sideffecteds_ok(calc_prices_pipeline):
@@ -1098,6 +1097,31 @@ def test_sideffecteds_endured(calc_prices_pipeline):
         },
         "vat owed": None,
     }
+
+
+@pytest.fixture(params=[0, 1])
+def sideffected_resched(request):
+    @operation(provides=sideffected("DEP", "yes", "no"), rescheduled=1, returns_dict=1)
+    def half_sfx():
+        return {"DEP": 1, sideffected("DEP", "no"): False}
+
+    yes = operation(
+        lambda dep: "yes!", name="YES", needs=sideffected("DEP", "yes"), provides="yes",
+    )
+    no = operation(
+        lambda dep: "no!", name="NO", needs=sideffected("DEP", "no"), provides="no",
+    )
+    ops = [half_sfx, yes, no]
+    if request.param:
+        ops = reversed(ops)
+    return compose("process order", *ops)
+
+
+def test_sideffected_rescheduled(sideffected_resched):
+    """Check if a `returns-dict` op can cancel sideffecteds. """
+    sol = sideffected_resched.compute({})
+    print(sol)
+    assert sol == {"DEP": 1, sideffected("DEP", "no"): False, "yes": "yes!"}
 
 
 def test_optional_per_function_with_same_output(exemethod):

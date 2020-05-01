@@ -10,7 +10,17 @@ import time
 from collections import ChainMap, abc, defaultdict, namedtuple
 from functools import partial
 from itertools import chain, count
-from typing import Any, Callable, Collection, List, Mapping, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -27,7 +37,14 @@ from .config import (
     is_skip_evictions,
     is_solid_true,
 )
-from .modifiers import is_mapped, is_optional, is_sideffect, optional
+from .modifiers import (
+    is_mapped,
+    is_optional,
+    is_pure_sideffect,
+    is_sideffect,
+    is_sideffected,
+    optional,
+)
 from .op import Operation
 
 NodePredicate = Callable[[Any, Mapping], bool]
@@ -202,23 +219,44 @@ class Solution(ChainMap, Plottable):
         :param op:
             the operation that completed ok
         :param outputs:
-            The names of the `outputs` values the op` actually produced,
+            The named values the op` actually produced,
             which may be a subset of its `provides`.  Sideffects are not considered.
 
         """
+
+        def collect_canceled_sideffects(dep, val) -> Sequence:
+            """Return any sfx `dep` with falsy value, singularizing sideffected."""
+            if val or not is_sideffect(dep):
+                return ()
+            if is_pure_sideffect(dep):
+                return (dep,)
+            ## Singularize sideffected
+            assert is_sideffected(dep), locals()
+            return (dep.withset(sideffects=(s,)) for s in dep.sideffects)
+
         assert not self.finalized, f"Cannot reuse solution: {self}"
         self._layers[op].update(outputs)
         self.executed[op] = None
 
         if is_solid_true(self.is_reschedule, op.rescheduled):
             dag = self.dag
+
+            ## Find which provides have been broken?
+            #
+            # OPTIMIZE: could use _fn_provides
             missing_outs = iset(op.provides) - set(outputs)
-            to_brake = [(op, out) for out in missing_outs if not is_sideffect(out)]
-            if to_brake:
-                self.executed[op] = list(
-                    missing_outs
-                )  # list checked by `scream_if_incomplete()`
-                dag.remove_edges_from(tuple(dag.out_edges(to_brake)))
+            sfx = (out for out in missing_outs if is_sideffect(out))
+            canceled_sideffects = [
+                sf
+                for k, v in outputs.items()
+                for sf in collect_canceled_sideffects(k, v)
+            ]
+            to_break = (missing_outs - sfx) | canceled_sideffects
+
+            if to_break:
+                # list used by `check_if_incomplete()`
+                self.executed[op] = list(to_break)
+                dag.remove_edges_from(tuple(dag.out_edges(to_break)))
                 canceled = _unsatisfied_operations(dag, self)
                 # Minus executed, bc partial-out op might not have any provides left.
                 newly_canceled = iset(canceled) - self.canceled - self.executed
