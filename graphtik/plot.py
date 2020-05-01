@@ -685,7 +685,7 @@ class Theme:
             if not callable(v) and not k.startswith("_")
         }
 
-    def with_set(self, **kw) -> "Theme":
+    def withset(self, **kw) -> "Theme":
         """Returns a deep-clone modified by `kw`."""
         return type(self)(_prototype=self, **kw)
 
@@ -987,9 +987,9 @@ class Plotter:
         """
         Returns a cloned plotter with a deep-copied theme modified as given.
 
-        See also :meth:`Theme.with_set()`.
+        See also :meth:`Theme.withset()`.
         """
-        return type(self)(self.default_theme.with_set(**kw))
+        return type(self)(self.default_theme.withset(**kw))
 
     def _new_styles_stack(self, plot_args: PlotArgs, ignore_errors=None):
         return StylesStack(plot_args, [], ignore_errors=ignore_errors)

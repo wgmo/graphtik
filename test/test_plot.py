@@ -380,12 +380,12 @@ def test_style_Ref():
     assert ss == 5
 
 
-def test_Theme_with_set():
+def test_Theme_withset():
     p = Theme()
-    p2 = p.with_set()
+    p2 = p.withset()
     assert p is not p2
 
-    p3 = p.with_set(include_steps=True)
+    p3 = p.withset(include_steps=True)
     assert p3.include_steps
     assert not p.include_steps
 

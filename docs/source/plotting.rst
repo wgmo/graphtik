@@ -141,7 +141,7 @@ ordered by breadth of the effects (most broadly effecting method at the top):
    customizations::
 
       active_plotter = get_active_plotter()
-      netop.plot(theme=active_plotter.default_theme.with_set(include_steps=True))
+      netop.plot(theme=active_plotter.default_theme.withset(include_steps=True))
 
    ... OR::
 
@@ -593,3 +593,8 @@ you may not always avoid one.
 
 Your best shot is to enable "`post mortem debugging
 <https://docs.python.org/3/library/pdb.html>`_".
+
+If you set a :func:`breakpoint()` in one of your functions, move up a few frames
+to find the :meth:`.ExecutionPlan._handle_task()` method, where the "live"
+:class:`.ExecutionPlan` & :class:`.Solution` instances live, useful when investigating
+problems with computed values.
