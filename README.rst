@@ -112,7 +112,7 @@ Run the graph and request all of the outputs:
 |sample-sol|
 |plot-legend|
 
-.. |sample-plot| image:: docs/source/images/barebone_2ops.svg
+.. |sample-plot| image:: docs/source/images/sample.svg
     :alt: sample graphtik plot
     :width: 120px
     :align: middle

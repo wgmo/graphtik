@@ -129,6 +129,6 @@ Run the graph-operation and request a subset of the outputs:
    >>> l = legend()
 
 .. |sample-plot| raw:: html
-    :file:  images/barebone_2ops.svg
+    :file:  images/sample.svg
 .. include:: ../../README.rst
     :start-after: _badges_substs:
