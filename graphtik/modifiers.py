@@ -196,7 +196,7 @@ def mapped(name: str, fn_kwarg: str):
 
         .. graphtik::
     """
-    return _Modifier(name, fn_kwarg=fn_kwarg)
+    return _Modifier(name, fn_kwarg=fn_kwarg) if fn_kwarg else name
 
 
 def optional(name: str, fn_kwarg: str = None):
