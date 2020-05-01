@@ -439,8 +439,6 @@ class Theme:
         2: {"shape": "house"},  # Out
         3: {"shape": "hexagon"},  # Inp/Out
     }
-    # FIXME: DROP kw_data_mapped, it's an edge attribute only.
-    kw_data_mapped = {"label": make_template("<{{ nx_item | eee }}>")}
     kw_data_sideffect = {
         "color": "blue",
         "fontcolor": "blue",
@@ -1138,9 +1136,6 @@ class Plotter:
                 styles.add("kw_data_sideffect")
                 if is_sol_sideffect(nx_node):
                     styles.add("kw_data_sol_sideffect")
-            # FIXME: DROP kw_data_mapped, it's an edge attribute only.
-            elif is_mapped(nx_node):
-                styles.add("kw_data_mapped")
 
             ## Data-state
             #
