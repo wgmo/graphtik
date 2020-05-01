@@ -40,17 +40,11 @@ from typing import (
 import jinja2
 import networkx as nx
 import pydot
-from boltons.iterutils import (
-    default_enter,
-    default_exit,
-    get_path,
-    remap,
-)
+from boltons.iterutils import default_enter, default_exit, get_path, remap
 
 from .base import PlotArgs, func_name, func_source
 from .config import is_debug
-from .modifiers import mapped as keyword
-from .modifiers import optional, sideffect, sol_sideffect
+from .modifiers import is_mapped, is_sideffect, is_sol_sideffect
 from .netop import NetworkOperation
 from .network import ExecutionPlan, Network, Solution, _EvictInstruction
 from .op import Operation
@@ -1136,11 +1130,11 @@ class Plotter:
                 f"kw_data_io_choice: {io_choice}", theme.kw_data_io_choice[io_choice]
             )
 
-            if isinstance(nx_node, sideffect):
+            if is_sideffect(nx_node):
                 styles.add("kw_data_sideffect")
-                if isinstance(nx_node, sol_sideffect):
+                if is_sol_sideffect(nx_node):
                     styles.add("kw_data_sol_sideffect")
-            elif isinstance(nx_node, keyword) and nx_node.fn_arg is not None:
+            elif is_mapped(nx_node) and nx_node.fn_arg is not None:
                 styles.add("kw_data_mapped")
 
             ## Data-state
@@ -1166,7 +1160,7 @@ class Plotter:
                     styles.add("kw_data_to_evict")
 
                 if solution is not None:
-                    if not isinstance(nx_node, sideffect):
+                    if not is_sol_sideffect(nx_node):
                         if nx_node in solution:
                             styles.add("kw_data_in_solution")
 

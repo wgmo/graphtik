@@ -271,8 +271,8 @@ Architecture
     optionals
         A `modifier` applied on `needs` only `dependencies <dependency>`, corresponding to either:
 
-        - function arguments-with-defaults (annotated with :class:`.optional`), or
-        - ``*args`` (annotated with :class:`.vararg` & :class:`.varargs`),
+        - function arguments-with-defaults (annotated with :func:`.optional`), or
+        - ``*args`` (annotated with :func:`.vararg` & :func:`.varargs`),
 
         that do not hinder execution of the `operation` if absent from `inputs`.
 
@@ -289,10 +289,10 @@ Architecture
 
         There are actually 2 relevant `modifier`\s:
 
-        - An *abstract sideffect* (annotated with :class:`.sideffect` modifier)
+        - An *abstract sideffect* (annotated with :func:`.sideffect` modifier)
           describing modifications taking place beyond the scope of the solution.
 
-        - The `solution sideffect` (annotated with :class:`.sol_sideffect` modifier)
+        - The `solution sideffect` (annotated with :func:`.sol_sideffect` modifier)
           denoting modifications on *dependencies* that are read and written in `solution`.
 
         .. Attention::
@@ -306,7 +306,7 @@ Architecture
         *sideffected dependency*.
 
         All *solution sideffect* `outputs` produce, by definition, `overwrites`.
-        It is annotated with :class:`.sol_sideffect` class.
+        It is annotated with :func:`.sol_sideffect` class.
 
     reschedule
     rescheduling

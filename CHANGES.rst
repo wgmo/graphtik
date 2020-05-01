@@ -357,7 +357,7 @@ v5.2.1 (28 Feb 2020, @ankostis): fix plan cache on skip-evictions, PY3.8 TCs, do
 
 v5.2.0 (27 Feb 2020, @ankostis): Map `needs` inputs --> args, SPELLCHECK
 ========================================================================
-+ FEAT(modifiers): :term:`optionals` and new modifier :class:`.arg` can now fetch values
++ FEAT(modifiers): :term:`optionals` and new modifier :func:`.mapped` can now fetch values
   from :term:`inputs` into differently-named arguments of operation functions.
 
   + refact: decouple `varargs` from `optional` modifiers hierarchy.
@@ -659,8 +659,8 @@ v3.0.0 (2 Dec 2019, @ankostis):  UNVARYING NetOperations, narrowed, API refact
   + FIX: netop `needs` are not all *optional* by default; optionality applied
     only if all underlying operations have a certain need as optional.
 
-  + FEAT: support function ``**args`` with 2 new modifiers :class:`.vararg` & :class:`.varargs`,
-    acting like :class:`.optional` (but without feeding into underlying functions
+  + FEAT: support function ``**args`` with 2 new modifiers :func:`.vararg` & :func:`.varargs`,
+    acting like :func:`.optional` (but without feeding into underlying functions
     like keywords).
 
   + BREAK(:gh:`12`): simplify ``compose`` API by turning it from class --> function;
@@ -807,7 +807,7 @@ v1.3.0 (Oct 2019, @ankostis): NEVER RELEASED: new DAG solver, better plotting & 
 
 Kept external API (hopefully) the same, but revamped pruning algorithm and
 refactored network compute/compile structure, so results may change; significantly
-enhanced plotting.  The only new feature actually is the :class:`.sideffect` modifier.
+enhanced plotting.  The only new feature actually is the :func:`.sideffect` modifier.
 
 Network:
 --------

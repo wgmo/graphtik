@@ -27,7 +27,7 @@ from .config import (
     is_skip_evictions,
     is_solid_true,
 )
-from .modifiers import mapped, optional, sideffect, vararg, varargs
+from .modifiers import is_mapped, is_optional, is_sideffect, optional
 from .op import Operation
 
 NodePredicate = Callable[[Any, Mapping], bool]
@@ -105,11 +105,7 @@ def _unsatisfied_operations(dag, inputs: Collection) -> List:
             else:
                 # It's ok not to dig into edge-data("optional") here,
                 # we care about all needs, including broken ones.
-                real_needs = set(
-                    n
-                    for n in node.needs
-                    if not isinstance(n, (optional, vararg, varargs))
-                )
+                real_needs = set(n for n in node.needs if not is_optional(n))
                 if real_needs.issubset(op_satisfaction[node]):
                     # We have a satisfied operation; mark its output-data
                     # as ok.
@@ -217,9 +213,7 @@ class Solution(ChainMap, Plottable):
         if is_solid_true(self.is_reschedule, op.rescheduled):
             dag = self.dag
             missing_outs = iset(op.provides) - set(outputs)
-            to_brake = [
-                (op, out) for out in missing_outs if not isinstance(out, sideffect)
-            ]
+            to_brake = [(op, out) for out in missing_outs if not is_sideffect(out)]
             if to_brake:
                 self.executed[op] = list(
                     missing_outs
@@ -372,7 +366,7 @@ def _optionalized(graph, data):
         optional(data)
         if all_optionals
         else data  # sideffect
-        if isinstance(data, sideffect)
+        if is_sideffect(data)
         else str(data)  # un-optionalize
     )
 
@@ -971,11 +965,11 @@ class Network(Plottable):
         needs_edges = []
         for n in getattr(operation, "op_needs", operation.needs):
             nkw, ekw = {}, {}
-            if isinstance(n, (optional, vararg, varargs)):
+            if is_optional(n):
                 ekw["optional"] = True
-            if isinstance(n, sideffect):
+            if is_sideffect(n):
                 ekw["sideffect"] = nkw["sideffect"] = True
-            if isinstance(n, mapped) and n.fn_arg is not None:
+            if is_mapped(n) and n.fn_arg is not None:
                 ekw["_fn_arg"] = n.fn_arg
             needs.append((n, nkw))
             needs_edges.append((n, operation, ekw))
@@ -993,7 +987,7 @@ class Network(Plottable):
         #
         for n in getattr(operation, "op_provides", operation.provides):
             kw = {}
-            if isinstance(n, sideffect):
+            if is_sideffect(n):
                 kw["sideffect"] = True
                 graph.add_node(n, sideffect=True)
 

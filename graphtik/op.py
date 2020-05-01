@@ -26,7 +26,17 @@ from .base import (
     jetsam,
 )
 from .config import is_debug, is_reschedule_operations, is_solid_true
-from .modifiers import mapped, optional, sideffect, sol_sideffect, vararg, varargs
+from .modifiers import (
+    Dependency,
+    is_mapped,
+    is_optional,
+    is_pure_sideffect,
+    is_sideffect,
+    is_sol_sideffect,
+    is_vararg,
+    is_varargs,
+    sol_sideffect,
+)
 
 log = logging.getLogger(__name__)
 
@@ -130,26 +140,26 @@ def _spread_sideffects(
 
     :return:
         the given `deps` duplicated as ``(fn_deps,  op_deps)``, where any instances of
-        :class:`.sideffects` and :class:`.sol_sideffect` are processed like this:
+        :func:`.sideffect` and :func:`.sol_sideffect` are processed like this:
 
         `fn_deps`
-            - :class:`.sol_sideffect` are replaced by the pure :attr:`.sol_sideffect.sideffected`
+            - :func:`.sol_sideffect` are replaced by the pure :attr:`.sol_sideffect.sideffected`
               consumed/produced by underlying functions, in the order it is first met
               (the rest duplicate `sideffected` are discarded).
-            - :class:`.sideffects` are simply dropped;
+            - :func:`.sideffect` are simply dropped;
 
         `op_deps`
-            :class:`.sol_sideffect` are replaced by a sequence of "singular" `sol_sideffect`
+            :func:`.sol_sideffect` are replaced by a sequence of "singular" `sol_sideffect`
             instances, one for each item in their :attr:`.sol_sideffect.sideffects` attribute,
             in the order they are first met
             (any duplicates are discarded, order is irrelevant, since they don't reach
             the function);
     """
 
-    def singularize_sol_sideffects(dep):
+    def singularize_sol_sideffects(dep: Dependency):
         return (
             (sol_sideffect(dep.sideffected, s) for s in dep.sideffects)
-            if isinstance(dep, sol_sideffect)
+            if is_sol_sideffect(dep)
             else (dep,)
         )
 
@@ -157,13 +167,13 @@ def _spread_sideffects(
     #: to facilitate copy-pasting singularized ones from the console.
     seen_sideffecteds: Set[str] = set()
 
-    def strip_sideffecteds(dep):
-        if isinstance(dep, sol_sideffect):
+    def strip_sideffecteds(dep: Dependency):
+        if is_sol_sideffect(dep):
             sideffected = dep.sideffected
             if not sideffected in seen_sideffecteds:
                 seen_sideffecteds.add(sideffected)
                 return (sideffected,)
-        elif not isinstance(dep, sideffect):
+        elif not is_sideffect(dep):
             return (dep,)
         return ()
 
@@ -252,7 +262,7 @@ class FunctionalOperation(Operation, Plottable):
             sfx_aliases = [
                 f"{src} -> {dst}"
                 for src, dst in aliases
-                if isinstance(src, sideffect) or isinstance(dst, sideffect)
+                if is_sideffect(src) or is_sideffect(dst)
             ]
             if sfx_aliases:
                 raise ValueError(
@@ -434,10 +444,10 @@ class FunctionalOperation(Operation, Plottable):
         kwargs = {}
         errors, missing, varargs_bad = [], [], []
         for n in self._fn_needs:
-            assert not isinstance(n, sideffect), locals()
+            assert not is_sideffect(n), locals()
             try:
                 if n not in named_inputs:
-                    if not isinstance(n, (optional, vararg, varargs, sideffect)):
+                    if not is_optional(n) or is_sideffect(n):
                         # It means `inputs` < compulsory `needs`.
                         # Compilation should have ensured all compulsories existed,
                         # but ..?
@@ -448,13 +458,13 @@ class FunctionalOperation(Operation, Plottable):
                 ## TODO: augment modifiers with "retrievers" from `inputs`.
                 inp_value = named_inputs[n]
 
-                if isinstance(n, mapped):  # includes `optionals`
+                if is_mapped(n):  # includes `optionals`
                     kwargs[n if n.fn_arg is None else n.fn_arg] = inp_value
 
-                elif isinstance(n, vararg):
+                elif is_vararg(n):
                     vararg_vals.append(inp_value)
 
-                elif isinstance(n, varargs):
+                elif is_varargs(n):
                     if isinstance(inp_value, str) or not isinstance(
                         inp_value, cabc.Iterable
                     ):
@@ -612,7 +622,7 @@ class FunctionalOperation(Operation, Plottable):
             results_op = self._zip_results_with_provides(results_fn, self._fn_provides)
 
             if outputs:
-                outputs = set(n for n in outputs if not isinstance(n, sideffect))
+                outputs = set(n for n in outputs if not is_sideffect(n))
                 # Ignore sideffect outputs.
                 results_op = {
                     key: val for key, val in results_op.items() if key in outputs

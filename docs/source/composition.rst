@@ -211,12 +211,12 @@ Advanced pipelines
 
 Dependencies on sideffects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: graphtik.modifiers.sideffect
+.. autofunction:: graphtik.modifiers.sideffect
    :noindex:
 
 Modifying existing values in solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: graphtik.modifiers.sol_sideffect
+.. autofunction:: graphtik.modifiers.sol_sideffect
    :noindex:
 
 Resilience on errors (*endured*)

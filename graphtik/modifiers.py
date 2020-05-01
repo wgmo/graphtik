@@ -189,7 +189,7 @@ def mapped(name: str, fn_kwarg: str):
 
     In case the name of the function arguments is different from the name in the
     `inputs` (or just because the name in the `inputs` is not a valid argument-name),
-    you may *map* it with the 2nd argument of :class:`.mapped` (or :class:`.optional`):
+    you may *map* it with the 2nd argument of :func:`.mapped` (or :class:`.optional`):
 
         >>> from graphtik import operation, compose, mapped
 
@@ -251,7 +251,7 @@ def optional(name: str, fn_kwarg: str = None):
         >>> graph(a=5)
         {'a': 5, 'sum': 5}
 
-    Like :class:`.mapped` you may map input-name to a different function-argument:
+    Like :func:`.mapped` you may map input-name to a different function-argument:
 
         >>> operation(needs=['a', optional("quasi-real", "b")],
         ...           provides="sum"
@@ -308,7 +308,7 @@ def vararg(name: str):
 
 def varargs(name: str):
     """
-    Like :class:`vararg`, naming an :term:`optional <optionals>` *iterable* value in the inputs.
+    Like :func:`.vararg`, naming an :term:`optional <optionals>` *iterable* value in the inputs.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -380,7 +380,7 @@ def sideffect(name, optional: bool = None):
     not expressed in solution's the inputs/outputs ("side-effects").
 
     .. hint::
-        If modifications involve some input/output, prefer the :class:`.sol_sideffect`
+        If modifications involve some input/output, prefer the :func:`.sol_sideffect`
         modifier.
 
         You may still convey this relationships simply by including the dependency name
@@ -446,7 +446,7 @@ def sol_sideffect(
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
 
-    Like :class:`.sideffect` but annotating the function's :term:`dependency` it relates to,
+    Like :func:`.sideffect` but annotating the function's :term:`dependency` it relates to,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
     of the function.
 
