@@ -218,7 +218,7 @@ class Solution(ChainMap, Plottable):
                 self.executed[op] = list(
                     missing_outs
                 )  # list checked by `scream_if_incomplete()`
-                dag.remove_edges_from(to_brake)
+                dag.remove_edges_from(tuple(dag.out_edges(to_brake)))
                 canceled = _unsatisfied_operations(dag, self)
                 # Minus executed, bc partial-out op might not have any provides left.
                 newly_canceled = iset(canceled) - self.canceled - self.executed
