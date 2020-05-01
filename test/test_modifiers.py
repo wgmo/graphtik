@@ -25,13 +25,13 @@ from graphtik.modifiers import (
         (lambda: sideffected("f", "ff"), "sideffected('f'<--'ff')"),
         (
             lambda: sideffected("f", "ff", fn_kwarg="F"),
-            "sideffected('f'<--'ff', fn_kwarg='F')",
+            "sideffected('f'<--'ff')",
         ),
         (
             lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"),
-            "sideffected?('f'<--'ff', fn_kwarg='F')",
+            "sideffected('f'<--'ff')",
         ),
-        (lambda: sideffected("f", "ff", optional=1), "sideffected?('f'<--'ff')"),
+        (lambda: sideffected("f", "ff", optional=1), "sideffected('f'<--'ff')"),
     ],
 )
 def test_modifs_str(mod, exp):

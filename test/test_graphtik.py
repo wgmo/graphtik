@@ -1004,8 +1004,10 @@ def test_sideffect_NO_RESULT(caplog):
         assert record.levelname != "WARNING"
 
 
-@pytest.fixture
-def calc_prices_pipeline():
+@pytest.fixture(params=[0, 1])
+def calc_prices_pipeline(request):
+    """A pipeline that may work even without VAT-rates."""
+
     @operation(needs="order_items", provides=sideffected("ORDER", "Items", "Prices"))
     def new_order(items: list) -> "pd.DataFrame":
         order = {"items": items}
@@ -1024,7 +1026,10 @@ def calc_prices_pipeline():
         return order
 
     @operation(
-        needs=[sideffected("ORDER", "Prices"), sideffected("ORDER", "VAT rates")],
+        needs=[
+            sideffected("ORDER", "Prices"),
+            sideffected("ORDER", "VAT rates", optional=True),
+        ],
         provides=[sideffected("ORDER", "VAT", "Totals"), "vat owed"],
     )
     def finalize_prices(order: "pd.DataFrame") -> Tuple["pd.DataFrame", float]:
@@ -1034,11 +1039,13 @@ def calc_prices_pipeline():
             vat_to_pay = sum(order["VAT"])
         else:
             order["totals"] = order["prices"][::]
+            vat_to_pay = None
         return order, vat_to_pay
 
-    proc_order = compose(
-        "process order", new_order, fill_in_vat_ratios, finalize_prices
-    )
+    ops = [new_order, fill_in_vat_ratios, finalize_prices]
+    if request.param:
+        ops = reversed(ops)
+    proc_order = compose("process order", *ops)
     return proc_order
 
 
@@ -1079,11 +1086,17 @@ def test_sideffecteds_endured(calc_prices_pipeline):
     sol = calc_prices_pipeline.compute(
         {"order_items": "milk babylino toilet-paper".split(), "vat rate": 0.18}
     )
+
     print(sol)
     assert sol == {
         "order_items": ["milk", "babylino", "toilet-paper"],
         "vat rate": 0.18,
-        "ORDER": {"items": ["milk", "babylino", "toilet-paper"], "prices": [1, 2, 3]},
+        "ORDER": {
+            "items": ["milk", "babylino", "toilet-paper"],
+            "prices": [1, 2, 3],
+            "totals": [1, 2, 3],
+        },
+        "vat owed": None,
     }
 
 

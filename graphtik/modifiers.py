@@ -80,22 +80,26 @@ class _Modifier(str):
                         sideffects,
                     )
 
+                    # Repr display also optionality (irrelevant to object's identity)
                     qmark = "?" if optional else ""
                     _repr = f"sideffect{qmark}: {str(name)!r}"
                     name = f"sideffect: {str(name)!r}"
                 else:  # sideffected
                     sideffected = name
                     sfx_str = ", ".join(str(i) for i in sideffects)
+
+                    ## Repr display also optionality & mapped-fn-kw
+                    #  (irrelevant to object's identity)
+                    #
                     qmark = "?" if optional else ""
-                    name = f"sideffected{qmark}({str(name)!r}<--{sfx_str!r})"
-                    if fn_kwarg:
-                        name = f"{name[:-1]}, fn_kwarg={fn_kwarg!r})"
-                    _repr = name  # avoid quotes around whole repr
+                    map_str = f", fn_kwarg={fn_kwarg!r}" if fn_kwarg else ""
+                    _repr = f"sideffected{qmark}({str(name)!r}<--{sfx_str!r}{map_str})"
+
+                    name = f"sideffected({str(name)!r}<--{sfx_str!r})"
             elif optional or fn_kwarg:
-                kwarg_str = f"-->{fn_kwarg!r}" if fn_kwarg else ""
-                # TODO: Use qmark for optional
+                map_str = f"-->{fn_kwarg!r}" if fn_kwarg else ""
                 _repr = (
-                    f"{'optional' if optional else 'mapped'}({str(name)!r}{kwarg_str})"
+                    f"{'optional' if optional else 'mapped'}({str(name)!r}{map_str})"
                 )
 
         obj = str.__new__(cls, name)
