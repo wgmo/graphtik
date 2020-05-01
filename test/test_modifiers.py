@@ -1,7 +1,6 @@
 import pytest
 
 from graphtik.modifiers import (
-    Dependency,
     mapped,
     optional,
     sideffect,

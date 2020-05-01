@@ -21,7 +21,7 @@ class _Optionals(enum.Enum):
         return self.value > 1
 
 
-class Dependency(str):
+class _Modifier(str):
     # avoid __dict__ on instances
     __slots__ = (
         "fn_kwarg",
@@ -51,7 +51,7 @@ class Dependency(str):
         fn_kwarg: str = None,
         optional: _Optionals = None,
         sideffects: Tuple[Union[str, None]] = None,
-    ) -> "Dependency":
+    ) -> "_Modifier":
         sideffected = _repr = None
         ## Sanity checks and decide
         #  - string-name on sideffects and
@@ -186,7 +186,7 @@ def mapped(name: str, fn_kwarg: str):
 
         .. graphtik::
     """
-    return Dependency(name, fn_kwarg=fn_kwarg)
+    return _Modifier(name, fn_kwarg=fn_kwarg)
 
 
 def optional(name: str, fn_kwarg: str = None):
@@ -236,7 +236,7 @@ def optional(name: str, fn_kwarg: str = None):
                             fn='myadd')
 
     """
-    return Dependency(name, fn_kwarg=fn_kwarg, optional=_Optionals.optional)
+    return _Modifier(name, fn_kwarg=fn_kwarg, optional=_Optionals.optional)
 
 
 def vararg(name: str):
@@ -277,7 +277,7 @@ def vararg(name: str):
         {'a': 5, 'sum': 5}
 
     """
-    return Dependency(name, optional=_Optionals.vararg)
+    return _Modifier(name, optional=_Optionals.vararg)
 
 
 def varargs(name: str):
@@ -334,7 +334,7 @@ def varargs(name: str):
 
     """
 
-    return Dependency(name, optional=_Optionals.varargs)
+    return _Modifier(name, optional=_Optionals.varargs)
 
 
 def sideffect(name, optional: bool = None):
@@ -405,7 +405,7 @@ def sideffect(name, optional: bool = None):
         .. graphtik::
 
     """
-    return Dependency(
+    return _Modifier(
         name, optional=_Optionals.optional if optional else None, sideffects=()
     )
 
@@ -508,7 +508,7 @@ def sol_sideffect(
 
     """
     sideffects = (sideffect0,) + sideffects
-    return Dependency(
+    return _Modifier(
         sideffected,
         sideffects=sideffects,
         optional=_Optionals.optional if optional else None,

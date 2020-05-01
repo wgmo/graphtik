@@ -27,7 +27,6 @@ from .base import (
 )
 from .config import is_debug, is_reschedule_operations, is_solid_true
 from .modifiers import (
-    Dependency,
     is_mapped,
     is_optional,
     is_pure_sideffect,
@@ -156,7 +155,7 @@ def _spread_sideffects(
             the function);
     """
 
-    def singularize_sol_sideffects(dep: Dependency):
+    def singularize_sol_sideffects(dep):
         return (
             (sol_sideffect(dep.sideffected, s) for s in dep.sideffects)
             if is_sol_sideffect(dep)
@@ -167,7 +166,7 @@ def _spread_sideffects(
     #: to facilitate copy-pasting singularized ones from the console.
     seen_sideffecteds: Set[str] = set()
 
-    def strip_sideffecteds(dep: Dependency):
+    def strip_sideffecteds(dep):
         if is_sol_sideffect(dep):
             sideffected = dep.sideffected
             if not sideffected in seen_sideffecteds:
