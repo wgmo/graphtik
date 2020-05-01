@@ -158,7 +158,7 @@ Architecture
     overwrites
         Values in the `solution` that have been written by more than one `operation`\s,
         accessed by :attr:`.Solution.overwrites`.
-        Note that `solution sideffect` `dependency` produce, almost always, *overwrites*.
+        Note that `sideffected` `dependency` produce, almost always, *overwrites*.
 
     inputs
         The named input values that are fed into an `operation` (or `netop`)
@@ -311,21 +311,25 @@ Architecture
         - An *abstract sideffect* (annotated with :func:`.sideffect` modifier)
           describing modifications taking place beyond the scope of the solution.
 
-        - The `solution sideffect` (annotated with :func:`.sol_sideffect` modifier)
+        - The `sideffected` (annotated with :func:`.sideffected` modifier)
           denoting modifications on *dependencies* that are read and written in `solution`.
 
         .. Attention::
             *Sideffects* are not compatible with `optionals` and `partial outputs`.
 
-    solution sideffect
     sideffected
-        A `modifier` that denotes `sideffects` on a `dependency` that exists in `solution`, ...
-
+        A `modifier` that denotes `sideffects` on a `dependency` that exists in `solution`,
         allowing to declare an `operation` that both `needs` and `provides` that
         *sideffected dependency*.
 
-        All *solution sideffect* `outputs` produce, by definition, `overwrites`.
-        It is annotated with :func:`.sol_sideffect`.
+        .. Note::
+            To be precise, the "sideffected dependency" is the name held in
+            :attr:`._Modifier.sideffected` attribute of a *modifier* created by
+            :func:`.sideffected` annotation function.
+
+        All *sideffected* `outputs` produce, by definition, `overwrites`.
+
+        It is annotated with :func:`.sideffected`.
 
     reschedule
     rescheduling
@@ -344,7 +348,7 @@ Architecture
         the *solution* must then *reschedule* the remaining operations downstream,
         and possibly *cancel* some of those ( assigned in :attr:`.Solution.canceled`).
 
-        Operations with *partial outputs* are incompatible with `solution sideffect`\s,
+        Operations with *partial outputs* are incompatible with `sideffected`\s,
         i.e. they cannot control which of their sideffects they have produced,
         it's either all or nothing.
 

@@ -216,7 +216,7 @@ Dependencies on sideffects
 
 Modifying existing values in solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.sol_sideffect
+.. autofunction:: graphtik.modifiers.sideffected
    :noindex:
 
 Resilience on errors (*endured*)

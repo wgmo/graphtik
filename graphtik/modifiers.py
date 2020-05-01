@@ -83,11 +83,11 @@ class _Modifier(str):
                     qmark = "?" if optional else ""
                     _repr = f"sideffect{qmark}: {str(name)!r}"
                     name = f"sideffect: {str(name)!r}"
-                else:  # sol_sideffect
+                else:  # sideffected
                     sideffected = name
                     sfx_str = ", ".join(str(i) for i in sideffects)
                     qmark = "?" if optional else ""
-                    name = f"sol_sideffect{qmark}({str(name)!r}<--{sfx_str!r})"
+                    name = f"sideffected{qmark}({str(name)!r}<--{sfx_str!r})"
                     if fn_kwarg:
                         name = f"{name[:-1]}, fn_kwarg={fn_kwarg!r})"
                     _repr = name  # avoid quotes around whole repr
@@ -156,17 +156,17 @@ def is_varargish(dep) -> bool:
 
 
 def is_sideffect(dep) -> bool:
-    """Check if a dependency is :term:`sideffects` or :term:`solution sideffect`."""
+    """Check if a dependency is :term:`sideffects` or :term:`sideffected`."""
     return getattr(dep, "sideffects", None) is not None
 
 
 def is_pure_sideffect(dep) -> bool:
-    """Check if it is :term:`sideffects` but not a :term:`solution sideffect`."""
+    """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
     return getattr(dep, "sideffects", None) == ()
 
 
-def is_sol_sideffect(dep) -> bool:
-    """Check if it is :term:`solution sideffect` (and get its :term:`sideffected`)."""
+def is_sideffected(dep) -> bool:
+    """Check if it is :term:`sideffected` (and get it)."""
     return getattr(dep, "sideffected", None)
 
 
@@ -384,7 +384,7 @@ def sideffect(name, optional: bool = None):
     not expressed in solution's the inputs/outputs ("side-effects").
 
     .. hint::
-        If modifications involve some input/output, prefer the :func:`.sol_sideffect`
+        If modifications involve some input/output, prefer the :func:`.sideffected`
         modifier.
 
         You may still convey this relationships simply by including the dependency name
@@ -451,8 +451,8 @@ def sideffect(name, optional: bool = None):
     )
 
 
-def sol_sideffect(
-    sideffected: str,
+def sideffected(
+    dependency: str,
     sideffect0: str,
     *sideffects: str,
     optional: bool = None,
@@ -465,22 +465,16 @@ def sol_sideffect(
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
     of the function.
 
-    .. Note::
-
-        When declaring an `operation` with *sideffected* dependency, it is important
-        not to put the actual :attr:`sideffected` in the `needs` & `provides`,
-        or else, dependency cycles will form, and network will not :term:`compile`.
-
     **Example:**
 
     A typical use-case is to signify columns required to produce new ones in
     pandas dataframes (:gray:`emulated with dictionaries`):
 
 
-        >>> from graphtik import operation, compose, sol_sideffect
+        >>> from graphtik import operation, compose, sideffected
 
         >>> @operation(needs="order_items",
-        ...            provides=sol_sideffect("ORDER", "Items", "Prices"))
+        ...            provides=sideffected("ORDER", "Items", "Prices"))
         ... def new_order(items: list) -> "pd.DataFrame":
         ...     order = {"items": items}
         ...     # Pretend we get the prices from sales.
@@ -488,16 +482,16 @@ def sol_sideffect(
         ...     return order
 
         >>> @operation(
-        ...     needs=[sol_sideffect("ORDER", "Items"), "vat rate"],
-        ...     provides=sol_sideffect("ORDER", "VAT")
+        ...     needs=[sideffected("ORDER", "Items"), "vat rate"],
+        ...     provides=sideffected("ORDER", "VAT")
         ... )
         ... def fill_in_vat(order: "pd.DataFrame", vat: float):
         ...     order['VAT'] = [i * vat for i in order['prices']]
         ...     return order
 
         >>> @operation(
-        ...     needs=[sol_sideffect("ORDER", "Prices", "VAT")],
-        ...     provides=sol_sideffect("ORDER", "Totals")
+        ...     needs=[sideffected("ORDER", "Prices", "VAT")],
+        ...     provides=sideffected("ORDER", "Totals")
         ... )
         ... def finalize_prices(order: "pd.DataFrame"):
         ...     order['totals'] = [p + v for p, v in zip(order['prices'], order['VAT'])]
@@ -511,23 +505,23 @@ def sol_sideffect(
         >>> with debug_enabled(True):
         ...     finalize_prices
         FunctionalOperation(name='finalize_prices',
-                            needs=[sol_sideffect('ORDER'<--'Prices'),
-                                   sol_sideffect('ORDER'<--'VAT')],
-                            op_needs=[sol_sideffect('ORDER'<--'Prices'),
-                                      sol_sideffect('ORDER'<--'VAT')],
+                            needs=[sideffected('ORDER'<--'Prices'),
+                                   sideffected('ORDER'<--'VAT')],
+                            op_needs=[sideffected('ORDER'<--'Prices'),
+                                      sideffected('ORDER'<--'VAT')],
                             fn_needs=['ORDER'],
-                            provides=[sol_sideffect('ORDER'<--'Totals')],
-                            op_provides=[sol_sideffect('ORDER'<--'Totals')],
+                            provides=[sideffected('ORDER'<--'Totals')],
+                            op_provides=[sideffected('ORDER'<--'Totals')],
                             fn_provides=['ORDER'], fn='finalize_prices')
 
-    - Notice that although the function consumes & produces ``ORDER``
+    - Notice that although the function consumes & produces the same ``ORDER`` dependency
       (check ``fn_needs`` & ``fn_provides``, above), which :orange:`would have created a cycle`,
       the wrapping operation :term:`needs` and :term:`provides` different
-      `sol_sideffects`, breaking thus the cycle.
+      `sideffected` instances, breaking thus the cycle.
 
-    - Notice also that declaring a single *solution sideffect* with multiple *sideffects*,
-      expands into multiple  *"singular"* ``sol_sideffect`` dependencies in the network
-      (check ``needs``, above).
+    - Notice also that declaring a single *sideffected* with multiple *sideffects*,
+      expands into multiple  *"singular"* ``sideffected`` dependencies in the network
+      (check ``needs`` & ``op_needs`` above).
 
         >>> proc_order = compose('process order', new_order, fill_in_vat, finalize_prices)
         >>> sol = proc_order.compute({
@@ -545,7 +539,7 @@ def sol_sideffect(
     .. graphtik::
         :height: 640
         :width: 100%
-        :name: solution-sideffects
+        :name: sideffecteds
 
     """
     sideffects = (sideffect0,) + sideffects
@@ -554,13 +548,13 @@ def sol_sideffect(
     invalids = [f"{type(i).__name__}({i!r})" for i in sideffects if type(i) is not str]
     if invalids:
         raise ValueError(f"Expecting regular strings as sideffects, got: {invalids!r}")
-    if is_sideffect(sideffected):
+    if is_sideffect(dependency):
         raise ValueError(
             f"Expecting a non-sideffect for sideffected"
-            f", got: {type(sideffected).__name__}({sideffected!r})"
+            f", got: {type(dependency).__name__}({dependency!r})"
         )
     return _Modifier(
-        sideffected,
+        dependency,
         sideffects=sideffects,
         optional=_Optionals.optional if optional else None,
         fn_kwarg=fn_kwarg,

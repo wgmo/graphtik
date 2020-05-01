@@ -31,10 +31,10 @@ from .modifiers import (
     is_optional,
     is_pure_sideffect,
     is_sideffect,
-    is_sol_sideffect,
+    is_sideffected,
     is_vararg,
     is_varargs,
-    sol_sideffect,
+    sideffected,
 )
 
 log = logging.getLogger(__name__)
@@ -139,27 +139,27 @@ def _spread_sideffects(
 
     :return:
         the given `deps` duplicated as ``(fn_deps,  op_deps)``, where any instances of
-        :func:`.sideffect` and :func:`.sol_sideffect` are processed like this:
+        :func:`.sideffect` and :func:`.sideffected` are processed like this:
 
         `fn_deps`
-            - :func:`.sol_sideffect` are replaced by the pure :attr:`.sol_sideffect.sideffected`
-              consumed/produced by underlying functions, in the order it is first met
-              (the rest duplicate `sideffected` are discarded).
+            - :func:`.sideffected` are replaced by the pure :attr:`._Modifier.sideffected`
+              dependency consumed/produced by underlying functions, in the order
+              it is first met (the rest duplicate `sideffected` are discarded).
             - :func:`.sideffect` are simply dropped;
 
         `op_deps`
-            :func:`.sol_sideffect` are replaced by a sequence of "singular" `sol_sideffect`
-            instances, one for each item in their :attr:`.sol_sideffect.sideffects` attribute,
+            :func:`.sideffected` are replaced by a sequence of "singular" `sideffected`
+            instances, one for each item in their :attr:`._Modifier.sideffects` attribute,
             in the order they are first met
             (any duplicates are discarded, order is irrelevant, since they don't reach
             the function);
     """
 
-    def singularize_sol_sideffects(dep):
-        """Make 1 sol_sideffect for each pure-sfx contained, preserving attributes """
+    def singularize_sideffecteds(dep):
+        """Make 1 sideffected for each pure-sfx contained, preserving attributes """
         return (
             (dep.withset(sideffects=(s,)) for s in dep.sideffects)
-            if is_sol_sideffect(dep)
+            if is_sideffected(dep)
             else (dep,)
         )
 
@@ -169,7 +169,7 @@ def _spread_sideffects(
 
     def strip_sideffecteds(dep):
         """Strip the dependency, preserving attributes """
-        if is_sol_sideffect(dep):
+        if is_sideffected(dep):
             sideffected = dep.sideffected
             if not sideffected in seen_sideffecteds:
                 seen_sideffecteds.add(sideffected)
@@ -181,7 +181,7 @@ def _spread_sideffects(
     assert deps is not None
 
     if deps:
-        deps = tuple(nn for n in deps for nn in singularize_sol_sideffects(n))
+        deps = tuple(nn for n in deps for nn in singularize_sideffecteds(n))
         fn_deps = tuple(nn for n in deps for nn in strip_sideffecteds(n))
         return deps, fn_deps
     else:
@@ -280,26 +280,26 @@ class FunctionalOperation(Operation, Plottable):
         self.name = name
 
         #: The :term:`needs` almost as given by the user
-        #: (which may contain MULTI-sol_sideffects and dupes),
+        #: (which may contain MULTI-sideffecteds and dupes),
         #: roughly morphed into `_fn_provides` + sideffects
-        #: (dupes preserved, with sideffects & SINGULARIZED :term:`solution sideffect`\s).
+        #: (dupes preserved, with sideffects & SINGULARIZED :term:`sideffected`\s).
         #: It is stored for builder functionality to work.
         self.needs = needs
         #: Value names ready to lay the graph for :term:`pruning`
-        #: (NO dupes, WITH aliases & sideffects, and SINGULAR :term:`solution sideffect`\s).
+        #: (NO dupes, WITH aliases & sideffects, and SINGULAR :term:`sideffected`\s).
         self.op_needs = op_needs
         #: Value names the underlying function requires
         #: (dupes preserved, without sideffects, with stripped :term:`sideffected` dependencies).
         self._fn_needs = _fn_needs
 
         #: The :term:`provides` almost as given by the user
-        #: (which may contain MULTI-sol_sideffects and dupes),
+        #: (which may contain MULTI-sideffecteds and dupes),
         #: roughly morphed into `_fn_provides` + sideffects
-        #: (dupes preserved, without aliases, with sideffects & SINGULARIZED :term:`solution sideffect`\s).
+        #: (dupes preserved, without aliases, with sideffects & SINGULARIZED :term:`sideffected`\s).
         #: It is stored for builder functionality to work.
         self.provides = provides
         #: Value names ready to lay the graph for :term:`pruning`
-        #: (NO dupes, WITH aliases & sideffects, and SINGULAR sol_sideffects).
+        #: (NO dupes, WITH aliases & sideffects, and SINGULAR sideffecteds).
         self.op_provides = op_provides
         #: Value names the underlying function produces
         #: (dupes preserved, without aliases & sideffects, with stripped :term:`sideffected` dependencies).

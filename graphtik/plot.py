@@ -44,7 +44,7 @@ from boltons.iterutils import default_enter, default_exit, get_path, remap
 
 from .base import PlotArgs, func_name, func_source
 from .config import is_debug
-from .modifiers import is_mapped, is_sideffect, is_sol_sideffect
+from .modifiers import is_mapped, is_sideffect, is_sideffected
 from .netop import NetworkOperation
 from .network import ExecutionPlan, Network, Solution, _EvictInstruction
 from .op import Operation
@@ -443,7 +443,7 @@ class Theme:
         "color": "blue",
         "fontcolor": "blue",
     }
-    kw_data_sol_sideffect = {
+    kw_data_sideffected = {
         "label": make_template(
             """
             <{{ nx_item.sideffected | eee }}<BR/>
@@ -1134,8 +1134,8 @@ class Plotter:
 
             if is_sideffect(nx_node):
                 styles.add("kw_data_sideffect")
-                if is_sol_sideffect(nx_node):
-                    styles.add("kw_data_sol_sideffect")
+                if is_sideffected(nx_node):
+                    styles.add("kw_data_sideffected")
 
             ## Data-state
             #
@@ -1160,7 +1160,7 @@ class Plotter:
                     styles.add("kw_data_to_evict")
 
                 if solution is not None:
-                    if not is_sol_sideffect(nx_node):
+                    if not is_sideffected(nx_node):
                         if nx_node in solution:
                             styles.add("kw_data_in_solution")
 

@@ -36,7 +36,7 @@ from graphtik import (
     operations_reschedullled,
     tasks_marshalled,
 )
-from graphtik.modifiers import optional, sideffect, sol_sideffect, vararg
+from graphtik.modifiers import optional, sideffect, sideffected, vararg
 from graphtik.netop import NetworkOperation
 from graphtik.network import Solution
 from graphtik.op import Operation
@@ -1006,7 +1006,7 @@ def test_sideffect_NO_RESULT(caplog):
 
 @pytest.fixture
 def calc_prices_pipeline():
-    @operation(needs="order_items", provides=sol_sideffect("ORDER", "Items", "Prices"))
+    @operation(needs="order_items", provides=sideffected("ORDER", "Items", "Prices"))
     def new_order(items: list) -> "pd.DataFrame":
         order = {"items": items}
         # Pretend we get the prices from sales.
@@ -1014,8 +1014,8 @@ def calc_prices_pipeline():
         return order
 
     @operation(
-        needs=[sol_sideffect("ORDER", "Items"), "vat rate"],
-        provides=sol_sideffect("ORDER", "VAT rates"),
+        needs=[sideffected("ORDER", "Items"), "vat rate"],
+        provides=sideffected("ORDER", "VAT rates"),
     )
     def fill_in_vat_ratios(order: "pd.DataFrame", base_vat: float) -> "pd.DataFrame":
         order["VAT_rates"] = [
@@ -1024,8 +1024,8 @@ def calc_prices_pipeline():
         return order
 
     @operation(
-        needs=[sol_sideffect("ORDER", "Prices"), sol_sideffect("ORDER", "VAT rates")],
-        provides=[sol_sideffect("ORDER", "VAT", "Totals"), "vat owed"],
+        needs=[sideffected("ORDER", "Prices"), sideffected("ORDER", "VAT rates")],
+        provides=[sideffected("ORDER", "VAT", "Totals"), "vat owed"],
     )
     def finalize_prices(order: "pd.DataFrame") -> Tuple["pd.DataFrame", float]:
         if "VAT_rates" in order:
@@ -1042,7 +1042,7 @@ def calc_prices_pipeline():
     return proc_order
 
 
-def test_solution_sideffects_ok(calc_prices_pipeline):
+def test_sideffecteds_ok(calc_prices_pipeline):
     sol = calc_prices_pipeline.compute(
         {"order_items": "milk babylino toilet-paper".split(), "vat rate": 0.18}
     )
@@ -1061,12 +1061,12 @@ def test_solution_sideffects_ok(calc_prices_pipeline):
     }
 
 
-def test_solution_sideffects_endured(calc_prices_pipeline):
+def test_sideffecteds_endured(calc_prices_pipeline):
     ## Break `fill_in_vat_ratios()`.
     #
     @operation(
-        needs=[sol_sideffect("ORDER", "Items"), "vat rate"],
-        provides=sol_sideffect("ORDER", "VAT rates"),
+        needs=[sideffected("ORDER", "Items"), "vat rate"],
+        provides=sideffected("ORDER", "VAT rates"),
         endured=True,
     )
     def fill_in_vat_ratios(order: "pd.DataFrame", base_vat: float) -> "pd.DataFrame":

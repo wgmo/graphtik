@@ -119,7 +119,7 @@ MODIFIERS:
 ----------
 + BREAK: rename `arg --> mapping``, which conveys the correct meaning.
 
-+ FEAT: Introduced :term:`solution sideffect`\s, to allow for certain dependencies
++ FEAT: Introduced :term`sideffected`\s, to allow for certain dependencies
   to be produced & consumed by function to apply "sideffects, without creating
   "cycles":
 
