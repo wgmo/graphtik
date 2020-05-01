@@ -6,18 +6,18 @@ abstractly represented by the :class:`.Operation` class.
 This class specifies the :term:`dependencies <dependency>` of the *operation*
 in the *pipeline*.
 
+You may inherit this class and access the declared values in :term:`needs` from :term:`solution`
+and produce the declared :term:`provides` when :meth:`Operation.compute()` method is called.
+But there is an easier way...actually half of the code of this project is to retrofit
+existing functions into *operations*.
+
+
+Operations from existing functions
+----------------------------------
 The :class:`.FunctionalOperation` provides a concrete lightweight wrapper
 around any arbitrary function to define those *dependencies*.
 Instead of constructing it directly, prefer to instantiate it by calling
-the :func:`.operation()` factory.
-
-
-Operations are just functions
-------------------------------
-
-At the heart of each `operation` is just a function, any arbitrary function.
-Indeed, you can wrap an existing function into an `operation`, and then call it
-just like the original function, e.g.:
+the :func:`.operation()` factory:
 
    >>> from operator import add
    >>> from graphtik import operation
@@ -28,10 +28,12 @@ just like the original function, e.g.:
    >>> add_op
    FunctionalOperation(name='add', needs=['a', 'b'], provides=['a_plus_b'], fn='add')
 
+You may call it just like the original function, e.g.:
+
    >>> add_op(3, 4) == add(3, 4)
    True
 
-   But ``__call__()`` is just to facilitate quick experimentation - it does not
+   But ``__call__()`` is just a facade for quick experimentation - it does not
    perform any checks or matching of *needs*/*provides* to function arguments
    & results (which happen when :term:`pipeline`\s :term:`compute`).
 
@@ -40,9 +42,69 @@ just like the original function, e.g.:
    (read more on :ref:`graph-computations`).
 
 
+Builder pattern
+^^^^^^^^^^^^^^^
+There are two ways to instantiate a :class:`.FunctionalOperation`\s, each one suitable
+for different scenarios.
+
+We've seen that calling manually :func:`.operation()` allows putting into a pipeline
+functions that are defined elsewhere (e.g. in another module, or are system functions).
+
+But that method is also useful if you want to create multiple operation instances
+with similar attributes, e.g. ``needs``:
+
+   >>> op_factory = operation(needs=['a'])
+
+Notice that we specified a `fn`, in order to get back a :class:`.FunctionalOperation`
+instance (and not a decorator).
+
+   >>> from graphtik import operation, compose
+   >>> from functools import partial
+
+   >>> def mypow(a, p=2):
+   ...    return a ** p
+
+   >>> pow_op2 = op_factory.withset(fn=mypow, provides="^2")
+   >>> pow_op3 = op_factory.withset(fn=partial(mypow, p=3), name='pow_3', provides='^3')
+   >>> pow_op0 = op_factory.withset(fn=lambda a: 1, name='pow_0', provides='^0')
+
+   >>> graphop = compose('powers', pow_op2, pow_op3, pow_op0)
+   >>> graphop
+   NetworkOperation('powers', needs=['a'], provides=['^2', '^3', '^0'], x3 ops:
+      mypow, pow_3, pow_0)
+
+
+   >>> graphop(a=2)
+   {'a': 2, '^2': 4, '^3': 8, '^0': 1}
+
+.. graphtik::
+.. Tip::
+  See :ref:`plotting` on how to make diagrams like this.
+
+
+Decorator specification
+^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are defining your computation graph and the functions that comprise it all in the same script,
+the decorator specification of ``operation`` instances might be particularly useful,
+as it allows you to assign computation graph structure to functions as they are defined.
+Here's an example:
+
+   >>> from graphtik import operation, compose
+
+   >>> @operation(needs=['b', 'a', 'r'], provides='bar')
+   ... def foo(a, b, c):
+   ...   return c * (a + b)
+
+   >>> graphop = compose('foo_graph', foo)
+
+.. graphtik::
+
+- Notice that if ``name`` is not given, it is deduced from the function name.
+
+
 Specifying graph structure: ``provides`` and ``needs``
 ------------------------------------------------------
-
 Each :term:`operation` is a node in a computation :term:`graph`,
 depending and supplying data from and to other nodes (via the :term:`solution`),
 in order to :term:`compute`.
@@ -75,6 +137,27 @@ to the :func:`.operation` factory, specifically:
    :seealso: :term:`provides`, :term:`modifier`, :attr:`.FunctionalOperation.provides`,
       :attr:`.FunctionalOperation.op_provides`, :attr:`.FunctionalOperation._fn_provides`
 
+Declarations of *needs* and *provides* is affected by :term:`modifier`\s like
+:func:`.mapped`:
+
+Map inputs to different function arguments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autofunction:: graphtik.modifiers.mapped
+   :noindex:
+
+Execute operations with missing inputs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autofunction:: graphtik.modifiers.optional
+   :noindex:
+
+Calling functions with varargs (``*args``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autofunction:: graphtik.modifiers.vararg
+   :noindex:
+.. autofunction:: graphtik.modifiers.varargs
+   :noindex:
+
+
 .. _aliases:
 
 Aliased `provides`
@@ -82,7 +165,7 @@ Aliased `provides`
 Sometimes, you need to interface functions & operations where they name a
 :term:`dependency` differently.
 This is doable without introducing "pipe-through" interface operation, either
-by annotating certain `needs` with :func:`.mapped` `modifiers` (see docs), or
+by annotating certain `needs` with :func:`.mapped` `modifiers` (above), or
 by :term:`alias`\sing certain `provides` to different names:
 
    >>> op = operation(str,
@@ -124,7 +207,6 @@ in :ref:`quick-start`:
                     x3 ops: mul, sub, abspow1)
 
 
-- Notice that if ``name`` is not given, it is deduced from the function name.
 - Notice the use of :func:`functools.partial()` to set parameter ``p`` to a constant value.
 - And this is done by calling once more the returned "decorator* from :func:`operation()`,
   when called without a functions.
@@ -133,69 +215,3 @@ The ``needs`` and ``provides`` arguments to the operations in this script define
 a computation graph that looks like this:
 
 .. graphtik::
-.. Tip::
-  See :ref:`plotting` on how to make diagrams like this.
-
-Builder pattern
-^^^^^^^^^^^^^^^
-There 2 ways to instantiate an :class:`.FunctionalOperation`\s, each one suitable
-for different scenarios, and so far we have only seen the 1st one:
-
-We've seen that calling manually :func:`.operation()` allows putting into a pipeline
-functions that are defined elsewhere (e.g. in another module, or are system functions).
-
-But that method is also useful if you want to create multiple operation instances
-with similar attributes, e.g. ``needs``:
-
-   >>> op_factory = operation(needs=['a'])
-
-Notice that we specified a `fn`, in order to get back a :class:`.FunctionalOperation`
-instance (and not a decorator).
-
-   >>> from functools import partial
-
-   >>> def mypow(a, p=2):
-   ...    return a ** p
-
-   >>> pow_op2 = op_factory.withset(fn=mypow, provides="^2")
-   >>> pow_op3 = op_factory.withset(fn=partial(mypow, p=3), name='pow_3', provides='^3')
-   >>> pow_op0 = op_factory.withset(fn=lambda a: 1, name='pow_0', provides='^0')
-
-   >>> graphop = compose('powers', pow_op2, pow_op3, pow_op0)
-   >>> graphop
-   NetworkOperation('powers', needs=['a'], provides=['^2', '^3', '^0'], x3 ops:
-      mypow, pow_3, pow_0)
-
-
-   >>> graphop(a=2)
-   {'a': 2, '^2': 4, '^3': 8, '^0': 1}
-
-.. graphtik::
-
-
-Decorator specification
-^^^^^^^^^^^^^^^^^^^^^^^
-
-If you are defining your computation graph and the functions that comprise it all in the same script,
-the decorator specification of ``operation`` instances might be particularly useful,
-as it allows you to assign computation graph structure to functions as they are defined.
-Here's an example:
-
-   >>> from graphtik import operation, compose
-
-   >>> @operation(name='foo_op', needs=['a', 'b', 'c'], provides='foo')
-   ... def foo(a, b, c):
-   ...   return c * (a + b)
-
-   >>> graphop = compose('foo_graph', foo)
-
-.. graphtik::
-
-
-
-Modifiers on `operation` `needs` and `provides`
------------------------------------------------
-Annotations on a `dependency` such as :term:`optionals` & :term:`sideffects` modify
-their behavior, and eventually the :term:`pipeline`.
-
-Read :mod:`.modifiers` for more.

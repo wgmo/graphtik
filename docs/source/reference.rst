@@ -27,6 +27,7 @@ Module: `modifiers`
 
 .. automodule:: graphtik.modifiers
      :members:
+     :private-members:
 
 Module: `netop`
 ====================

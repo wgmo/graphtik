@@ -1,7 +1,7 @@
 .. _graph-composition:
 
-Graph Composition
-=================
+Pipelines
+=========
 
 Graphtik's :func:`.operation.compose()` factory handles the work of tying together ``operation``
 instances into a runnable computation graph.
@@ -41,8 +41,8 @@ This yields a graph which looks like this (see :ref:`plotting`):
 
 .. _graph-computations:
 
-Running a computation graph
----------------------------
+Running a pipeline
+------------------
 
 The graph composed above can be run by simply calling it with a dictionary of values
 with keys corresponding to the named :term:`dependencies <dependency>` (`needs` &
@@ -99,8 +99,8 @@ into the plot:
 
 
 
-Short-circuiting a graph computation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Short-circuiting a pipeline
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can short-circuit a graph computation, making certain inputs unnecessary,
 by providing a value in the graph that is further downstream in the graph than those inputs.
@@ -126,8 +126,8 @@ Then, you can either provide the raw image data string as input, or you can prov
 the ``PIL.Image`` if you have it and skip providing the image data string.
 
 
-Extending existing computation graphs
--------------------------------------
+Extending pipelines
+-------------------
 
 Sometimes you will have an existing computation graph to which you want to add operations.
 This is simple, since ``compose`` can compose whole graphs along with individual ``operation`` instances.
@@ -152,8 +152,8 @@ Run the graph and print the output:
 
 
 
-Merging computation graphs
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Merging pipelines
+^^^^^^^^^^^^^^^^^
 
 Sometimes you will have two computation graphs---perhaps ones that share operations---you want to combine into one.
 In the simple case, where the graphs don't share operations or where you don't care
@@ -209,8 +209,8 @@ Advanced pipelines
 ------------------
 .. _endured:
 
-Dependencies on sideffects
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Depending on sideffects
+^^^^^^^^^^^^^^^^^^^^^^^
 .. autofunction:: graphtik.modifiers.sideffect
    :noindex:
 

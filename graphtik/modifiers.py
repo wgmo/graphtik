@@ -17,12 +17,17 @@ class _Optionals(enum.Enum):
 
     @property
     def varargish(self):
-        """True if the :term:`optional` is a :term:`varargish`. """
+        """True if the :term:`optionals` is a :term:`varargish`. """
         return self.value > 1
 
 
 class _Modifier(str):
-    """Annotate a :term:`dependency` with a combination of :term:`modifiers`. """
+    """
+    Annotate a :term:`dependency` with a combination of :term:`modifier`.
+
+    Private, in the sense that users should use the factory functions :func:`.mapped`,
+    :func:`optional` etc, and :func:`is_optional()` predicates.
+    """
 
     # avoid __dict__ on instances
     __slots__ = (
