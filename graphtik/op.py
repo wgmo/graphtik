@@ -156,8 +156,9 @@ def _spread_sideffects(
     """
 
     def singularize_sol_sideffects(dep):
+        """Make 1 sol_sideffect for each pure-sfx contained, preserving attributes """
         return (
-            (sol_sideffect(dep.sideffected, s) for s in dep.sideffects)
+            (dep.withset(sideffects=(s,)) for s in dep.sideffects)
             if is_sol_sideffect(dep)
             else (dep,)
         )
@@ -167,11 +168,12 @@ def _spread_sideffects(
     seen_sideffecteds: Set[str] = set()
 
     def strip_sideffecteds(dep):
+        """Strip the dependency, preserving attributes """
         if is_sol_sideffect(dep):
             sideffected = dep.sideffected
             if not sideffected in seen_sideffecteds:
                 seen_sideffecteds.add(sideffected)
-                return (sideffected,)
+                return (dep.withset(sideffects=None),)
         elif not is_sideffect(dep):
             return (dep,)
         return ()
