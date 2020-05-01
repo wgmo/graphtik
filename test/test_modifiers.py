@@ -19,8 +19,8 @@ from graphtik.modifiers import (
         (lambda: optional("b", "bb"), "b"),
         (lambda: vararg("c"), "c"),
         (lambda: varargs("d"), "d"),
-        (lambda: sideffect("e"), "sideffect: e"),
-        (lambda: sideffect("e", optional=1), "sideffect: e"),
+        (lambda: sideffect("e"), "sideffect: 'e'"),
+        (lambda: sideffect("e", optional=1), "sideffect: 'e'"),
         (lambda: sol_sideffect("f", "ff"), "sol_sideffect('f'<--'ff')"),
         (
             lambda: sol_sideffect("f", "ff", fn_kwarg="F"),
@@ -47,8 +47,8 @@ def test_modifs_str(mod, exp):
         (lambda: optional("b", "bb"), "optional('b'-->'bb')"),
         (lambda: vararg("c"), "vararg('c')"),
         (lambda: varargs("d"), "varargs('d')"),
-        (lambda: sideffect("e"), "sideffect: e"),
-        (lambda: sideffect("e", optional=1), "sideffect: e"),
+        (lambda: sideffect("e"), "sideffect: 'e'"),
+        (lambda: sideffect("e", optional=1), "sideffect: 'e'"),
         (lambda: sol_sideffect("f", "ff"), "sol_sideffect('f'<--'ff')"),
         (
             lambda: sol_sideffect("f", "ff", fn_kwarg="F"),
@@ -66,3 +66,18 @@ def test_modifs_repr(mod, exp):
     print(repr(mod))
     # Strip outer quotes
     assert repr(mod) == exp
+
+
+def test_recreation():
+    assert optional(optional("a")) == optional("a")
+    assert mapped(mapped("a", 1), 1) == mapped("a", 1)
+    assert vararg(vararg("a")) == vararg("a")
+    assert varargs(varargs("a")) == varargs("a")
+
+
+def test_recreation_repr():
+    assert repr(optional(optional("a"))) == repr(optional("a"))
+    assert repr(mapped(mapped("a", 1), 1)) == repr(mapped("a", 1))
+    assert repr(vararg(vararg("a"))) == repr(vararg("a"))
+    assert repr(varargs(varargs("a"))) == repr(varargs("a"))
+    # assert repr(sideffect(sideffect("a"))) == repr(sideffect("a"))

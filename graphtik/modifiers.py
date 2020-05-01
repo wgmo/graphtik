@@ -66,7 +66,7 @@ class Dependency(str):
                 optional,
                 sideffects,
             )
-            _repr = f"{optional.name}({name!r})"
+            _repr = f"{optional.name}({str(name)!r})"
         else:
             if sideffects is not None:
                 if sideffects == ():
@@ -81,20 +81,22 @@ class Dependency(str):
                     # m = re.match(r"sideffect\((.*)\)", name)
                     # if m:
                     #     name = m.group(1)
-                    name = f"sideffect: {name}"
+                    name = f"sideffect: {str(name)!r}"
                     _repr = name  # avoid quotes around whole repr
                 else:  # sol_sideffect
                     sideffected = name
                     sfx_str = ", ".join(str(i) for i in sideffects)
                     qmark = "?" if optional else ""
-                    name = f"sol_sideffect{qmark}({name!r}<--{sfx_str!r})"
+                    name = f"sol_sideffect{qmark}({str(name)!r}<--{sfx_str!r})"
                     if fn_kwarg:
                         name = f"{name[:-1]}, fn_kwarg={fn_kwarg!r})"
                     _repr = name  # avoid quotes around whole repr
             elif optional or fn_kwarg:
                 kwarg_str = f"-->{fn_kwarg!r}" if fn_kwarg else ""
                 # TODO: Use qmark for optional
-                _repr = f"{'optional' if optional else 'mapped'}({name!r}{kwarg_str})"
+                _repr = (
+                    f"{'optional' if optional else 'mapped'}({str(name)!r}{kwarg_str})"
+                )
 
         obj = str.__new__(cls, name)
 
@@ -408,8 +410,8 @@ def sideffect(name, optional: bool = None):
         ...         provides="body")(lambda: "TaDa!")
         ... )
         >>> graph
-        NetworkOperation('strip ease', needs=['sideffect: lights off'],
-                         provides=['sideffect: lights off', 'body'],
+        NetworkOperation('strip ease', needs=[sideffect: 'lights off'],
+                         provides=[sideffect: 'lights off', 'body'],
                          x2 ops: close_the_lights, undress)
 
         >>> sol = graph()
@@ -494,15 +496,14 @@ def sol_sideffect(
         >>> with debug_enabled(True):
         ...     finalize_prices
         FunctionalOperation(name='finalize_prices',
-                            needs=["sol_sideffect('ORDER'<--'Prices'",
-                                   "sol_sideffect('ORDER'<--'VAT'"],
-                            op_needs=["sol_sideffect('ORDER'<--'Prices'",
-                                      "sol_sideffect('ORDER'<--'VAT'"],
+                            needs=[sol_sideffect('ORDER'<--'Prices'),
+                                   sol_sideffect('ORDER'<--'VAT')],
+                            op_needs=[sol_sideffect('ORDER'<--'Prices'),
+                                      sol_sideffect('ORDER'<--'VAT')],
                             fn_needs=['ORDER'],
-                            provides=["sol_sideffect('ORDER'<--'Totals'"],
-                            op_provides=["sol_sideffect('ORDER'<--'Totals'"],
-                            fn_provides=['ORDER'],
-                            fn='finalize_prices')
+                            provides=[sol_sideffect('ORDER'<--'Totals')],
+                            op_provides=[sol_sideffect('ORDER'<--'Totals')],
+                            fn_provides=['ORDER'], fn='finalize_prices')
 
     - Notice that although the function consumes & produces ``ORDER``
       (check ``fn_needs`` & ``fn_provides``, above), which :orange:`would have created a cycle`,
