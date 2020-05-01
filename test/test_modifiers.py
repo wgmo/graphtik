@@ -13,6 +13,8 @@ from graphtik.modifiers import (
 @pytest.mark.parametrize(
     "mod, exp",
     [
+        (lambda: mapped("b", None), "b"),
+        (lambda: mapped("b", ""), "b"),
         (lambda: mapped("b", "bb"), "b"),
         (lambda: optional("b"), "b"),
         (lambda: optional("b", "bb"), "b"),
@@ -41,6 +43,8 @@ def test_modifs_str(mod, exp):
 @pytest.mark.parametrize(
     "mod, exp",
     [
+        (lambda: mapped("b", None), "'b'"),
+        (lambda: mapped("b", ""), "'b'"),
         (lambda: mapped("b", "bb"), "mapped('b'-->'bb')"),
         (lambda: optional("b"), "optional('b')"),
         (lambda: optional("b", "bb"), "optional('b'-->'bb')"),
