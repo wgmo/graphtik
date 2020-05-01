@@ -108,41 +108,24 @@ class Dependency(str):
 
         return obj
 
-    @property
-    def fn_arg(self):
-        # TODO: DROPPPPP renamed fn_arg
-        return self.fn_kwarg
-
     def __repr__(self):
         return super().__repr__() if self._repr is None else self._repr
 
 
 def is_mapped(dep) -> bool:
-    try:
-        return bool(dep.fn_kwarg)
-    except Exception:
-        return False
+    return getattr(dep, "fn_kwarg", None)
 
 
 def is_optional(dep) -> bool:
-    try:
-        return bool(dep.optional)
-    except Exception:
-        return False
+    return getattr(dep, "optional", None)
 
 
 def is_vararg(dep) -> bool:
-    try:
-        return dep.optional is _Optionals.vararg
-    except Exception:
-        return False
+    return getattr(dep, "optional", None) is _Optionals.vararg
 
 
 def is_varargs(dep) -> bool:
-    try:
-        return dep.optional is _Optionals.varargs
-    except Exception:
-        return False
+    return getattr(dep, "optional", None) is _Optionals.varargs
 
 
 def is_varargish(dep) -> bool:
@@ -153,24 +136,15 @@ def is_varargish(dep) -> bool:
 
 
 def is_sideffect(dep) -> bool:
-    try:
-        return dep.sideffects is not None
-    except Exception:
-        return False
+    return getattr(dep, "sideffects", None) is not None
 
 
 def is_pure_sideffect(dep) -> bool:
-    try:
-        return dep.sideffects == ()
-    except Exception:
-        return False
+    return getattr(dep, "sideffects", None) == ()
 
 
 def is_sol_sideffect(dep) -> bool:
-    try:
-        return bool(dep.sideffected)
-    except Exception:
-        return False
+    return getattr(dep, "sideffected", None)
 
 
 def mapped(name: str, fn_kwarg: str):

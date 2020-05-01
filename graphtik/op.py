@@ -458,8 +458,8 @@ class FunctionalOperation(Operation, Plottable):
                 ## TODO: augment modifiers with "retrievers" from `inputs`.
                 inp_value = named_inputs[n]
 
-                if is_mapped(n):  # includes `optionals`
-                    kwargs[n if n.fn_arg is None else n.fn_arg] = inp_value
+                if is_mapped(n):
+                    kwargs[n.fn_kwarg] = inp_value
 
                 elif is_vararg(n):
                     vararg_vals.append(inp_value)

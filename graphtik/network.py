@@ -969,8 +969,8 @@ class Network(Plottable):
                 ekw["optional"] = True
             if is_sideffect(n):
                 ekw["sideffect"] = nkw["sideffect"] = True
-            if is_mapped(n) and n.fn_arg is not None:
-                ekw["_fn_arg"] = n.fn_arg
+            if is_mapped(n):
+                ekw["fn_kwarg"] = n.fn_kwarg
             needs.append((n, nkw))
             needs_edges.append((n, operation, ekw))
         graph.add_nodes_from(needs)
