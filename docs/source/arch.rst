@@ -264,26 +264,45 @@ Architecture
         Usefull for operation returning `partial outputs`.
 
     modifier
-        Annotations on a `dependency` such as `optionals` & `sideffects`.
+        A `modifier` change `dependency` behavior during `compilation` or `execution`.
 
-        (see :mod:`graphtik.modifiers` module)
+        For instance, `needs` may be annotated as `optionals` function arguments,
+        `provides` and *needs* can be annotated as "ghost" `sideffects`
+
+        See :mod:`graphtik.modifiers` module.
 
     optionals
-        A `modifier` applied on `needs` only `dependencies <dependency>`, corresponding to either:
+        A `needs` only `modifier` for a `inputs` that do not hinder `operation` execution
+        (`prune`) if absent from `solution`.
 
-        - function arguments-with-defaults (annotated with :func:`.optional`), or
-        - ``*args`` (annotated with :func:`.vararg` & :func:`.varargs`),
+        In the underlying function it corresponds to either:
 
-        that do not hinder execution of the `operation` if absent from `inputs`.
+        - non-compulsory function arguments (with defaults), annotated with
+          :func:`.optional`, or
+        - `varargish` arguments, annotated with :func:`.vararg` or :func:`.varargs`.
+
+    varargish
+        A `needs` only `modifier` for `inputs` to be appended as ``*args``
+        (if present in `solution`).
+
+        There are 2 kinds, both, by definition, `optionals`:
+
+        - the :func:`.vararg` annotates any *solution* value to be appended *once*
+          in the ``*args``;
+        - the :func:`.varargs` annotates *iterable* values and all its items are appended
+          in the ``*args`` one-by-one.
+
+        .. include:: ../../graphtik/modifiers.py
+            :start-after: .. varargs-mistake-start
+            :end-before: .. varargs-mistake-end
 
     sideffects
         A `modifier` denoting a fictive `dependency` linking `operation`\s into virtual flows,
-
         without real data exchanges.
 
-        A *sideffect* is a *dependency* denoting a modification to some internal state
-        that may not be fully represented in the `graph` & `solution`.
-        *Sideffects* participate in the `compilation` of the graph, and a dummy value
+        The side-effect modification may happen to some internal state not fully represented
+        in the `graph` & `solution`.
+        *Sideffects* participate in the `compilation` of the graph, and a dummy values
         gets written in the `solution` during `execution`, but they are never given/asked
         to/from functions.
 

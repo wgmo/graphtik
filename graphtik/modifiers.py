@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-A :term:`modifier` changes the behavior of specific `needs` or `provides`.
+A :term:`modifier` change :term:`dependency` behavior during :term:`compilation` or :term:`execution`.
 
 The `needs` and `provides` annotated with *modifiers* designate, for instance,
 :term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
@@ -18,6 +18,7 @@ class _Optionals(enum.Enum):
 
     @property
     def varargish(self):
+        """True if the :term:`optional` is a :term:`varargish`. """
         return self.value > 1
 
 
@@ -35,7 +36,7 @@ class _Modifier(str):
 
     #: Map my name in `needs` into this kw-argument of the function.
     fn_kwarg: str
-    #: required = None, regular optional or varargish?
+    #: required is None, regular optional or varargish?
     optional: _Optionals
     #: An existing `dependency` in `solution` that sustain (must have sustained)
     #: the :term:`sideffects` by(for) the underlying function.
@@ -136,7 +137,7 @@ def is_varargs(dep) -> bool:
 
 
 def is_varargish(dep) -> bool:
-    """Check if an :term:`optionals` dependency is `vararg` or `varargs`."""
+    """Check if an :term:`optionals` dependency is :term:`varargish`."""
     try:
         return dep.optional.varargish
     except Exception:
@@ -163,11 +164,13 @@ def mapped(name: str, fn_kwarg: str):
 
     :param fn_kwarg:
         The argument-name corresponding to this named-input.
+        If not given, a regular string is returned.
 
         .. Note::
-            This extra mapping argument is needed either for `optionals` or
-            for functions with keywords-only arguments (like ``def func(*, foo, bar): ...``),
-            since `inputs`` are normally fed into functions by-position, not by-name.
+            This extra mapping argument is needed either for :term:`optionals`
+            (but not :term:`varargish`), or for functions with keywords-only arguments
+            (like ``def func(*, foo, bar): ...``),
+            since `inputs` are normally fed into functions by-position, not by-name.
 
     **Example:**
 
@@ -251,7 +254,7 @@ def optional(name: str, fn_kwarg: str = None):
 
 def vararg(name: str):
     """
-    Annotate :term:`optionals` `needs` to  be fed as op-function's ``*args`` if present in inputs.
+    Annotate a :term:`varargish` `needs` to  be fed as function's ``*args``.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -292,7 +295,7 @@ def vararg(name: str):
 
 def varargs(name: str):
     """
-    Like :func:`.vararg`, naming an :term:`optional <optionals>` *iterable* value in the inputs.
+    An :term:`varargish`  :func:`.vararg`, naming a *iterable* value in the inputs.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -331,8 +334,10 @@ def varargs(name: str):
             +++inputs: ['a', 'b']
             +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
+    .. varargs-mistake-start
     .. Attention::
-        To avoid user mistakes, *varargs* does not accept strings (though iterables):
+        To avoid user mistakes, *varargs* do not accept :class:`str` :term:`inputs`
+        (though iterables):
 
         >>> graph(a=5, b="mistake")
         Traceback (most recent call last):
@@ -340,8 +345,12 @@ def varargs(name: str):
         graphtik.base.MultiValueError: Failed preparing needs:
             1. Expected needs[varargs('b')] to be non-str iterables!
             +++inputs: ['a', 'b']
-            +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
+            +++FunctionalOperation(name='enlist',
+                                   needs=['a', varargs('b')],
+                                   provides=['sum'],
+                                   fn='enlist')
 
+    .. varargs-mistake-end
     """
     return _Modifier(name, optional=_Optionals.varargs)
 
