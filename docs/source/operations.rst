@@ -79,11 +79,11 @@ to the :func:`.operation` factory, specifically:
 
 Aliased `provides`
 ^^^^^^^^^^^^^^^^^^
-Sometimes, you need to interface operations where they name some :term:`dependency`
-differently.
-This is doable without introducing "pipe-through" interface operation, either by
-annotating `needs` with :class:`.kw` `modifiers` (see docs) or with :term:`alias`\es
-on the `provides` side:
+Sometimes, you need to interface functions & operations where they name a
+:term:`dependency` differently.
+This is doable without introducing "pipe-through" interface operation, either
+by annotating certain `needs` with :func:`.mapped` `modifiers` (see docs), or
+by :term:`alias`\sing certain `provides` to different names:
 
    >>> op = operation(str,
    ...                name="`provides` with `aliases`",

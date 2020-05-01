@@ -306,7 +306,7 @@ Architecture
         *sideffected dependency*.
 
         All *solution sideffect* `outputs` produce, by definition, `overwrites`.
-        It is annotated with :func:`.sol_sideffect` class.
+        It is annotated with :func:`.sol_sideffect`.
 
     reschedule
     rescheduling

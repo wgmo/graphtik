@@ -8,7 +8,7 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 """
 import re
 import enum
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 
 class _Optionals(enum.Enum):
@@ -22,6 +22,8 @@ class _Optionals(enum.Enum):
 
 
 class _Modifier(str):
+    """Annotate a :term:`dependency` with a combination of :term:`modifiers`. """
+
     # avoid __dict__ on instances
     __slots__ = (
         "fn_kwarg",
@@ -112,23 +114,28 @@ class _Modifier(str):
         return super().__repr__() if self._repr is None else self._repr
 
 
-def is_mapped(dep) -> bool:
+def is_mapped(dep) -> Optional[str]:
+    """Check if a :term:`dependency` is mapped (and get it)."""
     return getattr(dep, "fn_kwarg", None)
 
 
 def is_optional(dep) -> bool:
-    return getattr(dep, "optional", None)
+    """Check if a :term:`dependency` is optional (vararg(s) and sideffects included)."""
+    return bool(getattr(dep, "optional", None))
 
 
 def is_vararg(dep) -> bool:
+    """Check if an :term:`optionals` dependency is `vararg`."""
     return getattr(dep, "optional", None) is _Optionals.vararg
 
 
 def is_varargs(dep) -> bool:
+    """Check if an :term:`optionals` dependency is `varargs`."""
     return getattr(dep, "optional", None) is _Optionals.varargs
 
 
 def is_varargish(dep) -> bool:
+    """Check if an :term:`optionals` dependency is `vararg` or `varargs`."""
     try:
         return dep.optional.varargish
     except Exception:
@@ -140,10 +147,12 @@ def is_sideffect(dep) -> bool:
 
 
 def is_pure_sideffect(dep) -> bool:
+    """Check if it is :term:`sideffects` but not a :term:`solution sideffect`."""
     return getattr(dep, "sideffects", None) == ()
 
 
 def is_sol_sideffect(dep) -> bool:
+    """Check if it is :term:`solution sideffect` (and get its :term:`sideffected`)."""
     return getattr(dep, "sideffected", None)
 
 
@@ -163,7 +172,7 @@ def mapped(name: str, fn_kwarg: str):
 
     In case the name of the function arguments is different from the name in the
     `inputs` (or just because the name in the `inputs` is not a valid argument-name),
-    you may *map* it with the 2nd argument of :func:`.mapped` (or :class:`.optional`):
+    you may *map* it with the 2nd argument of :func:`.mapped`:
 
         >>> from graphtik import operation, compose, mapped
 
@@ -241,7 +250,7 @@ def optional(name: str, fn_kwarg: str = None):
 
 def vararg(name: str):
     """
-    Annotate :term:`optionals` `needs` to  be fed as op-function's ``*args`` when present in inputs.
+    Annotate :term:`optionals` `needs` to  be fed as op-function's ``*args`` if present in inputs.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -333,7 +342,6 @@ def varargs(name: str):
             +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
 
     """
-
     return _Modifier(name, optional=_Optionals.varargs)
 
 
