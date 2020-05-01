@@ -83,4 +83,16 @@ def test_recreation_repr():
     assert repr(mapped(mapped("a", 1), 1)) == repr(mapped("a", 1))
     assert repr(vararg(vararg("a"))) == repr(vararg("a"))
     assert repr(varargs(varargs("a"))) == repr(varargs("a"))
-    # assert repr(sideffect(sideffect("a"))) == repr(sideffect("a"))
+
+
+@pytest.mark.parametrize(
+    "call, exp",
+    [
+        (lambda: sideffect(sideffect("a")), "^Expecting "),
+        (lambda: sol_sideffect("a", sideffect("a")), "^Expecting "),
+        (lambda: sol_sideffect(sideffect("a"), "a"), "^Expecting "),
+    ],
+)
+def test_sol_sideffect_bad(call, exp):
+    with pytest.raises(ValueError, match=exp):
+        call()

@@ -6,7 +6,6 @@ A :term:`modifier` change :term:`dependency` behavior during :term:`compilation`
 The `needs` and `provides` annotated with *modifiers* designate, for instance,
 :term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
 """
-import re
 import enum
 from typing import Optional, Tuple, Union
 
@@ -81,9 +80,6 @@ class _Modifier(str):
                         sideffects,
                     )
 
-                    # m = re.match(r"sideffect\((.*)\)", name)
-                    # if m:
-                    #     name = m.group(1)
                     qmark = "?" if optional else ""
                     _repr = f"sideffect{qmark}: {str(name)!r}"
                     name = f"sideffect: {str(name)!r}"
@@ -423,6 +419,17 @@ def sideffect(name, optional: bool = None):
         .. graphtik::
 
     """
+    if type(name) is not str:
+        # import re
+        # if is_pure_sideffect(name):
+        #     m = re.match(r"sideffect\((.*)\)", name)
+        #     if m:
+        #         name = m.group(1)
+        # else:
+        raise ValueError(
+            "Expecting a regular string for sideffect"
+            f", got: {type(name).__name__}({name!r})"
+        )
     return _Modifier(
         name, optional=_Optionals.optional if optional else None, sideffects=()
     )
@@ -526,6 +533,16 @@ def sol_sideffect(
 
     """
     sideffects = (sideffect0,) + sideffects
+    ## Sanity checks
+    #
+    invalids = [f"{type(i).__name__}({i!r})" for i in sideffects if type(i) is not str]
+    if invalids:
+        raise ValueError(f"Expecting regular strings as sideffects, got: {invalids!r}")
+    if is_sideffect(sideffected):
+        raise ValueError(
+            f"Expecting a non-sideffect for sideffected"
+            f", got: {type(sideffected).__name__}({sideffected!r})"
+        )
     return _Modifier(
         sideffected,
         sideffects=sideffects,
