@@ -111,6 +111,21 @@ class _Modifier(str):
     def __repr__(self):
         return super().__repr__() if self._repr is None else self._repr
 
+    def withset(self, **kw):
+        """
+        Make a new modifier with modifed specs based on this one.
+
+        :param optional:
+            either a bool or an :class:`_Optionals` enum, as taken from :attr:`.optional`
+            from another modifier instance
+        """
+        return _Modifier(
+            kw.get("name", self.sideffected if self.sideffected else str(self)),
+            kw.get("fn_kwarg", self.fn_kwarg),
+            kw.get("optional", self.optional),
+            kw.get("sideffects", self.sideffects),
+        )
+
 
 def is_mapped(dep) -> Optional[str]:
     """Check if a :term:`dependency` is mapped (and get it)."""
@@ -118,8 +133,8 @@ def is_mapped(dep) -> Optional[str]:
 
 
 def is_optional(dep) -> bool:
-    """Check if a :term:`dependency` is optional (vararg(s) and sideffects included)."""
-    return bool(getattr(dep, "optional", None))
+    """Check (and get) if a :term:`dependency` is optional (varargish/sideffects included)."""
+    return getattr(dep, "optional", None)
 
 
 def is_vararg(dep) -> bool:
@@ -141,6 +156,7 @@ def is_varargish(dep) -> bool:
 
 
 def is_sideffect(dep) -> bool:
+    """Check if a dependency is :term:`sideffects` or :term:`solution sideffect`."""
     return getattr(dep, "sideffects", None) is not None
 
 
