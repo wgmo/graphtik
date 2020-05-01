@@ -83,8 +83,9 @@ class _Modifier(str):
                     # m = re.match(r"sideffect\((.*)\)", name)
                     # if m:
                     #     name = m.group(1)
+                    qmark = "?" if optional else ""
+                    _repr = f"sideffect{qmark}: {str(name)!r}"
                     name = f"sideffect: {str(name)!r}"
-                    _repr = name  # avoid quotes around whole repr
                 else:  # sol_sideffect
                     sideffected = name
                     sfx_str = ", ".join(str(i) for i in sideffects)

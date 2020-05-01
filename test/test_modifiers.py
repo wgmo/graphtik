@@ -51,7 +51,7 @@ def test_modifs_str(mod, exp):
         (lambda: vararg("c"), "vararg('c')"),
         (lambda: varargs("d"), "varargs('d')"),
         (lambda: sideffect("e"), "sideffect: 'e'"),
-        (lambda: sideffect("e", optional=1), "sideffect: 'e'"),
+        (lambda: sideffect("e", optional=1), "sideffect?: 'e'"),
         (lambda: sol_sideffect("f", "ff"), "sol_sideffect('f'<--'ff')"),
         (
             lambda: sol_sideffect("f", "ff", fn_kwarg="F"),
