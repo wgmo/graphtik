@@ -1160,18 +1160,23 @@ class Plotter:
                     styles.add("kw_data_to_evict")
 
                 if solution is not None:
-                    if not is_sideffected(nx_node):
+                    if not is_sideffect(nx_node):
                         if nx_node in solution:
                             styles.add("kw_data_in_solution")
 
                             if nx_node in solution.overwrites:
                                 styles.add("kw_data_overwritten")
 
-                        elif nx_node not in steps:
-                            # FIXME: is canceled correct?
-                            styles.add("kw_data_canceled")
-                        else:
+                        elif nx_node in steps:
                             styles.add("kw_data_evicted")
+                        else:
+                            styles.add("kw_data_canceled")
+                    else:  # sideffect
+                        if nx_node in solution:
+                            if solution[nx_node]:
+                                styles.add("kw_data_in_solution")
+                            else:
+                                styles.add("kw_data_canceled")
 
             styles.stack_user_style(node_attrs)
 
