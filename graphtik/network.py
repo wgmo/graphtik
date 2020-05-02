@@ -1171,7 +1171,9 @@ class Network(Plottable):
         )
         if outputs is None:
             outputs = iset(
-                n for n in self.provides if n not in inputs and n in pruned_dag
+                n
+                for n in self.provides
+                if n not in inputs and n in pruned_dag and not is_sideffect(n)
             )
         else:
             # filter-out from new `provides` if pruned.
