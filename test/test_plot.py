@@ -542,8 +542,8 @@ def test_node_dot_str0(dot_str_pipeline):
         digraph graph_ {
         fontname=italic;
         label=<graph>;
-        <edge> [margin="0.02,0.02", shape=invhouse];
-        <digraph&#58; strict> [margin="0.02,0.02", shape=invhouse];
+        <edge> [margin="0.04,0.02", shape=invhouse];
+        <digraph&#58; strict> [margin="0.04,0.02", shape=invhouse];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET="_top"
@@ -554,7 +554,7 @@ def test_node_dot_str0(dot_str_pipeline):
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
-        <&lt;graph&gt;> [margin="0.02,0.02", shape=house];
+        <&lt;graph&gt;> [margin="0.04,0.02", shape=house];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
@@ -595,9 +595,9 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         splines=ortho;
         subgraph "cluster_after pruning" {
         label="after pruning";
-        <edge> [fillcolor=wheat, margin="0.02,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
-        <digraph&#58; strict> [fillcolor=wheat, margin="0.02,0.02", shape=invhouse, style=filled, tooltip="(int) 2"];
-        <&lt;graph&gt;> [fillcolor=SkyBlue, margin="0.02,0.02", shape=house, style=filled, tooltip="(None)"];
+        <edge> [fillcolor=wheat, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
+        <digraph&#58; strict> [fillcolor=wheat, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 2"];
+        <&lt;graph&gt;> [fillcolor=SkyBlue, margin="0.04,0.02", shape=house, style=filled, tooltip="(None)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
