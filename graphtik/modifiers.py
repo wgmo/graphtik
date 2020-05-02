@@ -378,30 +378,33 @@ def varargs(name: str):
 
 def sideffect(name, optional: bool = None):
     """
-    Abstract :term:`sideffects` take part in the graph but not when calling functions.
+    :term:`sideffects` denoting modifications beyond the scope of the solution.
 
     Both `needs` & `provides` may be designated as *sideffects* using this modifier.
     They work as usual while solving the graph (:term:`compilation`) but
-    they do not interact with the `operation`'s function;  specifically:
+    they have a limited interaction with the operation's underlying function;
+    specifically:
 
-    - input sideffects must exist in the :term:`inputs` for an operation to kick-in;
-    - input sideffects are NOT fed into the function;
-    - output sideffects are NOT expected from the function;
-    - output sideffects are stored in the :term:`solution`.
-
-    Their purpose is to describe operations that modify some internal state
-    not expressed in solution's the inputs/outputs ("side-effects").
+    - input sideffects must exist in the solution as :term:`inputs` for an operation
+      depending on it to kick-in, when the computation starts - but this is not necessary
+      for intermediate sideffects in the solution during execution;
+    - input sideffects are NOT fed into underlying functions;
+    - output sideffects are not expected from underlying functions, unless
+      a rescheduled operation with :term:`partial outputs` designates a sideffected
+      as *canceled* by returning it with a falsy value (operation must `returns dictionary`).
 
     .. hint::
         If modifications involve some input/output, prefer the :func:`.sideffected`
         modifier.
 
-        You may still convey this relationships simply by including the dependency name
+        You may still convey this relationships by including the dependency name
         in the string - in the end, it's just a string - but no enforcement of any kind
         will happen from *graphtik*, like:
 
-        >>> sideffect("price[sales_df]")  # doctest: +SKIP
-        'sideffect(price[sales_df])'
+        >>> from graphtik import sideffect
+
+        >>> sideffect("price[sales_df]")
+        sideffect: 'price[sales_df]'
 
     **Example:**
 
@@ -470,9 +473,9 @@ def sideffected(
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
 
-    Like :func:`.sideffect` but annotating the function's :term:`dependency` it relates to,
+    Like :func:`.sideffect` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
-    of the function.
+    of the same function.
 
     **Example:**
 
@@ -523,14 +526,9 @@ def sideffected(
                             op_provides=[sideffected('ORDER'<--'Totals')],
                             fn_provides=['ORDER'], fn='finalize_prices')
 
-    - Notice that although the function consumes & produces the same ``ORDER`` dependency
-      (check ``fn_needs`` & ``fn_provides``, above), which :orange:`would have created a cycle`,
-      the wrapping operation :term:`needs` and :term:`provides` different
-      `sideffected` instances, breaking thus the cycle.
-
-    - Notice also that declaring a single *sideffected* with multiple *sideffects*,
-      expands into multiple  *"singular"* ``sideffected`` dependencies in the network
-      (check ``needs`` & ``op_needs`` above).
+    Notice that declaring a single *sideffected* with multiple *sideffects*,
+    expands into multiple  *"singular"* ``sideffected`` dependencies in the network
+    (check ``needs`` & ``op_needs`` above).
 
         >>> proc_order = compose('process order', new_order, fill_in_vat, finalize_prices)
         >>> sol = proc_order.compute({
@@ -549,6 +547,12 @@ def sideffected(
         :height: 640
         :width: 100%
         :name: sideffecteds
+
+    Notice that although many functions consume & produce the same ``ORDER`` dependency
+    (check ``fn_needs`` & ``fn_provides``, above), something that :orange:`would have formed
+    cycles`, the wrapping operations *need* and *provide* different sideffected instances,
+    breaking the cycles.
+
 
     """
     sideffects = (sideffect0,) + sideffects

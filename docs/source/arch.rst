@@ -257,11 +257,13 @@ Architecture
         You cannot alias an *alias*.  See :ref:`aliases`
 
     returns dictionary
-        When an `operation` is marked with this flag, the underlying function is not
-        expected to return `fn_provides` as a sequence but as a dictionary; hence,
-        no "zipping" of function-results --> `op_provides` takes place.
+        When an `operation` is marked with :attr:`FunctionalOperation.returns_dict` flag,
+        the underlying function is not expected to return `fn_provides` as a sequence
+        but as a dictionary; hence, no "zipping" of function-results --> `fn_provides`
+        takes place.
 
-        Usefull for operation returning `partial outputs`.
+        Usefull for operations returning `partial outputs` to have full control
+        over which `outputs` were actually produced, or to cancel `sideffects`.
 
     modifier
         A `modifier` change `dependency` behavior during `compilation` or `execution`.
@@ -300,22 +302,23 @@ Architecture
         A `modifier` denoting a fictive `dependency` linking `operation`\s into virtual flows,
         without real data exchanges.
 
-        The side-effect modification may happen to some internal state not fully represented
-        in the `graph` & `solution`.
-        *Sideffects* participate in the `compilation` of the graph, and a dummy values
-        gets written in the `solution` during `execution`, but they are never given/asked
-        to/from functions.
+        The side-effect modification may happen to some internal state
+        not fully represented in the `graph` & `solution`.
 
-        There are actually 2 relevant `modifier`\s:
+        There are actually 2 relevant *modifiers*:
 
-        - An *abstract sideffect* (annotated with :func:`.sideffect` modifier)
+        - An *abstract sideffect* modifier (annotated with :func:`.sideffect`)
           describing modifications taking place beyond the scope of the solution.
 
-        - The `sideffected` (annotated with :func:`.sideffected` modifier)
-          denoting modifications on *dependencies* that are read and written in `solution`.
+        - The `sideffected` modifier (annotated with :func:`.sideffected`)
+          denoting modifications on a *real* dependency read from and written to
+          the solution.
 
-        .. Attention::
-            *Sideffects* are not compatible with `optionals` and `partial outputs`.
+        Both kinds of sideffects participate in the `compilation` of the graph,
+        and both may be given or asked in the `inputs` & `outputs` of a `pipeline`,
+        but they are never given to functions.
+        A function of a `returns dictionary` operation can return a falsy value
+        to declare it as :term:`canceled <partial outputs>`.
 
     sideffected
         A `modifier` that denotes `sideffects` on a `dependency` that exists in `solution`,
@@ -323,18 +326,19 @@ Architecture
         *sideffected dependency*.
 
         .. Note::
-            To be precise, the "sideffected dependency" is the name held in
+            To be precise, the *"sideffected dependency"* is the name held in
             :attr:`._Modifier.sideffected` attribute of a *modifier* created by
-            :func:`.sideffected` annotation function.
+            :func:`.sideffected` function.
 
-        All *sideffected* `outputs` produce, by definition, `overwrites`.
+        The `outputs` of the *sideffected dependency* will produce `overwrites` if
+        *sideffected modifiers* containing it are declared both in the *needs* and *provides*
+        of any operation.
 
         It is annotated with :func:`.sideffected`.
 
     reschedule
     rescheduling
     partial outputs
-    partial operation
     canceled operation
         The partial `pruning` of the `solution`'s dag during `execution`.
         It happens when any of these 2 conditions apply:
@@ -348,9 +352,8 @@ Architecture
         the *solution* must then *reschedule* the remaining operations downstream,
         and possibly *cancel* some of those ( assigned in :attr:`.Solution.canceled`).
 
-        Operations with *partial outputs* are incompatible with `sideffected`\s,
-        i.e. they cannot control which of their sideffects they have produced,
-        it's either all or nothing.
+        *Partial operations* are usually declared with `returns dictionary` so that
+        the underlying function can control which of the outputs are returned.
 
         See :ref:`rescheduled`
 

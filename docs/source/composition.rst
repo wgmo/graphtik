@@ -219,16 +219,20 @@ Modifying existing values in solutions
 .. autofunction:: graphtik.modifiers.sideffected
    :noindex:
 
-Resilience on errors (*endured*)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-It is possible for pipeline persist executing operations, even if some of them
-are raising errors:
+Resilience when operations fail (*endurance*)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+It is possible for a pipeline to persist executing operations, even if some of them
+are raising errors, if they are marked as :term:`endured`:
 
     >>> @operation(endured=1, provides=["space", "time"])
     ... def get_out():
     ...     raise ValueError("Quarantined!")
     >>> get_out
     FunctionalOperation!(name='get_out', needs=[], provides=['space', 'time'], fn='get_out')
+
+Notice the exclamation(``!``) before the parenthesis in the string representation
+of the operation.
+
     >>> @operation(needs="space", provides="fun")
     ... def exercise(where):
     ...     return "refreshed"
@@ -248,12 +252,10 @@ are raising errors:
 
 .. graphtik::
 
-.. Hint::
-    Notice the exclamation(``!``) before the parenthesis in the string representation &
-    tooltip of the operations, or its thick outlines, both signifying :term:`endured`
-    or :term:`reschedule`\d (see below) operations.
+Notice the thick outlines of the endured (or :term:`reschedule`\d, see below) operations.
 
-When executed, the pipeline does not completely fail:
+When executed, the pipeline produced :term:`outputs`, although one of its operations
+has failed:
 
     >>> sol = netop()
     >>> sol
@@ -261,7 +263,8 @@ When executed, the pipeline does not completely fail:
 
 .. graphtik::
 
-You may then optionally abort on failures, by raising an appropriate exception:
+You may still abort on failures, later, by raising an appropriate exception from
+:class:`.Solution`:
 
     >>> sol.scream_if_incomplete()
     Traceback (most recent call last):
@@ -315,7 +318,7 @@ Depending on "quarantine' state we get to execute different part of the pipeline
 
 
 In both case, a warning gets raised about the missing outputs, but the execution
-proceeds regularly to what is possible to evaluate.  You may collect a report of
+proceeds regularly to what it is possible to evaluate.  You may collect a report of
 what has been canceled using this:
 
     >>> print(sol.check_if_incomplete())
