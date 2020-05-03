@@ -621,13 +621,15 @@ class FunctionalOperation(Operation, Plottable):
 
         return results
 
-    def compute(self, named_inputs, outputs: Items = None) -> dict:
+    def compute(self, named_inputs=None, outputs: Items = None) -> dict:
         try:
             if self.fn is None:
                 raise ValueError(
                     f"Operation was not yet provided with a callable `fn`!"
                 )
             assert self.name is not None, self
+            if named_inputs is None:
+                named_inputs = {}
 
             positional, varargs, kwargs = self._match_inputs_with_fn_needs(named_inputs)
             results_fn = self.fn(*positional, *varargs, **kwargs)
