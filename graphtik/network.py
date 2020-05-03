@@ -747,6 +747,14 @@ class ExecutionPlan(
 
             # stop if no nodes left to schedule, exit out of the loop
             if not upnext:
+                ## Re-check evictions and assume all ops executed.
+                #  Sequenced executor has no such problem bc exhausts steps.
+                #
+                #  TODO: evictions for parallel are wasting loops.
+                #
+                for node in self.steps:
+                    if isinstance(node, _EvictInstruction) and node in solution:
+                        del solution[node]
                 break
 
             if _isDebugLogging():
