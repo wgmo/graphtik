@@ -865,7 +865,7 @@ def _box_increment(box):
 
 
 @pytest.fixture(params=[0, 1])
-def netop_sideffect1(request) -> NetworkOperation:
+def netop_sideffect1(request, exemethod) -> NetworkOperation:
     ops = [
         operation(
             name="extend", needs=["box", sideffect("a")], provides=[sideffect("b")]
@@ -877,17 +877,17 @@ def netop_sideffect1(request) -> NetworkOperation:
     if request.param:
         ops = reversed(ops)
     # Designate `a`, `b` as sideffect inp/out arguments.
-    graph = compose("sideffect1", *ops)
+    graph = compose("sideffect1", *ops, parallel=exemethod)
 
     return graph
 
 
-def test_sideffect_no_real_data(exemethod, netop_sideffect1: NetworkOperation):
+def test_sideffect_no_real_data(netop_sideffect1: NetworkOperation):
     sidefx_fail = is_marshal_tasks() and not isinstance(
         get_execution_pool(), types.FunctionType  # mp_dummy.Pool
     )
 
-    graph = netop_sideffect1.withset(parallel=exemethod)
+    graph = netop_sideffect1
     inp = {"box": [0], "a": True}
 
     ## Normal data must not match sideffects.
@@ -980,11 +980,11 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
     assert "blue" in str(dot)
 
 
-def test_sideffect_NO_RESULT(caplog):
+def test_sideffect_NO_RESULT(caplog, exemethod):
     """NOTE: Not very usefull TC, works simply with plain Nones! """
     sfx = sideffect("b")
     op = operation(lambda: NO_RESULT, provides=sfx)
-    netop = compose("t", op)
+    netop = compose("t", op, parallel=exemethod)
     sol = netop.compute({}, outputs=sfx)
     assert sol == {}
     assert op in sol.executed
@@ -992,20 +992,20 @@ def test_sideffect_NO_RESULT(caplog):
     ## If NO_RESULT were not translated,
     #  a warning of unknown out might have emerged.
     caplog.clear()
-    netop = compose("t", operation(lambda: 1, provides=sfx))
+    netop = compose("t", operation(lambda: 1, provides=sfx), parallel=exemethod)
     netop.compute({}, outputs=sfx)
     for record in caplog.records:
         if record.levelname == "WARNING":
             assert "Ignoring result(1) because no `provides`" in record.message
 
     caplog.clear()
-    netop = compose("t", operation(lambda: NO_RESULT, provides=sfx))
+    netop = compose("t", operation(lambda: NO_RESULT, provides=sfx), parallel=exemethod)
     netop.compute({}, outputs=sfx)
     for record in caplog.records:
         assert record.levelname != "WARNING"
 
 
-def test_sideffect_cancel_sfx_only_operation():
+def test_sideffect_cancel_sfx_only_operation(exemethod):
     sfx = sideffect("b")
     op1 = operation(
         lambda: {sfx: False},
@@ -1015,12 +1015,12 @@ def test_sideffect_cancel_sfx_only_operation():
         rescheduled=True,
     )
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="a")
-    netop = compose("t", op1, op2)
+    netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute({})
     assert sol == {sfx: False}
 
 
-def test_sideffect_cancel():
+def test_sideffect_cancel(exemethod):
     sfx = sideffect("b")
     op1 = operation(
         lambda: {"a": 1, sfx: False},
@@ -1030,18 +1030,18 @@ def test_sideffect_cancel():
         rescheduled=True,
     )
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
-    netop = compose("t", op1, op2)
+    netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute({})
     assert sol == {"a": 1, sfx: False}
 
 
-def test_sideffect_not_canceled_if_not_resched():
+def test_sideffect_not_canceled_if_not_resched(exemethod):
     # Check op without any provides
     #
     sfx = sideffect("b")
     op1 = operation(lambda: {sfx: False}, name="op1", provides=sfx, returns_dict=True)
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
-    netop = compose("t", op1, op2)
+    netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute({})
     assert sol == {sfx: False, "b": 1}
 
@@ -1052,13 +1052,13 @@ def test_sideffect_not_canceled_if_not_resched():
         lambda: {"a": 1, sfx: False}, name="op1", provides=["a", sfx], returns_dict=True
     )
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
-    netop = compose("t", op1, op2)
+    netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute({})
     assert sol == {"a": 1, sfx: False, "b": 1}
 
 
 @pytest.fixture(params=[0, 1])
-def calc_prices_pipeline(request):
+def calc_prices_pipeline(request, exemethod):
     """A pipeline that may work even without VAT-rates."""
 
     @operation(needs="order_items", provides=sideffected("ORDER", "Items", "Prices"))
@@ -1098,7 +1098,7 @@ def calc_prices_pipeline(request):
     ops = [new_order, fill_in_vat_ratios, finalize_prices]
     if request.param:
         ops = reversed(ops)
-    return compose("process order", *ops)
+    return compose("process order", *ops, parallel=exemethod)
 
 
 def test_sideffecteds_ok(calc_prices_pipeline):
@@ -1153,7 +1153,7 @@ def test_sideffecteds_endured(calc_prices_pipeline):
 
 
 @pytest.fixture(params=[0, 1])
-def sideffected_resched(request):
+def sideffected_resched(request, exemethod):
     @operation(provides=sideffected("DEP", "yes", "no"), rescheduled=1, returns_dict=1)
     def half_sfx():
         return {"DEP": 1, sideffected("DEP", "no"): False}
@@ -1167,7 +1167,7 @@ def sideffected_resched(request):
     ops = [half_sfx, yes, no]
     if request.param:
         ops = reversed(ops)
-    return compose("process order", *ops)
+    return compose("process order", *ops, parallel=exemethod)
 
 
 def test_sideffected_canceled(sideffected_resched):
