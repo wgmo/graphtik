@@ -436,6 +436,22 @@ def test_func_name_lambda_local(kw, exp):
     assert base.func_name(lambda: None, **kw) == exp
 
 
+def test_func_name_partials_vs_human():
+    assert base.func_name(fnt.partialmethod(_Foo.foo), human=1, partials=0) == "foo"
+    assert base.func_name(fnt.partialmethod(_Foo.foo), human=None, partials=0) == "foo"
+    assert (
+        base.func_name(fnt.partialmethod(_Foo.foo), human=1, partials=1) == "foo(...)"
+    )
+    assert (
+        base.func_name(fnt.partialmethod(_Foo.foo), human=None, partials=1)
+        == "foo(...)"
+    )
+    assert (
+        base.func_name(fnt.partialmethod(_Foo.foo), human=1, partials=None)
+        == "foo(...)"
+    )
+
+
 ###############
 ## func_source
 ##

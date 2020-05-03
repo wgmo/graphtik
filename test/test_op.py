@@ -4,6 +4,7 @@
 import logging
 import re
 from collections import OrderedDict, namedtuple
+from functools import partial
 from types import SimpleNamespace
 
 import dill
@@ -11,8 +12,8 @@ import pytest
 
 from graphtik import NO_RESULT, compose, operation, optional, sideffect, vararg, varargs
 from graphtik.config import (
-    operations_reschedullled,
     operations_endured,
+    operations_reschedullled,
     tasks_in_parallel,
     tasks_marshalled,
 )
@@ -58,6 +59,11 @@ def test_repr_returns_dict():
         str(operation(lambda: None, name="myname"))
         == "FunctionalOperation(name='myname', needs=[], provides=[], fn='<lambda>')"
     )
+
+
+def test_auto_func_name():
+    assert operation(lambda: None).name == "<lambda>"
+    assert operation(partial(lambda a: None)).name == "<lambda>(...)"
 
 
 def test_builder_pattern():
@@ -433,9 +439,7 @@ def test_marshalled_op_repr():
 
 def test_marshalled_parallel_op_repr():
     op = operation(str, name="t", parallel=1, marshalled=1)
-    assert (
-        str(op) == "FunctionalOperation|&(name='t', needs=[], provides=[], fn='str')"
-    )
+    assert str(op) == "FunctionalOperation|&(name='t', needs=[], provides=[], fn='str')"
 
 
 def test_ALL_op_repr():

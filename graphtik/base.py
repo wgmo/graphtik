@@ -112,7 +112,9 @@ def astuple(i, argname, allowed_types=tuple):
     return i
 
 
-def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]:
+def func_name(
+    fn, default=..., mod=None, fqdn=None, human=None, partials=None
+) -> Optional[str]:
     """
     FQDN of `fn`, descending into partials to print their args.
 
@@ -126,8 +128,10 @@ def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]
         and locals, respectively (:pep:`3155`).
         *Sphinx* uses `fqdn=True` for generating IDs.
     :param human:
-        when true, partials denote their args like ``fn({"a": 1}, ...)`` in the returned text,
-        otherwise, just the (fqd-)name, appropriate for IDs.
+        when true, explain built-ins, and assume ``partials=True`` (if that was None)
+    :param partials:
+        when true (or omitted & `human` true), partials denote their args
+        like ``fn({"a": 1}, ...)``
 
     :return:
         a (possibly dot-separated) string, or `default` (unless this is ``...```).
@@ -162,11 +166,13 @@ def func_name(fn, default=..., mod=None, fqdn=None, human=None) -> Optional[str]
 
     TBD
     """
+    if partials is None:
+        partials = human
 
     if isinstance(fn, (partial, partialmethod)):
         # Always bubble-up errors.
         fn_name = func_name(fn.func, default, mod, fqdn, human)
-        if human:
+        if partials:
             args = ", ".join(str(i) for i in fn.args)
             kw = ", ".join(f"{k}={v}" for k, v in fn.keywords.items())
             args_str = ", ".join(i for i in (args, kw) + ("...",) if i)

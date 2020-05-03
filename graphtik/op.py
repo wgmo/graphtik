@@ -241,7 +241,7 @@ class FunctionalOperation(Operation, Plottable):
             )
 
         if name is None and fn:
-            name = func_name(fn, None, mod=0, fqdn=0, human=0)
+            name = func_name(fn, None, mod=0, fqdn=0, human=0, partials=1)
         if name is not None:
             name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
         ## Overwrite reparsed op-data.
