@@ -1140,43 +1140,30 @@ class Plotter:
             ## Data-state
             #
             if (
-                (
-                    isinstance(plottable, ExecutionPlan)
-                    and nx_node not in plottable.dag.nodes
-                )
-                or (
-                    isinstance(plottable, Solution)
-                    and nx_node not in plottable.dag.nodes
-                )
-                or (solution is not None and nx_node not in solution.dag.nodes)
-            ):
-                assert (
-                    not steps or nx_node not in steps
-                ), f"Given `steps` missmatch `plan` and/or `solution`!\n  {plot_args}"
-                styles.add("kw_data_pruned")
+                isinstance(plottable, (ExecutionPlan, Solution))
+                and nx_node not in plottable.dag.nodes
+            ) or (solution is not None and nx_node not in solution.dag.nodes):
                 graph.nodes[nx_node]["_pruned"] = True  # Signal to edge-plotting.
-            else:
-                if steps and nx_node in steps:
-                    styles.add("kw_data_to_evict")
+                styles.add("kw_data_pruned")
+                #
+                #  Note that Pruned "sibling" data due to asked outputs,
+                #  are also evicted afterwards.
+                #  So the cases below must still run.
 
-                if solution is not None:
-                    if not is_sideffect(nx_node):
-                        if nx_node in solution:
-                            styles.add("kw_data_in_solution")
+            if steps and nx_node in steps:
+                styles.add("kw_data_to_evict")
 
-                            if nx_node in solution.overwrites:
-                                styles.add("kw_data_overwritten")
+            if solution is not None:
+                if nx_node in solution:
+                    styles.add("kw_data_in_solution")
 
-                        elif nx_node in steps:
-                            styles.add("kw_data_evicted")
-                        else:
-                            styles.add("kw_data_canceled")
-                    else:  # sideffect
-                        if nx_node in solution:
-                            if solution[nx_node]:
-                                styles.add("kw_data_in_solution")
-                            else:
-                                styles.add("kw_data_canceled")
+                    if nx_node in solution.overwrites:
+                        styles.add("kw_data_overwritten")
+
+                elif nx_node in steps:
+                    styles.add("kw_data_evicted")
+                elif not is_sideffect(nx_node):
+                    styles.add("kw_data_canceled")
 
             styles.stack_user_style(node_attrs)
 
