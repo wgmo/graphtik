@@ -884,14 +884,15 @@ class ExecutionPlan(
 
             # Validate eviction was perfect
             #
-            assert (
-                not evict
+            if evict:
+                expected_provides = set(
+                    n.sideffected if is_sideffected(n) else n for n in self.provides
+                )
                 # It is a proper subset when not all outputs calculated.
-                or set(solution).issubset(self.provides)
-            ), (
-                f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
-                ' \n Did you bypass "impossible-outputs" validation?'
-            )
+                assert set(solution).issubset(expected_provides), (
+                    f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
+                    ' \n Did you bypass "impossible-outputs" validation?'
+                )
 
             return solution
         except Exception as ex:
