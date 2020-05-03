@@ -331,6 +331,9 @@ class FunctionalOperation(Operation, Plottable):
         #: i.e. the returned output-values are not zipped with `provides`.
         #:
         #: It does not have to return any :term:`alias` `outputs`.
+        #:
+        #: Can be changed amidst execution by the operation's function,
+        #: but it is easier for that function to simply call :meth:`.set_results_by_name()`.
         self.returns_dict = returns_dict
         #: Added as-is into NetworkX graph, and you may filter operations by
         #: :meth:`.NetworkOperation.withset()`.
@@ -641,9 +644,13 @@ class FunctionalOperation(Operation, Plottable):
             results_op = self._zip_results_with_provides(results_fn)
 
             outputs = astuple(outputs, "outputs", allowed_types=cabc.Sequence)
+
+            ## Keep only outputs asked.
+            #  Note that plan's executors do not ask outputs
+            #  (see `_OpTask.__call__`).
+            #
             if outputs:
-                outputs = set(n for n in outputs if not is_sideffect(n))
-                # Ignore sideffect outputs.
+                outputs = set(n for n in outputs)
                 results_op = {
                     key: val for key, val in results_op.items() if key in outputs
                 }
