@@ -136,8 +136,7 @@ def test_smoke_test():
     # Sum operation, late-bind compute function
     sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum_ab")(add)
 
-    # sum_op1 is callable
-    assert sum_op1(1, 2) == 3
+    assert sum_op1.fn(1, 2) == 3
 
     # Multiply operation, decorate in-place
     @operation(name="mul_op1", needs=["sum_ab", "b"], provides="sum_ab_times_b")
@@ -145,7 +144,7 @@ def test_smoke_test():
         return a * b
 
     # mul_op1 is callable
-    assert mul_op1(1, 2) == 2
+    assert mul_op1.fn(1, 2) == 2
 
     # Pow operation
     @operation(
@@ -170,9 +169,6 @@ def test_smoke_test():
     sum_op3 = sum_op_factory.withset(
         name="sum_op3", needs=["a", "b"], provides="sum_ab2"
     )
-
-    # sum_op3 is callable
-    assert sum_op3(5, 6) == 11
 
     # compose network
     netop = compose("my network", sum_op1, mul_op1, pow_op1, sum_op2, sum_op3)

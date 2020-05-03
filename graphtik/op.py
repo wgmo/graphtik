@@ -281,6 +281,7 @@ class FunctionalOperation(Operation, Plottable):
             alias_dst = ()
         op_provides = iset(itt.chain(provides, alias_dst))
 
+        #: The :term:`operation`'s underlying function.
         self.fn = fn
         #: a name for the operation (e.g. `'conv1'`, `'sum'`, etc..);
         #: it will be prefixed by `parents`.
@@ -683,12 +684,8 @@ class FunctionalOperation(Operation, Plottable):
             raise
 
     def __call__(self, *args, **kwargs):
-        """
-        Although may return results like :meth:`compute()`, does no checks, and
-
-        it it passes args/kw as user desires.
-        """
-        return self.fn(*args, **kwargs)
+        """Like dict args, delegates to :meth:`.compute()`."""
+        return self.fn(**dict(*args, **kwargs))
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         """Delegate to a provisional network with a single op . """

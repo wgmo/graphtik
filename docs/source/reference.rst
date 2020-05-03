@@ -21,6 +21,7 @@ Module: `op`
      :members:
      :undoc-members:
      :private-members:
+     :special-members:
 
 Module: `modifiers`
 ====================

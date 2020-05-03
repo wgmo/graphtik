@@ -28,14 +28,15 @@ the :func:`.operation()` factory:
    >>> add_op
    FunctionalOperation(name='add', needs=['a', 'b'], provides=['a_plus_b'], fn='add')
 
-You may call it just like the original function, e.g.:
+You may still call the original function, by accessing the :attr:`.FunctionalOperation.fn`
+attribute:
 
-   >>> add_op(3, 4) == add(3, 4)
+   >>> add_op.fn(3, 4) == add(3, 4)
    True
 
-   But ``__call__()`` is just a facade for quick experimentation - it does not
-   perform any checks or matching of *needs*/*provides* to function arguments
-   & results (which happen when :term:`pipeline`\s :term:`compute`).
+   But that is just for a quick experimentation - it does not perform any checks
+   or matching of *needs*/*provides* to function arguments & results
+   (which happen when :term:`pipeline`\s :term:`compute`).
 
    The way Graphtik works is by invoking their :meth:`.Operation.compute()` method,
    which, among others, allow to specify what results you desire to receive back
