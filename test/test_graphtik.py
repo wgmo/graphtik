@@ -981,13 +981,36 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
 
 
 def test_sideffect_NO_RESULT(caplog, exemethod):
-    """NOTE: Not very usefull TC, works simply with plain Nones! """
+    # NO_RESULT does not cancel sideffects unless op-rescheduled
+    #
     sfx = sideffect("b")
-    op = operation(lambda: NO_RESULT, provides=sfx)
-    netop = compose("t", op, parallel=exemethod)
+    op1 = operation(lambda: NO_RESULT, name="do-SFX", provides=sfx)
+    op2 = operation(lambda: 1, name="ask-SFX", needs=sfx, provides="a")
+    netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute({}, outputs=sfx)
+    assert op1 in sol.executed
+    assert op2 not in sol.executed
     assert sol == {}
-    assert op in sol.executed
+    sol = netop.compute({})
+    assert op1 in sol.executed
+    assert op2 in sol.executed
+    assert sol == {"a": 1}
+    sol = netop.compute({}, outputs="a")
+    assert op1 in sol.executed
+    assert op2 in sol.executed
+    assert sol == {"a": 1}
+
+    # NO_RESULT cancels sideffects of rescheduled ops.
+    #
+    netop = compose("t", op1, op2, rescheduled=True, parallel=exemethod)
+    sol = netop.compute({})
+    assert op1 in sol.executed
+    assert op2 not in sol.executed
+    assert sol == {sfx: False}
+    sol = netop.compute({}, outputs="a")
+    assert op2 not in sol.executed
+    assert op1 in sol.executed
+    assert sol == {}  # sfx evicted
 
     ## If NO_RESULT were not translated,
     #  a warning of unknown out might have emerged.
@@ -1018,6 +1041,8 @@ def test_sideffect_cancel_sfx_only_operation(exemethod):
     netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute({})
     assert sol == {sfx: False}
+    sol = netop.compute(outputs=sfx)
+    assert sol == {sfx: False}
 
 
 def test_sideffect_cancel(exemethod):
@@ -1031,8 +1056,14 @@ def test_sideffect_cancel(exemethod):
     )
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
     netop = compose("t", op1, op2, parallel=exemethod)
-    sol = netop.compute({})
+    sol = netop.compute()
     assert sol == {"a": 1, sfx: False}
+    sol = netop.compute(outputs="a")
+    assert sol == {"a": 1}  # sfx evicted
+    ## SFX both pruned & evicted
+    #
+    assert sfx not in sol.dag.nodes
+    assert sfx in sol.plan.steps
 
 
 def test_sideffect_not_canceled_if_not_resched(exemethod):
@@ -1042,8 +1073,10 @@ def test_sideffect_not_canceled_if_not_resched(exemethod):
     op1 = operation(lambda: {sfx: False}, name="op1", provides=sfx, returns_dict=True)
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
     netop = compose("t", op1, op2, parallel=exemethod)
-    sol = netop.compute({})
-    assert sol == {sfx: False, "b": 1}
+    # sol = netop.compute()
+    # assert sol == {sfx: False, "b": 1}
+    sol = netop.compute(outputs="b")
+    assert sol == {"b": 1}
 
     # Check also op with some provides
     #
@@ -1053,8 +1086,10 @@ def test_sideffect_not_canceled_if_not_resched(exemethod):
     )
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
     netop = compose("t", op1, op2, parallel=exemethod)
-    sol = netop.compute({})
+    sol = netop.compute()
     assert sol == {"a": 1, sfx: False, "b": 1}
+    sol = netop.compute(outputs="b")
+    assert sol == {"b": 1}
 
 
 @pytest.fixture(params=[0, 1])
@@ -1102,9 +1137,8 @@ def calc_prices_pipeline(request, exemethod):
 
 
 def test_sideffecteds_ok(calc_prices_pipeline):
-    sol = calc_prices_pipeline.compute(
-        {"order_items": "milk babylino toilet-paper".split(), "vat rate": 0.18}
-    )
+    inp = {"order_items": "milk babylino toilet-paper".split(), "vat rate": 0.18}
+    sol = calc_prices_pipeline.compute(inp)
     print(sol)
     assert sol == {
         "order_items": ["milk", "babylino", "toilet-paper"],
@@ -1118,6 +1152,31 @@ def test_sideffecteds_ok(calc_prices_pipeline):
         },
         "vat owed": 1.44,
     }
+    sol = calc_prices_pipeline.compute(
+        inp, [sideffected("ORDER", "VAT"), sideffected("ORDER", "Totals")]
+    )
+    print(sol)
+    assert sol == {
+        "ORDER": {
+            "items": ["milk", "babylino", "toilet-paper"],
+            "prices": [1, 2, 3],
+            "VAT_rates": [0.18, 0.36, 0.18],
+            "VAT": [0.18, 0.72, 0.54],
+            "totals": [1.18, 2.7199999999999998, 3.54],
+        },
+        # "vat owed": 1.44,
+    }
+
+    ## `vat owed` both pruned & evicted
+    #
+    assert "vat owed" not in sol.dag.nodes
+    assert "vat owed" in sol.plan.steps
+    # Check Pruned+Evicted data plot as expected.
+    #
+    dot = str(sol.plot())
+    print(dot)
+    assert re.search(r"<vat owed>.+style=dashed", dot)
+    assert re.search(r'<vat owed>.+tooltip="\(evicted\)"', dot)
 
 
 def test_sideffecteds_endured(calc_prices_pipeline):
