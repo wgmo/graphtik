@@ -33,7 +33,7 @@ but has diverged significantly with enhancements ever since.
    :numbered: 1
 
    operations
-   composition
+   pipelines
    plotting
    arch
    reference
