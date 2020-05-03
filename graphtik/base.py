@@ -385,7 +385,14 @@ class PlotArgs(NamedTuple):
     outputs: Collection = None
     #: Contains the computed results, which might be different from :attr:`plottable`.
     solution: "graphtik.network.Solution" = None
-    #: a mapping of nodes to cluster names
+    #: Either a mapping of node-names to dot(``.``)-separated cluster-names, or
+    #: false/true to enable :term:`plotter`'s default clustering of nodes based
+    #: on their dot-separated name parts.
+    #:
+    #: Note that if it's `None` (default), the plotter will cluster based on node-names,
+    #: BUT the Plan may replace the None with a dictionary with the "pruned" cluster
+    #: (when its :term:`dag` differs from network's :term:`graph`);
+    #: to suppress the pruned-cluster, pass a truthy, NON-dictionary value.
     clusters: Mapping = None
     #: If given, overrides :active plotter`.
     plotter: "graphtik.plot.Plotter" = None
@@ -552,7 +559,22 @@ class Plottable(abc.ABC):
 
             :seealso: :attr:`.PlotArgs.solution`
         :param clusters:
-            an optional mapping of nodes --> cluster-names, to group them
+            Either a mapping, or false/true to enable :term:`plotter`'s default
+            clustering of nodes base on their dot-separated name parts.
+
+            Note that if it's `None` (default), the plotter will cluster based on node-names,
+            BUT the Plan may replace the None with a dictionary with the "pruned" cluster
+            (when its :term:`dag` differs from network's :term:`graph`);
+            to suppress the pruned-cluster, pass a truthy, NON-dictionary value.
+
+            Practically, when it is a:
+
+            - dictionary of node-names --> dot(``.``)-separated cluster-names,
+              it is respected, even if empty;
+            - truthy: cluster based on dot(``.``)-separated node-name parts;
+            - falsy: don't cluster at all.
+
+            :seealso: :attr:`.PlotArgs.clusters`
         :param jupyter_render:
             a nested dictionary controlling the rendering of graph-plots in Jupyter cells,
             if `None`, defaults to :data:`jupyter_render`; you may modify it in place

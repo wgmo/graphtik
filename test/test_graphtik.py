@@ -365,29 +365,25 @@ def test_network_deep_merge():
     )
 
 
-def test_network_merge_in_doctests():
-    graphop = compose(
-        "graphop",
-        operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-        operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
-        operation(
-            name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"]
-        )(partial(abspow, p=3)),
-    )
+def test_network_merge_in_doctests(merge_pipes):
+    graphop, another_graph = merge_pipes
+    merged_graph = compose("merged_graph", graphop, another_graph, merge=False)
 
-    another_graph = compose(
-        "another_graph",
-        operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-        operation(name="mul2", needs=["c", "ab"], provides=["cab"])(mul),
-    )
-    merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
-    assert merged_graph.needs
-    assert merged_graph.provides
-
-    assert repr(merged_graph).startswith(
+    print(merged_graph)
+    assert str(merged_graph).startswith(
         "NetworkOperation('merged_graph', "
         "needs=['a', 'b', 'ab', 'a_minus_ab', 'c'], "
-        "provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'], x4 ops"
+        "provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'], x5 ops: "
+        "graphop.mul1, graphop.sub1, graphop.abspow1, another_graph.mul1, another_graph.mul2)"
+    )
+
+    merged_graph = compose("merged_graph", graphop, another_graph, merge=True)
+    print(merged_graph)
+    assert str(merged_graph).startswith(
+        "NetworkOperation('merged_graph', "
+        "needs=['a', 'b', 'ab', 'a_minus_ab', 'c'], "
+        "provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed', 'cab'], x4 ops: "
+        "mul1, sub1, abspow1, mul2)"
     )
 
 

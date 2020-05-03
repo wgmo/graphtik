@@ -233,10 +233,10 @@ def quote_node_id(s):
     return graphviz_html_string(s, repl_colon=True)
 
 
-def get_node_name(nx_node):
+def get_node_name(nx_node, raw=False):
     if isinstance(nx_node, Operation):
         nx_node = nx_node.name
-    return quote_node_id(nx_node)
+    return nx_node if raw else quote_node_id(nx_node)
 
 
 def as_identifier(s):
@@ -535,11 +535,7 @@ class Theme:
             "?": {"tooltip": "rescheduled", "bgcolor": "#fc89ac", "color": "white"},
             "|": {"tooltip": "parallel", "bgcolor": "#b1ce9a", "color": "white"},
             "&": {"tooltip": "marshalled", "bgcolor": "#4e3165", "color": "white"},
-            "}": {
-                "tooltip": "returns_dict",
-                "bgcolor": "#cc5500",
-                "color": "white",
-            },
+            "}": {"tooltip": "returns_dict", "bgcolor": "#cc5500", "color": "white",},
         }
     }
     #: props of the HTML-Table label for Operations
@@ -1064,7 +1060,6 @@ class Plotter:
             plot_args = plot_args._replace(dot_item=dot_node)
 
             self._append_or_cluster_node(plot_args)
-        self._append_any_clustered_nodes(plot_args)
 
         ## EDGES
         #
@@ -1228,29 +1223,47 @@ class Plotter:
         kw = styles.merge()
         return pydot.Node(**kw)
 
+    def _build_cluster_path(self, plot_args: PlotArgs, *path,) -> None:
+        """Return the last cluster in the path created"""
+        clustered = plot_args.clustered
+        root = plot_args.dot
+        for step in path:
+            cluster = clustered.get(step)
+            if not cluster:
+                cluster = clustered[step] = pydot.Cluster(
+                    step, label=graphviz_html_string(step)
+                )
+                root.add_subgraph(cluster)
+            root = cluster
+
+        return root
+
     def _append_or_cluster_node(self, plot_args: PlotArgs) -> None:
         """Add dot-node in dot now, or "cluster" it, to be added later. """
-        # TODO remap nested plot-clusters:
+
+        root = plot_args.dot
         clusters = plot_args.clusters
-        clustered = plot_args.clustered
         nx_node = plot_args.nx_item
 
-        if not clusters or not nx_node in clusters:
-            plot_args.dot.add_node(plot_args.dot_item)
-        else:
-            cluster_name = clusters[nx_node]
-            node_cluster = clustered.get(cluster_name)
-            if not node_cluster:
-                node_cluster = clustered[cluster_name] = pydot.Cluster(
-                    cluster_name, label=cluster_name
-                )
-            node_cluster.add_node(plot_args.dot_item)
+        # By default, node-name clustering is enabled.
+        #
+        if clusters is None:
+            clusters = True
 
-    def _append_any_clustered_nodes(self, plot_args: PlotArgs) -> None:
-        # TODO remap nested plot-clusters:
-        dot = plot_args.dot
-        for cluster in plot_args.clustered.values():
-            dot.add_subgraph(cluster)
+        ## First check if user has asked explicit clusters,
+        #  otherwise split by node's name parts.
+        #
+        cluster_path = None
+        if clusters:
+            if isinstance(clusters, abc.Mapping):
+                cluster_path = clusters.get(nx_node)
+                if cluster_path:
+                    cluster_path = clusters[nx_node].split(".")
+            else:
+                cluster_path = get_node_name(nx_node, raw=1).split(".")[:-1]
+
+            root = self._build_cluster_path(plot_args, *cluster_path or ())
+        root.add_node(plot_args.dot_item)
 
     def _make_edge(self, plot_args: PlotArgs) -> pydot.Edge:
         """Override it to customize edge appearance. """

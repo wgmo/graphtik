@@ -141,15 +141,21 @@ to create a new graph:
     ... )
 
 .. graphtik::
+    :graphvar: bigger_graph
 
 Run the graph and print the output:
 
-    >>> sol = bigger_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["a_minus_ab_minus_c"])
+    >>> sol = bigger_graph.compute({'a': 2, 'b': 5, 'c': 5},
+    ...                            outputs=["a_minus_ab_minus_c"])
     >>> sol
     {'a_minus_ab_minus_c': -13}
+    >>> dot = sol.plot(clusters=True)
 
 .. graphtik::
 
+.. tip::
+    We had to plot with ``clusters=True`` so that we prevent :term:`plan`
+    from inserting the "pruned" cluster (see :attr:`.PlotArgs.clusters`).
 
 
 Merging pipelines

@@ -9,6 +9,7 @@ from operator import add
 
 import dill
 import networkx as nx
+import pydot
 import pytest
 from jinja2 import Template
 
@@ -594,7 +595,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         fontname=italic;
         splines=ortho;
         subgraph "cluster_after pruning" {
-        label="after pruning";
+        label=<after pruning>;
         <edge> [fillcolor=wheat, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
         <digraph&#58; strict> [fillcolor=wheat, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 2"];
         <&lt;graph&gt;> [fillcolor=SkyBlue, margin="0.04,0.02", shape=house, style=filled, tooltip="(None)"];
@@ -642,3 +643,11 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     )
     assert _striplines(dot_str) == _striplines(exp)
     assert "<node>" not in dot_str
+
+
+def test_combine_clusters(merge_pipes):
+    p1, p2 = merge_pipes
+    merged_graph = compose("m", p1, p2, merge=False)
+    dot: pydot.Dot = merged_graph.plot()
+    assert dot.get_subgraph(f"cluster_{p1.name}")
+    assert dot.get_subgraph(f"cluster_{p2.name}")
