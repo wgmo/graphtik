@@ -1150,10 +1150,11 @@ class Plotter:
 
             ## Data-state
             #
-            if (
+            is_pruned = (
                 isinstance(plottable, (ExecutionPlan, Solution))
                 and nx_node not in plottable.dag.nodes
-            ) or (solution is not None and nx_node not in solution.dag.nodes):
+            ) or (solution is not None and nx_node not in solution.dag.nodes)
+            if is_pruned:
                 graph.nodes[nx_node]["_pruned"] = True  # Signal to edge-plotting.
                 styles.add("kw_data_pruned")
                 #
@@ -1173,7 +1174,7 @@ class Plotter:
 
                 elif nx_node in steps:
                     styles.add("kw_data_evicted")
-                elif not is_sideffect(nx_node):
+                elif not is_pruned and not is_sideffect(nx_node):
                     styles.add("kw_data_canceled")
 
             styles.stack_user_style(node_attrs)
