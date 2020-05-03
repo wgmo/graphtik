@@ -11,7 +11,7 @@ Architecture
     compute
     computation
     phase
-        |v410-flowchart|
+        |v440-flowchart|
         The definition & execution of networked operation is split in 1+2 phases:
 
         - `composition`
@@ -496,5 +496,5 @@ Architecture
 
 
 .. default-role:: obj
-.. |v410-flowchart| raw:: html
-    :file: images/GraphtikFlowchart-v4.1.0.svg
+.. |v440-flowchart| raw:: html
+    :file: images/GraphtikFlowchart-v4.4.0.svg

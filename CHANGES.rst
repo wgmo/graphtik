@@ -79,8 +79,10 @@ Changelog
 %%%%%%%%%
 
 
-v7.1.0 (30 Apr 2020, @ankostis): Theme-ize & expand everything
-==============================================================
+v7.1.0 (3 May 2020, @ankostis): Cancelable sideffects, theme-ize & expand everything
+====================================================================================
+|v440-flowchart|
+
 + break(plot): rename graph/node/edge control attribute ``_no_plot --> no_plot``.
 + break(plot): pass verbatim any `nx-attrs` starting with ``'graphviz.'`` into
   plotting process (instead of passing everything but private attributes).
@@ -88,6 +90,9 @@ v7.1.0 (30 Apr 2020, @ankostis): Theme-ize & expand everything
 + ENH(plot): expand callables (beyond Refs and templates).
 + ENH(sphinxext): clicking on an SVG opens the diagram in a new tab.
 + fix(sphinxext): don't choke on duplicate ``:name:`` in :rst:dir:`graphtik`` directives.
+
+.. |v440-flowchart| raw:: html
+    :file: docs/source/images/GraphtikFlowchart-v4.4.0.svg
 
 
 v7.0.0 (28 Apr 2020, @ankostis): In-solution sideffects, unified OpBuilder, plot badges

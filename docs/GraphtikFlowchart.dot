@@ -3,7 +3,7 @@
 #   dot docs/GraphtikFlowchart.dot -Tsvg -odocs/source/images/GraphtikFlowchart-vX.Y.Z.svg
 #
 digraph {
-    label="graphtik-v4.1.0 flowchart";
+    label="graphtik-v4.4+ flowchart";
     labelloc=t;
 
     operations  [shape=parallelogram fontname="italic" tooltip=class
@@ -39,6 +39,25 @@ digraph {
                  URL="arch.html#term-solution"];
 
     operations -> compose -> network    [arrowhead=vee];
-    {network inputs outputs predicate} -> compile -> plan  [arrowhead=vee];
-    {plan values} -> execute -> solution [arrowhead=vee];
+    network -> compile [arrowhead=vee
+                        label=<&#9679;graph>
+                        tooltip="operations linked by the dependencies"
+                        URL="arch.html#term-graph"];
+    {inputs outputs predicate} -> compile [arrowhead=vee];
+    compile -> plan    [arrowhead=vee
+                        label=<&#9679;pruned dag>
+                        tooltip="graph pruned by inputs & outputs"
+                        URL="arch.html#term-prune"];
+    plan -> execute    [arrowhead=vee
+                        label=<&#9679;dag>
+                        tooltip="plan's dag"
+                        URL="arch.html#term-dag"];
+    values -> execute [arrowhead=vee];
+    execute -> solution    [arrowhead=vee
+                            tooltip="dag clone to modify while executing"
+                            label=<&#9679;solution dag> URL="arch.html#term-solution-dag"];
+    solution -> solution   [arrowhead=vee
+                            label=<&#9679;prune dag on reschedule>
+                            tooltip="prune when endured operations fail or partial outputs"
+                            URL="arch.html#term-reschedule"];
 }
