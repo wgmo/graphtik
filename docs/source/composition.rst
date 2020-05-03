@@ -90,9 +90,9 @@ into the plot:
 
 .. graphtik::
 
-    >>> from graphtik.plot import Plotter
+    >>> from graphtik.plot import Theme
 
-    >>> dot = out.plot(plotter=Plotter(include_steps=True))
+    >>> dot = out.plot(theme=Theme(include_steps=True))
 
 .. tip:
    Read :ref:`plot-customizations` to understand the trick with the :term:`plotter`.
@@ -324,3 +324,6 @@ what has been canceled using this:
     >>> print(sol.check_if_incomplete())
     Not completed x1 operations ['read_book'] due to x0 failures and x1 partial-ops:
       +--get_out_or_stay_home: ['time']
+
+In case you wish to cancel the output of a single-result operation,
+return the special value :data:`graphtik.NO_RESULT`.
