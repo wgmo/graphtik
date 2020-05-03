@@ -326,9 +326,9 @@ class FunctionalOperation(Operation, Plottable):
         #: along with its `inputs` & `outputs`.
         #: (usefull when run in `parallel` with a :term:`process pool`).
         self.marshalled = marshalled
-        #: if true, it means the `fn` :term:`returns dictionary` with all `provides`,
-        #: and no further processing is done on them
-        #: (i.e. the returned output-values are not zipped with `provides`)
+        #: If true, it means the underlying function :term:`returns dictionary` ,
+        #: and no further processing is done on its results,
+        #: i.e. the returned output-values are not zipped with `provides`.
         self.returns_dict = returns_dict
         #: Added as-is into NetworkX graph, and you may filter operations by
         #: :meth:`.NetworkOperation.withset()`.
