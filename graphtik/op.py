@@ -329,6 +329,8 @@ class FunctionalOperation(Operation, Plottable):
         #: If true, it means the underlying function :term:`returns dictionary` ,
         #: and no further processing is done on its results,
         #: i.e. the returned output-values are not zipped with `provides`.
+        #:
+        #: It does not have to return any :term:`alias` `outputs`.
         self.returns_dict = returns_dict
         #: Added as-is into NetworkX graph, and you may filter operations by
         #: :meth:`.NetworkOperation.withset()`.
@@ -493,22 +495,11 @@ class FunctionalOperation(Operation, Plottable):
 
         return positional, vararg_vals, kwargs
 
-    def _zip_results_with_provides(self, results, fn_expected: iset) -> dict:
+    def _zip_results_with_provides(self, results) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
+        fn_expected: iset = self._fn_provides
         rescheduled = is_solid_true(is_reschedule_operations(), self.rescheduled)
-        if not fn_expected:  # All provides were sideffects?
-            if results and results != NO_RESULT:
-                ## Do not scream,
-                #  it is common to call a function for its sideffects,
-                # which happens to return an irrelevant value.
-                log.warning(
-                    "Ignoring result(%s) because no `provides` given!\n  %s",
-                    results,
-                    self,
-                )
-            results = {}
-
-        elif self.returns_dict:
+        if self.returns_dict:
 
             if hasattr(results, "_asdict"):  # named tuple
                 results = results._asdict()
@@ -522,13 +513,21 @@ class FunctionalOperation(Operation, Plottable):
                     f"got {type(results).__name__!r}: {results}\n  {self}"
                 )
 
+            if rescheduled:
+                fn_required = fn_expected
+                # Canceled sfx are welcomed.
+                fn_expected = iset(self.provides)
+            else:
+                fn_required = fn_expected
+
             res_names = results.keys()
 
             ## Allow unknown outs when dict,
             #  bc we can safely ignore them (and it's handy for reuse).
             #
-            if res_names - fn_expected:
-                unknown = list(res_names - fn_expected)
+            unknown = res_names - fn_expected
+            if unknown:
+                unknown = list(unknown)
                 log.info(
                     "Results%s contained +%s unknown provides%s\n  {self}",
                     list(res_names),
@@ -536,7 +535,7 @@ class FunctionalOperation(Operation, Plottable):
                     list(unknown),
                 )
 
-            missmatched = fn_expected - res_names
+            missmatched = fn_required - res_names
             if missmatched:
                 if rescheduled:
                     log.warning(
@@ -549,6 +548,18 @@ class FunctionalOperation(Operation, Plottable):
                         f"Got x{len(results)} results({list(results)}) mismatched "
                         f"-{len(missmatched)} provides({list(fn_expected)})!\n  {self}"
                     )
+
+        elif not fn_expected:  # All provides were sideffects?
+            if results and results != NO_RESULT:
+                ## Do not scream,
+                #  it is common to call a function for its sideffects,
+                # which happens to return an irrelevant value.
+                log.warning(
+                    "Ignoring result(%s) because no `provides` given!\n  %s",
+                    results,
+                    self,
+                )
+            results = {}
 
         else:  # Handle result sequence: no-result, single-item, many
             nexpected = len(fn_expected)
@@ -620,7 +631,7 @@ class FunctionalOperation(Operation, Plottable):
 
             positional, varargs, kwargs = self._match_inputs_with_fn_needs(named_inputs)
             results_fn = self.fn(*positional, *varargs, **kwargs)
-            results_op = self._zip_results_with_provides(results_fn, self._fn_provides)
+            results_op = self._zip_results_with_provides(results_fn)
 
             if outputs:
                 outputs = set(n for n in outputs if not is_sideffect(n))

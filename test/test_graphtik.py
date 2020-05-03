@@ -1005,9 +1005,6 @@ def test_sideffect_NO_RESULT(caplog):
         assert record.levelname != "WARNING"
 
 
-@pytest.mark.xfail(
-    reason="FIXME: FAILS after op has warned about 'Ignoring result'!",
-    strict=True)
 def test_sideffect_cancel_sfx_only_operation():
     sfx = sideffect("b")
     op1 = operation(
@@ -1020,7 +1017,7 @@ def test_sideffect_cancel_sfx_only_operation():
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="a")
     netop = compose("t", op1, op2)
     sol = netop.compute({})
-    assert sol == {}
+    assert sol == {sfx: False}
 
 
 def test_sideffect_cancel():
@@ -1046,7 +1043,7 @@ def test_sideffect_not_canceled_if_not_resched():
     op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
     netop = compose("t", op1, op2)
     sol = netop.compute({})
-    assert sol == {"b": 1}
+    assert sol == {sfx: False, "b": 1}
 
     # Check also op with some provides
     #
