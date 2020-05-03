@@ -1346,7 +1346,13 @@ def test_rescheduling(exemethod, resched, rescheduled):
         "netop",
         operation(lambda: [1], name="op1", provides=["a", "b"], rescheduled=1),
         canc,
-        operation(lambda: NO_RESULT, name="op2", provides=["c"], rescheduled=1),
+        operation(
+            lambda C=1: C and NO_RESULT,
+            name="op2",
+            needs=optional("C"),
+            provides=["c"],
+            rescheduled=1,
+        ),
         operation(
             lambda *args: sum(args),
             name="op3",
@@ -1355,7 +1361,7 @@ def test_rescheduling(exemethod, resched, rescheduled):
         ),
         parallel=exemethod,
     )
-    sol = op()
+    sol = op.compute({})
     assert sol == {"a": 1, "d": 1}
     assert list(sol.canceled) == [canc]
     dot = str(sol.plot())
@@ -1366,7 +1372,13 @@ def test_rescheduling(exemethod, resched, rescheduled):
         assert sol.scream_if_incomplete()
 
     ## Check if modified state fails the 2nd time.
-    assert op() == {"a": 1, "d": 1}
+    assert op.compute({}) == {"a": 1, "d": 1}
+
+    ## Tell op to cancel just 1 of 2 provides
+    #  (the 2n one, 'b').
+    #
+    sol = op.compute({"C": False})
+    assert sol == {"C": False, "a": 1, "c": False, "d": 1}
 
 
 def test_rescheduling_NO_RESULT(exemethod):
