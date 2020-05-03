@@ -25,7 +25,7 @@ from .base import (
     func_name,
     jetsam,
 )
-from .config import is_debug, is_reschedule_operations, is_solid_true
+from .config import is_debug, is_reschedule_operations, first_solid
 from .modifiers import (
     is_mapped,
     is_optional,
@@ -501,7 +501,7 @@ class FunctionalOperation(Operation, Plottable):
     def _zip_results_with_provides(self, results) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
         fn_expected: iset = self._fn_provides
-        rescheduled = is_solid_true(is_reschedule_operations(), self.rescheduled)
+        rescheduled = first_solid(is_reschedule_operations(), self.rescheduled)
         if self.returns_dict:
 
             if hasattr(results, "_asdict"):  # named tuple

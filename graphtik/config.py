@@ -260,6 +260,6 @@ Enable/disable globally :term:`rescheduling` for operations returning only *part
 ."""
 
 
-def is_solid_true(*tristates, default=False):
+def first_solid(*tristates, default=False):
     """Utility combining multiple tri-state booleans."""
     return first(tristates, default=default, key=lambda i: i is not None)

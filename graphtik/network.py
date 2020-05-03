@@ -35,7 +35,7 @@ from .config import (
     is_parallel_tasks,
     is_reschedule_operations,
     is_skip_evictions,
-    is_solid_true,
+    first_solid,
 )
 from .modifiers import (
     is_mapped,
@@ -239,7 +239,7 @@ class Solution(ChainMap, Plottable):
         self._layers[op].update(outputs)
         self.executed[op] = None
 
-        if is_solid_true(self.is_reschedule, op.rescheduled):
+        if first_solid(self.is_reschedule, op.rescheduled):
             dag = self.dag
 
             ## Find which provides have been broken?
@@ -610,10 +610,10 @@ class ExecutionPlan(
                 solution.elapsed_ms[op] = time.time()
 
                 task = _OpTask(op, input_values, solution.solid)
-                if is_solid_true(global_marshal, op.marshalled):
+                if first_solid(global_marshal, op.marshalled):
                     task = task.marshalled()
 
-                if is_solid_true(global_parallel, op.parallel):
+                if first_solid(global_parallel, op.parallel):
                     if not pool:
                         raise RuntimeError(
                             "With `parallel` you must `set_execution_pool().`"
