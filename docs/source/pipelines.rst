@@ -128,11 +128,16 @@ the ``PIL.Image`` if you have it and skip providing the image data string.
 
 Extending pipelines
 -------------------
+Sometimes we have existing computation graph(s) to which we want to append
+operations or other pipelines.
 
-Sometimes you will have an existing computation graph to which you want to add operations.
-This is simple, since ``compose`` can compose whole graphs along with individual ``operation`` instances.
-For example, if we have ``graph`` as above, we can add another operation to it
-to create a new graph:
+Combining
+^^^^^^^^^
+This is simple, since ``compose()`` can *combine* whole pipelines along with
+individual operations and pipelines.
+
+For example, if we have the above ``graph``, we can add another operation to it
+and create a new graph:
 
     >>> # Add another subtraction operation to the graph.
     >>> bigger_graph = compose("bigger_graph",
@@ -142,6 +147,9 @@ to create a new graph:
 
 .. graphtik::
     :graphvar: bigger_graph
+
+Notice that the original pipeline is preserved intact in an "isolated" cluster,
+and its operations have been prefixed by the name of that pipeline.
 
 Run the graph and print the output:
 
@@ -154,25 +162,20 @@ Run the graph and print the output:
 .. graphtik::
 
 .. tip::
-    We had to plot with ``clusters=True`` so that we prevent :term:`plan`
-    from inserting the "pruned" cluster (see :attr:`.PlotArgs.clusters`).
+    We had to plot with ``clusters=True`` so that we prevent the :term:`plan`
+    to insert the "after pruning" cluster (see :attr:`.PlotArgs.clusters`).
 
 
-Merging pipelines
-^^^^^^^^^^^^^^^^^
+Merging
+^^^^^^^
 
-Sometimes you will have two computation graphs---perhaps ones that share operations---you want to combine into one.
-In the simple case, where the graphs don't share operations or where you don't care
-whether a duplicated operation is run multiple (redundant) times,
-you can just do something like this:
+Sometimes we have computation graphs -- perhaps ones that share operations --
+and we want to *merge* them into one.
 
-.. code-block::
+This is doable with ``compose(..., merge=True))``.
+Any identically-named operations are consolidate into a single node, where
+the operation added later in the call (further to the right) wins.
 
-    combined_graph = compose("combined_graph", graph1, graph2)
-
-However, if you want to combine graphs that share operations and don't want to pay the price
-of running redundant computations, you can set the ``merge`` parameter of ``compose()`` to ``True``.
-This will consolidate redundant ``operation`` nodes (based on ``name``) into a single node.
 For example, let's say we have ``graphop``, as in the examples above, along with this graph:
 
     >>> another_graph = compose("another_graph",
@@ -204,11 +207,17 @@ We can merge :graphtik:`graphop` and :graphtik:`another_graph` like so, avoiding
 
 As always, we can run computations with this graph by simply calling it:
 
-    >>> sol = merged_graph.compute({'a': 2, 'b': 5, 'c': 5}, outputs=["cab"])
+    >>> sol = merged_graph.compute({"a": 2, "b": 5, "c": 5}, outputs=["cab"])
     >>> sol
     {'cab': 50}
 
 .. graphtik::
+
+.. seealso::
+    Consult these test-cases from the full sources of the project:
+
+    - :file:`test/test_graphtik.py:test_network_simple_merge()`
+    - :file:`test/test_graphtik.py:test_network_deep_merge()`
 
 
 Advanced pipelines
