@@ -550,6 +550,10 @@ class FunctionalOperation(Operation, Plottable):
                         f"-{len(missmatched)} provides({list(fn_expected)})!\n  {self}"
                     )
 
+        elif results == NO_RESULT and rescheduled:
+            # Cancel also any SFX.
+            results = {p: False for p in set(self.provides) if is_sideffect(p)}
+
         elif not fn_expected:  # All provides were sideffects?
             if results and results != NO_RESULT:
                 ## Do not scream,
