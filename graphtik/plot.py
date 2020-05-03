@@ -190,7 +190,7 @@ def graphviz_html_string(
 
     - `pydot` library does not quote DOT-keywords anywhere (pydot#111).
     - Char ``:`` on node-names denote port/compass-points and break IDs (pydot#224).
-    - Non-strings are not quoted_if_necessary by pydot.
+    - Non-strings are not quote_if_necessary by pydot.
     - NLs im tooltips of HTML-Table labels `need substitution with the XML-entity
       <see https://stackoverflow.com/a/27448551/548792>`_.
     - HTML-Label attributes (``xmlattr=True``) need both html-escape & quote.
@@ -928,7 +928,11 @@ class StylesStack(NamedTuple):
 
         graphviz_style = style.get("style")
         if isinstance(graphviz_style, (list, tuple)):
-            style["style"] = ",".join(str(i) for i in set(graphviz_style))
+            ## FIXME: support only plain-strings as graphviz-styles.
+            graphviz_style = ",".join(str(i) for i in set(graphviz_style))
+            if "," in graphviz_style:
+                graphviz_style = f'"{graphviz_style}"'
+            style["style"] = graphviz_style
 
         return style
 
