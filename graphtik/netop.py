@@ -309,7 +309,7 @@ class NetworkOperation(Operation, Plottable):
 
     def compute(
         self,
-        named_inputs: Mapping,
+        named_inputs: Mapping = UNSET,
         outputs: Items = UNSET,
         predicate: NodePredicate = UNSET,
     ) -> Solution:
@@ -351,6 +351,9 @@ class NetworkOperation(Operation, Plottable):
         See also :meth:`.Operation.compute()`.
         """
         try:
+            if named_inputs is UNSET:
+                named_inputs = {}
+
             net = self.net  # jetsam
             outputs = self.outputs if outputs == UNSET else outputs
             predicate = self.predicate if predicate == UNSET else predicate
