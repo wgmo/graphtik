@@ -25,7 +25,14 @@ from .base import (
     func_name,
     jetsam,
 )
-from .config import is_debug, is_reschedule_operations, first_solid
+from .config import (
+    is_debug,
+    is_endure_operations,
+    is_marshal_tasks,
+    is_parallel_tasks,
+    is_reschedule_operations,
+    first_solid,
+)
 from .modifiers import (
     is_mapped,
     is_optional,
@@ -361,12 +368,14 @@ class FunctionalOperation(Operation, Plottable):
         aliases = aslist(self.aliases, "aliases")
         aliases = f", aliases={aliases!r}" if aliases else ""
         fn_name = self.fn and func_name(self.fn, None, mod=0, fqdn=0, human=0)
-        returns_dict_marker = self.returns_dict and "{}" or ""
         nprops = f", x{len(self.node_props)}props" if self.node_props else ""
-        resched = "?" if self.rescheduled else ""
-        endured = "!" if self.endured else ""
-        parallel = "|" if self.parallel else ""
-        marshalled = "$" if self.marshalled else ""
+        resched = (
+            "?" if first_solid(self.rescheduled, is_reschedule_operations()) else ""
+        )
+        endured = "!" if first_solid(self.endured, is_endure_operations()) else ""
+        parallel = "|" if first_solid(self.parallel, is_parallel_tasks()) else ""
+        marshalled = "&" if first_solid(self.marshalled, is_marshal_tasks()) else ""
+        returns_dict_marker = self.returns_dict and "{}" or ""
 
         if is_debug():
             debug_needs = (

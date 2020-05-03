@@ -43,7 +43,14 @@ import pydot
 from boltons.iterutils import default_enter, default_exit, get_path, remap
 
 from .base import PlotArgs, func_name, func_source
-from .config import is_debug
+from .config import (
+    is_debug,
+    is_endure_operations,
+    is_marshal_tasks,
+    is_parallel_tasks,
+    is_reschedule_operations,
+    first_solid,
+)
 from .modifiers import is_mapped, is_sideffect, is_sideffected
 from .netop import NetworkOperation
 from .network import ExecutionPlan, Network, Solution, _EvictInstruction
@@ -499,17 +506,17 @@ class Theme:
         "penwidth": Ref("resched_thickness"),
         "style": ["dashed"],
         "tooltip": "(endured)",
-        "badges": ["E"],
+        "badges": ["!"],
     }
     kw_op_rescheduled = {
         "penwidth": Ref("resched_thickness"),
         "style": ["dashed"],
         "tooltip": "(rescheduled)",
-        "badges": ["R"],
+        "badges": ["?"],
     }
-    kw_op_parallel = {"badges": ["P"]}
-    kw_op_marshalled = {"badges": ["M"]}
-    kw_op_returns_dict = {"badges": ["D"]}
+    kw_op_parallel = {"badges": ["|"]}
+    kw_op_marshalled = {"badges": ["&"]}
+    kw_op_returns_dict = {"badges": ["}"]}
     ##
     ## op STATE
     ##
@@ -524,12 +531,12 @@ class Theme:
     #: below.
     op_badge_styles = {
         "badge_styles": {
-            "E": {"tooltip": "endured(!)", "bgcolor": "#04277d", "color": "white"},
-            "R": {"tooltip": "rescheduled(?)", "bgcolor": "#fc89ac", "color": "white"},
-            "P": {"tooltip": "parallel(|)", "bgcolor": "#b1ce9a", "color": "white"},
-            "M": {"tooltip": "marshalled($)", "bgcolor": "#4e3165", "color": "white"},
-            "D": {
-                "tooltip": "returns_dict({})",
+            "!": {"tooltip": "endured", "bgcolor": "#04277d", "color": "white"},
+            "?": {"tooltip": "rescheduled", "bgcolor": "#fc89ac", "color": "white"},
+            "|": {"tooltip": "parallel", "bgcolor": "#b1ce9a", "color": "white"},
+            "&": {"tooltip": "marshalled", "bgcolor": "#4e3165", "color": "white"},
+            "}": {
+                "tooltip": "returns_dict",
                 "bgcolor": "#cc5500",
                 "color": "white",
             },
@@ -577,7 +584,7 @@ class Theme:
                         {%- for badge in badges -%}
                             <TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor }}" TITLE="{{ badge_styles[badge].tooltip | e }}" TARGET="_self"
                             ><FONT FACE="monospace" COLOR="{{ badge_styles[badge].color }}"><B>
-                                {{- badge -}}
+                                {{- badge | eee -}}
                             </B></FONT></TD>
                         {%- endfor -%}
                         </TR>
@@ -1178,13 +1185,13 @@ class Plotter:
 
             ## Op-kind
             #
-            if nx_node.rescheduled:
+            if first_solid(nx_node.rescheduled, is_reschedule_operations()):
                 label_styles.add("kw_op_rescheduled")
-            if nx_node.endured:
+            if first_solid(nx_node.endured, is_endure_operations()):
                 label_styles.add("kw_op_endured")
-            if nx_node.parallel:
+            if first_solid(nx_node.parallel, is_parallel_tasks()):
                 label_styles.add("kw_op_parallel")
-            if nx_node.marshalled:
+            if first_solid(nx_node.marshalled, is_marshal_tasks()):
                 label_styles.add("kw_op_marshalled")
             if nx_node.returns_dict:
                 label_styles.add("kw_op_returns_dict")

@@ -10,6 +10,12 @@ import dill
 import pytest
 
 from graphtik import NO_RESULT, compose, operation, optional, sideffect, vararg, varargs
+from graphtik.config import (
+    operations_reschedullled,
+    operations_endured,
+    tasks_in_parallel,
+    tasks_marshalled,
+)
 from graphtik.network import yield_ops
 from graphtik.op import (
     FunctionalOperation,
@@ -421,20 +427,35 @@ def test_parallel_op_repr():
 def test_marshalled_op_repr():
     op = operation(str, name="t", provides=["a"], marshalled=True)
     assert str(op) == (
-        "FunctionalOperation$(name='t', needs=[], provides=['a'], fn='str')"
+        "FunctionalOperation&(name='t', needs=[], provides=['a'], fn='str')"
     )
 
 
 def test_marshalled_parallel_op_repr():
     op = operation(str, name="t", parallel=1, marshalled=1)
-    assert str(op) == "FunctionalOperation|$(name='t', needs=[], provides=[], fn='str')"
+    assert (
+        str(op) == "FunctionalOperation|&(name='t', needs=[], provides=[], fn='str')"
+    )
 
 
 def test_ALL_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1, parallel=1, marshalled=1)
     assert (
-        str(op) == "FunctionalOperation!?|$(name='t', needs=[], provides=[], fn='str')"
+        str(op) == "FunctionalOperation!?|&(name='t', needs=[], provides=[], fn='str')"
     )
+
+
+def test_CONFIG_op_repr():
+    with operations_endured(1), operations_reschedullled(1), tasks_in_parallel(
+        1
+    ), tasks_marshalled(1):
+        op = operation(str, name="t")
+        assert (
+            str(op)
+            == "FunctionalOperation!?|&(name='t', needs=[], provides=[], fn='str')"
+        )
+    op = operation(str, name="t", rescheduled=0, endured=0, parallel=0, marshalled=0)
+    assert str(op) == "FunctionalOperation(name='t', needs=[], provides=[], fn='str')"
 
 
 def test_reschedule_outputs():
