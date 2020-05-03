@@ -621,7 +621,7 @@ class FunctionalOperation(Operation, Plottable):
 
         return results
 
-    def compute(self, named_inputs, outputs=None) -> dict:
+    def compute(self, named_inputs, outputs: Items = None) -> dict:
         try:
             if self.fn is None:
                 raise ValueError(
@@ -633,6 +633,7 @@ class FunctionalOperation(Operation, Plottable):
             results_fn = self.fn(*positional, *varargs, **kwargs)
             results_op = self._zip_results_with_provides(results_fn)
 
+            outputs = astuple(outputs, "outputs", allowed_types=cabc.Sequence)
             if outputs:
                 outputs = set(n for n in outputs if not is_sideffect(n))
                 # Ignore sideffect outputs.
