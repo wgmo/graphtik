@@ -169,6 +169,7 @@ class Solution(ChainMap, Plottable):
         #: which becomes `True` when this instance has finished accepting results.
         self.finalized = False
         self.elapsed_ms = {}
+        #: A unique identifier to distinguish separate flows in execution logs.
         self.solid = "%X" % random.randint(0, 2 ** 16)
 
         ## Cache context-var flags.

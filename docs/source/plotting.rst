@@ -498,7 +498,35 @@ deeply nested stacks is notoriously hard
 Logging
 ^^^^^^^
 Increase the logging verbosity; logging statements have been placed melticulously
-to describe the :term:`execution` flow (but not :term:`compilation` :-().
+to describe the :term:`execution` flows  (but not :term:`compilation` :-(),
+with each log statement accompanied by the :attr:`solution id <.Solution.solid>` of that flow,
+like the ``(3C40)`` & ``(8697)`` below, important for when running pipelines
+in :term:`parallel`::
+
+   --------------------- Captured log call ---------------------
+   DEBUG    === Compiling netop(t)...
+   DEBUG    ... cache-updated key: ((), None, None)
+   DEBUG    === (3C40) Executing netop(t), in parallel, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x2 steps: op1, op2)...
+   DEBUG    +++ (3C40) Parallel batch['op1'] on solution[].
+   DEBUG    +++ (3C40) Executing OpTask(FunctionalOperation|(name='op1', needs=[], provides=[sideffect: 'b'], fn{}='<lambda>'), sol_keys=[])...
+   INFO     graphtik.op:op.py:534 Results[sideffect: 'b'] contained +1 unknown provides[sideffect: 'b']
+   FunctionalOperation|(name='op1', needs=[], provides=[sideffect: 'b'], fn{}='<lambda>')
+   DEBUG    ... (3C40) op(op1) completed in 1.406ms.
+
+   ...
+
+   DEBUG    === Compiling netop(t)...
+   DEBUG    ... cache-hit key: ((), None, None)
+   DEBUG    === (8697) Executing netop(t), evicting, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x3 steps: op1, op2, sideffect: 'b')...
+   DEBUG    +++ (8697) Executing OpTask(FunctionalOperation(name='op1', needs=[], provides=[sideffect: 'b'], fn{}='<lambda>'), sol_keys=[])...
+   INFO     graphtik.op:op.py:534 Results[sideffect: 'b'] contained +1 unknown provides[sideffect: 'b']
+   FunctionalOperation(name='op1', needs=[], provides=[sideffect: 'b'], fn{}='<lambda>')
+   DEBUG    ... (8697) op(op1) completed in 0.149ms.
+   DEBUG    +++ (8697) Executing OpTask(FunctionalOperation(name='op2', needs=[sideffect: 'b'], provides=['b'], fn='<lambda>'), sol_keys=[sideffect: 'b'])...
+   DEBUG    ... (8697) op(op2) completed in 0.08ms.
+   DEBUG    ... (8697) evicting 'sideffect: 'b'' from solution[sideffect: 'b', 'b'].
+   DEBUG    === (8697) Completed netop(t) in 0.229ms.
+
 
 ``DEBUG`` flag
 ^^^^^^^^^^^^^^
