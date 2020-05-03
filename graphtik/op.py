@@ -529,10 +529,11 @@ class FunctionalOperation(Operation, Plottable):
             if unknown:
                 unknown = list(unknown)
                 log.info(
-                    "Results%s contained +%s unknown provides%s\n  {self}",
+                    "Results%s contained +%s unknown provides%s\n  %s",
                     list(res_names),
                     len(unknown),
                     list(unknown),
+                    self,
                 )
 
             missmatched = fn_required - res_names
