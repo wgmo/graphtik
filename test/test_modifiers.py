@@ -7,6 +7,7 @@ from graphtik.modifiers import (
     sideffected,
     vararg,
     varargs,
+    rename_dependency,
 )
 
 
@@ -97,3 +98,64 @@ def test_sideffected_bad(call, exp):
 def test_withset_bad_kwargs():
     with pytest.raises(ValueError, match="Invalid kwargs:"):
         mapped("a", "b").withset(j=2)
+
+
+@pytest.mark.parametrize(
+    "mod, exp",
+    [
+        (lambda: "b", "mapped('p.b'-->'b')"),
+        (lambda: mapped("b", None), "mapped('p.b'-->'b')"),
+        (lambda: mapped("b", ""), "mapped('p.b'-->'b')"),
+        (lambda: mapped("b", "bb"), "mapped('p.b'-->'bb')"),
+        (lambda: optional("b"), "optional('p.b'-->'b')"),
+        (lambda: optional("b", "bb"), "optional('p.b'-->'bb')"),
+        (lambda: vararg("c"), "vararg('p.c')"),
+        (lambda: varargs("d"), "varargs('p.d')"),
+        (lambda: sideffect("e"), "sideffect: 'e'"),
+        (lambda: sideffect("e", optional=1), "sideffect?: 'e'"),
+        (
+            lambda: sideffected("f", "a", "b"),
+            "sideffected('p.f'<--'a', 'b', fn_kwarg='f')",
+        ),
+        (
+            lambda: sideffected("f", "ff", fn_kwarg="F"),
+            "sideffected('p.f'<--'ff', fn_kwarg='F')",
+        ),
+        (
+            lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"),
+            "sideffected?('p.f'<--'ff', fn_kwarg='F')",
+        ),
+        (
+            lambda: sideffected("f", "ff", optional=1),
+            "sideffected?('p.f'<--'ff', fn_kwarg='f')",
+        ),
+    ],
+)
+def test_modifs_rename_fn(mod, exp):
+    mod = mod()
+    renamer = lambda n: f"p.{n}"
+    got = repr(rename_dependency(mod, renamer))
+    print(got)
+    assert got == exp
+
+
+@pytest.mark.parametrize(
+    "mod, exp",
+    [
+        (lambda: mapped("b", "bb"), "mapped('D'-->'bb')"),
+        (lambda: optional("b"), "optional('D'-->'b')"),
+        (lambda: optional("b", "bb"), "optional('D'-->'bb')"),
+        (lambda: vararg("c"), "vararg('D')"),
+        (lambda: varargs("d"), "varargs('D')"),
+        (lambda: sideffect("e"), "sideffect: 'e'"),
+        (
+            lambda: sideffected("f", "a", "b", optional=1,),
+            "sideffected?('D'<--'a', 'b', fn_kwarg='f')",
+        ),
+    ],
+)
+def test_modifs_rename_str(mod, exp):
+    mod = mod()
+    got = repr(rename_dependency(mod, "D"))
+    print(got)
+    assert got == exp

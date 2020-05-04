@@ -185,6 +185,29 @@ def is_sideffected(dep) -> bool:
     return getattr(dep, "sideffected", None)
 
 
+def rename_dependency(dep, ren):
+    """Renames based to a fixed string or calling `ren` if callable, mapped to old"""
+    if callable(ren):
+        renamer = ren
+    else:
+        renamer = lambda n: ren
+
+    if isinstance(dep, _Modifier):
+        if is_pure_sideffect(dep):
+            pass  # TODO: rename sfx?
+        else:
+            old_name = dep.sideffected if is_sideffected(dep) else str(dep)
+            new_name = renamer(old_name)
+            kw = {}
+            if dep.fn_kwarg is None and not is_varargish(dep):
+                kw["fn_kwarg"] = old_name
+            dep = dep.withset(name=new_name, **kw)
+    else:  # plain string
+        dep = mapped(renamer(dep), str(dep))
+
+    return dep
+
+
 def mapped(name: str, fn_kwarg: str):
     """
     Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
