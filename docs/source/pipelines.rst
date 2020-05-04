@@ -90,9 +90,7 @@ into the plot:
 
 .. graphtik::
 
-    >>> from graphtik.plot import Theme
-
-    >>> dot = out.plot(theme=Theme(include_steps=True))
+    >>> dot = out.plot(theme={"include_steps": True})
 
 .. tip:
    Read :ref:`plot-customizations` to understand the trick with the :term:`plotter`.

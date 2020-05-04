@@ -141,7 +141,7 @@ ordered by breadth of the effects (most broadly effecting method at the top):
    customizations::
 
       active_plotter = get_active_plotter()
-      netop.plot(theme=active_plotter.default_theme.withset(include_steps=True))
+      netop.plot(theme={"include_steps": True})
 
    ... OR::
 

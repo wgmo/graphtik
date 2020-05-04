@@ -15,6 +15,7 @@ Generic utilities, or :mod:`.plot` API but without polluting imports.
 import abc
 import inspect
 import logging
+from collections import abc as cabc
 from collections import defaultdict, namedtuple
 from functools import partial, partialmethod, wraps
 from typing import Any, Collection, List, Mapping, NamedTuple, Optional, Tuple, Union
@@ -397,6 +398,7 @@ class PlotArgs(NamedTuple):
     #: If given, overrides :active plotter`.
     plotter: "graphtik.plot.Plotter" = None
     #: If given, overrides :term:`plot theme` plotter will use.
+    #: It can be any mapping, in which case it overrite the :term:`current theme`.
     theme: "graphtik.plot.Theme" = None
 
     #######
@@ -509,8 +511,8 @@ class Plottable(abc.ABC):
 
             :seealso: :attr:`.PlotArgs.plotter`
         :param theme:
-            Any :term:`plot theme` overrides; if none, the :attr:`.Plotter.default_theme`
-            of the :term:`active plotter` is used.
+            Any :term:`plot theme` or dictionary overrides; if none,
+            the :attr:`.Plotter.default_theme` of the :term:`active plotter` is used.
 
             :seealso: :attr:`.PlotArgs.theme`
         :param name:
@@ -697,11 +699,21 @@ class Plottable(abc.ABC):
 
         plot_args = PlotArgs(**kw)
 
-        from .plot import Plotter, get_active_plotter
+        from .plot import Plotter, Theme, get_active_plotter
 
+        ## Ensure a valid plotter in the args asap.
+        #
         if plotter and not isinstance(plotter, Plotter):
             raise TypeError(f"Invalid `plotter` argument given: {plotter}")
-        plot_args = plot_args._replace(plotter=plotter or get_active_plotter())
+        if not plotter:
+            plotter = get_active_plotter()
+        plot_args = plot_args._replace(plotter=plotter)
+
+        ## Overwrite any dictionaries over active theme asap.
+        #
+        if isinstance(theme, cabc.Mapping):
+            theme = plotter.default_theme.withset(**theme)
+            plot_args = plot_args._replace(theme=theme)
 
         plot_args = self.prepare_plot_args(plot_args)
         assert plot_args.graph, plot_args
