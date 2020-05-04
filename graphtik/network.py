@@ -209,15 +209,28 @@ class Solution(ChainMap, Plottable):
     def debugstr(self):
         return f"{type(self).__name__}({dict(self)}, {self.plan}, {self.executed}, {self._layers})"
 
-    def _reschedule(self, dag, nodes_to_break) -> Collection:
-        """Updated dag/canceled/executed ops and return newly-canceled ops. """
-        dag.remove_edges_from(tuple(dag.out_edges(nodes_to_break)))
+    def _reschedule(self, dag, nbunch_to_break, op):
+        """Update dag/canceled/executed ops and return newly-canceled ops. """
+        dag.remove_edges_from(tuple(dag.out_edges(nbunch_to_break)))
         canceled = _unsatisfied_operations(dag, self)
         # Minus executed, bc partial-out op might not have any provides left.
         newly_canceled = iset(canceled) - self.canceled - self.executed
         self.canceled.update(newly_canceled)
 
-        return newly_canceled
+        if newly_canceled and log.isEnabledFor(logging.INFO):
+            reason = (
+                "failure of"
+                if isinstance(nbunch_to_break, Operation) > 1
+                else "rescheduled"
+            )
+            log.info(
+                "... (%s) CANCELING +%s ops%s due to %s of op(%s).",
+                self.solid,
+                len(newly_canceled),
+                [n.name for n in newly_canceled],
+                reason,
+                op.name,
+            )
 
     def operation_executed(self, op, outputs):
         """
@@ -261,20 +274,17 @@ class Solution(ChainMap, Plottable):
                 for sf in collect_canceled_sideffects(k, v)
             ]
             to_break = (missing_outs - sfx) | canceled_sideffects
+            log.info(
+                "... (%s) missing partial outputs %s from rescheduled %s.",
+                self.solid,
+                list(to_break),
+                op,
+            )
 
             if to_break:
-                newly_canceled = self._reschedule(self.dag, to_break)
+                self._reschedule(self.dag, to_break, op)
                 # list used by `check_if_incomplete()`
                 self.executed[op] = to_break
-                if newly_canceled and log.isEnabledFor(logging.INFO):
-                    log.info(
-                        "... (%s) CANCELING +%s ops%s due to partial outs%s of op(%s).",
-                        self.solid,
-                        len(newly_canceled),
-                        [n.name for n in newly_canceled],
-                        list(missing_outs),
-                        op.name,
-                    )
 
     def operation_failed(self, op, ex):
         """
@@ -285,16 +295,7 @@ class Solution(ChainMap, Plottable):
         """
         assert not self.finalized, f"Cannot reuse solution: {self}"
         self.executed[op] = ex
-
-        newly_canceled = self._reschedule(self.dag, op)
-        if newly_canceled and log.isEnabledFor(logging.INFO):
-            log.info(
-                "... (%s) CANCELING +%s ops%s due to failed op(%s).",
-                self.solid,
-                len(newly_canceled),
-                [n.name for n in newly_canceled],
-                op.name,
-            )
+        self._reschedule(self.dag, op, op)
 
     def finalize(self):
         """invoked only once, after all ops have been executed"""
