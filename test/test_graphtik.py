@@ -1347,9 +1347,7 @@ def test_skip_eviction_flag():
 
 
 @pytest.mark.parametrize(
-    "endurance, endured",
-    # FIXME: (False, True) should not have run, missing (True, False)
-    [(None, True), (True, None), (False, True), (1, 1)],
+    "endurance, endured", [(None, True), (True, None), (1, 0), (1, 1)],
 )
 def test_execution_endurance(exemethod, endurance, endured):
     with operations_endured(endurance):
@@ -1391,9 +1389,7 @@ def test_execution_endurance(exemethod, endurance, endured):
 
 
 @pytest.mark.parametrize(
-    "resched, rescheduled",
-    # FIXME: missing config op-flag (True, False), dupe (None, True)
-    [(None, True), (True, None), (None, True), (1, 1)],
+    "resched, rescheduled", [(None, True), (True, None), (1, 0), (1, 1)],
 )
 def test_rescheduling(exemethod, resched, rescheduled):
     canc = operation(lambda: None, name="canc", needs=["b"], provides="cc")

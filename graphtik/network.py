@@ -661,7 +661,7 @@ class ExecutionPlan(
                 "... (%s) op(%s) completed in %sms.", solution.solid, op.name, elapsed
             )
         except Exception as ex:
-            is_endured = solution.is_endurance or op.endured
+            is_endured = first_solid(solution.is_endurance, op.endured)
             elapsed = elapsed_ms(op)
             loglevel = logging.WARNING if is_endured else logging.DEBUG
             log.log(
