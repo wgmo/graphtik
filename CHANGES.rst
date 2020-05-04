@@ -13,55 +13,62 @@ Graphtik Changelog
 
   - [-] start-node/end-node to group inputs/outputs
   - [-] DROP sideffects
-  - [x] Drop _Jetsam
-  - [x] Simpler jetsam
-  - [x] support *args 1-1 mapping in the jetsam() signature
-  - [x] FIX(sideffects): DIFFER from regular DATA...
-  - [x] FIX shared `executed` (no Solution class)
-  - [x] typo(test): overridden-->overriDDen
+  - [+] Drop _Jetsam
+  - [+] Simpler jetsam
+  - [+] support *args 1-1 mapping in the jetsam() signature
+  - [+] FIX(sideffects): DIFFER from regular DATA...
+  - [+] FIX shared `executed` (no Solution class)
+  - [+] typo(test): overridden-->overriDDen
   - [ ] `graphop` in docs
 
   Tasks
   =====
-  - [x] jetsam tasks
-  - [x] narrowed() --> withset()
-  - [x] reset abort on new `netop.compute()`
-  - [x] raise if rescheduled/endured ops
-  - [x] define sideffects on target "sideffected" needs
-  - [x] Operations behave like a regular decorator when fn given in 1st call.
+  - [+] jetsam tasks
+  - [+] narrowed() --> withset()
+  - [+] reset abort on new `netop.compute()`
+  - [+] raise if rescheduled/endured ops
+  - [+] define sideffects on target "sideffected" needs
+  - [+] Operations behave like a regular decorator when fn given in 1st call.
         Merge FuncOp+OpBuilder.
+  - [+] modifiers inherit a single class (to allow combinations)
+  - [+] Optional sideffected
+  - [+] Delegate FuncOp.__call__() --> compute().
+  - [ ] Rename NetOp -> pipeline;  unify compose() -> Pipeline class
+  - [ ] Function access executing Operation & Plan from its context.
+      - [ ] Unify OpTask & FuncOp
+      - [ ] function self-toggles `returns-dict` amidst execution.
+  - [ ] break cycles with dijkstra; weights
+  - [ ] Merge tutorial (operations + composition)
+  - [ ] Config DEBUG flags:
+    - [ ] skip - evictions(drop config)
+    - [ ] keep SFX in outputs
 
   - plot:
 
-    - [x] plot red partial outs/failures
-    - [x] plot graphs with Graphviz sphinx-extension
-    - [x] HTML-table op-nodes to allow decorations
-    - [x] plottable Operations
-    - [x] Op-node badges
+    - [+] plot red partial outs/failures
+    - [+] plot graphs with Graphviz sphinx-extension
+    - [+] HTML-table op-nodes to allow decorations
+    - [+] plottable Operations
+    - [+] Op-node badges
+    - [+] fix(sphinxext): deprecated sphinx.add_object()
 
-    - [ ] sphinxext: derive filename early, to allow xrefs and links early
-    - [ ] Link to SVG image in a new window
-    - [ ] Merged operation clusters
+    - [+] sphinxext: derive filename early, to allow xrefs and links early
+    - [+] Click on SVG to open it in a new window
+    - [+] Merged operation clusters
+    - [ ] Badges on Data
     - [ ] update legend (or generate it dynamically)
     - [ ] sphinxext: extend standard `doctest` module (instead of sphinx-builder)
-    - [ ] fix(sphinxext): deprecated sphinx.add_object()
+    - [ ] sphinx: autodoc Pipelines & Ops
 
   - doc:
 
-    - [x] explain rescheduled & endured in tutorial.
-    - [x] `aliases` in tutorial & terms
-
-  - [ ] Optional sol_sideffects
-  - [ ] Rename NetOp -> graphkit | pipeline
-  - [ ] modifiers inherit a single class (to allow combinations)
-  - [ ] sphinx: autodoc pipelines
-  - [ ] Allow for Optional `solution sideffect`
-  - [ ] break cycles with dijkstra; weights
-  - [ ] Merge tutorial (operations + composition)
-  - [ ] alias compose() <-- NetOp
+    - [+] explain rescheduled & endured in tutorial.
+    - [+] aliases in tutorial & terms
 
   - Dropped:
 
+    - [-] Solution-retriever modifier;
+      DROPPED: easier and more generic to access solution from Op-context.
     - [-] `solution.executed` pre-populated with all operations
     - [-] parallel batches restart from last position in steps
     - [-] covert custom op classes & modifiers directly into mergeable networkx graphs;
@@ -79,17 +86,60 @@ Changelog
 %%%%%%%%%
 
 
-v7.1.0 (3 May 2020, @ankostis): Cancelable sideffects, theme-ize & expand everything
+v7.1.0 (4 May 2020, @ankostis): Cancelable sideffects, theme-ize & expand everything
 ====================================================================================
 |v440-flowchart|
 
-+ break(plot): rename graph/node/edge control attribute ``_no_plot --> no_plot``.
-+ break(plot): pass verbatim any `nx-attrs` starting with ``'graphviz.'`` into
+Should have been a MAJOR BUMP due to breaking renames, but just out of
+another 6.x --> 7.x major bump.
+
+NET
+---
++ FIX: rescheduled operations were not canceling all downstream deps & operations.
++ FEAT: Cancelable sideffects: a :term:`reschedule`\s operation may return
+  a "falsy" sideffect to cancel downstream operations.
+
+  + ``NO_RESULT`` constant cancels also sideffects.
+
++ ENH(OP): more intuitive API, ``compute()`` may be called with no args,
+  or a single string as `outputs` param.  Operation's ``__call__`` now delegates
+  to ``compute()`` - to quickly experiment with function, access it from the
+  operation's :attr:`.FunctionalOperation.fn` attribute
+
+MODIFIERS
+---------
++ BREAK: renamed modifiers ``sol_sideffect --> sideffected``, to reduce terminology
+  mental load for the users.
++ ENH: support combinations of modifiers (e.g. optional sideffects).
++ REFACT: convert modifiers classes --> factory functions, producing :class:`._Modifier`
+  instances (normally not managed by the user).
+
+PLOT
+----
++ ENH: Theme-ize all; expand callables (beyond Refs and templates).
++ BREAK: rename ``Theme.with_set()`` --> :meth:`.Theme.withset()`.
++ break: pass verbatim any `nx-attrs` starting with ``'graphviz.'`` into
   plotting process (instead of passing everything but private attributes).
-+ break: raise ``TypeError`` instead of ``ValueError`` wherever it must.
-+ ENH(plot): expand callables (beyond Refs and templates).
++ break: rename graph/node/edge control attributes:
+
+  + ``_no_plot --> no_plot``.
+  + ``_alias_of --> alias_of``.
+
++ FEAT: draw combined pipelines as clusters
++ enh: corrected and richer styles for data nodes.
++ enh: unify op-badges on plot with diacritics in their string-representation.
 + ENH(sphinxext): clicking on an SVG opens the diagram in a new tab.
-+ fix(sphinxext): don't choke on duplicate ``:name:`` in :rst:dir:`graphtik`` directives.
++ fix(sphinxext): don't choke on duplicate ``:name:`` in :rst:dir:`graphtik` directives.
++ fix(sphinxext): fix deprecation of sphinx ``add_object()`` with ``note_object()``.
+
+Various
+-------
++ break: raise ``TypeError`` instead of ``ValueError`` wherever it must.
++ DOC(operations): heavily restructured chapter - now might stand alone.
+  Started using the `pipeline` name more often.
++ doc: use as sample diagram in the project opening an "endured" one (instead of
+  an outdated plain simple on).
++ doc: renamed document: ``composition.py --> pipelines.py``
 
 .. |v440-flowchart| raw:: html
     :file: docs/source/images/GraphtikFlowchart-v4.4.0.svg
@@ -122,7 +172,7 @@ v7.0.0 (28 Apr 2020, @ankostis): In-solution sideffects, unified OpBuilder, plot
 
 MODIFIERS:
 ----------
-+ BREAK: rename `arg --> mapping``, which conveys the correct meaning.
++ BREAK: rename `arg --> mapped``, which conveys the correct meaning.
 
 + FEAT: Introduced :term`sideffected`\s, to allow for certain dependencies
   to be produced & consumed by function to apply "sideffects, without creating
