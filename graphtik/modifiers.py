@@ -49,7 +49,7 @@ class _Modifier(str):
     #: the :term:`sideffected`, performed/required by the operation.
     #: If it is an empty tuple`, it is an abstract sideffect.
     sideffects: Tuple[Union[str, None]]
-    #: pre-calculcated representation
+    #: pre-calculated representation
     _repr: str
 
     def __new__(
@@ -91,16 +91,16 @@ class _Modifier(str):
                     name = f"sideffect: {str(name)!r}"
                 else:  # sideffected
                     sideffected = name
-                    sfx_str = ", ".join(str(i) for i in sideffects)
+                    sfx_str = ", ".join(repr(i) for i in sideffects)
 
                     ## Repr display also optionality & mapped-fn-kw
                     #  (irrelevant to object's identity)
                     #
                     qmark = "?" if optional else ""
                     map_str = f", fn_kwarg={fn_kwarg!r}" if fn_kwarg else ""
-                    _repr = f"sideffected{qmark}({str(name)!r}<--{sfx_str!r}{map_str})"
+                    _repr = f"sideffected{qmark}({str(name)!r}<--{sfx_str}{map_str})"
 
-                    name = f"sideffected({str(name)!r}<--{sfx_str!r})"
+                    name = f"sideffected({str(name)!r}<--{sfx_str})"
             elif optional or fn_kwarg:
                 map_str = f"-->{fn_kwarg!r}" if fn_kwarg else ""
                 _repr = (

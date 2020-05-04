@@ -22,11 +22,8 @@ from graphtik.modifiers import (
         (lambda: varargs("d"), "d"),
         (lambda: sideffect("e"), "sideffect: 'e'"),
         (lambda: sideffect("e", optional=1), "sideffect: 'e'"),
-        (lambda: sideffected("f", "ff"), "sideffected('f'<--'ff')"),
-        (
-            lambda: sideffected("f", "ff", fn_kwarg="F"),
-            "sideffected('f'<--'ff')",
-        ),
+        (lambda: sideffected("f", "a", "b"), "sideffected('f'<--'a', 'b')"),
+        (lambda: sideffected("f", "ff", fn_kwarg="F"), "sideffected('f'<--'ff')",),
         (
             lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"),
             "sideffected('f'<--'ff')",
@@ -52,7 +49,7 @@ def test_modifs_str(mod, exp):
         (lambda: varargs("d"), "varargs('d')"),
         (lambda: sideffect("e"), "sideffect: 'e'"),
         (lambda: sideffect("e", optional=1), "sideffect?: 'e'"),
-        (lambda: sideffected("f", "ff"), "sideffected('f'<--'ff')"),
+        (lambda: sideffected("f", "a", "b"), "sideffected('f'<--'a', 'b')"),
         (
             lambda: sideffected("f", "ff", fn_kwarg="F"),
             "sideffected('f'<--'ff', fn_kwarg='F')",
@@ -67,7 +64,6 @@ def test_modifs_str(mod, exp):
 def test_modifs_repr(mod, exp):
     mod = mod()
     print(repr(mod))
-    # Strip outer quotes
     assert repr(mod) == exp
 
 
