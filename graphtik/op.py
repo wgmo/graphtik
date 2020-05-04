@@ -685,7 +685,7 @@ class FunctionalOperation(Operation, Plottable):
 
     def __call__(self, *args, **kwargs):
         """Like dict args, delegates to :meth:`.compute()`."""
-        return self.fn(**dict(*args, **kwargs))
+        return self.compute(dict(*args, **kwargs))
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         """Delegate to a provisional network with a single op . """
