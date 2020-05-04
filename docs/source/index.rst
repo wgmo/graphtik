@@ -28,6 +28,11 @@ running and plotting graphs of functions (a.k.a pipelines).
 from `Graphkit`_ (summer 2019, v1.2.2) to :gh:`experiment <22>` with Python 3.6+ features,
 but has diverged significantly with enhancements ever since.
 
+.. raw:: html
+
+   <details>
+   <summary><a>Table of Contents</a></summary>
+
 .. toctree::
    :maxdepth: 4
    :numbered: 1
@@ -39,6 +44,10 @@ but has diverged significantly with enhancements ever since.
    reference
    Changes <changes>
    genindex
+
+.. raw:: html
+
+   </details>
 
 .. _quick-start:
 
