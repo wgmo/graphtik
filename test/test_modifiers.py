@@ -96,3 +96,8 @@ def test_recreation_repr():
 def test_sideffected_bad(call, exp):
     with pytest.raises(ValueError, match=exp):
         call()
+
+
+def test_withset_bad_kwargs():
+    with pytest.raises(ValueError, match="Invalid kwargs:"):
+        mapped("a", "b").withset(j=2)

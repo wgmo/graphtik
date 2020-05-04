@@ -122,18 +122,24 @@ class _Modifier(str):
 
     def withset(self, **kw):
         """
-        Make a new modifier with modifed specs based on this one.
+        Make a new modifier with kwargs: name(or sideffected), fn_kwarg, optional, sideffects
 
         :param optional:
             either a bool or an :class:`_Optionals` enum, as taken from :attr:`.optional`
             from another modifier instance
         """
-        return _Modifier(
-            kw.get("name", self.sideffected if self.sideffected else str(self)),
-            kw.get("fn_kwarg", self.fn_kwarg),
-            kw.get("optional", self.optional),
-            kw.get("sideffects", self.sideffects),
+        dep = _Modifier(
+            kw.pop("name", self.sideffected if self.sideffected else str(self)),
+            kw.pop("fn_kwarg", self.fn_kwarg),
+            kw.pop("optional", self.optional),
+            kw.pop("sideffects", self.sideffects),
         )
+        if kw:
+            raise ValueError(
+                f"Invalid kwargs: {kw}"
+                "\n  valid kwargs: name(or sideffected), fn_kwarg, optional, sideffects"
+            )
+        return dep
 
 
 def is_mapped(dep) -> Optional[str]:
