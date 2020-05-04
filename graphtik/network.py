@@ -17,7 +17,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Sequence,
     Tuple,
     Union,
 )
@@ -159,9 +158,10 @@ class Solution(ChainMap, Plottable):
         self.plan = plan
         #: A dictionary with keys the operations executed, and values their status:
         #:
-        #: - no key: not executed yet
-        #: - value None: execution ok
-        #: - value Exception: execution failed
+        #: - no key:            not executed yet
+        #: - value None:        execution ok
+        #: - value Exception:   execution failed
+        #: - value Collection:  canceled provides
         self.executed = {}
         #: A sorted set of :term:`canceled operation`\\s due to upstream failures.
         self.canceled = iset()  # not iterated, order not important, but ...
@@ -225,7 +225,7 @@ class Solution(ChainMap, Plottable):
 
         """
 
-        def collect_canceled_sideffects(dep, val) -> Sequence:
+        def collect_canceled_sideffects(dep, val) -> Collection:
             """Return any sfx `dep` with falsy value, singularizing sideffected."""
             if val or not is_sideffect(dep):
                 return ()
@@ -256,14 +256,14 @@ class Solution(ChainMap, Plottable):
 
             if to_break:
                 # list used by `check_if_incomplete()`
-                self.executed[op] = list(to_break)
+                self.executed[op] = to_break
                 dag.remove_edges_from(tuple(dag.out_edges(to_break)))
                 canceled = _unsatisfied_operations(dag, self)
                 # Minus executed, bc partial-out op might not have any provides left.
                 newly_canceled = iset(canceled) - self.canceled - self.executed
                 if newly_canceled and log.isEnabledFor(logging.INFO):
                     log.info(
-                        "... (%s) SKIPPING +%s ops%s due to partial outs%s of op(%s).",
+                        "... (%s) CANCELING +%s ops%s due to partial outs%s of op(%s).",
                         self.solid,
                         len(newly_canceled),
                         [n.name for n in newly_canceled],
@@ -283,12 +283,13 @@ class Solution(ChainMap, Plottable):
         self.executed[op] = ex
 
         dag = self.dag
-        dag.remove_edges_from(list(dag.out_edges(op)))
+        to_break = op
+        dag.remove_edges_from(tuple(dag.out_edges(to_break)))
         canceled = _unsatisfied_operations(dag, self)
         newly_canceled = iset(canceled) - self.canceled
         if newly_canceled and log.isEnabledFor(logging.INFO):
             log.info(
-                "... (%s) SKIPPING +%s ops%s due to failed op(%s).",
+                "... (%s) CANCELING +%s ops%s due to failed op(%s).",
                 self.solid,
                 len(newly_canceled),
                 [n.name for n in newly_canceled],
@@ -337,9 +338,9 @@ class Solution(ChainMap, Plottable):
         if incomplete:
             incomplete = [op.name for op in incomplete]
             partial_msgs = {
-                f"\n  +--{op.name}: {pouts}"
+                f"\n  +--{op.name}: {list(pouts)}"
                 for op, pouts in self.executed.items()
-                if pouts and isinstance(pouts, list)
+                if pouts and isinstance(pouts, abc.Collection)
             }
             err_msgs = [
                 f"\n  +--{op.name}: {type(ex).__name__}('{ex}')"

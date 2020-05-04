@@ -653,7 +653,7 @@ class FunctionalOperation(Operation, Plottable):
             results_fn = self.fn(*positional, *varargs, **kwargs)
             results_op = self._zip_results_with_provides(results_fn)
 
-            outputs = astuple(outputs, "outputs", allowed_types=cabc.Sequence)
+            outputs = astuple(outputs, "outputs", allowed_types=cabc.Collection)
 
             ## Keep only outputs asked.
             #  Note that plan's executors do not ask outputs
