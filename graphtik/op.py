@@ -862,3 +862,13 @@ def operation(
     decorator.withset = op.withset
 
     return decorator
+
+
+class NULL_OP(FunctionalOperation):
+    """Eliminates same-named operations added later during term:`operation merging`."""
+
+    def __init__(self, name, parents=None):
+        super().__init__(name=name, parents=parents)
+
+    def compute(self, *args, **kw):
+        raise AssertionError("Should have been eliminated!")

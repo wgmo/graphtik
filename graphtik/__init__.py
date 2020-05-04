@@ -45,4 +45,4 @@ from .config import (
 from .modifiers import mapped, optional, vararg, varargs, sideffect, sideffected, rename_dependency
 from .netop import compose
 from .network import AbortedException, IncompleteExecutionError
-from .op import operation
+from .op import operation, NULL_OP

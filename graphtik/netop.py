@@ -14,7 +14,7 @@ from .base import UNSET, Items, PlotArgs, Plottable, aslist, astuple, jetsam
 from .config import is_debug, reset_abort
 from .modifiers import optional, sideffect
 from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
-from .op import FunctionalOperation, Operation, reparse_operation_data
+from .op import FunctionalOperation, NULL_OP, Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
 
@@ -77,11 +77,10 @@ def _make_network(
     merge_set = iset()  # Preseve given node order.
     for op in operations:
         if isinstance(op, NetworkOperation):
-            merge_set.update(
-                proc_op(s, op.name) for s in op.net.graph if isinstance(s, Operation)
-            )
+            merge_set.update(proc_op(s, op.name) for s in yield_ops(op.net.graph))
         else:
             merge_set.add(proc_op(op))
+    merge_set = iset(i for i in merge_set if not isinstance(i, NULL_OP))
 
     assert all(bool(n) for n in merge_set)
     net = Network(*merge_set)
