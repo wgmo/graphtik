@@ -41,8 +41,8 @@ def test_modifs_str(mod, exp):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (lambda: mapped("b", None), "'b'"),
-        (lambda: mapped("b", ""), "'b'"),
+        (lambda: mapped("b", None), "mapped('b')"),
+        (lambda: mapped("b", ""), "mapped('b')"),
         (lambda: mapped("b", "bb"), "mapped('b'-->'bb')"),
         (lambda: optional("b"), "optional('b')"),
         (lambda: optional("b", "bb"), "optional('b'-->'bb')"),
@@ -103,7 +103,7 @@ def test_withset_bad_kwargs():
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (lambda: "b", "mapped('p.b'-->'b')"),
+        (lambda: "b", "'p.b'"),
         (lambda: mapped("b", None), "mapped('p.b'-->'b')"),
         (lambda: mapped("b", ""), "mapped('p.b'-->'b')"),
         (lambda: mapped("b", "bb"), "mapped('p.b'-->'bb')"),
@@ -113,10 +113,7 @@ def test_withset_bad_kwargs():
         (lambda: varargs("d"), "varargs('p.d')"),
         (lambda: sideffect("e"), "sideffect: 'e'"),
         (lambda: sideffect("e", optional=1), "sideffect?: 'e'"),
-        (
-            lambda: sideffected("f", "a", "b"),
-            "sideffected('p.f'<--'a', 'b', fn_kwarg='f')",
-        ),
+        (lambda: sideffected("f", "a", "b"), "sideffected('p.f'<--'a', 'b')",),
         (
             lambda: sideffected("f", "ff", fn_kwarg="F"),
             "sideffected('p.f'<--'ff', fn_kwarg='F')",
@@ -142,6 +139,7 @@ def test_modifs_rename_fn(mod, exp):
 @pytest.mark.parametrize(
     "mod, exp",
     [
+        (lambda: "s", "'D'"),
         (lambda: mapped("b", "bb"), "mapped('D'-->'bb')"),
         (lambda: optional("b"), "optional('D'-->'b')"),
         (lambda: optional("b", "bb"), "optional('D'-->'bb')"),
@@ -151,6 +149,10 @@ def test_modifs_rename_fn(mod, exp):
         (
             lambda: sideffected("f", "a", "b", optional=1,),
             "sideffected?('D'<--'a', 'b', fn_kwarg='f')",
+        ),
+        (
+            lambda: sideffected("f", "a", "b", optional=1, fn_kwarg="F"),
+            "sideffected?('D'<--'a', 'b', fn_kwarg='F')",
         ),
     ],
 )

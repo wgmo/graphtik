@@ -64,14 +64,11 @@ class _Modifier(str):
         #  - string-name on sideffects and
         #  - repr for all
         #
+        assert not optional or _Optionals(optional), ("Invalid optional: ", locals())
         if optional and optional.varargish:
-            assert not fn_kwarg and not sideffects, (
+            assert not fn_kwarg, (
                 "Varargish cannot map `fn_kwargs` or sideffects:",
-                name,
-                fn_kwarg,
-                optional,
-                optional,
-                sideffects,
+                locals(),
             )
             _repr = f"{optional.name}({str(name)!r})"
         else:
@@ -79,10 +76,7 @@ class _Modifier(str):
                 if sideffects == ():
                     assert fn_kwarg is None, (
                         "Pure sideffects cannot map `fn_kwarg`:",
-                        name,
-                        fn_kwarg,
-                        optional,
-                        sideffects,
+                        locals(),
                     )
 
                     # Repr display also optionality (irrelevant to object's identity)
@@ -97,12 +91,18 @@ class _Modifier(str):
                     #  (irrelevant to object's identity)
                     #
                     qmark = "?" if optional else ""
-                    map_str = f", fn_kwarg={fn_kwarg!r}" if fn_kwarg else ""
+                    # Mapped string is so convoluted bc it mimics `optional`
+                    # when `fn_kwarg` given.
+                    map_str = (
+                        f", fn_kwarg={fn_kwarg!r}"
+                        if fn_kwarg and fn_kwarg != name
+                        else ""
+                    )
                     _repr = f"sideffected{qmark}({str(name)!r}<--{sfx_str}{map_str})"
 
                     name = f"sideffected({str(name)!r}<--{sfx_str})"
             elif optional or fn_kwarg:
-                map_str = f"-->{fn_kwarg!r}" if fn_kwarg else ""
+                map_str = f"-->{fn_kwarg!r}" if fn_kwarg != name else ""
                 _repr = (
                     f"{'optional' if optional else 'mapped'}({str(name)!r}{map_str})"
                 )
@@ -143,7 +143,11 @@ class _Modifier(str):
 
 
 def is_mapped(dep) -> Optional[str]:
-    """Check if a :term:`dependency` is mapped (and get it)."""
+    """
+    Check if a :term:`dependency` is mapped (and get it).
+
+    Note that all non-varargish optionals are mapped (including sideffected optionals).
+    """
     return getattr(dep, "fn_kwarg", None)
 
 
@@ -198,12 +202,9 @@ def rename_dependency(dep, ren):
         else:
             old_name = dep.sideffected if is_sideffected(dep) else str(dep)
             new_name = renamer(old_name)
-            kw = {}
-            if dep.fn_kwarg is None and not is_varargish(dep):
-                kw["fn_kwarg"] = old_name
-            dep = dep.withset(name=new_name, **kw)
+            dep = dep.withset(name=new_name)
     else:  # plain string
-        dep = mapped(renamer(dep), str(dep))
+        dep = renamer(dep)
 
     return dep
 
@@ -212,15 +213,22 @@ def mapped(name: str, fn_kwarg: str):
     """
     Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
 
+    The value of a mapped dependencies is passed in as *keyword argument*
+    to the underlying function.
+
     :param fn_kwarg:
         The argument-name corresponding to this named-input.
-        If not given, a regular string is returned.
+        If it is None, assumed the same as `name`, so as
+        to behave always like kw-type arg and to preserve fn-name if ever renamed.
 
         .. Note::
             This extra mapping argument is needed either for :term:`optionals`
             (but not :term:`varargish`), or for functions with keywords-only arguments
             (like ``def func(*, foo, bar): ...``),
             since `inputs` are normally fed into functions by-position, not by-name.
+    :return:
+        a :class:`_Modifier` instance, even if no `fn_kwarg` is given OR
+        it is the same as `name`.
 
     **Example:**
 
@@ -249,7 +257,7 @@ def mapped(name: str, fn_kwarg: str):
 
         .. graphtik::
     """
-    return _Modifier(name, fn_kwarg=fn_kwarg) if fn_kwarg else name
+    return _Modifier(name, fn_kwarg=fn_kwarg or name)
 
 
 def optional(name: str, fn_kwarg: str = None):
@@ -257,8 +265,14 @@ def optional(name: str, fn_kwarg: str = None):
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
     received only if present in the `inputs` (when operation is invoked).
-    The value of an optional is passed as a keyword argument to the underlying function.
 
+    The value of an optional is passed in as a *keyword argument*
+    to the underlying function.
+
+    :param fn_kwarg:
+        the name for the function argument it corresponds;
+        if a falsy is given, same as `name` assumed,
+        to behave always like kw-type arg and to preserve fn-name if ever renamed.
 
     **Example:**
 
@@ -299,7 +313,7 @@ def optional(name: str, fn_kwarg: str = None):
                             fn='myadd')
 
     """
-    return _Modifier(name, fn_kwarg=fn_kwarg, optional=_Optionals.optional)
+    return _Modifier(name, fn_kwarg=fn_kwarg or name, optional=_Optionals.optional)
 
 
 def vararg(name: str):
@@ -502,6 +516,12 @@ def sideffected(
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
 
+    :param fn_kwarg:
+        the name for the function argument it corresponds.
+        When optional, it becomes the same as `name` if falsy, so as
+        to behave always like kw-type arg and to preserve fn-name if ever renamed.
+        When not optional, if not given, it's all fine.
+        
     Like :func:`.sideffect` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
     of the same function.
@@ -595,6 +615,11 @@ def sideffected(
             f"Expecting a non-sideffect for sideffected"
             f", got: {type(dependency).__name__}({dependency!r})"
         )
+    ## Mimic `optional` behavior,
+    #  i.e. preserve kwarg-ness if optional.
+    #
+    if optional and not fn_kwarg:
+        fn_kwarg = dependency
     return _Modifier(
         dependency,
         sideffects=sideffects,

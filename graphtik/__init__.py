@@ -42,7 +42,14 @@ from .config import (
 ## SEE ALSO: `.plot.active_plotter_plugged()`, `.plot.set_active_plotter()` &
 #  `.plot.get_active_plotter()` configs, not imported, unless plot is needed..
 
-from .modifiers import mapped, optional, vararg, varargs, sideffect, sideffected, rename_dependency
+from .modifiers import (
+    mapped,
+    optional,
+    vararg,
+    varargs,
+    sideffect,
+    sideffected,
+)
 from .netop import compose
 from .network import AbortedException, IncompleteExecutionError
 from .op import operation, NULL_OP

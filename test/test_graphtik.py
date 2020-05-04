@@ -1407,7 +1407,7 @@ def test_rescheduling(exemethod, resched, rescheduled):
         operation(
             lambda *args: sum(args),
             name="op3",
-            needs=["a", optional("b"), optional("c")],
+            needs=["a", vararg("b"), vararg("c")],
             provides=["d"],
         ),
         parallel=exemethod,
