@@ -183,14 +183,15 @@ def linkcode_resolve(domain, info):
             )
 
 
-rst_epilog = """
-
+rst_prolog = """
 .. include:: <s5defs.txt>
+.. default-role::
 .. _Graphkit: https://github.com/yahoo/graphkit
 .. _Graphviz: https://graphviz.org
 .. _pydot: https://github.com/pydot/pydot
 .. |pydot.Dot| replace:: ``pydot.Dot``
 .. _pydot.Dot: https://github.com/pydot/pydot
+
 """
 
 # There are two options for replacing |today|: either, you set today to some
