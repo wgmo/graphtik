@@ -49,6 +49,8 @@ from .modifiers import (
     varargs,
     sideffect,
     sideffected,
+    sideffected_vararg,
+    sideffected_varargs,
 )
 from .netop import compose
 from .network import AbortedException, IncompleteExecutionError

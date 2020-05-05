@@ -9,24 +9,63 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 import enum
 from typing import Optional, Tuple, Union
 
+# fmt: off
+#: Arguments-presence patterns for :class:`_Modifier` constructor.
+#: Combinations missing raise errors.
+_modifier_cstor_matrix = {
+# kw, opt, sfxed, sfx, STR, REPR
+"0 0 0 0": None,
+"1 0 0 0": ("%(name)s",                         "mapped('%(name)s'%(fn_kwarg)s)"),
+"1 1 0 0": ("%(name)s",                         "optional('%(name)s'%(fn_kwarg)s)"),
+"0 2 0 0": ("%(name)s",                         "vararg('%(name)s')"),
+"0 3 0 0": ("%(name)s",                         "varargs('%(name)s')"),
+"0 0 1 0": ("sideffect: '%(name)s'",            "sideffect: '%(name)s'"),
+"0 1 1 0": ("sideffect: '%(name)s'",           "sideffect?: '%(name)s'"),
+"0 0 1 1": ("sideffected('%(name)s'<--%(sfx)s)",  "sideffected('%(name)s'<--%(sfx)s)"),
+"1 0 1 1": ("sideffected('%(name)s'<--%(sfx)s)",  "sideffected('%(name)s'<--%(sfx)s%(fn_kwarg)s)"),
+"0 1 1 1": ("sideffected('%(name)s'<--%(sfx)s)", "sideffected?('%(name)s'<--%(sfx)s)"),
+"1 1 1 1": ("sideffected('%(name)s'<--%(sfx)s)", "sideffected?('%(name)s'<--%(sfx)s%(fn_kwarg)s)"),
+"0 2 1 1": ("sideffected('%(name)s'<--%(sfx)s)", "sideffected*('%(name)s'<--%(sfx)s)"),
+"0 3 1 1": ("sideffected('%(name)s'<--%(sfx)s)", "sideffected#('%(name)s'<--%(sfx)s)"),
+}
+# fmt: on
+
+
+def _match_modifier_args(name, *args):
+    flags = [int(bool(i)) for i in args]
+
+    # expand optional
+    if args[1]:
+        flags[1] = args[1].value
+    pattern = " ".join(str(i) for i in flags)
+    if pattern not in _modifier_cstor_matrix:
+        raise ValueError(f"Invalid modifier arguments: {name}, {args}, {pattern}")
+
+    return _modifier_cstor_matrix[pattern]
+
 
 class _Optionals(enum.Enum):
-    optional = 1
+    keyword = 1
     vararg = 2
     varargs = 3
-
-    @property
-    def varargish(self):
-        """True if the :term:`optionals` is a :term:`varargish`. """
-        return self.value > 1
 
 
 class _Modifier(str):
     """
     Annotate a :term:`dependency` with a combination of :term:`modifier`.
 
-    Private, in the sense that users should use the factory functions :func:`.mapped`,
-    :func:`optional` etc, and :func:`is_optional()` predicates.
+    It is private, in the sense that users should use only:
+
+    - the factory functions :func:`.mapped`, :func:`optional` etc,
+    - the predicates :func:`is_optional()`, :func:`is_pure_sideffect()` predicates, etc,
+    - and the :func:`dep_rename()`, :func:`dep_strip()` conversion functions
+
+    respectively.
+
+    .. Warning::
+        Cstor ``__new__()`` returns ``None`` if no other arg but ``name`` is given,
+        meaning, as a signal to build a regular string instead.
+
     """
 
     # avoid __dict__ on instances
@@ -34,182 +73,224 @@ class _Modifier(str):
         "fn_kwarg",
         "optional",
         "sideffected",
-        "sideffects",
+        "sfx_list",
         "_repr",
     )
 
     #: Map my name in `needs` into this kw-argument of the function.
+    #: :func:`is_mapped()` returns it.
     fn_kwarg: str
     #: required is None, regular optional or varargish?
+    #: :func:`is_optional()` returns it.
+    #: All regulars are `mapped`.
     optional: _Optionals
-    #: An existing `dependency` in `solution` that sustain (must have sustained)
-    #: the :term:`sideffects` by(for) the underlying function.
+    #: the pure-sideffect string or the existing :term:`sideffected` dependency
     sideffected: str
     #: At least one name(s) denoting the :term:`sideffects` modification(s) on
     #: the :term:`sideffected`, performed/required by the operation.
-    #: If it is an empty tuple`, it is an abstract sideffect.
-    sideffects: Tuple[Union[str, None]]
+    #:
+    #: - If it is an empty tuple`, it is an abstract sideffect,
+    #:    and :func:`is_pure_optional()` returns True.
+    #: - If not empty :func:`is_sideffected()` returns true
+    #:   (the :attr:`sideffected`).
+    sfx_list: Tuple[Union[str, None]]
     #: pre-calculated representation
     _repr: str
 
     def __new__(
         cls,
-        name: str,
-        fn_kwarg: str = None,
+        name,
+        fn_kwarg=None,
         optional: _Optionals = None,
-        sideffects: Tuple[Union[str, None]] = None,
+        sideffected=None,
+        sfx_list=(),
     ) -> "_Modifier":
-        sideffected = _repr = None
-        ## Sanity checks and decide
-        #  - string-name on sideffects and
-        #  - repr for all
+        """Warning, returns None! """
+        ## sanity checks & preprocessing
         #
-        assert not optional or _Optionals(optional), ("Invalid optional: ", locals())
-        if optional and optional.varargish:
-            assert not fn_kwarg, (
-                "Varargish cannot map `fn_kwargs` or sideffects:",
-                locals(),
+        if optional is not None and not isinstance(optional, _Optionals):
+            raise ValueError(
+                f"Invalid _Optional enum {optional!r}\n  locals={locals()}"
             )
-            _repr = f"{optional.name}({str(name)!r})"
-        else:
-            if sideffects is not None:
-                if sideffects == ():
-                    assert fn_kwarg is None, (
-                        "Pure sideffects cannot map `fn_kwarg`:",
-                        locals(),
-                    )
+        if sideffected and is_sideffect(sideffected):
+            raise ValueError(
+                f"`sideffected` cannot be sideffect, got {sideffected!r}"
+                f"\n  locals={locals()}"
+            )
+        double_sideffects = [
+            f"{type(i).__name__}({i!r})" for i in sfx_list if is_sideffect(i)
+        ]
+        if double_sideffects:
+            raise ValueError(
+                f"`sfx_list` cannot contain sideffects, got {double_sideffects!r}"
+                f"\n  locals={locals()}"
+            )
+        formats = _match_modifier_args(name, fn_kwarg, optional, sideffected, sfx_list,)
+        if not formats:
+            # Should make a plain string instead.
+            return
+        str_fmt, repr_fmt = formats
+        fmt_args = {
+            "name": name,
+            "fn_kwarg": f", fn_kwarg={fn_kwarg!r}" if fn_kwarg != name else "",
+            "sfx": ", ".join(f"'{i}'" for i in sfx_list),
+        }
+        name = str_fmt % fmt_args
+        _repr = repr_fmt % fmt_args
 
-                    # Repr display also optionality (irrelevant to object's identity)
-                    qmark = "?" if optional else ""
-                    _repr = f"sideffect{qmark}: {str(name)!r}"
-                    name = f"sideffect: {str(name)!r}"
-                else:  # sideffected
-                    sideffected = name
-                    sfx_str = ", ".join(repr(i) for i in sideffects)
-
-                    ## Repr display also optionality & mapped-fn-kw
-                    #  (irrelevant to object's identity)
-                    #
-                    qmark = "?" if optional else ""
-                    # Mapped string is so convoluted bc it mimics `optional`
-                    # when `fn_kwarg` given.
-                    map_str = (
-                        f", fn_kwarg={fn_kwarg!r}"
-                        if fn_kwarg and fn_kwarg != name
-                        else ""
-                    )
-                    _repr = f"sideffected{qmark}({str(name)!r}<--{sfx_str}{map_str})"
-
-                    name = f"sideffected({str(name)!r}<--{sfx_str})"
-            elif optional or fn_kwarg:
-                map_str = f"-->{fn_kwarg!r}" if fn_kwarg != name else ""
-                _repr = (
-                    f"{'optional' if optional else 'mapped'}({str(name)!r}{map_str})"
-                )
-
-        obj = str.__new__(cls, name)
+        obj = super().__new__(cls, name)
 
         obj._repr = str(_repr) if _repr is not None else None
         obj.fn_kwarg = fn_kwarg
         obj.optional = optional
         obj.sideffected = sideffected
-        obj.sideffects = sideffects
+        obj.sfx_list = sfx_list
 
         return obj
 
     def __repr__(self):
         return super().__repr__() if self._repr is None else self._repr
 
-    def withset(self, **kw):
-        """
-        Make a new modifier with kwargs: name(or sideffected), fn_kwarg, optional, sideffects
-
-        :param optional:
-            either a bool or an :class:`_Optionals` enum, as taken from :attr:`.optional`
-            from another modifier instance
-        """
-        dep = _Modifier(
-            kw.pop("name", self.sideffected if self.sideffected else str(self)),
-            kw.pop("fn_kwarg", self.fn_kwarg),
-            kw.pop("optional", self.optional),
-            kw.pop("sideffects", self.sideffects),
+    def __getnewargs__(self):
+        return (
+            self.sideffected or str(self),
+            self.fn_kwarg,
+            self.optional,
+            self.sideffected,
+            self.sfx_list,
         )
-        if kw:
-            raise ValueError(
-                f"Invalid kwargs: {kw}"
-                "\n  valid kwargs: name(or sideffected), fn_kwarg, optional, sideffects"
+
+    def _withset(
+        self,
+        name=...,
+        fn_kwarg=...,
+        optional: _Optionals = ...,
+        sideffected=...,
+        sfx_list=...,
+    ):
+        """
+        Make a new modifier with changes -- handle with care.
+
+        :return:
+            if no args left, returns a plain string!
+        """
+        kw = {
+            k: getattr(self, k) if v is ... else v
+            for k, v in zip(
+                "fn_kwarg optional sideffected sfx_list".split(),
+                (fn_kwarg, optional, sideffected, sfx_list),
             )
-        return dep
+        }
+        if name is ...:
+            name = self.sideffected or str(self)
+
+        ## SPECIAL handling when ``__new__` return None.
+        return _Modifier(name=name, **kw) or name
 
 
 def is_mapped(dep) -> Optional[str]:
     """
     Check if a :term:`dependency` is mapped (and get it).
 
-    Note that all non-varargish optionals are mapped (including sideffected optionals).
+    All non-varargish optionals are "mapped" (including sideffected ones).
+
+    :return:
+        the :attr:`fn_kwarg`
     """
     return getattr(dep, "fn_kwarg", None)
 
 
 def is_optional(dep) -> bool:
-    """Check (and get) if a :term:`dependency` is optional (varargish/sideffects included)."""
+    """
+    Check if a :term:`dependency` is optional.
+
+    Varargish & optional sideffects are included.
+
+    :return:
+        the :attr:`optional`
+    """
     return getattr(dep, "optional", None)
 
 
 def is_vararg(dep) -> bool:
     """Check if an :term:`optionals` dependency is `vararg`."""
-    return getattr(dep, "optional", None) is _Optionals.vararg
+    return getattr(dep, "optional", None) == _Optionals.vararg
 
 
 def is_varargs(dep) -> bool:
     """Check if an :term:`optionals` dependency is `varargs`."""
-    return getattr(dep, "optional", None) is _Optionals.varargs
+    return getattr(dep, "optional", None) == _Optionals.varargs
 
 
 def is_varargish(dep) -> bool:
     """Check if an :term:`optionals` dependency is :term:`varargish`."""
-    try:
-        return dep.optional.varargish
-    except Exception:
-        return False
+    return dep.optional in (_Optionals.vararg, _Optionals.vararg)
 
 
 def is_sideffect(dep) -> bool:
-    """Check if a dependency is :term:`sideffects` or :term:`sideffected`."""
-    return getattr(dep, "sideffects", None) is not None
+    """
+    Check if a dependency is :term:`sideffects` or :term:`sideffected`.
+
+    :return:
+        the :attr:`sideffected`
+    """
+    return getattr(dep, "sideffected", None)
 
 
 def is_pure_sideffect(dep) -> bool:
     """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
-    return getattr(dep, "sideffects", None) == ()
+    return getattr(dep, "sideffected", None) and not getattr(dep, "sfx_list", None)
 
 
 def is_sideffected(dep) -> bool:
-    """Check if it is :term:`sideffected` (and get it)."""
-    return getattr(dep, "sideffected", None)
+    """Check if it is :term:`sideffected`."""
+    return getattr(dep, "sideffected", None) and getattr(dep, "sfx_list", None)
 
 
-def rename_dependency(dep, ren):
-    """Renames based to a fixed string or calling `ren` if callable, mapped to old"""
+def dep_renamed(dep, ren):
+    """
+    Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
+
+    preserving any :func:`mapped` to old-name.
+    """
     if callable(ren):
         renamer = ren
     else:
         renamer = lambda n: ren
 
     if isinstance(dep, _Modifier):
-        if is_pure_sideffect(dep):
-            pass  # TODO: rename sfx?
-        else:
-            old_name = dep.sideffected if is_sideffected(dep) else str(dep)
-            new_name = renamer(old_name)
-            dep = dep.withset(name=new_name)
+        old_name = dep.sideffected if is_sideffect(dep) else str(dep)
+        new_name = renamer(old_name)
+        dep = dep._withset(name=new_name)
     else:  # plain string
         dep = renamer(dep)
 
     return dep
 
 
-def mapped(name: str, fn_kwarg: str):
+def dep_singularized(dep):
+    """
+    Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
+    """
+    return (
+        (dep._withset(sfx_list=(s,)) for s in dep.sfx_list)
+        if is_sideffected(dep)
+        else (dep,)
+    )
+
+
+def dep_stripped(dep):
+    """
+    Return the :attr:`_Modifier.sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
+
+    preserving all other properties of the `sideffected`.
+    """
+    if is_sideffected(dep):
+        dep = dep._withset(name=dep.sideffected, sideffected=None, sfx_list=())
+    return dep
+
+
+def mapped(name: str, fn_kwarg: str = None):
     """
     Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
 
@@ -219,7 +300,8 @@ def mapped(name: str, fn_kwarg: str):
     :param fn_kwarg:
         The argument-name corresponding to this named-input.
         If it is None, assumed the same as `name`, so as
-        to behave always like kw-type arg and to preserve fn-name if ever renamed.
+        to behave always like kw-type arg, and to preserve its fn-name
+        if ever renamed.
 
         .. Note::
             This extra mapping argument is needed either for :term:`optionals`
@@ -243,7 +325,7 @@ def mapped(name: str, fn_kwarg: str):
         ...    return a + b
         >>> myadd
         FunctionalOperation(name='myadd',
-                            needs=['a', mapped('name-in-inputs'-->'b')],
+                            needs=['a', mapped('name-in-inputs', fn_kwarg='b')],
                             provides=['sum'],
                             fn='myadd')
 
@@ -257,6 +339,7 @@ def mapped(name: str, fn_kwarg: str):
 
         .. graphtik::
     """
+    # Must pass a truthy `fn_kwarg` bc cstor cannot not know its mapped.
     return _Modifier(name, fn_kwarg=fn_kwarg or name)
 
 
@@ -272,7 +355,8 @@ def optional(name: str, fn_kwarg: str = None):
     :param fn_kwarg:
         the name for the function argument it corresponds;
         if a falsy is given, same as `name` assumed,
-        to behave always like kw-type arg and to preserve fn-name if ever renamed.
+        to behave always like kw-type arg and to preserve its fn-name
+        if ever renamed.
 
     **Example:**
 
@@ -308,12 +392,13 @@ def optional(name: str, fn_kwarg: str = None):
         ...           provides="sum"
         ... )(myadd.fn)  # Cannot wrap an operation, its `fn` only.
         FunctionalOperation(name='myadd',
-                            needs=['a', optional('quasi-real'-->'b')],
+                            needs=['a', optional('quasi-real', fn_kwarg='b')],
                             provides=['sum'],
                             fn='myadd')
 
     """
-    return _Modifier(name, fn_kwarg=fn_kwarg or name, optional=_Optionals.optional)
+    # Must pass a truthy `fn_kwarg` as cstor-matrix requires.
+    return _Modifier(name, fn_kwarg=fn_kwarg or name, optional=_Optionals.keyword)
 
 
 def vararg(name: str):
@@ -490,28 +575,17 @@ def sideffect(name, optional: bool = None):
         .. graphtik::
 
     """
-    if type(name) is not str:
-        # import re
-        # if is_pure_sideffect(name):
-        #     m = re.match(r"sideffect\((.*)\)", name)
-        #     if m:
-        #         name = m.group(1)
-        # else:
-        raise ValueError(
-            "Expecting a regular string for sideffect"
-            f", got: {type(name).__name__}({name!r})"
-        )
     return _Modifier(
-        name, optional=_Optionals.optional if optional else None, sideffects=()
+        name, optional=_Optionals.keyword if optional else None, sideffected=name,
     )
 
 
 def sideffected(
     dependency: str,
-    sideffect0: str,
-    *sideffects: str,
-    optional: bool = None,
+    sfx0: str,
+    *sfx_list: str,
     fn_kwarg: str = None,
+    optional: bool = None,
 ):
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
@@ -519,9 +593,9 @@ def sideffected(
     :param fn_kwarg:
         the name for the function argument it corresponds.
         When optional, it becomes the same as `name` if falsy, so as
-        to behave always like kw-type arg and to preserve fn-name if ever renamed.
+        to behave always like kw-type arg, and to preserve fn-name if ever renamed.
         When not optional, if not given, it's all fine.
-        
+
     Like :func:`.sideffect` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
     of the same function.
@@ -575,7 +649,7 @@ def sideffected(
                             op_provides=[sideffected('ORDER'<--'Totals')],
                             fn_provides=['ORDER'], fn='finalize_prices')
 
-    Notice that declaring a single *sideffected* with multiple *sideffects*,
+    Notice that declaring a single *sideffected* with many items in `sfx_list`,
     expands into multiple  *"singular"* ``sideffected`` dependencies in the network
     (check ``needs`` & ``op_needs`` above).
 
@@ -604,25 +678,30 @@ def sideffected(
 
 
     """
-    sideffects = (sideffect0,) + sideffects
-    ## Sanity checks
-    #
-    invalids = [f"{type(i).__name__}({i!r})" for i in sideffects if type(i) is not str]
-    if invalids:
-        raise ValueError(f"Expecting regular strings as sideffects, got: {invalids!r}")
-    if is_sideffect(dependency):
-        raise ValueError(
-            f"Expecting a non-sideffect for sideffected"
-            f", got: {type(dependency).__name__}({dependency!r})"
-        )
-    ## Mimic `optional` behavior,
-    #  i.e. preserve kwarg-ness if optional.
-    #
-    if optional and not fn_kwarg:
-        fn_kwarg = dependency
     return _Modifier(
         dependency,
-        sideffects=sideffects,
-        optional=_Optionals.optional if optional else None,
-        fn_kwarg=fn_kwarg,
+        optional=_Optionals.keyword if optional else None,
+        fn_kwarg=dependency if optional and not fn_kwarg else fn_kwarg,
+        sideffected=dependency,
+        sfx_list=(sfx0, *sfx_list),
+    )
+
+
+def sideffected_vararg(dependency: str, sfx0: str, *sfx_list: str):
+    """Like :func:`sideffected` + :func:`vararg`. """
+    return _Modifier(
+        dependency,
+        optional=_Optionals.vararg,
+        sideffected=dependency,
+        sfx_list=(sfx0, *sfx_list),
+    )
+
+
+def sideffected_varargs(dependency: str, sfx0: str, *sfx_list: str):
+    """Like :func:`sideffected` + :func:`varargs`. """
+    return _Modifier(
+        dependency,
+        optional=_Optionals.varargs,
+        sideffected=dependency,
+        sfx_list=(sfx0, *sfx_list),
     )

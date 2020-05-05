@@ -37,6 +37,7 @@ from .config import (
     first_solid,
 )
 from .modifiers import (
+    dep_singularized,
     is_mapped,
     is_optional,
     is_pure_sideffect,
@@ -249,14 +250,10 @@ class Solution(ChainMap, Plottable):
         """
 
         def collect_canceled_sideffects(dep, val) -> Collection:
-            """Return any sfx `dep` with falsy value, singularizing sideffected."""
+            """yield any sfx `dep` with falsy value, singularizing sideffected."""
             if val or not is_sideffect(dep):
                 return ()
-            if is_pure_sideffect(dep):
-                return (dep,)
-            ## Singularize sideffected
-            assert is_sideffected(dep), locals()
-            return (dep.withset(sideffects=(s,)) for s in dep.sideffects)
+            return dep_singularized(dep)
 
         assert not self.finalized, f"Cannot reuse solution: {self}"
         self._layers[op].update(outputs)

@@ -34,6 +34,8 @@ from .config import (
     first_solid,
 )
 from .modifiers import (
+    dep_stripped,
+    dep_singularized,
     is_mapped,
     is_optional,
     is_pure_sideffect,
@@ -162,14 +164,6 @@ def _spread_sideffects(
             the function);
     """
 
-    def singularize_sideffecteds(dep):
-        """Make 1 sideffected for each pure-sfx contained, preserving attributes """
-        return (
-            (dep.withset(sideffects=(s,)) for s in dep.sideffects)
-            if is_sideffected(dep)
-            else (dep,)
-        )
-
     #: The only dupes that are dropped from `fn_deps` are any `sideffected`,
     #: to facilitate copy-pasting singularized ones from the console.
     seen_sideffecteds: Set[str] = set()
@@ -180,7 +174,7 @@ def _spread_sideffects(
             sideffected = dep.sideffected
             if not sideffected in seen_sideffecteds:
                 seen_sideffecteds.add(sideffected)
-                return (dep.withset(sideffects=None),)
+                return (dep_stripped(dep),)
         elif not is_sideffect(dep):
             return (dep,)
         return ()
@@ -188,7 +182,7 @@ def _spread_sideffects(
     assert deps is not None
 
     if deps:
-        deps = tuple(nn for n in deps for nn in singularize_sideffecteds(n))
+        deps = tuple(nn for n in deps for nn in dep_singularized(n))
         fn_deps = tuple(nn for n in deps for nn in strip_sideffecteds(n))
         return deps, fn_deps
     else:

@@ -12,9 +12,9 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import UNSET, Items, PlotArgs, Plottable, aslist, astuple, jetsam
 from .config import is_debug, reset_abort
-from .modifiers import optional, sideffect, rename_dependency
+from .modifiers import dep_renamed, optional, sideffect
 from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
-from .op import FunctionalOperation, NULL_OP, Operation, reparse_operation_data
+from .op import NULL_OP, FunctionalOperation, Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
 
@@ -85,8 +85,8 @@ def _make_network(
 
                 # TODO: DROP op.parent; name actually decides nesting.
                 kw["parents"] = (parent,) + (op.parents or ())
-                kw["needs"] = [rename_dependency(n, renamer) for n in op.needs]
-                kw["provides"] = [rename_dependency(n, renamer) for n in op.provides]
+                kw["needs"] = [dep_renamed(n, renamer) for n in op.needs]
+                kw["provides"] = [dep_renamed(n, renamer) for n in op.provides]
 
             op = op.withset(**kw)
 
@@ -433,6 +433,8 @@ def compose(
           For example, to nest just the operations, call::
 
               compose(..., nest=lambda n: isinstance(n, Operation))
+
+          :seealso: :func:`.dep_renamed`
 
     :param rescheduled:
         applies :term:`reschedule`\\d to all contained `operations`
