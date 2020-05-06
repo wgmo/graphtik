@@ -48,8 +48,7 @@ from .modifiers import (
     vararg,
     varargs,
 )
-from .pipeline import compose
-from .op import NULL_OP, operation
+from .op import NULL_OP, operation, compose
 
 ## SEE ALSO: `.plot.active_plotter_plugged()`, `.plot.set_active_plotter()` &
 #  `.plot.get_active_plotter()` configs, not imported, unless plot is needed..

@@ -92,7 +92,7 @@ v8.0.0 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modi
 
   + :mod:`.network` module was splitted into :mod:`.execution` which now
     contains plan+solution;
-  + renamed module ``netop`` --> :mod:`.pipeline`.
+  + renamed module ``netop`` --> ``.pipeline``.
   + DOC: module dependencies diagram in :doc:`reference`.
 
 + BREAK: sideffect modifier functions *shortened* to :func:`.sfx` & :func:`.sfxed`.
@@ -579,7 +579,7 @@ Details
   or else they will fail.
 
 + FEAT(OP, netop): specify :term:`endurance`/`reschedule` on a per operation basis,
-  or collectively for all operations grouped under some :term:`netop`.
+  or collectively for all operations grouped under some :term:`pipeline`.
 
 + REFACT(NETOP):
 
@@ -630,7 +630,7 @@ v4.3.0 (16 Dec 2019, @ankostis): Aliases
 v4.2.0 (16 Dec 2019, @ankostis): ENDURED Execution
 ==================================================
 + FEAT(NET): when :func:`.set_endure_operations` configuration is set to true,
-  a :term:`netop` will keep on calculating solution, skipping any operations
+  a :term:`pipeline` will keep on calculating solution, skipping any operations
   downstream from failed ones.  The :term:`solution` eventually collects all failures
   in ``Solution.failures`` attribute.
 

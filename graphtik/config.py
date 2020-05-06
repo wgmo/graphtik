@@ -79,6 +79,8 @@ When true, increase details on string-representation of network objects and erro
 
 :param enabled:
     - ``None, False, string(0, false, off, no)``: Disabled
+    - ``1``: Enable ALL ``DEBUG_XXX``
+    - integers: Enable respective ``DEBUG_XXX`` bit-field constants
     - anything else: Enable ALL ``DEBUG_XXX``
 
 Affected behavior:
@@ -260,6 +262,6 @@ Enable/disable globally :term:`rescheduling` for operations returning only *part
 ."""
 
 
-def first_solid(*tristates, default=False):
+def first_solid(*tristates, default=None):
     """Utility combining multiple tri-state booleans."""
     return first(tristates, default=default, key=lambda i: i is not None)

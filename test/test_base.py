@@ -9,8 +9,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from graphtik import base, network, op, operation
-from graphtik.pipeline import NetworkOperation
 from graphtik.execution import ExecutionPlan, Solution, _OpTask
+from graphtik.op import NetworkOperation
 
 
 @pytest.mark.parametrize("locs", [None, (), [], [0], "bad"])

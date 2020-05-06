@@ -639,8 +639,7 @@ def build_network(
         see same-named param in :func:`.compose`
     """
     from boltons.setutils import IndexedSet as iset
-    from .op import NULL_OP
-    from .pipeline import NetworkOperation
+    from .op import NULL_OP, NetworkOperation
 
     def proc_op(op, parent=None):
         """clone FuncOperation with certain props changed"""

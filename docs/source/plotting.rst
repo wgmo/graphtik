@@ -40,7 +40,7 @@ The same :meth:`.Plottable.plot()` method applies also for:
 
 each one capable to producing diagrams with increasing complexity.
 Whenever possible, the top-level ``plot()`` methods will delegate to the ones below;
-specifically, the :term:`netop` keeps a transient reference to the last `plan`.
+specifically, the :term:`pipeline` keeps a transient reference to the last `plan`.
 BUT the `plan` does not hold such a reference, you have to plot the `solution`.
 
 For instance, when a net-operation has just been composed, plotting it will
@@ -307,7 +307,7 @@ Directives
    .. rst:directive:option:: alt
       :type: `str`
 
-      If not given, derived from string representation of the :term:`netop`.
+      If not given, derived from string representation of the :term:`pipeline`.
 
 .. rst:directive::  graphtik-output
 

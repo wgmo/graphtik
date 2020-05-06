@@ -37,7 +37,7 @@ Architecture
         .. autosummary::
 
             graphtik.op.FunctionalOperation
-            graphtik.pipeline.NetworkOperation
+            graphtik.op.NetworkOperation
             graphtik.network.Network
             graphtik.execution.ExecutionPlan
             graphtik.execution.Solution
