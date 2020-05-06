@@ -86,14 +86,58 @@ Changelog
 %%%%%%%%%
 
 
-v7.1.1 (5 May 2020, @ankostis): minor reschedule fixes and refactoring
-----------------------------------------------------------------------
+v8.0.0 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modifiers; invert "merge" meaning
+=============================================================================================================
++ BREAK: restructured ``netop`` && ``network`` modules:
+
+  + :mod:`.network` module was splitted into :mod:`.execution` which now
+    contains plan+solution;
+  + renamed module ``netop`` --> :mod:`.pipeline`.
+  + DOC: module dependencies diagram in :doc:`reference`.
+
++ BREAK: sideffect modifier functions *shortened* to :func:`.sfx` & :func:`.sfxed`.
+
+  + FEAT: +Sideffected :term:`varargish` -- now :term:`sideffected` fully mirror
+    a regular dependency.
+  + ENH: change visual **repr**\esentation of modifiers with DIACRITICS only.
+  + refact(modifiers): use cstor matrix to combine modifier arguments; new utility
+    method for renaming dependencies :func:`.dep_renamed()`
+    (usefull when :ref:`operation-nesting`, see below).
+  + ENH: possible to rename also sideffects;  the actual sideffect string is now
+    stored in the modifier.
+
++ BREAK/ENH: invert ":term:`merge <operation merging>`" meaning with (newly introduced)
+  ":term:"nest <operation nesting>`"; default is now is merge:
+
+  + FEAT: introduce the :class:`NULL_OP` operation that can "erase" an existing
+    operation when merging pipelines.
+  + ENH: ``compose(..., nest=nest_cb)`` where the callback accepts :class:`.NestArgs`
+    and can perform any kind of renaming on data + operations before :term:`combining
+    pipelines <combine pipelines>`.
+  + doc: "merge" identically-named ops override each other, "nest" means they are prefixed,
+    "combine" means both operations.
+  + DOC: re-written a :ref:`merge-vs-nest tutorial <operation-merging>` for humanity.
+
++ DROP(op): `parent` attribute is no longer maintained -- operation identity now
+  based only on name, which may implicitly be nested by dots(``.``).
++ ENH(plot): accept bare dictionary as theme overrides when plotting.
++ doc: fix site configuration for using the standard ``<s5defs>`` include
+  for colored/font-size sphinx roles.
+
+
+v7.1.2 (6 May 2020, @ankostis): minor reschedule fixes and refactoring
+======================================================================
+Actually it contains just what was destined for v7.1.1.
+
 + FIX(op): v7.0.0 promise that ``op.__call__`` delegates to ``compute()`` was a fake;
   now it is fixed.
 + fix(config): endurance flags were miss-behaving.
 + refact(net): factor out a :meth:`._reschedule()` method for both endurance & rescheduled ops.
 + feat(build): +script to launch pytest on a local clone repo before pushing.
 
+v7.1.1 (5 May 2020, @ankostis): canceled, by mistake contained features for 8.x
+--------------------------------------------------------------------------------
+(removed from PyPi/RTD, new features by mistake were removed from v7.1.2)
 
 
 v7.1.0 (4 May 2020, @ankostis): Cancelable sideffects, theme-ize & expand everything
@@ -872,7 +916,7 @@ v1.3.0 (Oct 2019, @ankostis): NEVER RELEASED: new DAG solver, better plotting & 
 
 Kept external API (hopefully) the same, but revamped pruning algorithm and
 refactored network compute/compile structure, so results may change; significantly
-enhanced plotting.  The only new feature actually is the :func:`.sideffect` modifier.
+enhanced plotting.  The only new feature actually is the ``.sideffect`` modifier.
 
 Network:
 --------
