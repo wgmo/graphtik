@@ -185,106 +185,6 @@ class _Modifier(str):
         return _Modifier(name=name, **kw)
 
 
-def is_mapped(dep) -> Optional[str]:
-    """
-    Check if a :term:`dependency` is mapped (and get it).
-
-    All non-varargish optionals are "mapped" (including sideffected ones).
-
-    :return:
-        the :attr:`fn_kwarg`
-    """
-    return getattr(dep, "fn_kwarg", None)
-
-
-def is_optional(dep) -> bool:
-    """
-    Check if a :term:`dependency` is optional.
-
-    Varargish & optional sideffects are included.
-
-    :return:
-        the :attr:`optional`
-    """
-    return getattr(dep, "optional", None)
-
-
-def is_vararg(dep) -> bool:
-    """Check if an :term:`optionals` dependency is `vararg`."""
-    return getattr(dep, "optional", None) == _Optionals.vararg
-
-
-def is_varargs(dep) -> bool:
-    """Check if an :term:`optionals` dependency is `varargs`."""
-    return getattr(dep, "optional", None) == _Optionals.varargs
-
-
-def is_varargish(dep) -> bool:
-    """Check if an :term:`optionals` dependency is :term:`varargish`."""
-    return dep.optional in (_Optionals.vararg, _Optionals.vararg)
-
-
-def is_sfx(dep) -> bool:
-    """
-    Check if a dependency is :term:`sideffects` or :term:`sideffected`.
-
-    :return:
-        the :attr:`sideffected`
-    """
-    return getattr(dep, "sideffected", None)
-
-
-def is_pure_sfx(dep) -> bool:
-    """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
-    return getattr(dep, "sideffected", None) and not getattr(dep, "sfx_list", None)
-
-
-def is_sfxed(dep) -> bool:
-    """Check if it is :term:`sideffected`."""
-    return getattr(dep, "sideffected", None) and getattr(dep, "sfx_list", None)
-
-
-def dep_renamed(dep, ren):
-    """
-    Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
-
-    preserving any :func:`mapped` to old-name.
-    """
-    if callable(ren):
-        renamer = ren
-    else:
-        renamer = lambda n: ren
-
-    if isinstance(dep, _Modifier):
-        old_name = dep.sideffected if is_sfx(dep) else str(dep)
-        new_name = renamer(old_name)
-        dep = dep._withset(name=new_name)
-    else:  # plain string
-        dep = renamer(dep)
-
-    return dep
-
-
-def dep_singularized(dep):
-    """
-    Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
-    """
-    return (
-        (dep._withset(sfx_list=(s,)) for s in dep.sfx_list) if is_sfxed(dep) else (dep,)
-    )
-
-
-def dep_stripped(dep):
-    """
-    Return the :attr:`_Modifier.sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
-
-    conveying all other properties of the original modifier to the stripped dependency.
-    """
-    if is_sfxed(dep):
-        dep = dep._withset(name=dep.sideffected, sideffected=None, sfx_list=())
-    return dep
-
-
 def mapped(name: str, fn_kwarg: str = None):
     """
     Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
@@ -703,3 +603,103 @@ def sfxed_varargs(dependency: str, sfx0: str, *sfx_list: str):
         sideffected=dependency,
         sfx_list=(sfx0, *sfx_list),
     )
+
+
+def is_mapped(dep) -> Optional[str]:
+    """
+    Check if a :term:`dependency` is mapped (and get it).
+
+    All non-varargish optionals are "mapped" (including sideffected ones).
+
+    :return:
+        the :attr:`fn_kwarg`
+    """
+    return getattr(dep, "fn_kwarg", None)
+
+
+def is_optional(dep) -> bool:
+    """
+    Check if a :term:`dependency` is optional.
+
+    Varargish & optional sideffects are included.
+
+    :return:
+        the :attr:`optional`
+    """
+    return getattr(dep, "optional", None)
+
+
+def is_vararg(dep) -> bool:
+    """Check if an :term:`optionals` dependency is `vararg`."""
+    return getattr(dep, "optional", None) == _Optionals.vararg
+
+
+def is_varargs(dep) -> bool:
+    """Check if an :term:`optionals` dependency is `varargs`."""
+    return getattr(dep, "optional", None) == _Optionals.varargs
+
+
+def is_varargish(dep) -> bool:
+    """Check if an :term:`optionals` dependency is :term:`varargish`."""
+    return dep.optional in (_Optionals.vararg, _Optionals.vararg)
+
+
+def is_sfx(dep) -> bool:
+    """
+    Check if a dependency is :term:`sideffects` or :term:`sideffected`.
+
+    :return:
+        the :attr:`sideffected`
+    """
+    return getattr(dep, "sideffected", None)
+
+
+def is_pure_sfx(dep) -> bool:
+    """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
+    return getattr(dep, "sideffected", None) and not getattr(dep, "sfx_list", None)
+
+
+def is_sfxed(dep) -> bool:
+    """Check if it is :term:`sideffected`."""
+    return getattr(dep, "sideffected", None) and getattr(dep, "sfx_list", None)
+
+
+def dep_renamed(dep, ren):
+    """
+    Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
+
+    preserving any :func:`mapped` to old-name.
+    """
+    if callable(ren):
+        renamer = ren
+    else:
+        renamer = lambda n: ren
+
+    if isinstance(dep, _Modifier):
+        old_name = dep.sideffected if is_sfx(dep) else str(dep)
+        new_name = renamer(old_name)
+        dep = dep._withset(name=new_name)
+    else:  # plain string
+        dep = renamer(dep)
+
+    return dep
+
+
+def dep_singularized(dep):
+    """
+    Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
+    """
+    return (
+        (dep._withset(sfx_list=(s,)) for s in dep.sfx_list) if is_sfxed(dep) else (dep,)
+    )
+
+
+def dep_stripped(dep):
+    """
+    Return the :attr:`_Modifier.sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
+
+    conveying all other properties of the original modifier to the stripped dependency.
+    """
+    if is_sfxed(dep):
+        dep = dep._withset(name=dep.sideffected, sideffected=None, sfx_list=())
+    return dep
