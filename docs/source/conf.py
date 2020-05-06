@@ -170,10 +170,12 @@ def linkcode_resolve(domain, info):
             return uri
         except TypeError as ex:
             # don't clutter logs, these are mostly non functions.
-            assert "module, class, method, function," in str(ex), ex
+            assert "module, class, method, function," in str(ex), (ex, item_name)
         except OSError as ex:
-            # don't clutter logs, these are mostly non functions.
-            assert "could not find class definition" in str(ex), ex
+            # don't clutter logs, these are mostly non functions or `__new__` specials.
+            assert "could not find class definition" in str(
+                ex
+            ) or "could not get source code" in str(ex), (ex, item_name)
         except Exception as ex:
             log.warning(
                 "Ignoring error on while searching lineno of '%s': %s(%s)",
