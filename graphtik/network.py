@@ -13,8 +13,8 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import Items, PlotArgs, Plottable, astuple, jetsam
 from .config import is_debug, is_skip_evictions
-from .modifiers import is_mapped, is_optional, is_sfx, optional
-from .op import Operation
+from .modifiers import dep_renamed, is_mapped, is_optional, is_sfx, optional
+from .op import FunctionalOperation, Operation
 
 NodePredicate = Callable[[Any, Mapping], bool]
 
@@ -597,3 +597,118 @@ class Network(Plottable):
             log.debug("... cache-updated key: %s", cache_key)
 
         return plan
+
+
+def build_network(
+    operations,
+    rescheduled=None,
+    endured=None,
+    parallel=None,
+    marshalled=None,
+    nest=None,
+    node_props=None,
+):
+    """The :term:`network` factory that does :term:`operation merging` before constructing it. """
+    from boltons.setutils import IndexedSet as iset
+    from .op import NULL_OP
+    from .netop import NetworkOperation
+
+    def proc_op(op, parent=None):
+        """clone FuncOperation with certain props changed"""
+        assert isinstance(op, FunctionalOperation), op
+
+        ## Convey any node-props specified in the netop here
+        #  to all sub-operations.
+        #
+        if (
+            node_props
+            or (nest and parent)
+            or rescheduled is not None
+            or endured is not None
+            or parallel is not None
+            or marshalled is not None
+        ):
+            kw = {
+                k: v
+                for k, v in [
+                    ("rescheduled", rescheduled),
+                    ("endured", endured),
+                    ("parallel", parallel),
+                    ("marshalled", marshalled),
+                ]
+                if v is not None
+            }
+            if node_props:
+                op_node_props = op.node_props.copy()
+                op_node_props.update(node_props)
+                kw["node_props"] = op_node_props
+
+            ## If `nest`, rename the op & data (predicated by `nest`)
+            #  by prefixing them with their parent netop.
+            #
+            if nest:
+                kw["name"] = node_renamed("operation", op, parent)
+                kw["needs"] = [node_renamed("needs", n, parent) for n in op.needs]
+                kw["provides"] = [
+                    node_renamed("provides", n, parent) for n in op.provides
+                ]
+
+            op = op.withset(**kw)
+
+        return op
+
+    def node_renamed(typ, node, parent) -> str:
+        """Handle user's or default `nest` callable's results."""
+        assert callable(nest), (nest, operations)
+
+        ret = nest(typ, node, parent)
+
+        if not ret:
+            # A falsy means don't touch the node.
+            return node.name if isinstance(node, Operation) else node
+
+        if not isinstance(ret, str):
+            # Truthy but not str values mean nest!
+            ret = nest_any_node(typ, node, parent)
+
+        return ret
+
+    ## Set default nesting if requested by user.
+    #
+    if nest:
+        if not callable(nest):
+            nest = nest_any_node
+
+    merge_set = iset()  # Preseve given node order.
+    for op in operations:
+        if isinstance(op, NetworkOperation):
+            merge_set.update(proc_op(s, op.name) for s in yield_ops(op.net.graph))
+        else:
+            merge_set.add(proc_op(op))
+    merge_set = iset(i for i in merge_set if not isinstance(i, NULL_OP))
+
+    assert all(bool(n) for n in merge_set)
+    net = Network(*merge_set)
+
+    return net
+
+
+def nest_any_node(
+    node_type: str, node: Union[Operation, str], parent: "NetworkOperation"
+) -> str:
+    """Nest both operation & data `node` under `parent` (if given).
+
+    :return:
+        the nested name of the operation or data
+    """
+
+    def prefixed(name):
+        return f"{parent}.{name}" if parent else name
+
+    if isinstance(node, Operation):
+        new_name = prefixed(node.name)
+    else:
+        assert isinstance(node, str), locals()
+        new_name = dep_renamed(node, prefixed)
+
+    return new_name
