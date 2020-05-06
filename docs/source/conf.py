@@ -114,7 +114,7 @@ def _make_py_item_url(fn):
 
 plotter = plot.get_active_plotter()
 plot.set_active_plotter(
-    plot.get_active_plotter().with_styles(
+    plotter.with_styles(
         kw_op_label={
             **plotter.default_theme.kw_op_label,
             "op_url": lambda plot_args: _make_py_item_url(plot_args.nx_item),

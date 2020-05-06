@@ -1004,9 +1004,9 @@ class Plotter:
 
         plot_args = plot_args.with_defaults(
             # Don't leave `solution` unassigned
-            solution=isinstance(plot_args.plottable, Solution)
-            and plot_args.plottable
-            or None,
+            solution=plot_args.plottable
+            if isinstance(plot_args.plottable, Solution)
+            else None,
             theme=self.default_theme,
         )
 
