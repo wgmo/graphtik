@@ -86,13 +86,15 @@ Changelog
 %%%%%%%%%
 
 
-v8.0.0 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modifiers; invert "merge" meaning
+v8.0.1 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modifiers; invert "merge" meaning
 =============================================================================================================
+**--((superseded immediately v8.0.0 with just one more module restructuring)))--**
+
 + BREAK: restructured ``netop`` && ``network`` modules:
 
   + :mod:`.network` module was splitted into :mod:`.execution` which now
     contains plan+solution;
-  + renamed module ``netop`` --> ``.pipeline``.
+  + unified modules ``op`` + ``netop`` --> :mod`.composition`.
   + DOC: module dependencies diagram in :doc:`reference`.
 
 + BREAK: sideffect modifier functions *shortened* to :func:`.sfx` & :func:`.sfxed`.
@@ -123,6 +125,12 @@ v8.0.0 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modi
 + ENH(plot): accept bare dictionary as theme overrides when plotting.
 + doc: fix site configuration for using the standard ``<s5defs>`` include
   for colored/font-size sphinx roles.
+
+
+v8.0.0 (7 May 2020, @ankostis): retracted bc found one more module restructuring
+--------------------------------------------------------------------------------
+**--((all changes above in b8.0.1 happened actually here))--**
+
 
 
 v7.1.2 (6 May 2020, @ankostis): minor reschedule fixes and refactoring
