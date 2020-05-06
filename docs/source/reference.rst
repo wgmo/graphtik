@@ -5,7 +5,7 @@ API Reference
 .. autosummary::
 
      graphtik
-     graphtik.op
+     graphtik.composition
      graphtik.modifiers
      graphtik.network
      graphtik.execution
@@ -17,10 +17,10 @@ API Reference
 .. raw:: html
      :file: images/GraphtikModuleDependencies.svg
 
-Module: `op`
-====================
+Module: `composition`
+=====================
 
-.. automodule:: graphtik.op
+.. automodule:: graphtik.composition
      :members:
      :undoc-members:
      :private-members:

@@ -8,9 +8,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from graphtik import base, network, op, operation
+from graphtik import base, network, composition, operation
 from graphtik.execution import ExecutionPlan, Solution, _OpTask
-from graphtik.op import NetworkOperation
+from graphtik.composition import NetworkOperation, Operation
 
 
 @pytest.mark.parametrize("locs", [None, (), [], [0], "bad"])
@@ -131,7 +131,7 @@ def test_jetsam_nested():
     assert excinfo.value.jetsam == {"fn": "inner", "a": 1, "b": 2}
 
 
-class _ScreamingOperation(op.Operation):
+class _ScreamingOperation(Operation):
     def __init__(self):
         self.name = ("",)
         self.needs = ()

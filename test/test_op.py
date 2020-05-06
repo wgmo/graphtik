@@ -18,7 +18,7 @@ from graphtik.config import (
     tasks_marshalled,
 )
 from graphtik.network import yield_ops
-from graphtik.op import (
+from graphtik.composition import (
     FunctionalOperation,
     Operation,
     as_renames,

@@ -509,7 +509,7 @@ in :term:`parallel`::
    DEBUG    === (3C40) Executing netop(t), in parallel, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x2 steps: op1, op2)...
    DEBUG    +++ (3C40) Parallel batch['op1'] on solution[].
    DEBUG    +++ (3C40) Executing OpTask(FunctionalOperation|(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>'), sol_keys=[])...
-   INFO     graphtik.op:op.py:534 Results[sfx: 'b'] contained +1 unknown provides[sfx: 'b']
+   INFO     graphtik.composition:op.py:534 Results[sfx: 'b'] contained +1 unknown provides[sfx: 'b']
    FunctionalOperation|(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>')
    DEBUG    ... (3C40) op(op1) completed in 1.406ms.
 
@@ -519,7 +519,7 @@ in :term:`parallel`::
    DEBUG    ... cache-hit key: ((), None, None)
    DEBUG    === (8697) Executing netop(t), evicting, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x3 steps: op1, op2, sfx: 'b')...
    DEBUG    +++ (8697) Executing OpTask(FunctionalOperation(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>'), sol_keys=[])...
-   INFO     graphtik.op:op.py:534 Results[sfx: 'b'] contained +1 unknown provides[sfx: 'b']
+   INFO     graphtik.composition:op.py:534 Results[sfx: 'b'] contained +1 unknown provides[sfx: 'b']
    FunctionalOperation(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>')
    DEBUG    ... (8697) op(op1) completed in 0.149ms.
    DEBUG    +++ (8697) Executing OpTask(FunctionalOperation(name='op2', needs=[sfx: 'b'], provides=['b'], fn='<lambda>'), sol_keys=[sfx: 'b'])...

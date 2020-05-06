@@ -52,7 +52,7 @@ from .config import (
     is_reschedule_operations,
 )
 from .modifiers import is_mapped, is_sfx, is_sfxed
-from .op import Operation
+from .composition import Operation
 
 log = logging.getLogger(__name__)
 

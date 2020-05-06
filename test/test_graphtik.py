@@ -39,7 +39,7 @@ from graphtik import (
 )
 from graphtik.execution import Solution
 from graphtik.modifiers import optional, sfx, sfxed, vararg
-from graphtik.op import NetworkOperation, Operation
+from graphtik.composition import NetworkOperation, Operation
 
 log = logging.getLogger(__name__)
 

@@ -41,7 +41,7 @@ from .network import (
     yield_node_names,
     yield_ops,
 )
-from .op import Operation
+from .composition import Operation
 
 #: If this logger is *eventually* DEBUG-enabled,
 #: the string-representation of network-objects (network, plan, solution)

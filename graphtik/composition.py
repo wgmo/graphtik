@@ -3,9 +3,7 @@
 """
 .. default-role: term
 
-`compose` `operation` & `dependency` into `pipeline`\\s..
-
-and match/zip inputs/outputs during `execution .
+`compose` `operation` & `dependency` into `pipeline`\\s match/zip inputs/outputs during `execution`.
 
 .. default-role:
 """
