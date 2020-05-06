@@ -31,15 +31,12 @@ def test_dill_modifier():
         (lambda: optional("b", "bb"), "b"),
         (lambda: vararg("c"), "c"),
         (lambda: varargs("d"), "d"),
-        (lambda: sideffect("e"), "sideffect: 'e'"),
-        (lambda: sideffect("e", optional=1), "sideffect: 'e'"),
-        (lambda: sideffected("f", "a", "b"), "sideffected('f'<--'a', 'b')"),
-        (lambda: sideffected("f", "ff", fn_kwarg="F"), "sideffected('f'<--'ff')",),
-        (
-            lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"),
-            "sideffected('f'<--'ff')",
-        ),
-        (lambda: sideffected("f", "ff", optional=1), "sideffected('f'<--'ff')"),
+        (lambda: sideffect("e"), "sfx: 'e'"),
+        (lambda: sideffect("e", optional=1), "sfx: 'e'"),
+        (lambda: sideffected("f", "a", "b"), "sfxed('f', 'a', 'b')"),
+        (lambda: sideffected("f", "ff", fn_kwarg="F"), "sfxed('f', 'ff')",),
+        (lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"), "sfxed('f', 'ff')",),
+        (lambda: sideffected("f", "ff", optional=1), "sfxed('f', 'ff')"),
     ],
 )
 def test_modifs_str(mod, exp):
@@ -51,27 +48,24 @@ def test_modifs_str(mod, exp):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (lambda: mapped("b", None), "mapped('b')"),
-        (lambda: mapped("b", ""), "mapped('b')"),
-        (lambda: mapped("b", "bb"), "mapped('b', fn_kwarg='bb')"),
-        (lambda: optional("b"), "optional('b')"),
-        (lambda: optional("b", "bb"), "optional('b', fn_kwarg='bb')"),
-        (lambda: vararg("c"), "vararg('c')"),
-        (lambda: varargs("d"), "varargs('d')"),
-        (lambda: sideffect("e"), "sideffect: 'e'"),
-        (lambda: sideffect("e", optional=1), "sideffect?: 'e'"),
-        (lambda: sideffected("f", "a", "b"), "sideffected('f'<--'a', 'b')"),
-        (
-            lambda: sideffected("f", "ff", fn_kwarg="F"),
-            "sideffected('f'<--'ff', fn_kwarg='F')",
-        ),
+        (lambda: mapped("b", None), "'b'(>)"),
+        (lambda: mapped("b", ""), "'b'(>)"),
+        (lambda: mapped("b", "bb"), "'b'(>'bb')"),
+        (lambda: optional("b"), "'b'(?)"),
+        (lambda: optional("b", "bb"), "'b'(?>'bb')"),
+        (lambda: vararg("c"), "'c'(*)"),
+        (lambda: varargs("d"), "'d'(+)"),
+        (lambda: sideffect("e"), "sfx: 'e'"),
+        (lambda: sideffect("e", optional=1), "sfx(?): 'e'"),
+        (lambda: sideffected("f", "a", "b"), "sfxed('f', 'a', 'b')"),
+        (lambda: sideffected("f", "ff", fn_kwarg="F"), "sfxed('f'(>'F'), 'ff')",),
         (
             lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"),
-            "sideffected?('f'<--'ff', fn_kwarg='F')",
+            "sfxed('f'(?>'F'), 'ff')",
         ),
-        (lambda: sideffected("f", "ff", optional=1), "sideffected?('f'<--'ff')"),
-        (lambda: sideffected_vararg("f", "a"), "sideffected*('f'<--'a')"),
-        (lambda: sideffected_varargs("f", "a", "b"), "sideffected#('f'<--'a', 'b')"),
+        (lambda: sideffected("f", "ff", optional=1), "sfxed('f'(?), 'ff')"),
+        (lambda: sideffected_vararg("f", "a"), "sfxed('f'(*), 'a')"),
+        (lambda: sideffected_varargs("f", "a", "b"), "sfxed('f'(+), 'a', 'b')"),
     ],
 )
 def test_modifs_repr(mod, exp):
@@ -112,36 +106,30 @@ def test_sideffected_bad(call, exp):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (lambda: "b", "'p.b'"),
-        (lambda: mapped("b", None), "mapped('p.b', fn_kwarg='b')"),
-        (lambda: mapped("b", ""), "mapped('p.b', fn_kwarg='b')"),
-        (lambda: mapped("b", "bb"), "mapped('p.b', fn_kwarg='bb')"),
-        (lambda: optional("b"), "optional('p.b', fn_kwarg='b')"),
-        (lambda: optional("b", "bb"), "optional('p.b', fn_kwarg='bb')"),
-        (lambda: vararg("c"), "vararg('p.c')"),
-        (lambda: varargs("d"), "varargs('p.d')"),
-        (lambda: sideffect("e"), "sideffect: 'p.e'"),
-        (lambda: sideffect("e", optional=1), "sideffect?: 'p.e'"),
-        (lambda: sideffected("f", "a", "b"), "sideffected('p.f'<--'a', 'b')",),
+        ("b", "'p.b'"),
+        (mapped("b", None), "'p.b'(>'b')"),
+        (mapped("b", ""), "'p.b'(>'b')"),
+        (mapped("b", "bb"), "'p.b'(>'bb')"),
+        (optional("b"), "'p.b'(?>'b')"),
+        (optional("b", "bb"), "'p.b'(?>'bb')"),
+        (vararg("c"), "'p.c'(*)"),
+        (varargs("d"), "'p.d'(+)"),
+        (sideffect("e"), "sfx: 'p.e'"),
+        (sideffect("e", optional=1), "sfx(?): 'p.e'"),
+        (sideffected("f", "a", "b"), "sfxed('p.f', 'a', 'b')",),
+        (sideffected("f", "ff", fn_kwarg="F"), "sfxed('p.f'(>'F'), 'ff')",),
         (
-            lambda: sideffected("f", "ff", fn_kwarg="F"),
-            "sideffected('p.f'<--'ff', fn_kwarg='F')",
+            sideffected("f", "ff", optional=1, fn_kwarg="F"),
+            "sfxed('p.f'(?>'F'), 'ff')",
         ),
-        (
-            lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"),
-            "sideffected?('p.f'<--'ff', fn_kwarg='F')",
-        ),
-        (
-            lambda: sideffected("f", "ff", optional=1),
-            "sideffected?('p.f'<--'ff', fn_kwarg='f')",
-        ),
-        (lambda: sideffected_vararg("f", "a", "b"), "sideffected*('p.f'<--'a', 'b')"),
-        (lambda: sideffected_varargs("f", "a"), "sideffected#('p.f'<--'a')"),
+        (sideffected("f", "ff", optional=1), "sfxed('p.f'(?>'f'), 'ff')",),
+        (sideffected_vararg("f", "a", "b"), "sfxed('p.f'(*), 'a', 'b')"),
+        (sideffected_varargs("f", "a"), "sfxed('p.f'(+), 'a')"),
     ],
 )
 def test_modifs_rename_fn(mod, exp):
     renamer = lambda n: f"p.{n}"
-    got = repr(dep_renamed(mod(), renamer))
+    got = repr(dep_renamed(mod, renamer))
     print(got)
     assert got == exp
 
@@ -150,19 +138,19 @@ def test_modifs_rename_fn(mod, exp):
     "mod, exp",
     [
         (lambda: "s", "'D'"),
-        (lambda: mapped("b", "bb"), "mapped('D', fn_kwarg='bb')"),
-        (lambda: optional("b"), "optional('D', fn_kwarg='b')"),
-        (lambda: optional("b", "bb"), "optional('D', fn_kwarg='bb')"),
-        (lambda: vararg("c"), "vararg('D')"),
-        (lambda: varargs("d"), "varargs('D')"),
-        (lambda: sideffect("e"), "sideffect: 'D'"),
+        (lambda: mapped("b", "bb"), "'D'(>'bb')"),
+        (lambda: optional("b"), "'D'(?>'b')"),
+        (lambda: optional("b", "bb"), "'D'(?>'bb')"),
+        (lambda: vararg("c"), "'D'(*)"),
+        (lambda: varargs("d"), "'D'(+)"),
+        (lambda: sideffect("e"), "sfx: 'D'"),
         (
             lambda: sideffected("f", "a", "b", optional=1,),
-            "sideffected?('D'<--'a', 'b', fn_kwarg='f')",
+            "sfxed('D'(?>'f'), 'a', 'b')",
         ),
         (
             lambda: sideffected("f", "a", "b", optional=1, fn_kwarg="F"),
-            "sideffected?('D'<--'a', 'b', fn_kwarg='F')",
+            "sfxed('D'(?>'F'), 'a', 'b')",
         ),
     ],
 )
@@ -175,17 +163,14 @@ def test_modifs_rename_str(mod, exp):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (varargs("d"), "varargs('d')"),
-        (sideffect("e", optional=1), "sideffect?: 'e'"),
+        (varargs("d"), "'d'(+)"),
+        (sideffect("e", optional=1), "sfx(?): 'e'"),
         (sideffected("f", "a", "b"), "'f'"),
-        (sideffected("f", "ff", fn_kwarg="F"), "mapped('f', fn_kwarg='F')",),
-        (
-            sideffected("f", "ff", optional=1, fn_kwarg="F"),
-            "optional('f', fn_kwarg='F')",
-        ),
-        (sideffected("f", "ff", optional=1), "optional('f')"),
-        (sideffected_vararg("f", "a"), "vararg('f')"),
-        (sideffected_varargs("f", "a", "b"), "varargs('f')"),
+        (sideffected("f", "ff", fn_kwarg="F"), "'f'(>'F')",),
+        (sideffected("f", "ff", optional=1, fn_kwarg="F"), "'f'(?>'F')",),
+        (sideffected("f", "ff", optional=1), "'f'(?)"),
+        (sideffected_vararg("f", "a"), "'f'(*)"),
+        (sideffected_varargs("f", "a", "b"), "'f'(+)"),
     ],
 )
 def test_sideffected_strip(mod, exp):

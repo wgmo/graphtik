@@ -13,20 +13,19 @@ from typing import Optional, Tuple, Union
 #: Arguments-presence patterns for :class:`_Modifier` constructor.
 #: Combinations missing raise errors.
 _modifier_cstor_matrix = {
-# kw, opt, sfxed, sfx, STR, REPR
-"0 0 0 0": None,
-"1 0 0 0": ("%(name)s",                         "mapped('%(name)s'%(fn_kwarg)s)"),
-"1 1 0 0": ("%(name)s",                         "optional('%(name)s'%(fn_kwarg)s)"),
-"0 2 0 0": ("%(name)s",                         "vararg('%(name)s')"),
-"0 3 0 0": ("%(name)s",                         "varargs('%(name)s')"),
-"0 0 1 0": ("sideffect: '%(name)s'",            "sideffect: '%(name)s'"),
-"0 1 1 0": ("sideffect: '%(name)s'",           "sideffect?: '%(name)s'"),
-"0 0 1 1": ("sideffected('%(name)s'<--%(sfx)s)",  "sideffected('%(name)s'<--%(sfx)s)"),
-"1 0 1 1": ("sideffected('%(name)s'<--%(sfx)s)",  "sideffected('%(name)s'<--%(sfx)s%(fn_kwarg)s)"),
-"0 1 1 1": ("sideffected('%(name)s'<--%(sfx)s)", "sideffected?('%(name)s'<--%(sfx)s)"),
-"1 1 1 1": ("sideffected('%(name)s'<--%(sfx)s)", "sideffected?('%(name)s'<--%(sfx)s%(fn_kwarg)s)"),
-"0 2 1 1": ("sideffected('%(name)s'<--%(sfx)s)", "sideffected*('%(name)s'<--%(sfx)s)"),
-"0 3 1 1": ("sideffected('%(name)s'<--%(sfx)s)", "sideffected#('%(name)s'<--%(sfx)s)"),
+# (7, kw, opt, sfxed, sfx): (STR, REPR) OR None
+70000: None,
+71000: (       "%(dep)s",                  "'%(dep)s'(%(kw)s)"           ),
+71100: (       "%(dep)s",                  "'%(dep)s'(?%(kw)s)"          ),
+70200: (       "%(dep)s",                  "'%(dep)s'(*)"                ),
+70300: (       "%(dep)s",                  "'%(dep)s'(+)"                ),
+70010: ( "sfx: '%(dep)s'",            "sfx: '%(dep)s'"                   ),
+70110: ( "sfx: '%(dep)s'",         "sfx(?): '%(dep)s'"                    ),
+70011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s', %(sfx)s)"         ),
+71011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(%(kw)s), %(sfx)s)" ),
+71111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(?%(kw)s), %(sfx)s)"),
+70211: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(*), %(sfx)s)"      ),
+70311: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(+), %(sfx)s)"      ),
 }
 # fmt: on
 
@@ -37,7 +36,8 @@ def _match_modifier_args(name, *args):
     # expand optional
     if args[1]:
         flags[1] = args[1].value
-    pattern = " ".join(str(i) for i in flags)
+    pattern = "".join(str(i) for i in flags)
+    pattern = int(f"7{pattern}")
     if pattern not in _modifier_cstor_matrix:
         raise ValueError(f"Invalid modifier arguments: {name}, {args}, {pattern}")
 
@@ -63,9 +63,7 @@ class _Modifier(str):
     respectively.
 
     .. Warning::
-        Cstor ``__new__()`` returns ``None`` if no other arg but ``name`` is given,
-        meaning, as a signal to build a regular string instead.
-
+        Cstor ``__new__()`` returns a plain string if no other arg but ``name`` is given.
     """
 
     # avoid __dict__ on instances
@@ -127,24 +125,24 @@ class _Modifier(str):
             )
         formats = _match_modifier_args(name, fn_kwarg, optional, sideffected, sfx_list,)
         if not formats:
-            # Should make a plain string instead.
-            return
+            # Make a plain string instead.
+            return str(name)
+
         str_fmt, repr_fmt = formats
         fmt_args = {
-            "name": name,
-            "fn_kwarg": f", fn_kwarg={fn_kwarg!r}" if fn_kwarg != name else "",
+            "dep": name,
+            "kw": f">'{fn_kwarg}'" if fn_kwarg != name else ">" if not optional else "",
             "sfx": ", ".join(f"'{i}'" for i in sfx_list),
         }
         name = str_fmt % fmt_args
         _repr = repr_fmt % fmt_args
 
         obj = super().__new__(cls, name)
-
-        obj._repr = str(_repr) if _repr is not None else None
         obj.fn_kwarg = fn_kwarg
         obj.optional = optional
         obj.sideffected = sideffected
         obj.sfx_list = sfx_list
+        obj._repr = _repr
 
         return obj
 
@@ -167,7 +165,7 @@ class _Modifier(str):
         optional: _Optionals = ...,
         sideffected=...,
         sfx_list=...,
-    ):
+    ) -> Union["_Modifier", str]:
         """
         Make a new modifier with changes -- handle with care.
 
@@ -184,8 +182,7 @@ class _Modifier(str):
         if name is ...:
             name = self.sideffected or str(self)
 
-        ## SPECIAL handling when ``__new__` return None.
-        return _Modifier(name=name, **kw) or name
+        return _Modifier(name=name, **kw)
 
 
 def is_mapped(dep) -> Optional[str]:
@@ -325,7 +322,7 @@ def mapped(name: str, fn_kwarg: str = None):
         ...    return a + b
         >>> myadd
         FunctionalOperation(name='myadd',
-                            needs=['a', mapped('name-in-inputs', fn_kwarg='b')],
+                            needs=['a', 'name-in-inputs'(>'b')],
                             provides=['sum'],
                             fn='myadd')
 
@@ -373,7 +370,7 @@ def optional(name: str, fn_kwarg: str = None):
         >>> graph = compose('mygraph', myadd)
         >>> graph
         NetworkOperation('mygraph',
-                         needs=['a', optional('b')],
+                         needs=['a', 'b'(?)],
                          provides=['sum'],
                          x1 ops: myadd)
 
@@ -392,7 +389,7 @@ def optional(name: str, fn_kwarg: str = None):
         ...           provides="sum"
         ... )(myadd.fn)  # Cannot wrap an operation, its `fn` only.
         FunctionalOperation(name='myadd',
-                            needs=['a', optional('quasi-real', fn_kwarg='b')],
+                            needs=['a', 'quasi-real'(?>'b')],
                             provides=['sum'],
                             fn='myadd')
 
@@ -422,7 +419,10 @@ def vararg(name: str):
         ... def addall(a, *b):
         ...    return a + sum(b)
         >>> addall
-        FunctionalOperation(name='addall', needs=['a', vararg('b'), vararg('c')], provides=['sum'], fn='addall')
+        FunctionalOperation(name='addall',
+                            needs=['a', 'b'(*), 'c'(*)],
+                            provides=['sum'],
+                            fn='addall')
 
 
         >>> graph = compose('mygraph', addall)
@@ -463,7 +463,7 @@ def varargs(name: str):
         ... )
         >>> graph
         NetworkOperation('mygraph',
-                         needs=['a', optional('b')],
+                         needs=['a', 'b'(?)],
                          provides=['sum'],
                          x1 ops: enlist)
 
@@ -479,9 +479,9 @@ def varargs(name: str):
         Traceback (most recent call last):
         ...
         graphtik.base.MultiValueError: Failed preparing needs:
-            1. Expected needs[varargs('b')] to be non-str iterables!
+            1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
-            +++FunctionalOperation(name='enlist', needs=['a', varargs('b')], provides=['sum'], fn='enlist')
+            +++FunctionalOperation(name='enlist', needs=['a', 'b'(+)], provides=['sum'], fn='enlist')
 
     .. varargs-mistake-start
     .. Attention::
@@ -492,10 +492,10 @@ def varargs(name: str):
         Traceback (most recent call last):
         ...
         graphtik.base.MultiValueError: Failed preparing needs:
-            1. Expected needs[varargs('b')] to be non-str iterables!
+            1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
             +++FunctionalOperation(name='enlist',
-                                   needs=['a', varargs('b')],
+                                   needs=['a', 'b'(+)],
                                    provides=['sum'],
                                    fn='enlist')
 
@@ -532,7 +532,7 @@ def sideffect(name, optional: bool = None):
         >>> from graphtik import sideffect
 
         >>> sideffect("price[sales_df]")
-        sideffect: 'price[sales_df]'
+        sfx: 'price[sales_df]'
 
     **Example:**
 
@@ -554,8 +554,9 @@ def sideffect(name, optional: bool = None):
         ...         provides="body")(lambda: "TaDa!")
         ... )
         >>> graph
-        NetworkOperation('strip ease', needs=[sideffect: 'lights off'],
-                         provides=[sideffect: 'lights off', 'body'],
+        NetworkOperation('strip ease',
+                         needs=[sfx: 'lights off'],
+                         provides=[sfx: 'lights off', 'body'],
                          x2 ops: close_the_lights, undress)
 
         >>> sol = graph()
@@ -640,14 +641,13 @@ def sideffected(
         >>> with debug_enabled(True):
         ...     finalize_prices
         FunctionalOperation(name='finalize_prices',
-                            needs=[sideffected('ORDER'<--'Prices'),
-                                   sideffected('ORDER'<--'VAT')],
-                            op_needs=[sideffected('ORDER'<--'Prices'),
-                                      sideffected('ORDER'<--'VAT')],
+                            needs=[sfxed('ORDER', 'Prices'), sfxed('ORDER', 'VAT')],
+                            op_needs=[sfxed('ORDER', 'Prices'), sfxed('ORDER', 'VAT')],
                             fn_needs=['ORDER'],
-                            provides=[sideffected('ORDER'<--'Totals')],
-                            op_provides=[sideffected('ORDER'<--'Totals')],
-                            fn_provides=['ORDER'], fn='finalize_prices')
+                            provides=[sfxed('ORDER', 'Totals')],
+                            op_provides=[sfxed('ORDER', 'Totals')],
+                            fn_provides=['ORDER'],
+                            fn='finalize_prices')
 
     Notice that declaring a single *sideffected* with many items in `sfx_list`,
     expands into multiple  *"singular"* ``sideffected`` dependencies in the network

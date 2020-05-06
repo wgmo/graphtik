@@ -334,7 +334,7 @@ def test_network_combine():
     exp = {"a": 1, "b": 2, "c": 4, "sum1": 3, "sum2": 3, "sum3": 7}
     assert net1(a=1, b=2, c=4) == exp
     assert repr(net1).startswith(
-        "NetworkOperation('my network 1', needs=[optional('a'), 'b', 'sum1', 'c'], "
+        "NetworkOperation('my network 1', needs=['a'(?), 'b', 'sum1', 'c'], "
         "provides=['sum1', 'sum2', 'sum3'], x3 ops"
     )
 
@@ -346,7 +346,7 @@ def test_network_combine():
     exp = {"a": 1, "b": 2, "sum1": 3, "sum2": 5}
     assert net2(**{"a": 1, "b": 2}) == exp
     assert repr(net2).startswith(
-        "NetworkOperation('my network 2', needs=[optional('a'), 'b', 'sum1'], provides=['sum1', 'sum2'], x2 ops"
+        "NetworkOperation('my network 2', needs=['a'(?), 'b', 'sum1'], provides=['sum1', 'sum2'], x2 ops"
     )
 
     net3 = compose("merged", net1, net2)
@@ -354,7 +354,7 @@ def test_network_combine():
     assert net3(a=1, b=2, c=4) == exp
 
     assert repr(net3).startswith(
-        "NetworkOperation('merged', needs=[optional('a'), 'b', 'sum1', 'c'], provides=['sum1', 'sum2', 'sum3'], x4 ops"
+        "NetworkOperation('merged', needs=['a'(?), 'b', 'sum1', 'c'], provides=['sum1', 'sum2', 'sum3'], x4 ops"
     )
 
     ## Reverse ops, change results and `needs` optionality.
@@ -364,7 +364,7 @@ def test_network_combine():
     assert net3(**{"a": 1, "b": 2, "c": 4}) == exp
 
     assert repr(net3).startswith(
-        "NetworkOperation('merged', needs=[optional('a'), 'b', 'sum1', 'c'], provides=['sum1', 'sum2', 'sum3'], x4 ops"
+        "NetworkOperation('merged', needs=['a'(?), 'b', 'sum1', 'c'], provides=['sum1', 'sum2', 'sum3'], x4 ops"
     )
 
 
@@ -826,7 +826,9 @@ def test_narrow_and_optionality(reverse):
     if reverse:
         ops = list(reversed(ops))
         provides = "'sum2', 'sum1'"
-    netop_str = f"NetworkOperation('t', needs=['a', optional('bb')], provides=[{provides}], x2 ops"
+    netop_str = (
+        f"NetworkOperation('t', needs=['a', 'bb'(?)], provides=[{provides}], x2 ops"
+    )
 
     netop = compose("t", *ops)
     assert repr(netop).startswith(netop_str)
@@ -844,7 +846,7 @@ def test_narrow_and_optionality(reverse):
     netop = compose("t", *ops)
     assert repr(netop).startswith(netop_str)
     assert repr(netop.compile(["bb"])).startswith(
-        "ExecutionPlan(needs=[optional('bb')], provides=['sum1'], x1 steps:"
+        "ExecutionPlan(needs=['bb'(?)], provides=['sum1'], x1 steps:"
     )
 
     ## Narrow by `provides`
@@ -852,7 +854,7 @@ def test_narrow_and_optionality(reverse):
     netop = compose("t", *ops, outputs="sum1")
     assert repr(netop).startswith(netop_str)
     assert repr(netop.compile("bb")).startswith(
-        "ExecutionPlan(needs=[optional('bb')], provides=['sum1'], x3 steps:"
+        "ExecutionPlan(needs=['bb'(?)], provides=['sum1'], x3 steps:"
     )
     assert repr(netop.compile("bb")) == repr(netop.compute({"bb": 1}).plan)
 
@@ -868,7 +870,7 @@ def test_narrow_and_optionality(reverse):
     #
     netop = compose("t", *ops, outputs=["sum1"])
     assert repr(netop.compile(inputs="a")).startswith(
-        "ExecutionPlan(needs=[optional('a')], provides=['sum1'], x3 steps:"
+        "ExecutionPlan(needs=['a'(?)], provides=['sum1'], x3 steps:"
     )
 
     netop = compose("t", *ops, outputs=["sum2"])
