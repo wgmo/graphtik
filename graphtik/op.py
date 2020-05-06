@@ -11,9 +11,8 @@ import itertools as itt
 import logging
 import textwrap
 from collections import abc as cabc
-from collections import namedtuple
 from functools import wraps
-from typing import Any, Callable, Collection, List, Mapping, Set, Tuple, Union
+from typing import Any, Callable, Collection, List, Mapping, Tuple, Union
 
 from boltons.setutils import IndexedSet as iset
 
@@ -30,16 +29,16 @@ from .base import (
     jetsam,
 )
 from .config import (
+    first_solid,
     is_debug,
     is_endure_operations,
     is_marshal_tasks,
     is_parallel_tasks,
     is_reschedule_operations,
-    first_solid,
 )
 from .modifiers import (
-    dep_stripped,
     dep_singularized,
+    dep_stripped,
     is_mapped,
     is_optional,
     is_pure_sfx,
@@ -47,14 +46,9 @@ from .modifiers import (
     is_sfxed,
     is_vararg,
     is_varargs,
-    sfxed,
 )
 
 log = logging.getLogger(__name__)
-
-
-def _dict_without(kw, *to_skip):
-    return {k: v for k, v in kw.items() if k not in to_skip}
 
 
 def as_renames(i, argname):
