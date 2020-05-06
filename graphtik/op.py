@@ -38,12 +38,12 @@ from .modifiers import (
     dep_singularized,
     is_mapped,
     is_optional,
-    is_pure_sideffect,
-    is_sideffect,
-    is_sideffected,
+    is_pure_sfx,
+    is_sfx,
+    is_sfxed,
     is_vararg,
     is_varargs,
-    sideffected,
+    sfxed,
 )
 
 log = logging.getLogger(__name__)
@@ -148,34 +148,33 @@ def _spread_sideffects(
 
     :return:
         the given `deps` duplicated as ``(fn_deps,  op_deps)``, where any instances of
-        :func:`.sideffect` and :func:`.sideffected` are processed like this:
+        :term:`sideffects` are processed like this:
 
         `fn_deps`
-            - :func:`.sideffected` are replaced by the pure :attr:`._Modifier.sideffected`
+            - any :func:`\.sfxed` are replaced by the :func:`stripped <.dep_stripped>`
               dependency consumed/produced by underlying functions, in the order
-              it is first met (the rest duplicate `sideffected` are discarded).
-            - :func:`.sideffect` are simply dropped;
+              they are first met (the rest duplicate `sideffected` are discarded).
+            - any :func:`\.sfx` are simply dropped;
 
         `op_deps`
-            :func:`.sideffected` are replaced by a sequence of "singular" `sideffected`
-            instances, one for each item in their :attr:`._Modifier.sideffects` attribute,
-            in the order they are first met
+            any :func:`\.sfxed` are replaced by a sequence of ":func:`singularized
+            <.dep_singularized>`" instances, one for each item in their
+            :attr:`._Modifier.sfx_list` attribute, in the order they are first met
             (any duplicates are discarded, order is irrelevant, since they don't reach
             the function);
     """
 
-    #: The only dupes that are dropped from `fn_deps` are any `sideffected`,
-    #: to facilitate copy-pasting singularized ones from the console.
-    seen_sideffecteds: Set[str] = set()
+    #: The dedupe  any `sideffected`.
+    seen_sideffecteds = set()
 
     def strip_sideffecteds(dep):
-        """Strip the dependency, preserving attributes """
-        if is_sideffected(dep):
-            sideffected = dep.sideffected
-            if not sideffected in seen_sideffecteds:
-                seen_sideffecteds.add(sideffected)
-                return (dep_stripped(dep),)
-        elif not is_sideffect(dep):
+        """Strip and dedupe any sfxed, drop any sfx. """
+        if is_sfxed(dep):
+            dep = dep_stripped(dep)
+            if not dep in seen_sideffecteds:
+                seen_sideffecteds.add(dep)
+                return (dep,)
+        elif not is_sfx(dep):
             return (dep,)
         return ()
 
@@ -262,9 +261,7 @@ class FunctionalOperation(Operation, Plottable):
                     f", not found in provides {list(provides)}!"
                 )
             sfx_aliases = [
-                f"{src} -> {dst}"
-                for src, dst in aliases
-                if is_sideffect(src) or is_sideffect(dst)
+                f"{src} -> {dst}" for src, dst in aliases if is_sfx(src) or is_sfx(dst)
             ]
             if sfx_aliases:
                 raise ValueError(
@@ -454,10 +451,10 @@ class FunctionalOperation(Operation, Plottable):
         kwargs = {}
         errors, missing, varargs_bad = [], [], []
         for n in self._fn_needs:
-            assert not is_sideffect(n), locals()
+            assert not is_sfx(n), locals()
             try:
                 if n not in named_inputs:
-                    if not is_optional(n) or is_sideffect(n):
+                    if not is_optional(n) or is_sfx(n):
                         # It means `inputs` < compulsory `needs`.
                         # Compilation should have ensured all compulsories existed,
                         # but ..?
@@ -559,7 +556,7 @@ class FunctionalOperation(Operation, Plottable):
 
         elif results == NO_RESULT and rescheduled:
             # Cancel also any SFX.
-            results = {p: False for p in set(self.provides) if is_sideffect(p)}
+            results = {p: False for p in set(self.provides) if is_sfx(p)}
 
         elif not fn_expected:  # All provides were sideffects?
             if results and results != NO_RESULT:

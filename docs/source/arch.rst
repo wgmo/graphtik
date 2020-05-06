@@ -327,10 +327,10 @@ Architecture
 
         There are actually 2 relevant *modifiers*:
 
-        - An *abstract sideffect* modifier (annotated with :func:`.sideffect`)
+        - An *abstract sideffect* modifier (annotated with :func:`.sfx`)
           describing modifications taking place beyond the scope of the solution.
 
-        - The `sideffected` modifier (annotated with :func:`.sideffected`)
+        - The `sideffected` modifier (annotated with :func:`.sfxed`)
           denoting modifications on a *real* dependency read from and written to
           the solution.
 
@@ -348,13 +348,13 @@ Architecture
         .. Note::
             To be precise, the *"sideffected dependency"* is the name held in
             :attr:`._Modifier.sideffected` attribute of a *modifier* created by
-            :func:`.sideffected` function.
+            :func:`.sfxed` function.
 
         The `outputs` of the *sideffected dependency* will produce `overwrites` if
         *sideffected modifiers* containing it are declared both in the *needs* and *provides*
         of any operation.
 
-        It is annotated with :func:`.sideffected`.
+        It is annotated with :func:`.sfxed`.
 
     reschedule
     rescheduling

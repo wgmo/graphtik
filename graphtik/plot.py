@@ -51,7 +51,7 @@ from .config import (
     is_reschedule_operations,
     first_solid,
 )
-from .modifiers import is_mapped, is_sideffect, is_sideffected
+from .modifiers import is_mapped, is_sfx, is_sfxed
 from .netop import NetworkOperation
 from .network import ExecutionPlan, Network, Solution, _EvictInstruction
 from .op import Operation
@@ -454,7 +454,7 @@ class Theme:
         "label": make_template(
             """
             <{{ nx_item.sideffected | eee }}<BR/>
-            (<I>sideffect:</I> {{ nx_item.sideffects | join(', ') | eee }})>
+            (<I>sfx:</I> {{ nx_item.sfx_list | join(', ') | eee }})>
             """
         ),
     }
@@ -1138,9 +1138,9 @@ class Plotter:
                 f"kw_data_io_choice: {io_choice}", theme.kw_data_io_choice[io_choice]
             )
 
-            if is_sideffect(nx_node):
+            if is_sfx(nx_node):
                 styles.add("kw_data_sideffect")
-                if is_sideffected(nx_node):
+                if is_sfxed(nx_node):
                     styles.add("kw_data_sideffected")
 
             ## Data-state
@@ -1169,7 +1169,7 @@ class Plotter:
 
                 elif nx_node in steps:
                     styles.add("kw_data_evicted")
-                elif not is_pruned and not is_sideffect(nx_node):
+                elif not is_pruned and not is_sfx(nx_node):
                     styles.add("kw_data_canceled")
 
             styles.stack_user_style(node_attrs)

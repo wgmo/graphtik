@@ -7,17 +7,17 @@ from graphtik.modifiers import (
     dep_stripped,
     mapped,
     optional,
-    sideffect,
-    sideffected,
-    sideffected_vararg,
-    sideffected_varargs,
+    sfx,
+    sfxed,
+    sfxed_vararg,
+    sfxed_varargs,
     vararg,
     varargs,
 )
 
 
 def test_dill_modifier():
-    s = sideffected("foo", "gg")
+    s = sfxed("foo", "gg")
     s == dill.loads(dill.dumps(s))
 
 
@@ -31,12 +31,12 @@ def test_dill_modifier():
         (lambda: optional("b", "bb"), "b"),
         (lambda: vararg("c"), "c"),
         (lambda: varargs("d"), "d"),
-        (lambda: sideffect("e"), "sfx: 'e'"),
-        (lambda: sideffect("e", optional=1), "sfx: 'e'"),
-        (lambda: sideffected("f", "a", "b"), "sfxed('f', 'a', 'b')"),
-        (lambda: sideffected("f", "ff", fn_kwarg="F"), "sfxed('f', 'ff')",),
-        (lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"), "sfxed('f', 'ff')",),
-        (lambda: sideffected("f", "ff", optional=1), "sfxed('f', 'ff')"),
+        (lambda: sfx("e"), "sfx: 'e'"),
+        (lambda: sfx("e", optional=1), "sfx: 'e'"),
+        (lambda: sfxed("f", "a", "b"), "sfxed('f', 'a', 'b')"),
+        (lambda: sfxed("f", "ff", fn_kwarg="F"), "sfxed('f', 'ff')",),
+        (lambda: sfxed("f", "ff", optional=1, fn_kwarg="F"), "sfxed('f', 'ff')",),
+        (lambda: sfxed("f", "ff", optional=1), "sfxed('f', 'ff')"),
     ],
 )
 def test_modifs_str(mod, exp):
@@ -55,17 +55,17 @@ def test_modifs_str(mod, exp):
         (lambda: optional("b", "bb"), "'b'(?>'bb')"),
         (lambda: vararg("c"), "'c'(*)"),
         (lambda: varargs("d"), "'d'(+)"),
-        (lambda: sideffect("e"), "sfx: 'e'"),
-        (lambda: sideffect("e", optional=1), "sfx(?): 'e'"),
-        (lambda: sideffected("f", "a", "b"), "sfxed('f', 'a', 'b')"),
-        (lambda: sideffected("f", "ff", fn_kwarg="F"), "sfxed('f'(>'F'), 'ff')",),
+        (lambda: sfx("e"), "sfx: 'e'"),
+        (lambda: sfx("e", optional=1), "sfx(?): 'e'"),
+        (lambda: sfxed("f", "a", "b"), "sfxed('f', 'a', 'b')"),
+        (lambda: sfxed("f", "ff", fn_kwarg="F"), "sfxed('f'(>'F'), 'ff')",),
         (
-            lambda: sideffected("f", "ff", optional=1, fn_kwarg="F"),
+            lambda: sfxed("f", "ff", optional=1, fn_kwarg="F"),
             "sfxed('f'(?>'F'), 'ff')",
         ),
-        (lambda: sideffected("f", "ff", optional=1), "sfxed('f'(?), 'ff')"),
-        (lambda: sideffected_vararg("f", "a"), "sfxed('f'(*), 'a')"),
-        (lambda: sideffected_varargs("f", "a", "b"), "sfxed('f'(+), 'a', 'b')"),
+        (lambda: sfxed("f", "ff", optional=1), "sfxed('f'(?), 'ff')"),
+        (lambda: sfxed_vararg("f", "a"), "sfxed('f'(*), 'a')"),
+        (lambda: sfxed_varargs("f", "a", "b"), "sfxed('f'(+), 'a', 'b')"),
     ],
 )
 def test_modifs_repr(mod, exp):
@@ -91,11 +91,11 @@ def test_recreation_repr():
 @pytest.mark.parametrize(
     "call, exp",
     [
-        (lambda: sideffect(sideffect("a")), "^`sideffected` cannot"),
-        (lambda: sideffected("a", sideffect("a")), "^`sfx_list` cannot"),
-        (lambda: sideffected(sideffect("a"), "a"), "^`sideffected` cannot"),
-        (lambda: sideffected_vararg(sideffect("a"), "a"), "^`sideffected` cannot"),
-        (lambda: sideffected_varargs(sideffect("a"), "a"), "^`sideffected` cannot"),
+        (lambda: sfx(sfx("a")), "^`sideffected` cannot"),
+        (lambda: sfxed("a", sfx("a")), "^`sfx_list` cannot"),
+        (lambda: sfxed(sfx("a"), "a"), "^`sideffected` cannot"),
+        (lambda: sfxed_vararg(sfx("a"), "a"), "^`sideffected` cannot"),
+        (lambda: sfxed_varargs(sfx("a"), "a"), "^`sideffected` cannot"),
     ],
 )
 def test_sideffected_bad(call, exp):
@@ -114,17 +114,14 @@ def test_sideffected_bad(call, exp):
         (optional("b", "bb"), "'p.b'(?>'bb')"),
         (vararg("c"), "'p.c'(*)"),
         (varargs("d"), "'p.d'(+)"),
-        (sideffect("e"), "sfx: 'p.e'"),
-        (sideffect("e", optional=1), "sfx(?): 'p.e'"),
-        (sideffected("f", "a", "b"), "sfxed('p.f', 'a', 'b')",),
-        (sideffected("f", "ff", fn_kwarg="F"), "sfxed('p.f'(>'F'), 'ff')",),
-        (
-            sideffected("f", "ff", optional=1, fn_kwarg="F"),
-            "sfxed('p.f'(?>'F'), 'ff')",
-        ),
-        (sideffected("f", "ff", optional=1), "sfxed('p.f'(?>'f'), 'ff')",),
-        (sideffected_vararg("f", "a", "b"), "sfxed('p.f'(*), 'a', 'b')"),
-        (sideffected_varargs("f", "a"), "sfxed('p.f'(+), 'a')"),
+        (sfx("e"), "sfx: 'p.e'"),
+        (sfx("e", optional=1), "sfx(?): 'p.e'"),
+        (sfxed("f", "a", "b"), "sfxed('p.f', 'a', 'b')",),
+        (sfxed("f", "ff", fn_kwarg="F"), "sfxed('p.f'(>'F'), 'ff')",),
+        (sfxed("f", "ff", optional=1, fn_kwarg="F"), "sfxed('p.f'(?>'F'), 'ff')",),
+        (sfxed("f", "ff", optional=1), "sfxed('p.f'(?>'f'), 'ff')",),
+        (sfxed_vararg("f", "a", "b"), "sfxed('p.f'(*), 'a', 'b')"),
+        (sfxed_varargs("f", "a"), "sfxed('p.f'(+), 'a')"),
     ],
 )
 def test_modifs_rename_fn(mod, exp):
@@ -143,13 +140,10 @@ def test_modifs_rename_fn(mod, exp):
         (lambda: optional("b", "bb"), "'D'(?>'bb')"),
         (lambda: vararg("c"), "'D'(*)"),
         (lambda: varargs("d"), "'D'(+)"),
-        (lambda: sideffect("e"), "sfx: 'D'"),
+        (lambda: sfx("e"), "sfx: 'D'"),
+        (lambda: sfxed("f", "a", "b", optional=1,), "sfxed('D'(?>'f'), 'a', 'b')",),
         (
-            lambda: sideffected("f", "a", "b", optional=1,),
-            "sfxed('D'(?>'f'), 'a', 'b')",
-        ),
-        (
-            lambda: sideffected("f", "a", "b", optional=1, fn_kwarg="F"),
+            lambda: sfxed("f", "a", "b", optional=1, fn_kwarg="F"),
             "sfxed('D'(?>'F'), 'a', 'b')",
         ),
     ],
@@ -164,13 +158,13 @@ def test_modifs_rename_str(mod, exp):
     "mod, exp",
     [
         (varargs("d"), "'d'(+)"),
-        (sideffect("e", optional=1), "sfx(?): 'e'"),
-        (sideffected("f", "a", "b"), "'f'"),
-        (sideffected("f", "ff", fn_kwarg="F"), "'f'(>'F')",),
-        (sideffected("f", "ff", optional=1, fn_kwarg="F"), "'f'(?>'F')",),
-        (sideffected("f", "ff", optional=1), "'f'(?)"),
-        (sideffected_vararg("f", "a"), "'f'(*)"),
-        (sideffected_varargs("f", "a", "b"), "'f'(+)"),
+        (sfx("e", optional=1), "sfx(?): 'e'"),
+        (sfxed("f", "a", "b"), "'f'"),
+        (sfxed("f", "ff", fn_kwarg="F"), "'f'(>'F')",),
+        (sfxed("f", "ff", optional=1, fn_kwarg="F"), "'f'(?>'F')",),
+        (sfxed("f", "ff", optional=1), "'f'(?)"),
+        (sfxed_vararg("f", "a"), "'f'(*)"),
+        (sfxed_varargs("f", "a", "b"), "'f'(+)"),
     ],
 )
 def test_sideffected_strip(mod, exp):
@@ -182,9 +176,9 @@ def test_sideffected_strip(mod, exp):
     "mod, exp",
     [
         ("a", ["a"]),
-        (sideffect("a"), [sideffect("a")]),
-        (sideffected("a", "b"), [sideffected("a", "b")]),
-        (sideffected("a", "b", "c"), [sideffected("a", "b"), sideffected("a", "c")]),
+        (sfx("a"), [sfx("a")]),
+        (sfxed("a", "b"), [sfxed("a", "b")]),
+        (sfxed("a", "b", "c"), [sfxed("a", "b"), sfxed("a", "c")]),
     ],
 )
 def test_sideffected_singularized(mod, exp):

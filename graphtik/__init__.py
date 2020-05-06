@@ -47,10 +47,10 @@ from .modifiers import (
     optional,
     vararg,
     varargs,
-    sideffect,
-    sideffected,
-    sideffected_vararg,
-    sideffected_varargs,
+    sfx,
+    sfxed,
+    sfxed_vararg,
+    sfxed_varargs,
 )
 from .netop import compose
 from .network import AbortedException, IncompleteExecutionError

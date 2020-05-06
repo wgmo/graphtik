@@ -10,22 +10,14 @@ import time
 from collections import ChainMap, abc, defaultdict, namedtuple
 from functools import partial
 from itertools import chain, count
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Collection, List, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
 from .base import UNSET, Items, PlotArgs, Plottable, aslist, astuple, jetsam
 from .config import (
+    first_solid,
     get_execution_pool,
     is_abort,
     is_debug,
@@ -34,15 +26,15 @@ from .config import (
     is_parallel_tasks,
     is_reschedule_operations,
     is_skip_evictions,
-    first_solid,
 )
 from .modifiers import (
     dep_singularized,
+    dep_stripped,
     is_mapped,
     is_optional,
-    is_pure_sideffect,
-    is_sideffect,
-    is_sideffected,
+    is_pure_sfx,
+    is_sfx,
+    is_sfxed,
     optional,
 )
 from .op import Operation
@@ -251,7 +243,7 @@ class Solution(ChainMap, Plottable):
 
         def collect_canceled_sideffects(dep, val) -> Collection:
             """yield any sfx `dep` with falsy value, singularizing sideffected."""
-            if val or not is_sideffect(dep):
+            if val or not is_sfx(dep):
                 return ()
             return dep_singularized(dep)
 
@@ -264,7 +256,7 @@ class Solution(ChainMap, Plottable):
             #
             # OPTIMIZE: could use _fn_provides
             missing_outs = iset(op.provides) - set(outputs)
-            sfx = (out for out in missing_outs if is_sideffect(out))
+            sfx = (out for out in missing_outs if is_sfx(out))
             canceled_sideffects = [
                 sf
                 for k, v in outputs.items()
@@ -403,7 +395,7 @@ def _optionalized(graph, data):
         optional(data)
         if all_optionals
         else data  # sideffect
-        if is_sideffect(data)
+        if is_sfx(data)
         else str(data)  # un-optionalize
     )
 
@@ -883,9 +875,7 @@ class ExecutionPlan(
             # Validate eviction was perfect
             #
             if evict:
-                expected_provides = set(
-                    n.sideffected if is_sideffected(n) else n for n in self.provides
-                )
+                expected_provides = set(dep_stripped(n) for n in self.provides)
                 # It is a proper subset when not all outputs calculated.
                 assert set(solution).issubset(expected_provides), (
                     f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
@@ -1013,7 +1003,7 @@ class Network(Plottable):
             nkw, ekw = {}, {}
             if is_optional(n):
                 ekw["optional"] = True
-            if is_sideffect(n):
+            if is_sfx(n):
                 ekw["sideffect"] = nkw["sideffect"] = True
             if is_mapped(n):
                 ekw["fn_kwarg"] = n.fn_kwarg
@@ -1033,7 +1023,7 @@ class Network(Plottable):
         #
         for n in getattr(operation, "op_provides", operation.provides):
             kw = {}
-            if is_sideffect(n):
+            if is_sfx(n):
                 kw["sideffect"] = True
                 graph.add_node(n, sideffect=True)
 
@@ -1181,7 +1171,7 @@ class Network(Plottable):
             outputs = iset(
                 n
                 for n in self.provides
-                if n not in inputs and n in pruned_dag and not is_sideffect(n)
+                if n not in inputs and n in pruned_dag and not is_sfx(n)
             )
         else:
             # filter-out from new `provides` if pruned.

@@ -57,7 +57,7 @@ class _Modifier(str):
     It is private, in the sense that users should use only:
 
     - the factory functions :func:`.mapped`, :func:`optional` etc,
-    - the predicates :func:`is_optional()`, :func:`is_pure_sideffect()` predicates, etc,
+    - the predicates :func:`is_optional()`, :func:`is_pure_sfx()` predicates, etc,
     - and the :func:`dep_rename()`, :func:`dep_strip()` conversion functions
 
     respectively.
@@ -89,7 +89,7 @@ class _Modifier(str):
     #:
     #: - If it is an empty tuple`, it is an abstract sideffect,
     #:    and :func:`is_pure_optional()` returns True.
-    #: - If not empty :func:`is_sideffected()` returns true
+    #: - If not empty :func:`is_sfxed()` returns true
     #:   (the :attr:`sideffected`).
     sfx_list: Tuple[Union[str, None]]
     #: pre-calculated representation
@@ -110,13 +110,13 @@ class _Modifier(str):
             raise ValueError(
                 f"Invalid _Optional enum {optional!r}\n  locals={locals()}"
             )
-        if sideffected and is_sideffect(sideffected):
+        if sideffected and is_sfx(sideffected):
             raise ValueError(
                 f"`sideffected` cannot be sideffect, got {sideffected!r}"
                 f"\n  locals={locals()}"
             )
         double_sideffects = [
-            f"{type(i).__name__}({i!r})" for i in sfx_list if is_sideffect(i)
+            f"{type(i).__name__}({i!r})" for i in sfx_list if is_sfx(i)
         ]
         if double_sideffects:
             raise ValueError(
@@ -224,7 +224,7 @@ def is_varargish(dep) -> bool:
     return dep.optional in (_Optionals.vararg, _Optionals.vararg)
 
 
-def is_sideffect(dep) -> bool:
+def is_sfx(dep) -> bool:
     """
     Check if a dependency is :term:`sideffects` or :term:`sideffected`.
 
@@ -234,12 +234,12 @@ def is_sideffect(dep) -> bool:
     return getattr(dep, "sideffected", None)
 
 
-def is_pure_sideffect(dep) -> bool:
+def is_pure_sfx(dep) -> bool:
     """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
     return getattr(dep, "sideffected", None) and not getattr(dep, "sfx_list", None)
 
 
-def is_sideffected(dep) -> bool:
+def is_sfxed(dep) -> bool:
     """Check if it is :term:`sideffected`."""
     return getattr(dep, "sideffected", None) and getattr(dep, "sfx_list", None)
 
@@ -256,7 +256,7 @@ def dep_renamed(dep, ren):
         renamer = lambda n: ren
 
     if isinstance(dep, _Modifier):
-        old_name = dep.sideffected if is_sideffect(dep) else str(dep)
+        old_name = dep.sideffected if is_sfx(dep) else str(dep)
         new_name = renamer(old_name)
         dep = dep._withset(name=new_name)
     else:  # plain string
@@ -270,9 +270,7 @@ def dep_singularized(dep):
     Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
     """
     return (
-        (dep._withset(sfx_list=(s,)) for s in dep.sfx_list)
-        if is_sideffected(dep)
-        else (dep,)
+        (dep._withset(sfx_list=(s,)) for s in dep.sfx_list) if is_sfxed(dep) else (dep,)
     )
 
 
@@ -280,9 +278,9 @@ def dep_stripped(dep):
     """
     Return the :attr:`_Modifier.sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
 
-    preserving all other properties of the `sideffected`.
+    conveying all other properties of the original modifier to the stripped dependency.
     """
-    if is_sideffected(dep):
+    if is_sfxed(dep):
         dep = dep._withset(name=dep.sideffected, sideffected=None, sfx_list=())
     return dep
 
@@ -504,7 +502,7 @@ def varargs(name: str):
     return _Modifier(name, optional=_Optionals.varargs)
 
 
-def sideffect(name, optional: bool = None):
+def sfx(name, optional: bool = None):
     """
     :term:`sideffects` denoting modifications beyond the scope of the solution.
 
@@ -522,16 +520,16 @@ def sideffect(name, optional: bool = None):
       as *canceled* by returning it with a falsy value (operation must `returns dictionary`).
 
     .. hint::
-        If modifications involve some input/output, prefer the :func:`.sideffected`
+        If modifications involve some input/output, prefer the :func:`.sfxed`
         modifier.
 
         You may still convey this relationships by including the dependency name
         in the string - in the end, it's just a string - but no enforcement of any kind
         will happen from *graphtik*, like:
 
-        >>> from graphtik import sideffect
+        >>> from graphtik import sfx
 
-        >>> sideffect("price[sales_df]")
+        >>> sfx("price[sales_df]")
         sfx: 'price[sales_df]'
 
     **Example:**
@@ -540,9 +538,9 @@ def sideffect(name, optional: bool = None):
     outside `solution`:
 
 
-        >>> from graphtik import operation, compose, sideffect
+        >>> from graphtik import operation, compose, sfx
 
-        >>> @operation(provides=sideffect("lights off"))  # sideffect names can be anything
+        >>> @operation(provides=sfx("lights off"))  # sideffect names can be anything
         ... def close_the_lights():
         ...    pass
 
@@ -550,7 +548,7 @@ def sideffect(name, optional: bool = None):
         ...     close_the_lights,
         ...     operation(
         ...         name='undress',
-        ...         needs=[sideffect("lights off")],
+        ...         needs=[sfx("lights off")],
         ...         provides="body")(lambda: "TaDa!")
         ... )
         >>> graph
@@ -569,9 +567,9 @@ def sideffect(name, optional: bool = None):
     .. note::
         Something has to provide a sideffect for a function needing it to execute -
         this could be another operation, like above, or the user-inputs;
-        just specify some dummy value for the sideffect:
+        just specify some truthy value for the sideffect:
 
-            >>> sol = graph.compute({sideffect("lights off"): True})
+            >>> sol = graph.compute({sfx("lights off"): True})
 
         .. graphtik::
 
@@ -581,7 +579,7 @@ def sideffect(name, optional: bool = None):
     )
 
 
-def sideffected(
+def sfxed(
     dependency: str,
     sfx0: str,
     *sfx_list: str,
@@ -597,7 +595,7 @@ def sideffected(
         to behave always like kw-type arg, and to preserve fn-name if ever renamed.
         When not optional, if not given, it's all fine.
 
-    Like :func:`.sideffect` but annotating a *real* :term:`dependency` in the solution,
+    Like :func:`.sfx` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
     of the same function.
 
@@ -607,10 +605,10 @@ def sideffected(
     pandas dataframes (:gray:`emulated with dictionaries`):
 
 
-        >>> from graphtik import operation, compose, sideffected
+        >>> from graphtik import operation, compose, sfxed
 
         >>> @operation(needs="order_items",
-        ...            provides=sideffected("ORDER", "Items", "Prices"))
+        ...            provides=sfxed("ORDER", "Items", "Prices"))
         ... def new_order(items: list) -> "pd.DataFrame":
         ...     order = {"items": items}
         ...     # Pretend we get the prices from sales.
@@ -618,16 +616,16 @@ def sideffected(
         ...     return order
 
         >>> @operation(
-        ...     needs=[sideffected("ORDER", "Items"), "vat rate"],
-        ...     provides=sideffected("ORDER", "VAT")
+        ...     needs=[sfxed("ORDER", "Items"), "vat rate"],
+        ...     provides=sfxed("ORDER", "VAT")
         ... )
         ... def fill_in_vat(order: "pd.DataFrame", vat: float):
         ...     order['VAT'] = [i * vat for i in order['prices']]
         ...     return order
 
         >>> @operation(
-        ...     needs=[sideffected("ORDER", "Prices", "VAT")],
-        ...     provides=sideffected("ORDER", "Totals")
+        ...     needs=[sfxed("ORDER", "Prices", "VAT")],
+        ...     provides=sfxed("ORDER", "Totals")
         ... )
         ... def finalize_prices(order: "pd.DataFrame"):
         ...     order['totals'] = [p + v for p, v in zip(order['prices'], order['VAT'])]
@@ -687,7 +685,7 @@ def sideffected(
     )
 
 
-def sideffected_vararg(dependency: str, sfx0: str, *sfx_list: str):
+def sfxed_vararg(dependency: str, sfx0: str, *sfx_list: str):
     """Like :func:`sideffected` + :func:`vararg`. """
     return _Modifier(
         dependency,
@@ -697,7 +695,7 @@ def sideffected_vararg(dependency: str, sfx0: str, *sfx_list: str):
     )
 
 
-def sideffected_varargs(dependency: str, sfx0: str, *sfx_list: str):
+def sfxed_varargs(dependency: str, sfx0: str, *sfx_list: str):
     """Like :func:`sideffected` + :func:`varargs`. """
     return _Modifier(
         dependency,

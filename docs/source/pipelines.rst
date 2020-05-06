@@ -243,12 +243,12 @@ Advanced pipelines
 
 Depending on sideffects
 ^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.sideffect
+.. autofunction:: graphtik.modifiers.sfx
    :noindex:
 
 Modifying existing values in solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.sideffected
+.. autofunction:: graphtik.modifiers.sfxed
    :noindex:
 
 Resilience when operations fail (*endurance*)

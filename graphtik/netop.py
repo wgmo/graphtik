@@ -12,7 +12,7 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import UNSET, Items, PlotArgs, Plottable, aslist, astuple, jetsam
 from .config import is_debug, reset_abort
-from .modifiers import dep_renamed, optional, sideffect
+from .modifiers import dep_renamed, optional
 from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
 from .op import NULL_OP, FunctionalOperation, Operation, reparse_operation_data
 

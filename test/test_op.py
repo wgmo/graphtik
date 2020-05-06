@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import dill
 import pytest
 
-from graphtik import NO_RESULT, compose, operation, optional, sideffect, vararg, varargs
+from graphtik import NO_RESULT, compose, operation, optional, sfx, vararg, varargs
 from graphtik.config import (
     operations_endured,
     operations_reschedullled,
@@ -352,13 +352,11 @@ def test_as_renames(inp, exp):
             r"The `aliases` for ['a', 'b'] rename ['b'], not found in provides ['a']!",
         ),
         (
-            lambda: dict(
-                name="t", provides=sideffect("a"), aliases={sideffect("a"): 1}
-            ),
+            lambda: dict(name="t", provides=sfx("a"), aliases={sfx("a"): 1}),
             "must not contain `sideffects",
         ),
         (
-            lambda: dict(name="t", provides="a", aliases={"a": sideffect("AA")}),
+            lambda: dict(name="t", provides="a", aliases={"a": sfx("AA")}),
             "must not contain `sideffects",
         ),
     ],

@@ -37,7 +37,7 @@ from graphtik import (
     operations_reschedullled,
     tasks_marshalled,
 )
-from graphtik.modifiers import optional, sideffect, sideffected, vararg
+from graphtik.modifiers import optional, sfx, sfxed, vararg
 from graphtik.netop import NetworkOperation
 from graphtik.network import Solution
 from graphtik.op import Operation
@@ -891,12 +891,12 @@ def _box_increment(box):
 @pytest.fixture(params=[0, 1])
 def netop_sideffect1(request, exemethod) -> NetworkOperation:
     ops = [
-        operation(
-            name="extend", needs=["box", sideffect("a")], provides=[sideffect("b")]
-        )(_box_extend),
-        operation(
-            name="increment", needs=["box", sideffect("b")], provides=sideffect("c")
-        )(_box_increment),
+        operation(name="extend", needs=["box", sfx("a")], provides=[sfx("b")])(
+            _box_extend
+        ),
+        operation(name="increment", needs=["box", sfx("b")], provides=sfx("c"))(
+            _box_increment
+        ),
     ]
     if request.param:
         ops = reversed(ops)
@@ -929,7 +929,7 @@ def test_sideffect_no_real_data(netop_sideffect1: NetworkOperation):
         assert graph.compute(inp)
 
     with pytest.raises(ValueError, match="Unsolvable graph"):
-        graph.compute(inp, ["box", sideffect("b")])
+        graph.compute(inp, ["box", sfx("b")])
 
     with pytest.raises(ValueError, match="Unsolvable graph"):
         # Cannot run, since no sideffect inputs given.
@@ -940,19 +940,19 @@ def test_sideffect_no_real_data(netop_sideffect1: NetworkOperation):
     ## OK INPUT SIDEFFECTS
     #
     # ok, no asked out
-    sol = graph.compute({"box": [0], sideffect("a"): True})
-    assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3], sideffect("a"): True}
+    sol = graph.compute({"box": [0], sfx("a"): True})
+    assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3], sfx("a"): True}
     #
     # bad, not asked the out-sideffect
     with pytest.raises(ValueError, match="Unsolvable graph"):
-        graph.compute({"box": [0], sideffect("a"): True}, "box")
+        graph.compute({"box": [0], sfx("a"): True}, "box")
     #
     # ok, asked the 1st out-sideffect
-    sol = graph.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("b")])
+    sol = graph.compute({"box": [0], sfx("a"): True}, ["box", sfx("b")])
     assert sol == {"box": box_orig if sidefx_fail else [0, 1, 2]}
     #
     # ok, asked the 2nd out-sideffect
-    sol = graph.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
+    sol = graph.compute({"box": [0], sfx("a"): True}, ["box", sfx("c")])
     assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3]}
 
 
@@ -963,10 +963,8 @@ def test_sideffect_real_input(reverse, exemethod):
     )
 
     ops = [
-        operation(name="extend", needs=["box", "a"], provides=[sideffect("b")])(
-            _box_extend
-        ),
-        operation(name="increment", needs=["box", sideffect("b")], provides="c")(
+        operation(name="extend", needs=["box", "a"], provides=[sfx("b")])(_box_extend),
+        operation(name="increment", needs=["box", sfx("b")], provides="c")(
             _box_increment
         ),
     ]
@@ -994,7 +992,7 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
 
     netop = netop_sideffect1.withset(parallel=exemethod)
     box_orig = [0]
-    sol = netop.compute({"box": [0], sideffect("a"): True}, ["box", sideffect("c")])
+    sol = netop.compute({"box": [0], sfx("a"): True}, ["box", sfx("c")])
     assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3]}
     assert len(netop.last_plan.steps) == 4
 
@@ -1007,11 +1005,11 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
 def test_sideffect_NO_RESULT(caplog, exemethod):
     # NO_RESULT does not cancel sideffects unless op-rescheduled
     #
-    sfx = sideffect("b")
-    op1 = operation(lambda: NO_RESULT, name="do-SFX", provides=sfx)
-    op2 = operation(lambda: 1, name="ask-SFX", needs=sfx, provides="a")
+    an_sfx = sfx("b")
+    op1 = operation(lambda: NO_RESULT, name="do-SFX", provides=an_sfx)
+    op2 = operation(lambda: 1, name="ask-SFX", needs=an_sfx, provides="a")
     netop = compose("t", op1, op2, parallel=exemethod)
-    sol = netop.compute({}, outputs=sfx)
+    sol = netop.compute({}, outputs=an_sfx)
     assert op1 in sol.executed
     assert op2 not in sol.executed
     assert sol == {}
@@ -1030,88 +1028,95 @@ def test_sideffect_NO_RESULT(caplog, exemethod):
     sol = netop.compute({})
     assert op1 in sol.executed
     assert op2 not in sol.executed
-    assert sol == {sfx: False}
+    assert sol == {an_sfx: False}
     sol = netop.compute({}, outputs="a")
     assert op2 not in sol.executed
     assert op1 in sol.executed
-    assert sol == {}  # sfx evicted
+    assert sol == {}  # an_sfx evicted
 
     ## If NO_RESULT were not translated,
     #  a warning of unknown out might have emerged.
     caplog.clear()
-    netop = compose("t", operation(lambda: 1, provides=sfx), parallel=exemethod)
-    netop.compute({}, outputs=sfx)
+    netop = compose("t", operation(lambda: 1, provides=an_sfx), parallel=exemethod)
+    netop.compute({}, outputs=an_sfx)
     for record in caplog.records:
         if record.levelname == "WARNING":
             assert "Ignoring result(1) because no `provides`" in record.message
 
     caplog.clear()
-    netop = compose("t", operation(lambda: NO_RESULT, provides=sfx), parallel=exemethod)
-    netop.compute({}, outputs=sfx)
+    netop = compose(
+        "t", operation(lambda: NO_RESULT, provides=an_sfx), parallel=exemethod
+    )
+    netop.compute({}, outputs=an_sfx)
     for record in caplog.records:
         assert record.levelname != "WARNING"
 
 
 def test_sideffect_cancel_sfx_only_operation(exemethod):
-    sfx = sideffect("b")
+    an_sfx = sfx("b")
     op1 = operation(
-        lambda: {sfx: False},
+        lambda: {an_sfx: False},
         name="op1",
-        provides=sfx,
+        provides=an_sfx,
         returns_dict=True,
         rescheduled=True,
     )
-    op2 = operation(lambda: 1, name="op2", needs=sfx, provides="a")
+    op2 = operation(lambda: 1, name="op2", needs=an_sfx, provides="a")
     netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute({})
-    assert sol == {sfx: False}
-    sol = netop.compute(outputs=sfx)
-    assert sol == {sfx: False}
+    assert sol == {an_sfx: False}
+    sol = netop.compute(outputs=an_sfx)
+    assert sol == {an_sfx: False}
 
 
 def test_sideffect_cancel(exemethod):
-    sfx = sideffect("b")
+    an_sfx = sfx("b")
     op1 = operation(
-        lambda: {"a": 1, sfx: False},
+        lambda: {"a": 1, an_sfx: False},
         name="op1",
-        provides=["a", sfx],
+        provides=["a", an_sfx],
         returns_dict=True,
         rescheduled=True,
     )
-    op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
+    op2 = operation(lambda: 1, name="op2", needs=an_sfx, provides="b")
     netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute()
-    assert sol == {"a": 1, sfx: False}
+    assert sol == {"a": 1, an_sfx: False}
     sol = netop.compute(outputs="a")
-    assert sol == {"a": 1}  # sfx evicted
+    assert sol == {"a": 1}  # an_sfx evicted
     ## SFX both pruned & evicted
     #
-    assert sfx not in sol.dag.nodes
-    assert sfx in sol.plan.steps
+    assert an_sfx not in sol.dag.nodes
+    assert an_sfx in sol.plan.steps
 
 
 def test_sideffect_not_canceled_if_not_resched(exemethod):
     # Check op without any provides
     #
-    sfx = sideffect("b")
-    op1 = operation(lambda: {sfx: False}, name="op1", provides=sfx, returns_dict=True)
-    op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
+    an_sfx = sfx("b")
+    op1 = operation(
+        lambda: {an_sfx: False}, name="op1", provides=an_sfx, returns_dict=True
+    )
+    op2 = operation(lambda: 1, name="op2", needs=an_sfx, provides="b")
     netop = compose("t", op1, op2, parallel=exemethod)
     # sol = netop.compute()
-    # assert sol == {sfx: False, "b": 1}
+    # assert sol == {an_sfx: False, "b": 1}
     sol = netop.compute(outputs="b")
     assert sol == {"b": 1}
 
     # Check also op with some provides
     #
-    sfx = sideffect("b")
+    an_sfx = sfx("b")
     op1 = operation(
-        lambda: {"a": 1, sfx: False}, name="op1", provides=["a", sfx], returns_dict=True
+        lambda: {"a": 1, an_sfx: False},
+        name="op1",
+        provides=["a", an_sfx],
+        returns_dict=True,
     )
-    op2 = operation(lambda: 1, name="op2", needs=sfx, provides="b")
+    op2 = operation(lambda: 1, name="op2", needs=an_sfx, provides="b")
     netop = compose("t", op1, op2, parallel=exemethod)
     sol = netop.compute()
-    assert sol == {"a": 1, sfx: False, "b": 1}
+    assert sol == {"a": 1, an_sfx: False, "b": 1}
     sol = netop.compute(outputs="b")
     assert sol == {"b": 1}
 
@@ -1120,7 +1125,7 @@ def test_sideffect_not_canceled_if_not_resched(exemethod):
 def calc_prices_pipeline(request, exemethod):
     """A pipeline that may work even without VAT-rates."""
 
-    @operation(needs="order_items", provides=sideffected("ORDER", "Items", "Prices"))
+    @operation(needs="order_items", provides=sfxed("ORDER", "Items", "Prices"))
     def new_order(items: list) -> "pd.DataFrame":
         order = {"items": items}
         # Pretend we get the prices from sales.
@@ -1128,8 +1133,8 @@ def calc_prices_pipeline(request, exemethod):
         return order
 
     @operation(
-        needs=[sideffected("ORDER", "Items"), "vat rate"],
-        provides=sideffected("ORDER", "VAT rates"),
+        needs=[sfxed("ORDER", "Items"), "vat rate"],
+        provides=sfxed("ORDER", "VAT rates"),
     )
     def fill_in_vat_ratios(order: "pd.DataFrame", base_vat: float) -> "pd.DataFrame":
         order["VAT_rates"] = [
@@ -1138,11 +1143,8 @@ def calc_prices_pipeline(request, exemethod):
         return order
 
     @operation(
-        needs=[
-            sideffected("ORDER", "Prices"),
-            sideffected("ORDER", "VAT rates", optional=True),
-        ],
-        provides=[sideffected("ORDER", "VAT", "Totals"), "vat owed"],
+        needs=[sfxed("ORDER", "Prices"), sfxed("ORDER", "VAT rates", optional=True),],
+        provides=[sfxed("ORDER", "VAT", "Totals"), "vat owed"],
     )
     def finalize_prices(order: "pd.DataFrame") -> Tuple["pd.DataFrame", float]:
         if "VAT_rates" in order:
@@ -1177,7 +1179,7 @@ def test_sideffecteds_ok(calc_prices_pipeline):
         "vat owed": 1.44,
     }
     sol = calc_prices_pipeline.compute(
-        inp, [sideffected("ORDER", "VAT"), sideffected("ORDER", "Totals")]
+        inp, [sfxed("ORDER", "VAT"), sfxed("ORDER", "Totals")]
     )
     print(sol)
     assert sol == {
@@ -1207,8 +1209,8 @@ def test_sideffecteds_endured(calc_prices_pipeline):
     ## Break `fill_in_vat_ratios()`.
     #
     @operation(
-        needs=[sideffected("ORDER", "Items"), "vat rate"],
-        provides=sideffected("ORDER", "VAT rates"),
+        needs=[sfxed("ORDER", "Items"), "vat rate"],
+        provides=sfxed("ORDER", "VAT rates"),
         endured=True,
     )
     def fill_in_vat_ratios(order: "pd.DataFrame", base_vat: float) -> "pd.DataFrame":
@@ -1237,15 +1239,15 @@ def test_sideffecteds_endured(calc_prices_pipeline):
 
 @pytest.fixture(params=[0, 1])
 def sideffected_resched(request, exemethod):
-    @operation(provides=sideffected("DEP", "yes", "no"), rescheduled=1, returns_dict=1)
+    @operation(provides=sfxed("DEP", "yes", "no"), rescheduled=1, returns_dict=1)
     def half_sfx():
-        return {"DEP": 1, sideffected("DEP", "no"): False}
+        return {"DEP": 1, sfxed("DEP", "no"): False}
 
     yes = operation(
-        lambda dep: "yes!", name="YES", needs=sideffected("DEP", "yes"), provides="yes",
+        lambda dep: "yes!", name="YES", needs=sfxed("DEP", "yes"), provides="yes",
     )
     no = operation(
-        lambda dep: "no!", name="NO", needs=sideffected("DEP", "no"), provides="no",
+        lambda dep: "no!", name="NO", needs=sfxed("DEP", "no"), provides="no",
     )
     ops = [half_sfx, yes, no]
     if request.param:
@@ -1257,7 +1259,7 @@ def test_sideffected_canceled(sideffected_resched):
     """Check if a `returns-dict` op can cancel sideffecteds. """
     sol = sideffected_resched.compute({})
     print(sol)
-    assert sol == {"DEP": 1, sideffected("DEP", "no"): False, "yes": "yes!"}
+    assert sol == {"DEP": 1, sfxed("DEP", "no"): False, "yes": "yes!"}
 
 
 def test_optional_per_function_with_same_output(exemethod):
