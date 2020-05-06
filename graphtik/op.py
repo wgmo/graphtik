@@ -666,7 +666,7 @@ class FunctionalOperation(Operation, Plottable):
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         """Delegate to a provisional network with a single op . """
-        from .netop import compose
+        from .pipeline import compose
         from .plot import graphviz_html_string
 
         is_user_label = bool(plot_args.graph and plot_args.graph.get("graphviz.label"))

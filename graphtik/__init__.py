@@ -48,7 +48,7 @@ from .modifiers import (
     vararg,
     varargs,
 )
-from .netop import compose
+from .pipeline import compose
 from .op import NULL_OP, operation
 
 ## SEE ALSO: `.plot.active_plotter_plugged()`, `.plot.set_active_plotter()` &

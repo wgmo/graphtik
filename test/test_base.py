@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from graphtik import base, network, op, operation
-from graphtik.netop import NetworkOperation
+from graphtik.pipeline import NetworkOperation
 from graphtik.execution import ExecutionPlan, Solution, _OpTask
 
 

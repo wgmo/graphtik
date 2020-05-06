@@ -611,7 +611,7 @@ def build_network(
     """The :term:`network` factory that does :term:`operation merging` before constructing it. """
     from boltons.setutils import IndexedSet as iset
     from .op import NULL_OP
-    from .netop import NetworkOperation
+    from .pipeline import NetworkOperation
 
     def proc_op(op, parent=None):
         """clone FuncOperation with certain props changed"""
