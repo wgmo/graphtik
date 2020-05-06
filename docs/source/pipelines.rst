@@ -132,7 +132,8 @@ with other operations and/or pipelines.
 There are 2 ways to combine operations together, :term:`merging
 <operation merging>` (the default) and :term:`nesting <operation nesting>`.
 
-.. _merging-operations:
+
+.. _operation-merging:
 
 Merging
 ^^^^^^^
@@ -178,6 +179,8 @@ operation under the same name, "sleep":
     :graphvar: weekday
 
 
+.. _operation-nesting:
+
 Nesting
 ^^^^^^^
 Other times we want preserve all the operations composed, regardless of clashes
@@ -203,7 +206,7 @@ We do that by passing a :func:`.callable` as the ``nest`` parameter,
 which will decide which of the nodes of the original pipeline, both operations & data,
 should be prefixed (see :func:`.compose` for the exact specs of that param):
 
-    >>> def rename_predicate(node):
+    >>> def rename_predicate(p, node, parent):
     ...     if node not in ("backlog", "tasks done", "todos"):
     ...         return True
 

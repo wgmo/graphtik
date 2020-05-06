@@ -281,7 +281,7 @@ def test_network_plan_execute():
 
 
 def test_network_nest_ops_only():
-    def ops_only(n):
+    def ops_only(t, n, p):
         return isinstance(n, Operation)
 
     sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
@@ -397,7 +397,7 @@ def test_network_merge_in_doctests():
     week = compose("week", *weekdays, nest=True)
     assert len(week.ops) == 6
 
-    def rename_predicate(node):
+    def rename_predicate(typ, node, parent):
         if node not in ("backlog", "tasks done", "todos"):
             return True
 
@@ -1623,7 +1623,7 @@ def test_combine_networks(exemethod, bools):
             name="sub2", needs=["a_minus_ab", "c"], provides="a_minus_ab_minus_c"
         )(sub),
         parallel=parallel2,
-        nest=lambda n: isinstance(n, Operation),
+        nest=lambda t, n, p: isinstance(n, Operation),
     )
     ## Ensure all old-nodes were prefixed.
     #

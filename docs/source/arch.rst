@@ -67,11 +67,16 @@ Architecture
             with the operations added earlier in the ``.compose()`` call
             (further to the left) winning over those added later (further to the right).
 
+            :seealso: :ref:`operation-merging`
+
         nesting
             the original pipelines are preserved intact in "isolated" clusters,
             by prefixing the names of their operations (and optionally data)
             by the name of the respective original pipeline that contained them
             (or the user defines the renames).
+
+            :seealso: :ref:`operation-nesting`, :func:`.nest_any_node()`,
+                :func:`.dep_renamed()`, :attr:`.PlotArgs.clusters`
 
     compile
     compilation

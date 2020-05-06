@@ -40,13 +40,12 @@ def _make_network(
         """clone FuncOperation with certain props changed"""
         assert isinstance(op, FunctionalOperation), op
 
-        nest_is_callable = callable(nest)
         ## Convey any node-props specified in the netop here
         #  to all sub-operations.
         #
         if (
             node_props
-            or (nest and (parent or nest_is_callable))
+            or (nest and parent)
             or rescheduled is not None
             or endured is not None
             or parallel is not None
@@ -70,27 +69,38 @@ def _make_network(
             ## If `nest`, rename the op & data (predicated by `nest`)
             #  by prefixing them with their parent netop.
             #
-            if nest and (parent or nest_is_callable):
-
-                def renamer(name):
-                    prefixed = f"{parent}.{name}"
-                    if nest_is_callable:
-                        new_name = nest(name)
-                        if new_name in (True, False, None):
-                            new_name = prefixed if new_name else name
-                    else:
-                        new_name = prefixed if nest else name
-
-                    return new_name
-
-                # TODO: DROP op.parent; name actually decides nesting.
-                kw["parents"] = (parent,) + (op.parents or ())
-                kw["needs"] = [dep_renamed(n, renamer) for n in op.needs]
-                kw["provides"] = [dep_renamed(n, renamer) for n in op.provides]
+            if nest:
+                kw["name"] = node_renamed("operation", op, parent)
+                kw["needs"] = [node_renamed("needs", n, parent) for n in op.needs]
+                kw["provides"] = [
+                    node_renamed("provides", n, parent) for n in op.provides
+                ]
 
             op = op.withset(**kw)
 
         return op
+
+    def node_renamed(typ, node, parent) -> str:
+        """Handle user's or default `nest` callable's results."""
+        assert callable(nest), (nest, operations)
+
+        ret = nest(typ, node, parent)
+
+        if not ret:
+            # A falsy means don't touch the node.
+            return node.name if isinstance(node, Operation) else node
+
+        if not isinstance(ret, str):
+            # Truthy but not str values mean nest!
+            ret = nest_any_node(typ, node, parent)
+
+        return ret
+
+    ## Set default nesting if requested by user.
+    #
+    if nest:
+        if not callable(nest):
+            nest = nest_any_node
 
     merge_set = iset()  # Preseve given node order.
     for op in operations:
@@ -424,17 +434,32 @@ def compose(
         Each argument should be an operation instance created using
         ``operation``.
     :param nest:
-        - If false (default), applies :term:`operation merging`;
-        - if true, applies :term:`operation nesting` to all nodes (ops + data);
-        - if it is :func:`.callable`, it is given each node before merging to decide
-          its new name, or if it should be prefixed by the parent pipeline (or not)
-          by returning one of ``(str, None, True, False)``.
+        - If false (default), applies :term:`operation merging`, not *nesting*.
+        - if true, applies :term:`operation nesting` to :class:`.FunctionalOperation`\\s
+          only (performed by :func:`.op.nest_any_node()`;
+        - if it is :func:`.callable`, it is given each node and the parent pipeline
+          (if combining pipeline(s)) to decide the node's name.
+
+          The callable may return the new-name (str), or a true/false to apply
+          the default renaming which is to rename all nodes (as performed by
+          :func:`.op.nest_any_node()`).
 
           For example, to nest just the operations, call::
 
-              compose(..., nest=lambda n: isinstance(n, Operation))
+              compose(
+                  ...,
+                  nest=lambda typ, node, parent: isinstance(n, Operation)
+              )
 
-          :seealso: :func:`.dep_renamed`
+          ...where `typ` is one of ``(operation | needs | provides)`` strings.
+
+          Of course the callable can apply a renaming irrelevant from the `parent`.
+
+          .. Attention::
+              The callable must preserve any :term:`modifier` on data nodes,
+              so :func:`.dep_renamed` should be used.
+
+          :seealso: :ref:`operation-nesting` for examples
 
     :param rescheduled:
         applies :term:`reschedule`\\d to all contained `operations`
@@ -472,3 +497,24 @@ def compose(
         nest=nest,
         node_props=node_props,
     )
+
+
+def nest_any_node(
+    node_type: str, node: Union[Operation, str], parent: NetworkOperation
+) -> str:
+    """Nest both operation & data `node` under `parent` (if given).
+
+    :return:
+        the nested name of the operation or data
+    """
+
+    def prefixed(name):
+        return f"{parent}.{name}" if parent else name
+
+    if isinstance(node, Operation):
+        new_name = prefixed(node.name)
+    else:
+        assert isinstance(node, str), locals()
+        new_name = dep_renamed(node, prefixed)
+
+    return new_name

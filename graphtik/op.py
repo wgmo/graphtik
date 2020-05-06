@@ -205,7 +205,6 @@ class FunctionalOperation(Operation, Plottable):
         provides: Items = None,
         aliases: Mapping = None,
         *,
-        parents: Tuple = None,
         rescheduled=None,
         endured=None,
         parallel=None,
@@ -224,10 +223,6 @@ class FunctionalOperation(Operation, Plottable):
 
         if fn and not callable(fn):
             raise TypeError(f"Operation was not provided with a callable: {fn}")
-        if parents and not isinstance(parents, tuple):
-            raise TypeError(
-                f"Operation `parents` must be tuple, was {type(parents).__name__!r}: {parents}"
-            )
         if node_props is not None and not isinstance(node_props, cabc.Mapping):
             raise TypeError(
                 f"Operation `node_props` must be a dict, was {type(node_props).__name__!r}: {node_props}"
@@ -235,8 +230,6 @@ class FunctionalOperation(Operation, Plottable):
 
         if name is None and fn:
             name = func_name(fn, None, mod=0, fqdn=0, human=0, partials=1)
-        if name is not None:
-            name = ".".join(str(pop) for pop in ((parents or ()) + (name,)))
         ## Overwrite reparsed op-data.
         name, needs, provides = reparse_operation_data(name, needs, provides)
 
@@ -275,7 +268,8 @@ class FunctionalOperation(Operation, Plottable):
         #: The :term:`operation`'s underlying function.
         self.fn = fn
         #: a name for the operation (e.g. `'conv1'`, `'sum'`, etc..);
-        #: it will be prefixed by `parents`.
+        #: any "parents split by dots(``.``)".
+        #: :seealso: :ref:`operation-nesting`
         self.name = name
 
         #: The :term:`needs` almost as given by the user
@@ -308,9 +302,6 @@ class FunctionalOperation(Operation, Plottable):
         #:
         #: You cannot alias an :term:`alias`.
         self.aliases = aliases
-        #: a tuple wth the names of the parents, prefixing `name`,
-        #: but also kept for equality/hash check.
-        self.parents = parents
         #: If true, underlying *callable* may produce a subset of `provides`,
         #: and the :term:`plan` must then :term:`reschedule` after the operation
         #: has executed.  In that case, it makes more sense for the *callable*
@@ -341,15 +332,12 @@ class FunctionalOperation(Operation, Plottable):
         self.node_props = node_props
 
     def __eq__(self, other):
-        """Operation identity is based on `name` and `parents`."""
-        return bool(
-            self.name == getattr(other, "name", UNSET)
-            and self.parents == getattr(other, "parents", UNSET)
-        )
+        """Operation identity is based on `name`."""
+        return bool(self.name == getattr(other, "name", UNSET))
 
     def __hash__(self):
-        """Operation identity is based on `name` and `parents`."""
-        return hash(self.name) ^ hash(self.parents)
+        """Operation identity is based on `name`."""
+        return hash(self.name)
 
     def __repr__(self):
         """
@@ -859,11 +847,11 @@ class NULL_OP(FunctionalOperation):
     """
     Eliminates same-named operations added later during term:`operation merging`.
 
-    :seealso: :ref:`merging-operations`
+    :seealso: :ref:`operation-merging`
     """
 
-    def __init__(self, name, parents=None):
-        super().__init__(name=name, parents=parents)
+    def __init__(self, name):
+        super().__init__(name=name)
 
     def compute(self, *args, **kw):
         raise AssertionError("Should have been eliminated!")

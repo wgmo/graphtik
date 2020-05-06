@@ -26,17 +26,17 @@ from graphtik.op import (
 )
 
 
-@pytest.fixture(params=[None, ["some"]])
+@pytest.fixture(params=[None, "got"])
 def opname(request):
     return request.param
 
 
-@pytest.fixture(params=[None, ["some"]])
+@pytest.fixture(params=[None, "some"])
 def opneeds(request):
     return request.param
 
 
-@pytest.fixture(params=[None, ["some"]])
+@pytest.fixture(params=[None, "stuff"])
 def opprovides(request):
     return request.param
 
@@ -150,10 +150,6 @@ def test_func_op_validation(opargs, exp):
             {"node_props": "ab"},
             TypeError("node_props` must be a dict, was 'str':"),
         ),
-        ((), {"parents": []}, None),
-        ((), {"parents": ["gg"]}, TypeError("parents` must be tuple, was 'list':")),
-        ((), {"parents": 3.14}, TypeError("parents` must be tuple, was 'float':")),
-        ((), {"parents": "gg"}, TypeError("parents` must be tuple, was 'str':")),
     ],
 )
 def test_func_op_init(args, kw, exp):
