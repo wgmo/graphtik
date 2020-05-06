@@ -39,9 +39,15 @@ Architecture
             graphtik.op.FunctionalOperation
             graphtik.netop.NetworkOperation
             graphtik.network.Network
-            graphtik.network.ExecutionPlan
-            graphtik.network.Solution
+            graphtik.execution.ExecutionPlan
+            graphtik.execution.Solution
 
+        ... plus those for `plotting`:
+
+        .. autosummary::
+
+            graphtik.plot.Plotter
+            graphtik.plot.Theme
 
     compose
     composition
@@ -144,7 +150,7 @@ Architecture
 
     unsatisfied operation
         The core of `pruning` & `rescheduling`, performed by
-        :func:`.network._unsatisfied_operations()` function, which collects
+        :func:`.network.unsatisfied_operations()` function, which collects
         all `operation`\s with unreachable `dependencies <dependency>`:
 
         - they have `needs` that do not correspond to any of the given `inputs` or
@@ -461,6 +467,7 @@ Architecture
             :end-before: .. serve-sphinx-warn-end
 
     plotter
+    plotting
         A :class:`.Plotter` is responsible for rendering `plottable`\s as images.
         It is the `active plotter` that does that, unless overridden in a
         :meth:`.Plottable.plot()` call.

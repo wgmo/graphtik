@@ -11,7 +11,7 @@ __uri__ = "https://github.com/pygraphkit/graphtik"
 __author__ = "hnguyen, ankostis"
 
 
-from .base import NO_RESULT
+from .base import NO_RESULT, AbortedException, IncompleteExecutionError
 from .config import (
     abort_run,
     debug_enabled,
@@ -38,20 +38,18 @@ from .config import (
     tasks_in_parallel,
     tasks_marshalled,
 )
-
-## SEE ALSO: `.plot.active_plotter_plugged()`, `.plot.set_active_plotter()` &
-#  `.plot.get_active_plotter()` configs, not imported, unless plot is needed..
-
 from .modifiers import (
     mapped,
     optional,
-    vararg,
-    varargs,
     sfx,
     sfxed,
     sfxed_vararg,
     sfxed_varargs,
+    vararg,
+    varargs,
 )
 from .netop import compose
-from .network import AbortedException, IncompleteExecutionError
-from .op import operation, NULL_OP
+from .op import NULL_OP, operation
+
+## SEE ALSO: `.plot.active_plotter_plugged()`, `.plot.set_active_plotter()` &
+#  `.plot.get_active_plotter()` configs, not imported, unless plot is needed..

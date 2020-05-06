@@ -37,9 +37,9 @@ from graphtik import (
     operations_reschedullled,
     tasks_marshalled,
 )
+from graphtik.execution import Solution
 from graphtik.modifiers import optional, sfx, sfxed, vararg
 from graphtik.netop import NetworkOperation
-from graphtik.network import Solution
 from graphtik.op import Operation
 
 log = logging.getLogger(__name__)

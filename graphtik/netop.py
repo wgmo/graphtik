@@ -7,13 +7,9 @@ import re
 from collections import abc
 from typing import Any, Callable, Collection, List, Mapping, Union
 
-import networkx as nx
-from boltons.setutils import IndexedSet as iset
-
 from .base import UNSET, Items, PlotArgs, Plottable, aslist, astuple, jetsam
 from .config import is_debug, reset_abort
 from .modifiers import dep_renamed, optional
-from .network import ExecutionPlan, Network, NodePredicate, Solution, yield_ops
 from .op import NULL_OP, FunctionalOperation, Operation, reparse_operation_data
 
 log = logging.getLogger(__name__)
@@ -36,6 +32,9 @@ def _make_network(
     nest=None,
     node_props=None,
 ):
+    from boltons.setutils import IndexedSet as iset
+    from .network import Network, yield_ops
+
     def proc_op(op, parent=None):
         """clone FuncOperation with certain props changed"""
         assert isinstance(op, FunctionalOperation), op
@@ -143,7 +142,7 @@ class NetworkOperation(Operation, Plottable):
         name,
         *,
         outputs=None,
-        predicate: NodePredicate = None,
+        predicate: "NodePredicate" = None,
         rescheduled=None,
         endured=None,
         parallel=None,
@@ -177,6 +176,8 @@ class NetworkOperation(Operation, Plottable):
         """
         Display more informative names for the Operation class
         """
+        from .network import yield_ops
+
         clsname = type(self).__name__
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
@@ -191,12 +192,14 @@ class NetworkOperation(Operation, Plottable):
     @property
     def ops(self) -> List[Operation]:
         """A new list with all :term:`operation`\\s contained in the :term:`network`."""
+        from .network import yield_ops
+
         return list(yield_ops(self.net.graph))
 
     def withset(
         self,
         outputs: Items = UNSET,
-        predicate: NodePredicate = UNSET,
+        predicate: "NodePredicate" = UNSET,
         *,
         name=None,
         rescheduled=None,
@@ -241,6 +244,8 @@ class NetworkOperation(Operation, Plottable):
                 *Unknown output nodes: ...*
 
         """
+        from .network import yield_ops
+
         outputs = self.outputs if outputs == UNSET else outputs
         predicate = self.predicate if predicate == UNSET else predicate
 
@@ -294,8 +299,8 @@ class NetworkOperation(Operation, Plottable):
         return plot_args
 
     def compile(
-        self, inputs=None, outputs=UNSET, predicate: NodePredicate = UNSET
-    ) -> ExecutionPlan:
+        self, inputs=None, outputs=UNSET, predicate: "NodePredicate" = UNSET
+    ) -> "ExecutionPlan":
         """
         Produce a :term:`plan` for the given args or `outputs`/`predicate` narrowed earlier.
 
@@ -338,8 +343,8 @@ class NetworkOperation(Operation, Plottable):
         self,
         named_inputs: Mapping = UNSET,
         outputs: Items = UNSET,
-        predicate: NodePredicate = UNSET,
-    ) -> Solution:
+        predicate: "NodePredicate" = UNSET,
+    ) -> "Solution":
         """
         Compile a plan & :term:`execute` the graph, sequentially or parallel.
 
@@ -399,7 +404,7 @@ class NetworkOperation(Operation, Plottable):
             jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
             raise
 
-    def __call__(self, **input_kwargs) -> Solution:
+    def __call__(self, **input_kwargs) -> "Solution":
         """
         Delegates to :meth:`compute()`, respecting any narrowed `outputs`.
         """

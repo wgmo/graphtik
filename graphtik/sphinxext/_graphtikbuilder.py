@@ -16,7 +16,7 @@ from sphinx.util import logging
 
 from ..base import Plottable
 from ..config import is_debug
-from ..network import Solution
+from ..execution import Solution
 from . import doctestglobs, dynaimage, graphtik_node
 
 PlottableType = Union[None, Plottable, pydot.Dot]

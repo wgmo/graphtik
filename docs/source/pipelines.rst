@@ -304,7 +304,7 @@ You may still abort on failures, later, by raising an appropriate exception from
     >>> sol.scream_if_incomplete()
     Traceback (most recent call last):
     ...
-    graphtik.network.IncompleteExecutionError:
+    graphtik.base.IncompleteExecutionError:
     Not completed x2 operations ['exercise', 'get_out'] due to x1 failures and x0 partial-ops:
       +--get_out: ValueError('Quarantined!')
 

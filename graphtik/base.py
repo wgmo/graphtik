@@ -31,6 +31,31 @@ class MultiValueError(ValueError):
         return str(self.args[0])  # pylint: disable=unsubscriptable-object
 
 
+class AbortedException(Exception):
+    """
+    Raised from Network when :func:`.abort_run()` is called, and contains the solution ...
+
+    with any values populated so far.
+    """
+
+
+class IncompleteExecutionError(Exception):
+    """
+    Error report when any `netop` operations were canceled/failed.
+
+    The exception contains 3 arguments:
+
+    1. the causal errors and conditions (1st arg),
+    2. the list of collected exceptions (2nd arg), and
+    3. the solution instance (3rd argument), to interrogate for more.
+
+    Returned by :meth:`.check_if_incomplete()` or raised by :meth:`.scream_if_incomplete()`.
+    """
+
+    def __str__(self):
+        return self.args[0]  # pylint: disable=unsubscriptable-object
+
+
 class Token(str):
     """Guarantee equality, not(!) identity, across processes."""
 

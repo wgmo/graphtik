@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-Plotting of graph graphs handled by :term:`active plotter` (see also :mod:`.base`).
+:term:`plotting` handled by the :term:`active plotter` & :term:`current theme`.
 
 Separate from `graphtik.base` to avoid too many imports too early.
 
@@ -44,16 +44,14 @@ from boltons.iterutils import default_enter, default_exit, get_path, remap
 
 from .base import PlotArgs, func_name, func_source
 from .config import (
+    first_solid,
     is_debug,
     is_endure_operations,
     is_marshal_tasks,
     is_parallel_tasks,
     is_reschedule_operations,
-    first_solid,
 )
 from .modifiers import is_mapped, is_sfx, is_sfxed
-from .netop import NetworkOperation
-from .network import ExecutionPlan, Network, Solution, _EvictInstruction
 from .op import Operation
 
 log = logging.getLogger(__name__)
@@ -1002,6 +1000,8 @@ class Plotter:
         return StylesStack(plot_args, [], ignore_errors=ignore_errors)
 
     def plot(self, plot_args: PlotArgs):
+        from .execution import Solution
+
         plot_args = plot_args.with_defaults(
             # Don't leave `solution` unassigned
             solution=isinstance(plot_args.plottable, Solution)
@@ -1114,7 +1114,7 @@ class Plotter:
 
         3. Set tooltips with the solution-values for data-nodes.
         """
-        from .op import Operation
+        from .execution import ExecutionPlan, Solution
 
         theme = plot_args.theme
         graph = plot_args.graph

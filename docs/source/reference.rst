@@ -9,6 +9,7 @@ API Reference
      graphtik.modifiers
      graphtik.netop
      graphtik.network
+     graphtik.execution
      graphtik.plot
      graphtik.config
      graphtik.base
@@ -41,6 +42,15 @@ Module: `network`
 =================
 
 .. automodule:: graphtik.network
+     :members:
+     :private-members:
+     :special-members:
+     :undoc-members:
+
+Module: `execution`
+===================
+
+.. automodule:: graphtik.execution
      :members:
      :private-members:
      :special-members:
