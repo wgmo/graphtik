@@ -1,6 +1,8 @@
 # Copyright 2020-2020, Kostis Anagnostopoulos;
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""Extends Sphinx with :rst:dir:`graphtik` directive rendering plots from doctest code."""
+"""
+Extends Sphinx with :rst:dir:`graphtik` directive for :term:`plotting <plotter>` from doctest code.
+"""
 import collections.abc as cabc
 import itertools as itt
 import os

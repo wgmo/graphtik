@@ -1,6 +1,6 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""About :term:`network operation`\\s (those based on graphs)"""
+""":term:`composition` and :term:`operation merging` into :term:`pipeline`\\s. """
 
 import logging
 import re

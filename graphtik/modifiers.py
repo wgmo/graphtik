@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-A :term:`modifier` change :term:`dependency` behavior during :term:`compilation` or :term:`execution`.
+:term:`modifier`\\s change :term:`dependency` behavior during :term:`compilation` & :term:`execution`.
 
 The `needs` and `provides` annotated with *modifiers* designate, for instance,
 :term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
