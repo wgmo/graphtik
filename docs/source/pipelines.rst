@@ -129,9 +129,8 @@ Extending pipelines
 Sometimes we begin with existing computation graph(s) to which we want to extend
 with other operations and/or pipelines.
 
-There are 2 ways to combine operations together, :term:`merging
+There are 2 ways to :term:`combine pipelines` together, :term:`merging
 <operation merging>` (the default) and :term:`nesting <operation nesting>`.
-
 
 .. _operation-merging:
 
@@ -202,12 +201,12 @@ Let's suppose we want to break the isolation, and have all sub-pipelines
 consume & produce from a common "backlog" (n.b. in real life, we would have
 a "feeder" & "collector" operations).
 
-We do that by passing a :func:`.callable` as the ``nest`` parameter,
-which will decide which of the nodes of the original pipeline, both operations & data,
-should be prefixed (see :func:`.compose` for the exact specs of that param):
+We do that by passing as the ``nest`` parameter a :func:`.callable` which will decide
+which names of the original pipeline (operations & dependencies) should be prefixed
+(see also :func:`.compose` & :class:`.NestArgs` for how to use that param):
 
-    >>> def rename_predicate(p, node, parent):
-    ...     if node not in ("backlog", "tasks done", "todos"):
+    >>> def rename_predicate(nest_args):
+    ...     if nest_args.name not in ("backlog", "tasks done", "todos"):
     ...         return True
 
     >>> week = compose("week", *weekdays, nest=rename_predicate)

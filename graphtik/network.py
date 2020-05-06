@@ -6,7 +6,17 @@
 import logging
 from collections import abc, defaultdict
 from itertools import count
-from typing import Any, Callable, Collection, List, Mapping, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    List,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -599,6 +609,20 @@ class Network(Plottable):
         return plan
 
 
+class NestArgs(NamedTuple):
+    """:term:`operation nesting` callables receive instances of this class."""
+
+    #: the parent :class:`.NetworkOperation` of the operation currently being processed
+    parent: "NetworkOperation"
+    #: what is currently being renamed,
+    #: one of the string: ``(op | needs | provides)``
+    typ: str
+    #: the operation currently being processed
+    op: Operation
+    # the name of the item to be renamed/nested
+    name: str
+
+
 def build_network(
     operations,
     rescheduled=None,
@@ -608,7 +632,12 @@ def build_network(
     nest=None,
     node_props=None,
 ):
-    """The :term:`network` factory that does :term:`operation merging` before constructing it. """
+    """
+    The :term:`network` factory that does :term:`operation merging` before constructing it.
+
+    :param nest:
+        see same-named param in :func:`.compose`
+    """
     from boltons.setutils import IndexedSet as iset
     from .op import NULL_OP
     from .pipeline import NetworkOperation
@@ -622,7 +651,7 @@ def build_network(
         #
         if (
             node_props
-            or (nest and parent)
+            or nest
             or rescheduled is not None
             or endured is not None
             or parallel is not None
@@ -646,43 +675,51 @@ def build_network(
             ## If `nest`, rename the op & data (predicated by `nest`)
             #  by prefixing them with their parent netop.
             #
+            nest_args = NestArgs(parent, op, None, None)
             if nest:
-                kw["name"] = node_renamed("operation", op, parent)
-                kw["needs"] = [node_renamed("needs", n, parent) for n in op.needs]
+                kw["name"] = rename(nest_args._replace(typ="op", name=op.name))
+                kw["needs"] = [
+                    rename(nest_args._replace(typ="needs", name=n)) for n in op.needs
+                ]
                 kw["provides"] = [
-                    node_renamed("provides", n, parent) for n in op.provides
+                    rename(nest_args._replace(typ="provides", name=n))
+                    for n in op.provides
                 ]
 
             op = op.withset(**kw)
 
         return op
 
-    def node_renamed(typ, node, parent) -> str:
+    def rename(nest_args: NestArgs) -> str:
         """Handle user's or default `nest` callable's results."""
-        assert callable(nest), (nest, operations)
+        assert callable(nest), (nest, nest_args)
 
-        ret = nest(typ, node, parent)
+        ok = False
+        try:
+            ret = nest(nest_args)
+            if not ret:
+                # A falsy means don't touch the node.
+                ret = nest_args.name
+            elif not isinstance(ret, str):
+                # Truthy but not str values mean apply default nesting.
+                ret = nest_any_node(nest_args)
 
-        if not ret:
-            # A falsy means don't touch the node.
-            return node.name if isinstance(node, Operation) else node
+            ok = True
+            return ret
+        finally:
+            if not ok:
+                log.warning("Failed to nest-rename %s", nest_args)
 
-        if not isinstance(ret, str):
-            # Truthy but not str values mean nest!
-            ret = nest_any_node(typ, node, parent)
-
-        return ret
-
-    ## Set default nesting if requested by user.
-    #
     if nest:
+        ## Set default nesting if not one provided by user.
+        #
         if not callable(nest):
             nest = nest_any_node
 
     merge_set = iset()  # Preseve given node order.
     for op in operations:
         if isinstance(op, NetworkOperation):
-            merge_set.update(proc_op(s, op.name) for s in yield_ops(op.net.graph))
+            merge_set.update(proc_op(s, op) for s in yield_ops(op.net.graph))
         else:
             merge_set.add(proc_op(op))
     merge_set = iset(i for i in merge_set if not isinstance(i, NULL_OP))
@@ -693,22 +730,18 @@ def build_network(
     return net
 
 
-def nest_any_node(
-    node_type: str, node: Union[Operation, str], parent: "NetworkOperation"
-) -> str:
-    """Nest both operation & data `node` under `parent` (if given).
+def nest_any_node(nest_args: NestArgs) -> str:
+    """Nest both operation & data under `parent`'s name (if given).
 
     :return:
         the nested name of the operation or data
     """
 
     def prefixed(name):
-        return f"{parent}.{name}" if parent else name
+        return f"{nest_args.parent.name}.{name}" if nest_args.parent else name
 
-    if isinstance(node, Operation):
-        new_name = prefixed(node.name)
-    else:
-        assert isinstance(node, str), locals()
-        new_name = dep_renamed(node, prefixed)
-
-    return new_name
+    return (
+        prefixed(nest_args.name)
+        if nest_args.typ == "op"
+        else dep_renamed(nest_args.name, prefixed)
+    )

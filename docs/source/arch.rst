@@ -61,28 +61,33 @@ Architecture
             - Use :func:`.compose()` factory to build :class:`.NetworkOperation`
               instances (a.k.a. pipelines).
 
-    operation merging
-    operation nesting
+    combine pipelines
         When `operation`\s and/or `pipeline`\s are `compose`\d together, there are
-        two ways to combine the operations contained into the new pipeline,
-        controlled by the ``nest`` parameter of :func:`.compose()` factory
-        :small:`(read its docstring for details on the accepted values)`:
+        two ways to combine the operations contained into the new pipeline:
+        `operation merging` (default) and `operation nesting`.
 
-        merging
-            (default) any identically-named operations override each other,
-            with the operations added earlier in the ``.compose()`` call
-            (further to the left) winning over those added later (further to the right).
+        They are selected by the ``nest`` functional parameter of :func:`.compose()`
+        factory.
 
-            :seealso: :ref:`operation-merging`
+    operation merging
+        The default method to `combine pipelines`, also applied when simply merging `operation`\s.
 
-        nesting
-            the original pipelines are preserved intact in "isolated" clusters,
-            by prefixing the names of their operations (and optionally data)
-            by the name of the respective original pipeline that contained them
-            (or the user defines the renames).
+        Any identically-named operations override each other,
+        with the operations added earlier in the ``.compose()`` call
+        (further to the left) winning over those added later (further to the right).
 
-            :seealso: :ref:`operation-nesting`, :func:`.nest_any_node()`,
-                :func:`.dep_renamed()`, :attr:`.PlotArgs.clusters`
+        :seealso: :ref:`operation-merging`
+
+    operation nesting
+        The elaborate method to `combine pipelines` forming *clusters*.
+
+        The original pipelines are preserved intact in "isolated" clusters,
+        by prefixing the names of their operations (and optionally data)
+        by the name of the respective original pipeline that contained them
+        (or the user defines the renames).
+
+        :seealso: :ref:`operation-nesting`, :func:`.compose`, :class:`.NestArgs`,
+            :func:`.nest_any_node()`, :func:`.dep_renamed()`, :attr:`.PlotArgs.clusters`
 
     compile
     compilation

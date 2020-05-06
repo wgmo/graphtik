@@ -331,7 +331,7 @@ def compose(
     endured=None,
     parallel=None,
     marshalled=None,
-    nest: Union[Callable[[str], str], Union[bool, str]] = None,
+    nest: Union[Callable[["NestArgs"], str], Union[bool, str]] = None,
     node_props=None,
 ) -> NetworkOperation:
     """
@@ -350,29 +350,26 @@ def compose(
         ``operation``.
     :param nest:
         - If false (default), applies :term:`operation merging`, not *nesting*.
-        - if true, applies :term:`operation nesting` to :class:`.FunctionalOperation`\\s
-          only (performed by :func:`.op.nest_any_node()`;
-        - if it is :func:`.callable`, it is given each node and the parent pipeline
-          (if combining pipeline(s)) to decide the node's name.
+        - if true, applies :term:`operation nesting` to :all types of nodes
+          (performed by :func:`.nest_any_node()`;
+        - if it is a :func:`.callable`, it is given a :class:`.NestArgs` instance
+          to decide the node's name.
 
-          The callable may return the new-name (str), or a true/false to apply
-          the default renaming which is to rename all nodes (as performed by
-          :func:`.op.nest_any_node()`).
+          The callable may return a *str* for the new-name, or any other true/false
+          to apply default nesting which is to rename all nodes, as performed
+          by :func:`.nest_any_node()`.
 
-          For example, to nest just the operations, call::
+          For example, to nest just operation's names (but not their dependencies),
+          call::
 
               compose(
                   ...,
-                  nest=lambda typ, node, parent: isinstance(n, Operation)
+                  nest=lambda nest_args: nest_args.typ == "op"
               )
 
-          ...where `typ` is one of ``(operation | needs | provides)`` strings.
-
-          Of course the callable can apply a renaming irrelevant from the `parent`.
-
           .. Attention::
-              The callable must preserve any :term:`modifier` on data nodes,
-              so :func:`.dep_renamed` should be used.
+              The callable SHOULD wish to preserve any :term:`modifier` on dependencies,
+              and use :func:`.dep_renamed`.
 
           :seealso: :ref:`operation-nesting` for examples
 
