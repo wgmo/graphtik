@@ -15,6 +15,9 @@ API Reference
      graphtik.base
      graphtik.sphinxext
 
+.. raw:: html
+     :file: images/GraphtikModuleDependencies.svg
+
 Module: `op`
 ====================
 
