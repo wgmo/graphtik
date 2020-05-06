@@ -62,8 +62,9 @@ class _Modifier(str):
 
     respectively.
 
-    .. Warning::
-        Cstor ``__new__()`` returns a plain string if no other arg but ``name`` is given.
+    .. Note::
+        User code better call :func:`_modifier()` factory which may return a plain string
+        if no other arg but ``name`` are given.
     """
 
     # avoid __dict__ on instances
@@ -96,12 +97,7 @@ class _Modifier(str):
     _repr: str
 
     def __new__(
-        cls,
-        name,
-        fn_kwarg=None,
-        optional: _Optionals = None,
-        sideffected=None,
-        sfx_list=(),
+        cls, name, fn_kwarg, optional: _Optionals, sideffected, sfx_list, _repr,
     ) -> "_Modifier":
         """Warning, returns None! """
         ## sanity checks & preprocessing
@@ -123,19 +119,6 @@ class _Modifier(str):
                 f"`sfx_list` cannot contain sideffects, got {double_sideffects!r}"
                 f"\n  locals={locals()}"
             )
-        formats = _match_modifier_args(name, fn_kwarg, optional, sideffected, sfx_list,)
-        if not formats:
-            # Make a plain string instead.
-            return str(name)
-
-        str_fmt, repr_fmt = formats
-        fmt_args = {
-            "dep": name,
-            "kw": f">'{fn_kwarg}'" if fn_kwarg != name else ">" if not optional else "",
-            "sfx": ", ".join(f"'{i}'" for i in sfx_list),
-        }
-        name = str_fmt % fmt_args
-        _repr = repr_fmt % fmt_args
 
         obj = super().__new__(cls, name)
         obj.fn_kwarg = fn_kwarg
@@ -147,15 +130,16 @@ class _Modifier(str):
         return obj
 
     def __repr__(self):
-        return super().__repr__() if self._repr is None else self._repr
+        return self._repr
 
     def __getnewargs__(self):
         return (
-            self.sideffected or str(self),
+            str(self),
             self.fn_kwarg,
             self.optional,
             self.sideffected,
             self.sfx_list,
+            self._repr,
         )
 
     def _withset(
@@ -170,7 +154,7 @@ class _Modifier(str):
         Make a new modifier with changes -- handle with care.
 
         :return:
-            if no args left, returns a plain string!
+             Delegates to :func:`_dep`, so returns a plain string if no args left.
         """
         kw = {
             k: getattr(self, k) if v is ... else v
@@ -182,7 +166,33 @@ class _Modifier(str):
         if name is ...:
             name = self.sideffected or str(self)
 
-        return _Modifier(name=name, **kw)
+        return _dep(name=name, **kw)
+
+
+def _dep(
+    name, fn_kwarg=None, optional: _Optionals = None, sideffected=None, sfx_list=(),
+):
+    """
+    A :class:`_Modifier` factory that may return a plain str when no other args given.
+
+    It decides the final `name` and `_repr` for the new modifier by matching
+    the given inputs with the :data:`_modifier_cstor_matrix`.
+    """
+    formats = _match_modifier_args(name, fn_kwarg, optional, sideffected, sfx_list,)
+    if not formats:
+        # Make a plain string instead.
+        return str(name)
+
+    str_fmt, repr_fmt = formats
+    fmt_args = {
+        "dep": name,
+        "kw": f">'{fn_kwarg}'" if fn_kwarg != name else ">" if not optional else "",
+        "sfx": ", ".join(f"'{i}'" for i in sfx_list),
+    }
+    name = str_fmt % fmt_args
+    _repr = repr_fmt % fmt_args
+
+    return _Modifier(name, fn_kwarg, optional, sideffected, sfx_list, _repr)
 
 
 def mapped(name: str, fn_kwarg: str = None):
@@ -235,7 +245,7 @@ def mapped(name: str, fn_kwarg: str = None):
         .. graphtik::
     """
     # Must pass a truthy `fn_kwarg` bc cstor cannot not know its mapped.
-    return _Modifier(name, fn_kwarg=fn_kwarg or name)
+    return _dep(name, fn_kwarg=fn_kwarg or name)
 
 
 def optional(name: str, fn_kwarg: str = None):
@@ -293,7 +303,7 @@ def optional(name: str, fn_kwarg: str = None):
 
     """
     # Must pass a truthy `fn_kwarg` as cstor-matrix requires.
-    return _Modifier(name, fn_kwarg=fn_kwarg or name, optional=_Optionals.keyword)
+    return _dep(name, fn_kwarg=fn_kwarg or name, optional=_Optionals.keyword)
 
 
 def vararg(name: str):
@@ -337,7 +347,7 @@ def vararg(name: str):
         {'a': 5, 'sum': 5}
 
     """
-    return _Modifier(name, optional=_Optionals.vararg)
+    return _dep(name, optional=_Optionals.vararg)
 
 
 def varargs(name: str):
@@ -399,7 +409,7 @@ def varargs(name: str):
 
     .. varargs-mistake-end
     """
-    return _Modifier(name, optional=_Optionals.varargs)
+    return _dep(name, optional=_Optionals.varargs)
 
 
 def sfx(name, optional: bool = None):
@@ -474,7 +484,7 @@ def sfx(name, optional: bool = None):
         .. graphtik::
 
     """
-    return _Modifier(
+    return _dep(
         name, optional=_Optionals.keyword if optional else None, sideffected=name,
     )
 
@@ -576,7 +586,7 @@ def sfxed(
 
 
     """
-    return _Modifier(
+    return _dep(
         dependency,
         optional=_Optionals.keyword if optional else None,
         fn_kwarg=dependency if optional and not fn_kwarg else fn_kwarg,
@@ -587,7 +597,7 @@ def sfxed(
 
 def sfxed_vararg(dependency: str, sfx0: str, *sfx_list: str):
     """Like :func:`sideffected` + :func:`vararg`. """
-    return _Modifier(
+    return _dep(
         dependency,
         optional=_Optionals.vararg,
         sideffected=dependency,
@@ -597,7 +607,7 @@ def sfxed_vararg(dependency: str, sfx0: str, *sfx_list: str):
 
 def sfxed_varargs(dependency: str, sfx0: str, *sfx_list: str):
     """Like :func:`sideffected` + :func:`varargs`. """
-    return _Modifier(
+    return _dep(
         dependency,
         optional=_Optionals.varargs,
         sideffected=dependency,
