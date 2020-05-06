@@ -151,13 +151,13 @@ def _spread_sideffects(
         :term:`sideffects` are processed like this:
 
         `fn_deps`
-            - any :func:`\.sfxed` are replaced by the :func:`stripped <.dep_stripped>`
+            - any :func:`.sfxed` are replaced by the :func:`stripped <.dep_stripped>`
               dependency consumed/produced by underlying functions, in the order
               they are first met (the rest duplicate `sideffected` are discarded).
-            - any :func:`\.sfx` are simply dropped;
+            - any :func:`.sfx` are simply dropped;
 
         `op_deps`
-            any :func:`\.sfxed` are replaced by a sequence of ":func:`singularized
+            any :func:`.sfxed` are replaced by a sequence of ":func:`singularized
             <.dep_singularized>`" instances, one for each item in their
             :attr:`._Modifier.sfx_list` attribute, in the order they are first met
             (any duplicates are discarded, order is irrelevant, since they don't reach
