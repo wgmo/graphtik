@@ -42,9 +42,9 @@ import networkx as nx
 import pydot
 from boltons.iterutils import default_enter, default_exit, get_path, remap
 
-from .base import PlotArgs, func_name, func_source
+from .base import PlotArgs, first_solid, func_name, func_source
+from .composition import Operation
 from .config import (
-    first_solid,
     is_debug,
     is_endure_operations,
     is_marshal_tasks,
@@ -52,7 +52,6 @@ from .config import (
     is_reschedule_operations,
 )
 from .modifiers import is_mapped, is_sfx, is_sfxed
-from .composition import Operation
 
 log = logging.getLogger(__name__)
 

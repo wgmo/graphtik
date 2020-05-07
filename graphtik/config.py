@@ -260,8 +260,3 @@ Enable/disable globally :term:`rescheduling` for operations returning only *part
     a "reset" token (see :meth:`.ContextVar.set`)
 
 ."""
-
-
-def first_solid(*tristates, default=None):
-    """Utility combining multiple tri-state booleans."""
-    return first(tristates, default=default, key=lambda i: i is not None)

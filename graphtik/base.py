@@ -99,6 +99,13 @@ class Token(str):
 UNSET = Token("UNSET")
 
 
+def first_solid(*tristates, default=None):
+    """Utility combining multiple tri-state booleans."""
+    from boltons.iterutils import first
+
+    return first(tristates, default=default,    key=lambda i: i is not None)
+
+
 def aslist(i, argname, allowed_types=list):
     """Utility to accept singular strings as lists, and None --> []."""
     if not i:

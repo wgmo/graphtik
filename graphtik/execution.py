@@ -21,10 +21,11 @@ from .base import (
     Plottable,
     aslist,
     astuple,
+    first_solid,
     jetsam,
 )
+from .composition import Operation
 from .config import (
-    first_solid,
     get_execution_pool,
     is_abort,
     is_debug,
@@ -41,7 +42,6 @@ from .network import (
     yield_node_names,
     yield_ops,
 )
-from .composition import Operation
 
 #: If this logger is *eventually* DEBUG-enabled,
 #: the string-representation of network-objects (network, plan, solution)

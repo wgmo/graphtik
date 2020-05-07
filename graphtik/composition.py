@@ -11,6 +11,7 @@
 import abc
 import itertools as itt
 import logging
+import re
 import textwrap
 from collections import abc as cabc
 from functools import wraps
@@ -27,17 +28,9 @@ from .base import (
     Token,
     aslist,
     astuple,
+    first_solid,
     func_name,
     jetsam,
-)
-from .config import (
-    first_solid,
-    is_debug,
-    is_endure_operations,
-    is_marshal_tasks,
-    is_parallel_tasks,
-    is_reschedule_operations,
-    reset_abort,
 )
 from .modifiers import (
     dep_singularized,
@@ -352,6 +345,15 @@ class FunctionalOperation(Operation, Plottable):
         """
         Display more informative names for the Operation class
         """
+        from .config import (
+            is_debug,
+            is_endure_operations,
+            is_marshal_tasks,
+            is_parallel_tasks,
+            is_reschedule_operations,
+            reset_abort,
+        )
+
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
         aliases = aslist(self.aliases, "aliases")
@@ -386,6 +388,7 @@ class FunctionalOperation(Operation, Plottable):
 
         if not DEBUG, all deps are converted into lists, ready to be printed.
         """
+        from .config import is_debug
 
         return {
             k: v if is_debug() else list(v)
@@ -423,6 +426,8 @@ class FunctionalOperation(Operation, Plottable):
         varargs_bad: List,
         named_inputs: Mapping,
     ) -> ValueError:
+        from .config import is_debug
+
         errors = [
             f"Need({n}) failed due to: {type(nex).__name__}({nex})"
             for n, nex in enumerate(exceptions, 1)
@@ -498,6 +503,8 @@ class FunctionalOperation(Operation, Plottable):
 
     def _zip_results_with_provides(self, results) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
+        from .config import is_reschedule_operations
+
         fn_expected: iset = self._fn_provides
         rescheduled = first_solid(is_reschedule_operations(), self.rescheduled)
         if self.returns_dict:
@@ -936,6 +943,7 @@ class NetworkOperation(Operation, Plottable):
         """
         Display more informative names for the Operation class
         """
+        from .config import is_debug
         from .network import yield_ops
 
         clsname = type(self).__name__
@@ -1142,6 +1150,8 @@ class NetworkOperation(Operation, Plottable):
 
         See also :meth:`.Operation.compute()`.
         """
+        from .config import reset_abort
+
         try:
             if named_inputs is UNSET:
                 named_inputs = {}
