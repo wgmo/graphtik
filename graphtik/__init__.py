@@ -12,7 +12,7 @@ __author__ = "hnguyen, ankostis"
 
 
 from .base import AbortedException, IncompleteExecutionError
-from .composition import NO_RESULT, NULL_OP, compose, operation
+from .composition import NO_RESULT, NO_RESULT_BUT_SFX, NULL_OP, compose, operation
 from .modifiers import (
     mapped,
     optional,

@@ -24,6 +24,7 @@ from graphtik import network
 from graphtik.base import AbortedException, IncompleteExecutionError
 from graphtik.composition import (
     NO_RESULT,
+    NO_RESULT_BUT_SFX,
     NULL_OP,
     NetworkOperation,
     Operation,
@@ -1054,6 +1055,23 @@ def test_sideffect_NO_RESULT(caplog, exemethod):
     assert op2 not in sol.executed
     assert op1 in sol.executed
     assert sol == {}  # an_sfx evicted
+
+    # NO_RESULT_BUT_SFX cancels sideffects of rescheduled ops.
+    #
+    op11 = operation(lambda: NO_RESULT_BUT_SFX, name="do-SFX", provides=an_sfx)
+    netop = compose("t", op11, op2, rescheduled=True, parallel=exemethod)
+    sol = netop.compute({}, outputs=an_sfx)
+    assert op11 in sol.executed
+    assert op2 not in sol.executed
+    assert sol == {}
+    sol = netop.compute({})
+    assert op11 in sol.executed
+    assert op2 in sol.executed
+    assert sol == {"a": 1}
+    sol = netop.compute({}, outputs="a")
+    assert op11 in sol.executed
+    assert op2 in sol.executed
+    assert sol == {"a": 1}
 
     ## If NO_RESULT were not translated,
     #  a warning of unknown out might have emerged.

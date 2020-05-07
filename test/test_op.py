@@ -10,7 +10,16 @@ from types import SimpleNamespace
 import dill
 import pytest
 
-from graphtik import NO_RESULT, compose, operation, optional, sfx, vararg, varargs
+from graphtik import (
+    NO_RESULT,
+    NO_RESULT_BUT_SFX,
+    compose,
+    operation,
+    optional,
+    sfx,
+    vararg,
+    varargs,
+)
 from graphtik.config import (
     operations_endured,
     operations_reschedullled,
@@ -467,6 +476,10 @@ def test_reschedule_outputs():
     assert op.compute({}) == {"a": "AA"}
 
     op = operation(lambda: NO_RESULT, name="t", provides=["a", "b"], rescheduled=True)
+    assert op.compute({}) == {}
+    op = operation(
+        lambda: NO_RESULT_BUT_SFX, name="t", provides=["a", "b"], rescheduled=True
+    )
     assert op.compute({}) == {}
 
     op = operation(

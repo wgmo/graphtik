@@ -49,12 +49,15 @@ from .modifiers import (
 
 log = logging.getLogger(__name__)
 
-#: When an operation function returns this special value,
-#: it implies operation has no result at all,
-#: (otherwise, it would have been a single result, ``None``).
-#: Usefull for :term:`partial outputs` who want to cancel their single result
+#: A special return value for the function of a :term:`reschedule` operation
+#: signifying that it did not produce any result at all (including :term:`sideffects`),
+#: otherwise, it would have been a single result, ``None``.
+#: Usefull for rescheduled who want to cancel their single result
 #: witout being delcared as :term:`returns dictionary`.
 NO_RESULT = Token("NO_RESULT")
+#: Like :data:`NO_RESULT` but does not cancel any :term;`sideffects`
+#: declared as provides.
+NO_RESULT_BUT_SFX = Token("NO_RESULT_BUT_SFX")
 
 
 class PlotArgs(NamedTuple):
@@ -949,12 +952,16 @@ class FunctionalOperation(Operation, Plottable):
                         f"-{len(missmatched)} provides({list(fn_expected)})!\n  {self}"
                     )
 
-        elif results == NO_RESULT and rescheduled:
-            # Cancel also any SFX.
-            results = {p: False for p in set(self.provides) if is_sfx(p)}
+        elif results in (NO_RESULT, NO_RESULT_BUT_SFX) and rescheduled:
+            results = (
+                {}
+                if results == NO_RESULT_BUT_SFX
+                # Cancel also any SFX.
+                else {p: False for p in set(self.provides) if is_sfx(p)}
+            )
 
         elif not fn_expected:  # All provides were sideffects?
-            if results and results != NO_RESULT:
+            if results and results not in (NO_RESULT, NO_RESULT_BUT_SFX):
                 ## Do not scream,
                 #  it is common to call a function for its sideffects,
                 # which happens to return an irrelevant value.
@@ -968,7 +975,7 @@ class FunctionalOperation(Operation, Plottable):
         else:  # Handle result sequence: no-result, single-item, many
             nexpected = len(fn_expected)
 
-            if results == NO_RESULT:
+            if results in (NO_RESULT, NO_RESULT_BUT_SFX):
                 results = ()
                 ngot = 0
 
