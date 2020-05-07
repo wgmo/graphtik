@@ -55,6 +55,30 @@ log = logging.getLogger(__name__)
 NO_RESULT = Token("NO_RESULT")
 
 
+class Operation(abc.ABC):
+    """An abstract class representing an action with :meth:`.compute()`."""
+
+    @property
+    def __name__(self) -> str:
+        return self.name  # pylint: disable=no-member
+
+    @abc.abstractmethod
+    def compute(self, named_inputs, outputs=None):
+        """
+        Compute (optional) asked `outputs` for the given `named_inputs`.
+
+        It is called by :class:`.Network`.
+        End-users should simply call the operation with `named_inputs` as kwargs.
+
+        :param named_inputs:
+            the input values with which to feed the computation.
+        :returns list:
+            Should return a list values representing
+            the results of running the feed-forward computation on
+            ``inputs``.
+        """
+
+
 def as_renames(i, argname):
     """
     Parses a list of (source-->destination) from dict, list-of-2-items, single 2-tuple.
@@ -116,30 +140,6 @@ def reparse_operation_data(
         raise TypeError(f"All `provides` must be str, got: {provides!r}")
 
     return name, needs, provides
-
-
-class Operation(abc.ABC):
-    """An abstract class representing an action with :meth:`.compute()`."""
-
-    @property
-    def __name__(self) -> str:
-        return self.name  # pylint: disable=no-member
-
-    @abc.abstractmethod
-    def compute(self, named_inputs, outputs=None):
-        """
-        Compute (optional) asked `outputs` for the given `named_inputs`.
-
-        It is called by :class:`.Network`.
-        End-users should simply call the operation with `named_inputs` as kwargs.
-
-        :param named_inputs:
-            the input values with which to feed the computation.
-        :returns list:
-            Should return a list values representing
-            the results of running the feed-forward computation on
-            ``inputs``.
-        """
 
 
 def _spread_sideffects(
