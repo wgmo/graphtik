@@ -20,26 +20,29 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from graphtik import (
+from graphtik import network
+from graphtik.base import AbortedException, IncompleteExecutionError
+from graphtik.composition import (
     NO_RESULT,
     NULL_OP,
-    AbortedException,
-    IncompleteExecutionError,
-    abort_run,
+    NetworkOperation,
+    Operation,
     compose,
+    operation,
+)
+from graphtik.config import (
+    abort_run,
+    debug_enabled,
     evictions_skipped,
     execution_pool_plugged,
     get_execution_pool,
     is_marshal_tasks,
-    network,
-    operation,
     operations_endured,
     operations_reschedullled,
     tasks_marshalled,
 )
 from graphtik.execution import Solution
 from graphtik.modifiers import optional, sfx, sfxed, vararg
-from graphtik.composition import NetworkOperation, Operation
 
 log = logging.getLogger(__name__)
 

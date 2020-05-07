@@ -96,12 +96,6 @@ class Token(str):
         return self.__str__()
 
 
-#: When an operation function returns this special value,
-#: it implies operation has no result at all,
-#: (otherwise, it would have been a single result, ``None``).
-#: Usefull for :term:`partial outputs` who want to cancel their single result
-#: witout being delcared as :term:`returns dictionary`.
-NO_RESULT = Token("NO_RESULT")
 UNSET = Token("UNSET")
 
 

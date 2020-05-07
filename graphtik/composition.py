@@ -19,12 +19,12 @@ from typing import Any, Callable, Collection, List, Mapping, Tuple, Union
 from boltons.setutils import IndexedSet as iset
 
 from .base import (
-    NO_RESULT,
     UNSET,
     Items,
     MultiValueError,
     PlotArgs,
     Plottable,
+    Token,
     aslist,
     astuple,
     func_name,
@@ -53,6 +53,13 @@ from .modifiers import (
 )
 
 log = logging.getLogger(__name__)
+
+#: When an operation function returns this special value,
+#: it implies operation has no result at all,
+#: (otherwise, it would have been a single result, ``None``).
+#: Usefull for :term:`partial outputs` who want to cancel their single result
+#: witout being delcared as :term:`returns dictionary`.
+NO_RESULT = Token("NO_RESULT")
 
 
 def as_renames(i, argname):

@@ -544,7 +544,7 @@ def sfxed(
     To view all internal :term:`dependencies <dependency>`, enable DEBUG
     in :term:`configurations`:
 
-        >>> from graphtik import debug_enabled
+        >>> from graphtik.config import debug_enabled
 
         >>> with debug_enabled(True):
         ...     finalize_prices
