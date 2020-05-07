@@ -3,8 +3,6 @@
 """
 :term:`plotting` handled by the :term:`active plotter` & :term:`current theme`.
 
-Separate from `graphtik.base` to avoid too many imports too early.
-
 .. doctest::
     :hide:
 
@@ -42,8 +40,8 @@ import networkx as nx
 import pydot
 from boltons.iterutils import default_enter, default_exit, get_path, remap
 
-from .base import PlotArgs, first_solid, func_name, func_source
-from .composition import Operation
+from .base import first_solid, func_name, func_source
+from .composition import Operation, PlotArgs
 from .config import (
     is_debug,
     is_endure_operations,

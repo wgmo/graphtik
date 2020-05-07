@@ -17,14 +17,13 @@ from .base import (
     AbortedException,
     IncompleteExecutionError,
     Items,
-    PlotArgs,
-    Plottable,
     aslist,
     astuple,
     first_solid,
     jetsam,
 )
-from .composition import Operation
+from .composition import Operation, PlotArgs, Plottable
+
 from .config import (
     get_execution_pool,
     is_abort,

@@ -14,7 +14,7 @@ from sphinx.ext import doctest as extdoctest
 from sphinx.locale import _, __
 from sphinx.util import logging
 
-from ..base import Plottable
+from ..composition import Plottable
 from ..config import is_debug
 from ..execution import Solution
 from . import doctestglobs, dynaimage, graphtik_node

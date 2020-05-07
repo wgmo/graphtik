@@ -21,10 +21,10 @@ from typing import (
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Items, PlotArgs, Plottable, astuple, jetsam
+from .base import Items, astuple, jetsam
 from .config import is_debug, is_skip_evictions
 from .modifiers import dep_renamed, is_mapped, is_optional, is_sfx, optional
-from .composition import FunctionalOperation, Operation
+from .composition import FunctionalOperation, Operation, PlotArgs, Plottable
 
 NodePredicate = Callable[[Any, Mapping], bool]
 

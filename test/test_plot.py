@@ -14,9 +14,8 @@ import pytest
 from jinja2 import Template
 
 from graphtik import base, compose, network, operation, plot
-from graphtik.base import PlotArgs
 from graphtik.modifiers import optional
-from graphtik.composition import NetworkOperation
+from graphtik.composition import NetworkOperation, PlotArgs
 from graphtik.plot import (
     Plotter,
     Ref,
