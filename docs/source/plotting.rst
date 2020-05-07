@@ -36,7 +36,7 @@ The same :meth:`.Plottable.plot()` method applies also for:
 - :class:`.NetworkOperation`
 - :class:`.Network`
 - :class:`.ExecutionPlan`
-- :class:`~.network.Solution`
+- :class:`.Solution`
 
 each one capable to producing diagrams with increasing complexity.
 

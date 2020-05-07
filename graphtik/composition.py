@@ -55,7 +55,7 @@ log = logging.getLogger(__name__)
 NO_RESULT = Token("NO_RESULT")
 
 
-class Operation(abc.ABC):
+class Operation(Plottable, abc.ABC):
     """An abstract class representing an action with :meth:`.compute()`."""
 
     @property
