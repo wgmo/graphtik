@@ -39,19 +39,17 @@ The same :meth:`.Plottable.plot()` method applies also for:
 - :class:`~.network.Solution`
 
 each one capable to producing diagrams with increasing complexity.
-Whenever possible, the top-level ``plot()`` methods will delegate to the ones below;
-specifically, the :term:`pipeline` keeps a transient reference to the last `plan`.
-BUT the `plan` does not hold such a reference, you have to plot the `solution`.
 
 For instance, when a net-operation has just been composed, plotting it will
 come out bare bone, with just the 2 types of nodes (data & operations), their
-dependencies, and the sequence of the execution-plan.
+dependencies, and (optionally, if :term:`plot theme` ``include_steps`` is true)
+the sequence of the execution-steps of the :term:`plan`.
 
 .. image:: images/barebone_3ops.svg
     :alt: barebone graph
 
 But as soon as you run it, the net plot calls will print more of the internals.
-Internally it delegates to :meth:`.ExecutionPlan.plot()` of :attr:`.NetworkOperation.last_plan`
+Internally it delegates to :meth:`.ExecutionPlan.plot()` of the plan.
 attribute, which *caches* the last run to facilitate debugging.
 If you want the bare-bone diagram, plot the network::
 

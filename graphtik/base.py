@@ -103,7 +103,7 @@ def first_solid(*tristates, default=None):
     """Utility combining multiple tri-state booleans."""
     from boltons.iterutils import first
 
-    return first(tristates, default=default,    key=lambda i: i is not None)
+    return first(tristates, default=default, key=lambda i: i is not None)
 
 
 def aslist(i, argname, allowed_types=list):
@@ -668,28 +668,38 @@ class Plottable(abc.ABC):
 
         **Examples:**
 
-        >>> from graphtik import compose, operation
-        >>> from graphtik.modifiers import optional
-        >>> from operator import add
+            >>> from graphtik import compose, operation
+            >>> from graphtik.modifiers import optional
+            >>> from operator import add
 
-        >>> netop = compose("netop",
-        ...     operation(name="add", needs=["a", "b1"], provides=["ab1"])(add),
-        ...     operation(name="sub", needs=["a", optional("b2")], provides=["ab2"])(lambda a, b=1: a-b),
-        ...     operation(name="abb", needs=["ab1", "ab2"], provides=["asked"])(add),
-        ... )
+            >>> pipeline = compose("pipeline",
+            ...     operation(name="add", needs=["a", "b1"], provides=["ab1"])(add),
+            ...     operation(name="sub", needs=["a", optional("b2")], provides=["ab2"])(lambda a, b=1: a-b),
+            ...     operation(name="abb", needs=["ab1", "ab2"], provides=["asked"])(add),
+            ... )
 
-        >>> netop.plot(True);                       # plot just the graph in a matplotlib window # doctest: +SKIP
-        >>> inputs = {'a': 1, 'b1': 2}
-        >>> solution = netop(**inputs)              # now plots will include the execution-plan
+            >>> pipeline.plot(True);                       # plot just the graph in a matplotlib window # doctest: +SKIP
+            >>> inputs = {'a': 1, 'b1': 2}
+            >>> solution = pipeline(**inputs)              # now plots will include the execution-plan
 
-        >>> netop.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);           # doctest: +SKIP
-        >>> dot = netop.plot(solution=solution);    # just get the `pydot.Dot` object, renderable in Jupyter
-        >>> print(dot)
-        digraph netop {
-        fontname=italic;
-        label=<netop>;
-        <a> [fillcolor=wheat, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
-        ...
+        The solution is also *plottable*:
+
+            >>> solution.plot('plot1.svg');                                                             # doctest: +SKIP
+
+        or you may augment the pipelinewith the requested inputs/outputs & solution:
+
+            >>> pipeline.plot('plot1.svg', inputs=inputs, outputs=['asked', 'b1'], solution=solution);  # doctest: +SKIP
+
+        In any case you may get the `pydot.Dot` object
+        (n.b. it is renderable in Jupyter as-is):
+
+            >>> dot = pipeline.plot(solution=solution);
+            >>> print(dot)
+            digraph pipeline {
+            fontname=italic;
+            label=<pipeline>;
+            <a> [fillcolor=wheat, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
+            ...
 
         .. graphtik::
 
@@ -698,13 +708,13 @@ class Plottable(abc.ABC):
         You may use the :attr:`PlotArgs.graph` overlay to skip certain nodes (or edges)
         from the plots:
 
-        >>> import networkx as nx
+            >>> import networkx as nx
 
-        >>> g = nx.DiGraph()  # the overlay
-        >>> to_hide = netop.net.find_op_by_name("sub")
-        >>> g.add_node(to_hide, no_plot=True)
-        >>> dot = netop.plot(graph=g)
-        >>> assert "<sub>" not in str(dot), str(dot)
+            >>> g = nx.DiGraph()  # the overlay
+            >>> to_hide = pipeline.net.find_op_by_name("sub")
+            >>> g.add_node(to_hide, no_plot=True)
+            >>> dot = pipeline.plot(graph=g)
+            >>> assert "<sub>" not in str(dot), str(dot)
 
         .. graphtik::
 

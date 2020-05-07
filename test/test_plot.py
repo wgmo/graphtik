@@ -194,7 +194,6 @@ def test_op_label_template_nones():
 def test_plot_formats(pipeline, tmp_path):
     ## Generate all formats  (not needing to save files)
 
-    # run it here (and not in fixture) to ensure `last_plan` exists.
     inputs = {"a": 1, "b1": 2}
     outputs = ["asked", "b1"]
     solution = pipeline.compute(inputs, outputs)
@@ -236,6 +235,17 @@ def test_plot_formats(pipeline, tmp_path):
         raise AssertionError("Failed pydot formats: %s" % "".join(sorted(dupe_errs)))
 
 
+def _check_common_end(s1, s2, clip_index):
+    __tracebackhide__ = True  # pylint: disable=unused-variable
+    s1, s2 = s1[clip_index:], s2[clip_index:]
+    ## Locate the index where they start to differ.
+    #
+    for i, (c1, c2) in enumerate(zip(reversed(s1), reversed(s2))):
+        if c1 != c2:
+            s1, s2 = s1[-i - 16 :], s2[-i - 16 :]
+            assert s1 == s2
+
+
 @active_plotter_plugged(Plotter(include_steps=True))
 def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     # Plotting original network, no plan.
@@ -244,58 +254,41 @@ def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     assert f"digraph {pipeline.name} {{" in str(base_dot)  # graph-name
     assert f"label=<{pipeline.name}>;" in str(base_dot)  # graph-label
 
-    solution = pipeline.compute(inputs, outputs)
+    sol = pipeline.compute(inputs, outputs)
 
-    # Plotting delegates to network plan.
+    # Plotting of pipeline must remains the same.
     netop_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))
-    assert netop_dot
-    assert netop_dot != base_dot
-    assert f"digraph {pipeline.name} {{" in str(base_dot)  # graph-name
-    assert f"label=<{pipeline.name}>;" in str(base_dot)  # graph-label
+    assert netop_dot == base_dot
 
-    # Plotting plan alone has not label.
-    plan_dot = str(pipeline.last_plan.plot(inputs=inputs, outputs=outputs))
+    # Plotting plan alone has no label.
+    plan_dot = str(sol.plan.plot(inputs=inputs, outputs=outputs))
     assert plan_dot
     assert plan_dot != base_dot
     assert plan_dot != netop_dot
     assert f"digraph {pipeline.name} {{" not in str(plan_dot)  # graph-name
     assert f"label=<{pipeline.name}>;" not in str(plan_dot)  # graph-label
 
-    # Plot a plan + solution, which must be different from all before.
-    sol_netop_dot = str(
-        pipeline.plot(inputs=inputs, outputs=outputs, solution=solution)
-    )
+    # Plot a pipeline + solution, which must be different from all before.
+    sol_netop_dot = str(pipeline.plot(inputs=inputs, outputs=outputs, solution=sol))
     assert sol_netop_dot != base_dot
     assert sol_netop_dot != netop_dot
     assert sol_netop_dot != plan_dot
     assert f"digraph {pipeline.name} {{" in str(netop_dot)  # graph-name
     assert f"label=<{pipeline.name}>;" in str(netop_dot)  # graph-label
 
-    # Plot a solution, which must equal plan + sol.
-    sol_plan_dot = str(
-        pipeline.last_plan.plot(inputs=inputs, outputs=outputs, solution=solution)
-    )
-    head1 = "digraph plan_x9_nodes {"
-    assert sol_plan_dot.startswith(head1)
-    sol_dot = str(solution.plot(inputs=inputs, outputs=outputs))
-    head2 = "digraph solution_x9_nodes {"
-    assert sol_dot.startswith(head2)
-    assert sol_plan_dot[len(head1) :] == sol_dot[len(head2) :]
-
-    plan = pipeline.last_plan
-    pipeline.last_plan = None
-
-    # We resetted last_plan to check if it reproduces original.
-    base_dot2 = str(pipeline.plot(inputs=inputs, outputs=outputs))
-    assert str(base_dot2) == str(base_dot)
+    # Plot a solution, which must not equal anything so far.
+    sol_dot = str(sol.plot())
+    sol_dot.startswith("digraph solution_x9_nodes {")
+    assert sol_dot != str(pipeline.plot(inputs=inputs, outputs=outputs, solution=sol))
+    assert sol_dot != str(pipeline.plot(solution=sol))
 
     # Calling plot directly on plan misses netop.name
-    raw_plan_dot = str(plan.plot(inputs=inputs, outputs=outputs))
+    raw_plan_dot = str(sol.plan.plot(inputs=inputs, outputs=outputs))
     assert f"digraph {pipeline.name} {{" not in str(raw_plan_dot)  # graph-name
     assert f"label=<{pipeline.name}>;" not in str(raw_plan_dot)  # graph-label
 
     # Check plan does not contain solution, unless given.
-    raw_sol_plan_dot = str(plan.plot(inputs=inputs, outputs=outputs, solution=solution))
+    raw_sol_plan_dot = str(sol.plan.plot(inputs=inputs, outputs=outputs, solution=sol))
     assert raw_sol_plan_dot != raw_plan_dot
 
 

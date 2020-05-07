@@ -896,8 +896,6 @@ class NetworkOperation(Operation, Plottable):
     #: The :term:`node predicate` is a 2-argument callable(op, node-data)
     #: that should return true for nodes to include; if None, all nodes included.
     predicate = None
-    #: The execution_plan of the last call to compute(), stored as debugging aid.
-    last_plan = None
     #: The outputs names (possibly `None`) used to compile the :attr:`plan`.
     outputs = None
 
@@ -1051,10 +1049,10 @@ class NetworkOperation(Operation, Plottable):
         )
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
-        """Delegate to network if last-plan does not exist. """
+        """Delegate to network. """
         from .plot import graphviz_html_string
 
-        plottable = self.last_plan or self.net
+        plottable = self.net
         plot_args = plot_args.with_defaults(name=self.name)
         plot_args = plottable.prepare_plot_args(plot_args)
         assert plot_args.graph, plot_args
@@ -1162,7 +1160,7 @@ class NetworkOperation(Operation, Plottable):
 
             # Build the execution plan.
             log.debug("=== Compiling netop(%s)...", self.name)
-            self.last_plan = plan = net.compile(named_inputs.keys(), outputs, predicate)
+            plan = net.compile(named_inputs.keys(), outputs, predicate)
 
             # Restore `abort` flag for next run.
             reset_abort()

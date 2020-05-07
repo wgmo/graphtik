@@ -716,10 +716,11 @@ def test_same_outputs_operations_order():
     assert addsub(**inp) == {"a": 3, "b": 1, "ab": 2}
     assert addsub.compute(inp, "ab") == {"ab": 2}
     assert subadd(**inp) == {"a": 3, "b": 1, "ab": 4}
-    assert subadd.compute(inp, "ab") == {"ab": 4}
+    sol = subadd.compute(inp, "ab")
+    assert sol == {"ab": 4}
 
     # ## Check it does not duplicate evictions
-    assert len(subadd.last_plan.steps) == 4
+    assert len(sol.plan.steps) == 4
 
     ## Add another step to test evictions
     #
@@ -742,8 +743,9 @@ def test_same_outputs_operations_order():
     assert solution == {"AB": 4}
     assert solution.overwrites == {}
 
-    assert subadd.compute(inp, "AB") == {"AB": 4}
-    assert len(subadd.last_plan.steps) == 6
+    sol = subadd.compute(inp, "AB")
+    assert sol == {"AB": 4}
+    assert len(sol.plan.steps) == 6
 
 
 def test_same_inputs_evictions():
@@ -756,9 +758,10 @@ def test_same_inputs_evictions():
 
     inp = {"a": 3}
     assert pipeline(**inp) == {"a": 3, "2a": 6, "@S": 6}
-    assert pipeline.compute(inp, "@S") == {"@S": 6}
+    sol = pipeline.compute(inp, "@S")
+    assert sol == {"@S": 6}
     ## Check it does not duplicate evictions
-    assert len(pipeline.last_plan.steps) == 4
+    assert len(sol.plan.steps) == 4
 
 
 def test_unsatisfied_operations(exemethod):
@@ -1012,7 +1015,7 @@ def test_sideffect_steps(exemethod, netop_sideffect1: NetworkOperation):
     box_orig = [0]
     sol = netop.compute({"box": [0], sfx("a"): True}, ["box", sfx("c")])
     assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3]}
-    assert len(netop.last_plan.steps) == 4
+    assert len(sol.plan.steps) == 4
 
     ## Check sideffect links plotted as blue
     #  (assumes color used only for this!).
