@@ -49,7 +49,7 @@ from .config import (
     is_parallel_tasks,
     is_reschedule_operations,
 )
-from .modifiers import is_mapped, is_sfx, is_sfxed
+from .modifiers import is_sfx, is_sfxed
 
 log = logging.getLogger(__name__)
 
@@ -997,16 +997,6 @@ class Plotter:
         return StylesStack(plot_args, [], ignore_errors=ignore_errors)
 
     def plot(self, plot_args: PlotArgs):
-        from .execution import Solution
-
-        plot_args = plot_args.with_defaults(
-            # Don't leave `solution` unassigned
-            solution=plot_args.plottable
-            if isinstance(plot_args.plottable, Solution)
-            else None,
-            theme=self.default_theme,
-        )
-
         dot = self.build_pydot(plot_args)
         return self.render_pydot(dot, **plot_args.kw_render_pydot)
 
@@ -1022,6 +1012,7 @@ class Plotter:
         if plot_args.graph is None:
             raise ValueError("At least `graph` to plot must be given!")
 
+        plot_args = plot_args.with_defaults(theme=self.default_theme)
         theme = plot_args.theme
 
         graph, steps = self._skip_no_plot_nodes(plot_args.graph, plot_args.steps)
@@ -1111,8 +1102,6 @@ class Plotter:
 
         3. Set tooltips with the solution-values for data-nodes.
         """
-        from .execution import ExecutionPlan, Solution
-
         theme = plot_args.theme
         graph = plot_args.graph
         nx_node = plot_args.nx_item
@@ -1145,8 +1134,7 @@ class Plotter:
             ## Data-state
             #
             is_pruned = (
-                isinstance(plottable, (ExecutionPlan, Solution))
-                and nx_node not in plottable.dag.nodes
+                hasattr(plottable, "dag") and nx_node not in plottable.dag.nodes
             ) or (solution is not None and nx_node not in solution.dag.nodes)
             if is_pruned:
                 graph.nodes[nx_node]["_pruned"] = True  # Signal to edge-plotting.

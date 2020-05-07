@@ -398,6 +398,7 @@ class Plottable(abc.ABC):
         plot_args = PlotArgs(**kw)
 
         from .plot import Plotter, Theme, get_active_plotter
+        from .execution import Solution
 
         ## Ensure a valid plotter in the args asap.
         #
@@ -406,6 +407,7 @@ class Plottable(abc.ABC):
         if not plotter:
             plotter = get_active_plotter()
         plot_args = plot_args._replace(plotter=plotter)
+        assert plot_args.plotter, f"Expected `plotter`: {plot_args}"
 
         ## Overwrite any dictionaries over active theme asap.
         #
@@ -414,7 +416,14 @@ class Plottable(abc.ABC):
             plot_args = plot_args._replace(theme=theme)
 
         plot_args = self.prepare_plot_args(plot_args)
-        assert plot_args.graph, plot_args
+        assert plot_args.graph, f"Expected `graph: {plot_args}"
+
+        plot_args = plot_args.with_defaults(
+            # Don't leave `solution` unassigned, if possible.
+            solution=plot_args.plottable
+            if isinstance(plot_args.plottable, Solution)
+            else None
+        )
 
         return plot_args.plotter.plot(plot_args)
 
