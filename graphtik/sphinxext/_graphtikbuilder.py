@@ -16,7 +16,6 @@ from sphinx.util import logging
 
 from ..composition import Plottable
 from ..config import is_debug
-from ..execution import Solution
 from . import doctestglobs, dynaimage, graphtik_node
 
 PlottableType = Union[None, Plottable, pydot.Dot]
@@ -74,7 +73,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
                 rel_img_path = self._render_dot_image(img_format, dot, node)
                 dot_str = (
                     f"{plottable.debugstr()}"
-                    if isinstance(plottable, Solution)
+                    if hasattr(plottable, "debugstr")  # a Solution
                     else plottable
                 )
                 self._upd_image_node(
