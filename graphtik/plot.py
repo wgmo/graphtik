@@ -40,6 +40,7 @@ import networkx as nx
 import pydot
 from boltons.iterutils import default_enter, default_exit, get_path, remap
 
+from . import __version__
 from .base import first_solid, func_name, func_source
 from .composition import Operation, PlotArgs
 from .config import (
@@ -1413,67 +1414,51 @@ class Plotter:
             for attr, d in Theme.theme_attributes(theme).items()
         }
 
+        ss = self._new_styles_stack(plot_args)
+        ss.add("kw_data_to_evict")
+        ss.add("kw_data_evicted")
+        ss.add(
+            "manual",
+            {
+                "shape": "rect",
+                "tooltip": "Instruction step to erase data from solution, to save memory.",
+                "URL": graphviz_html_string(f"{theme.arch_url}#term-evictions"),
+            },
+        )
+        theme_styles["evicted"] = str(pydot.Node(**ss.merge()))
+
+        ss = self._new_styles_stack(plot_args)
+        ss.add("kw_data_sideffect")
+        ss.add(
+            "manual",
+            {
+                "shape": "rect",
+                "label": "sideffect",
+                "tooltip": "Fictive data not consumed/produced by operation functions.",
+                "URL": graphviz_html_string(f"{theme.arch_url}#term-sideffects"),
+            },
+        )
+        theme_styles["sfx"] = str(pydot.Node(**ss.merge()))
+        theme_styles["ver"] = __version__
+
         ## From https://stackoverflow.com/questions/3499056/making-a-legend-key-in-graphviz
         # Render it manually with these python commands, and remember to update result in git:
         #
         #   from graphtik.plot import legend
         #   legend('docs/source/images/GraphtikLegend.svg')
-        dot_text = """
+        dot_text = (
+            """
         digraph {
-            rankdir=LR;
+            rankdir=TB;
             subgraph cluster_legend {
-            label="Graphtik Legend";
+            label="Graphtik Legend %(ver)s";
 
-            operation   [shape=oval fontname=italic
-                        tooltip="A function with needs & provides."
-                        URL="%(arch_url)s#term-operation"];
-            insteps     [label="execution step" fontname=italic
-                        tooltip="Either an operation or ean eviction-instruction."
-                        URL="%(arch_url)s#term-execution-steps"];
-            executed    [shape=oval style=filled fillcolor=wheat fontname=italic
-                        tooltip="Operation executed successfully."
-                        URL="%(arch_url)s#term-solution"];
-            failed      [shape=oval style=filled fillcolor=LightCoral fontname=italic
-                        tooltip="Failed operation - downstream ops will cancel."
-                        URL="%(arch_url)s#term-endurance"];
-            rescheduled [shape=oval penwidth=4 fontname=italic label=<endured/rescheduled>
-                        tooltip="Operation may fail or provide partial outputs so `net` must reschedule."
-                        URL="%(arch_url)s#term-reschedulling"];
-            canceled    [shape=oval style=filled fillcolor=Grey fontname=italic
-                        tooltip="Canceled operation due to failures or partial outputs upstream."
-                        URL="%(arch_url)s#term-reschedule"];
-            operation -> insteps -> executed -> failed -> rescheduled -> canceled [style=invis];
-
-            data    [shape=rect
-                    tooltip="Any data not given or asked."
-                    URL="%(arch_url)s#term-graph"];
-            input   [shape=invhouse
-                    tooltip="Solution value given into the computation."
-                    URL="%(arch_url)s#term-inputs"];
-            output  [shape=house
-                    tooltip="Solution value asked from the computation."
-                    URL="%(arch_url)s#term-outputs"];
-            inp_out [shape=hexagon label="inp+out"
-                    tooltip="Data both given and asked."
-                    URL="%(arch_url)s#term-netop"];
-            evicted [shape=rect color="%(evicted)s"
-                    tooltip="Instruction step to erase data from solution, to save memory."
-                    URL="%(arch_url)s#term-evictions"];
-            sol     [shape=rect style=filled fillcolor=wheat label="in solution"
-                    tooltip="Data contained in the solution."
-                    URL="%(arch_url)s#term-solution"];
-            overwrite [shape=rect theme=filled fillcolor=SkyBlue
-                    tooltip="More than 1 values exist in solution with this name."
-                    URL="%(arch_url)s#term-overwrites"];
-            data -> input -> output -> inp_out -> evicted -> sol -> overwrite [theme=invis];
-
-            e1          [style=invis];
-            e1          -> requirement;
-            requirement [color=invis
-                        tooltip="Source operation --> target `provides` OR source `needs` --> target operation."
-                        URL="%(arch_url)s#term-needs"];
-            requirement -> optional     [style=dashed];
-            optional    [color=invis
+            Dependencies   [shape=plaintext fontsize=16 fontname="bold italic"];
+            Dependencies -> dependency [tooltip="Compulsory: from src Operation --> dst `provides` OR src `needs` --> dst Operation."
+                        URL="%(arch_url)s#term-dependency"];
+            dependency [color=invis];
+            dependency -> optional     [style=dashed];
+            optional    [color=invis label="optional\npartial out"
                         tooltip="Target operation may run without source `need` OR source operation may not `provide` target data."
                         URL="%(arch_url)s#term-needs"];
             optional    -> sideffect    [color=blue];
@@ -1486,14 +1471,76 @@ class Plotter:
                         URL="%(arch_url)s#term-partial outputs"];
             broken   -> sequence        [color="%(steps_color)s" penwidth=4 style=dotted
                                         arrowhead=vee label=1 fontcolor="%(steps_color)s"];
-            sequence    [color=invis penwidth=4 label="execution sequence"
+            sequence    [color=invis penwidth=4 label="execution\nsequence"
                         tooltip="Sequence of execution steps."
                         URL="%(arch_url)s#term-execution-steps"];
+
+
+            DataLabel   [shape=plaintext fontsize=16 fontname="bold italic"
+                            label=Data];
+            data    [shape=rect
+                    tooltip="Any data not given or asked."
+                    URL="%(arch_url)s#term-graph"];
+            input   [shape=invhouse
+                    tooltip="Solution value given into the computation."
+                    URL="%(arch_url)s#term-inputs"];
+            output  [shape=house
+                    tooltip="Solution value asked from the computation."
+                    URL="%(arch_url)s#term-outputs"];
+            inp_out [shape=hexagon label="inp+out"
+                    tooltip="Data both given and asked."
+                    URL="%(arch_url)s#term-dependency"];
+            evicted %(evicted)s
+            sfx %(sfx)s
+            sol     [shape=rect style=filled fillcolor=wheat label="with value"
+                    tooltip="Data contained in the solution."
+                    URL="%(arch_url)s#term-solution"];
+            overwrite [shape=rect style=filled fillcolor=SkyBlue
+                    tooltip="More than 1 values exist in solution with this name."
+                    URL="%(arch_url)s#term-overwrite"];
+            DataLabel -> data -> input -> output -> inp_out -> sfx -> evicted -> sol -> overwrite [style=invis];
+
+
+
+            Operations   [shape=plaintext fontsize=16 fontname="bold italic"];
+            operation   [shape=plain
+                        label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="ROUNDED">
+                          <TR><TD BORDER="1" SIDES="B">operation</TD></TR>
+                          <TR><TD><I>function</I></TD></TR>
+                        </TABLE>>
+                        tooltip="A function with needs & provides."
+                        URL="%(arch_url)s#term-operation"];
+            pruned    [shape=plain color="%(pruned_color)s" fontcolor="%(pruned_color)s"
+                        label=<<TABLE CELLBORDER="0" STYLE="ROUNDED">
+                          <TR><TD>pruned</TD></TR></TABLE>>
+                        tooltip="Operation excluded from plan."
+                        URL="%(arch_url)s#term-prune"];
+            executed    [shape=plain
+                        label=<<TABLE CELLBORDER="0" STYLE="ROUNDED" BGCOLOR="wheat">
+                          <TR><TD>executed</TD></TR></TABLE>>
+                        tooltip="Operation executed successfully."
+                        URL="%(arch_url)s#term-solution"];
+            failed      [shape=plain
+                        label=<<TABLE CELLBORDER="0" STYLE="ROUNDED" BGCOLOR="LightCoral">
+                          <TR><TD>failed</TD></TR></TABLE>>
+                        tooltip="Failed operation - downstream ops will cancel."
+                        URL="%(arch_url)s#term-endurance"];
+            rescheduled [shape=plain
+                        label=<<TABLE border="4" CELLBORDER="0" STYLE="ROUNDED">
+                          <TR><TD>endured<br/>rescheduled</TD></TR></TABLE>>
+                        tooltip="Operation may fail or provide partial outputs so `net` must reschedule."
+                        URL="%(arch_url)s#term-reschedulling"];
+            canceled    [shape=plain
+                        label=<<TABLE CELLBORDER="0" STYLE="ROUNDED" BGCOLOR="Grey">
+                          <TR><TD>canceled</TD></TR></TABLE>>
+                        tooltip="Canceled operation due to failures or partial outputs upstream."
+                        URL="%(arch_url)s#term-reschedule"];
+            Operations -> operation -> pruned -> executed -> failed -> rescheduled -> canceled [style=invis];
             }
         }
-        """ % {
-            **theme_styles,
-        }
+        """
+            % theme_styles
+        )
 
         dot = pydot.graph_from_dot_data(dot_text)[0]
         # cluster = pydot.Cluster("Graphtik legend", label="Graphtik legend")

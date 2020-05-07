@@ -132,7 +132,7 @@ Run the graph-operation and request a subset of the outputs:
 ... where the (interactive) legend is this:
 
 .. graphtik::
-   :width: 100%
+   :width: 65%
 
    >>> from graphtik.plot import legend
    >>> l = legend()
