@@ -1120,6 +1120,8 @@ class Plotter:
         nx_node = plot_args.nx_item
         node_attrs = plot_args.nx_attrs
         (plottable, _, _, steps, inputs, outputs, solution, *_,) = plot_args
+        if solution is not None and steps is None:
+            steps = solution.plan.steps
 
         if isinstance(nx_node, str):  # DATA
             styles = self._new_styles_stack(plot_args)
