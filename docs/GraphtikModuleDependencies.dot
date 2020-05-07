@@ -3,7 +3,7 @@
 #   dot docs/GraphtikFlowchart.dot -Tsvg -odocs/source/images/GraphtikFlowchart-vX.Y.Z.svg
 #
 digraph {
-    label="graphtik-v8+ module dependencies";
+    label="graphtik-v8.1+ module dependencies";
     labelloc=t;
     node [style=filled];
 
@@ -11,7 +11,7 @@ digraph {
          label="core modules";
          tooltip="most modules depend on them";
         "base.py"   [shape=component
-                    tooltip="(implicit) everything imports this module"
+                    tooltip="(implicit) everything imports this module, not shown"
                     fillcolor=AliceBlue
                     URL="reference.html#module-graphtik.base"];
         "config.py"      [shape=component tooltip="(public)"
@@ -45,10 +45,8 @@ digraph {
 
     {"composition.py", "network.py", "execution.py", "plot.py"} -> "modifiers.py" [tooltip="(import-time)"];
     {"network.py", "execution.py", "plot.py", "sphinxext/"} -> "composition.py" [tooltip="(import-time)"];
-    "base.py" -> "plot.py" [tooltip="(run-time)" style=dashed];
     "execution.py" -> "network.py"    [tooltip="(import-time)"];
     "network.py" -> "execution.py"    [tooltip="(run-time)" style=dashed];
-    "composition.py" -> "network.py"        [tooltip="(run-time)" style=dashed];
-    "plot.py" -> "execution.py"    [tooltip="(run-time) " style=dashed];
+    "composition.py" -> {"network.py", "execution.py", "plot.py"}       [tooltip="(run-time)" style=dashed];
     "sphinxext/" -> "plot.py"    [tooltip="(import-time)"];
 }
