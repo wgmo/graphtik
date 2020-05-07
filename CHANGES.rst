@@ -647,7 +647,7 @@ v4.2.0 (16 Dec 2019, @ankostis): ENDURED Execution
 + ENH(DOC,plot): Links in Legend and :ref:`arch` Workflow SVGs now work,
   and delegate to *architecture* terms.
 
-+ ENH(plot): mark :term:`overwrites`, *failed* & *canceled* in ``repr()``
++ ENH(plot): mark :term:`overwrite`, *failed* & *canceled* in ``repr()``
   (see :term:`endurance`).
 
 + refact(conf): fully rename configuration operation ``skip_evictions``.
@@ -668,7 +668,7 @@ v4.1.0 (13  Dec 2019, @ankostis): ChainMap Solution for Rewrites, stable TOPOLOG
 
   + ENH(NETOP): ``compute()`` return :class:`.Solution`, consolidating:
 
-    + :term:`overwrites`,
+    + :term:`overwrite`,
     + ``executed`` operations, and
     + the generating :term:`plan`.
 

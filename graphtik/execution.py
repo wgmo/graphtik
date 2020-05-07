@@ -54,7 +54,7 @@ def _isDebugLogging():
 
 class Solution(ChainMap, Plottable):
     """
-    A chain-map collecting :term:`solution` outputs and execution state (eg :term:`overwrites`)
+    The :term:`solution` chain-map and execution state (e.g. :term:`overwrite` or :term:`canceled operation`)
     """
 
     def __init__(self, plan, input_values: dict):

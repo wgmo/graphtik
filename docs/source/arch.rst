@@ -191,10 +191,10 @@ Architecture
         *Evictions* are pre-calculated during `compilation`, where :class:`._EvictInstruction`
         `steps` are inserted in the `execution plan`.
 
-    overwrites
+    overwrite
         Values in the `solution` that have been written by more than one `operation`\s,
         accessed by :attr:`.Solution.overwrites`.
-        Note that `sideffected` `dependency` produce, almost always, *overwrites*.
+        Note that a `sideffected` `dependency` produce usually an *overwrite*.
 
     inputs
         The named input values that are fed into an `operation` (or `netop`)
@@ -366,9 +366,9 @@ Architecture
             :attr:`._Modifier.sideffected` attribute of a *modifier* created by
             :func:`.sfxed` function.
 
-        The `outputs` of the *sideffected dependency* will produce `overwrites` if
-        *sideffected modifiers* containing it are declared both in the *needs* and *provides*
-        of any operation.
+        The `outputs` of a *sideffected dependency* will produce an `overwrite` if
+        the *sideffected dependency* is declared both as *needs* and *provides*
+        of some operation.
 
         It is annotated with :func:`.sfxed`.
 
