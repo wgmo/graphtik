@@ -86,16 +86,18 @@ Changelog
 %%%%%%%%%
 
 
-v8.0.1 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modifiers; invert "merge" meaning
+v8.0.2 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modifiers; invert "merge" meaning
 =============================================================================================================
-**--((superseded immediately v8.0.0 with just one more module restructuring)))--**
+**--((superseded immediately v8.0.1 & v8.0.2 with more restructurings)))--**
 
 + BREAK: restructured ``netop`` && ``network`` modules:
 
-  + :mod:`.network` module was splitted into :mod:`.execution` which now
+  + BREAK: stopped(!) importing :mod:`.config` top-level.
+  + BREAK: :mod:`.network` module was splitted into :mod:`.execution` which now
     contains plan+solution;
-  + unified modules ``op`` + ``netop`` --> :mod`.composition`.
-  + DOC: module dependencies diagram in :doc:`reference`.
+  + BREAK: unified modules ``op`` + ``netop`` --> :mod`.composition`.
+  + DOC: module dependencies diagram in :doc:`reference`;
+    now x60 faster ``import composition`` from 300ms --> 5ms.
 
 + BREAK: sideffect modifier functions *shortened* to :func:`.sfx` & :func:`.sfxed`.
 
@@ -127,9 +129,9 @@ v8.0.1 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modi
   for colored/font-size sphinx roles.
 
 
-v8.0.0 (7 May 2020, @ankostis): retracted bc found one more module restructuring
---------------------------------------------------------------------------------
-**--((all changes above in b8.0.1 happened actually here))--**
+v8.0.0, v8.0.1 (7 May 2020, @ankostis): retracted bc found more restructurings
+------------------------------------------------------------------------------
+**--((all changes above in b8.0.2 happened actually in these 2 releases))--**
 
 
 
