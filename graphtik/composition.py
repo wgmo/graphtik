@@ -6,6 +6,10 @@
 `compose` `operation` & `dependency` into `pipeline`\\s match/zip inputs/outputs during `execution`.
 
 .. default-role:
+.. note::
+    This module (along with :mod:`.modifiers`) is what client code needs
+    to define pipelines *on import time* without incurring a heavy price
+    (<5ms on a 2019 fast PC)
 """
 
 import abc

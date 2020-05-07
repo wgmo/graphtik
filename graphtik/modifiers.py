@@ -5,6 +5,11 @@
 
 The `needs` and `provides` annotated with *modifiers* designate, for instance,
 :term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
+
+.. note::
+    This module (along with :mod:`.composition`) is what client code needs
+    to define pipelines *on import time* without incurring a heavy price
+    (<5ms on a 2019 fast PC)
 """
 import enum
 from typing import Optional, Tuple, Union
