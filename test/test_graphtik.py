@@ -283,7 +283,7 @@ def test_network_plan_execute():
     assert sol == exp
 
 
-def test_network_nest_errors(caplog):
+def test_compose_nester_bad_screamy(caplog):
     def screamy_nester(nest_args):
         raise RuntimeError("Bluff")
 
@@ -299,7 +299,12 @@ def test_network_nest_errors(caplog):
             assert "(parent=None, typ='op', op=None, name='op1')" in record.message
 
 
-def test_network_nest_ops_only():
+def test_compose_nester_preserve_ops(caplog):
+    pip = compose("t", operation(str, "op1"), operation(str, "op2"), nest=lambda na: 1,)
+    assert str(pip) == "NetworkOperation('t', needs=[], provides=[], x2 ops: op1, op2)"
+
+
+def test_compose_nest_ops_only():
     def ops_only(nest_args):
         return nest_args.typ == "op"
 

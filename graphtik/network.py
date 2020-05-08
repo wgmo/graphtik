@@ -676,12 +676,12 @@ def build_network(
             #
             nest_args = NestArgs(parent, op, None, None)
             if nest:
-                kw["name"] = rename(nest_args._replace(typ="op", name=op.name))
+                kw["name"] = renamer(nest_args._replace(typ="op", name=op.name))
                 kw["needs"] = [
-                    rename(nest_args._replace(typ="needs", name=n)) for n in op.needs
+                    renamer(nest_args._replace(typ="needs", name=n)) for n in op.needs
                 ]
                 kw["provides"] = [
-                    rename(nest_args._replace(typ="provides", name=n))
+                    renamer(nest_args._replace(typ="provides", name=n))
                     for n in op.provides
                 ]
 
@@ -689,22 +689,22 @@ def build_network(
 
         return op
 
-    def rename(nest_args: NestArgs) -> str:
+    def renamer(nest_args: NestArgs) -> str:
         """Handle user's or default `nest` callable's results."""
         assert callable(nest), (nest, nest_args)
 
         ok = False
         try:
-            ret = nest(nest_args)
-            if not ret:
+            new_name = nest(nest_args)
+            if not new_name:
                 # A falsy means don't touch the node.
-                ret = nest_args.name
-            elif not isinstance(ret, str):
+                new_name = nest_args.name
+            elif not isinstance(new_name, str):
                 # Truthy but not str values mean apply default nesting.
-                ret = nest_any_node(nest_args)
+                new_name = nest_any_node(nest_args)
 
             ok = True
-            return ret
+            return new_name
         finally:
             if not ok:
                 log.warning("Failed to nest-rename %s", nest_args)
