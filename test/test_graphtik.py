@@ -15,6 +15,7 @@ from multiprocessing import dummy as mp_dummy
 from multiprocessing import get_context
 from operator import add, floordiv, mul, sub
 from pprint import pprint
+from textwrap import dedent
 from typing import Tuple
 from unittest.mock import MagicMock
 
@@ -287,12 +288,30 @@ def test_compose_nester_dict(caplog):
     pip = compose(
         "t",
         operation(str, "op1", provides=["a", "aa"]),
-        operation(str, "op2", needs="a", provides=["b", "c"]),
+        operation(
+            str,
+            "op2",
+            needs="a",
+            provides=["b", sfx("c")],
+            aliases=[("b", "B"), ("b", "p")],
+        ),
         nest={"op1": "OP1", "a": "A", "b": "bb"},
     )
+    print(str(pip))
     assert str(pip) == (
         "NetworkOperation('t', needs=['A'], "
-        "provides=['A', 'aa', 'bb', 'c'], x2 ops: OP1, op2)"
+        "provides=['A', 'aa', 'bb', sfx: 'c', 'B', 'p'], x2 ops: OP1, op2)"
+    )
+    print(str(pip.ops))
+    assert (
+        str(pip.ops)
+        == dedent(
+            """
+        [FunctionalOperation(name='OP1', needs=[], provides=['A', 'aa'], fn='str'),
+         FunctionalOperation(name='op2', needs=['A'], provides=['bb', sfx: 'c'],
+         aliases=[('bb', 'B'), ('bb', 'p')], fn='str')]
+    """
+        ).replace("\n", "")
     )
 
 

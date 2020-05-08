@@ -680,10 +680,20 @@ def build_network(
                 kw["needs"] = [
                     renamer(ren_args._replace(typ="needs", name=n)) for n in op.needs
                 ]
-                kw["provides"] = [
-                    renamer(ren_args._replace(typ="provides", name=n))
+                # Store renamed `provides` as map, used for `aliases` below.
+                renamed_provides = {
+                    n: renamer(ren_args._replace(typ="provides", name=n))
                     for n in op.provides
-                ]
+                }
+                kw["provides"] = list(renamed_provides.values())
+                if op.aliases:
+                    kw["aliases"] = [
+                        (
+                            renamed_provides[k],
+                            renamer(ren_args._replace(typ="aliases", name=v)),
+                        )
+                        for k, v in op.aliases
+                    ]
 
             op = op.withset(**kw)
 
