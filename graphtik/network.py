@@ -24,7 +24,7 @@ from boltons.setutils import IndexedSet as iset
 from .base import Items, astuple, jetsam
 from .config import is_debug, is_skip_evictions
 from .modifiers import dep_renamed, is_mapped, is_optional, is_sfx, optional
-from .composition import FunctionalOperation, Operation, PlotArgs, Plottable
+from .composition import FunctionalOperation, Operation, PlotArgs, RenArgs, Plottable
 
 NodePredicate = Callable[[Any, Mapping], bool]
 
@@ -607,20 +607,6 @@ class Network(Plottable):
             log.debug("... cache-updated key: %s", cache_key)
 
         return plan
-
-
-class RenArgs(NamedTuple):
-    """:term:`operation nesting` `nest` callables receive instances of this class."""
-
-    #: what is currently being renamed,
-    #: one of the string: ``(op | needs | provides)``
-    typ: str
-    #: the operation currently being processed
-    op: Operation
-    # the name of the item to be renamed/nested
-    name: str
-    #: the parent :class:`.NetworkOperation` of the operation currently being processed
-    parent: "NetworkOperation"
 
 
 def build_network(

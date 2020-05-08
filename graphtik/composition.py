@@ -45,6 +45,7 @@ from .base import (
     jetsam,
 )
 from .modifiers import (
+    dep_renamed,
     dep_singularized,
     dep_stripped,
     is_mapped,
@@ -459,6 +460,23 @@ class Plottable(abc.ABC):
         pass
 
 
+class RenArgs(NamedTuple):
+    """
+    Arguments received by callbacks in :meth:`.rename()` and :term:`operation nesting`.
+    """
+
+    #: what is currently being renamed,
+    #: one of the string: ``(op | needs | provides | aliases)``
+    typ: str
+    #: the operation currently being processed
+    op: "Operation"
+    # the name of the item to be renamed/nested
+    name: str
+    #: The parent :class:`.NetworkOperation` of the operation currently being processed,.
+    #: Has value only when doing :term:`operation nesting` from :func:`.compose()`.
+    parent: "NetworkOperation" = None
+
+
 class Operation(Plottable, abc.ABC):
     """An abstract class representing an action with :meth:`.compute()`."""
 
@@ -481,6 +499,85 @@ class Operation(Plottable, abc.ABC):
             the results of running the feed-forward computation on
             ``inputs``.
         """
+
+    # def plot(self, *args, **kw):
+    #     """Dead impl so as to be easier to make a dummy Op."""
+    #     raise NotImplementedError("Operation subclasses")
+
+    def _rename_graph_names(
+        self,
+        kw,
+        renamer: Union[Callable[[RenArgs], str], Mapping[str, str]],
+        rename_driver: Callable[[RenArgs], str] = None,
+    ) -> None:
+        """
+        Pass operation & dependency names through `renamer`, as handled by `rename_driver`.
+
+        :param kw:
+            all data extracted from an operation, to be modified it in-place
+
+        For the other 2 params, see :meth:`.FunctionalOperation.withset()`.
+
+        :raise ValueError:
+            - if a `renamer` was neither dict nor callable
+            - if a `renamer` dict contained a non-string value,
+        :raise TypeError:
+            if `rename_driver` was not a callable with appropriate signature
+        """
+
+        def default_rename_driver(ren_args: RenArgs) -> str:
+            """Handle non-string names from a callable `renamer` as true/false."""
+
+            new_name = old_name = ren_args.name
+            if isinstance(renamer, cabc.Mapping):
+                if old_name in renamer:
+                    # Preserve any modifier.
+                    new_name = dep_renamed(old_name, renamer[old_name])
+            elif callable(renamer):
+                ok = False
+                try:
+                    new_name = renamer(ren_args)
+                finally:
+                    if not ok:
+                        log.warning("Failed to nest-rename %s", ren_args)
+
+                if not new_name:
+                    # A falsy means don't touch the node.
+                    new_name = old_name
+            else:
+                raise AssertionError(
+                    f"Invalid `renamer` {renamer!r} should have been caught earlier."
+                )
+
+            if not new_name or not isinstance(new_name, str):
+                raise ValueError(
+                    f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
+                )
+
+            return new_name
+
+        if not rename_driver:
+            rename_driver = default_rename_driver
+        ren_args = RenArgs(self, None, None)
+
+        kw["name"] = rename_driver(ren_args._replace(typ="op", name=kw["name"]))
+        kw["needs"] = [
+            rename_driver(ren_args._replace(typ="needs", name=n)) for n in kw["needs"]
+        ]
+        # Store renamed `provides` as map, used for `aliases` below.
+        renamed_provides = {
+            n: rename_driver(ren_args._replace(typ="provides", name=n))
+            for n in kw["provides"]
+        }
+        kw["provides"] = list(renamed_provides.values())
+        if "aliases" in kw:
+            kw["aliases"] = [
+                (
+                    renamed_provides[k],
+                    rename_driver(ren_args._replace(typ="aliases", name=v)),
+                )
+                for k, v in kw["aliases"]
+            ]
 
 
 def as_renames(i, argname):
@@ -819,8 +916,96 @@ class FunctionalOperation(Operation, Plottable):
             )
         }
 
-    def withset(self, fn: Callable = None, **kw,) -> "FunctionalOperation":
-        """Make a *clone* with the some values replaced. """
+    def withset(
+        self,
+        fn: Callable = ...,
+        name=...,
+        needs: Items = ...,
+        provides: Items = ...,
+        aliases: Mapping = ...,
+        *,
+        renamer=None,
+        rename_driver=None,
+        rescheduled=...,
+        endured=...,
+        parallel=...,
+        marshalled=...,
+        returns_dict=...,
+        node_props: Mapping = ...,
+    ) -> "FunctionalOperation":
+        """
+        Make a *clone* with the some values replaced, or operation and dependencies renamed.
+
+        if `renamer` given, it is applied on top (and afterwards) ny other changevalues,
+        for operation-name and dependencies (aliases included).
+
+        :param renamer:
+            - if a dictionary, it renames any operations & data named as keys
+              into the respective values.
+            - if it is a :func:`.callable`, it is given a :class:`.RenArgs` instance
+              to decide the node's name.
+
+            The callable may return a *str* for the new-name, or any other false
+            value to leave node named as is.
+
+            .. Attention::
+                The callable SHOULD wish to preserve any :term:`modifier` on dependencies,
+                and use :func:`.dep_renamed()` if a callable is given.
+
+        :param rename_driver:
+            Feeds all op-names and handles non-str result names ; if not given,
+            a default one is used.
+
+        :return:
+            a clone operation with changed/renamed values asked
+
+        :raise:
+            - (ValueError, TypeError): all cstor validation errors
+            - TypeError: if `rename_driver` was not a callable with appropriate signature
+            - ValueError: if a `renamer` dict contains a non-string value
+
+
+        **Examples**
+
+            >>> from graphtik import sfx
+
+            >>> op = operation(str, "foo", needs="a",
+            ...     provides=["b", sfx("c")],
+            ...     aliases={"b": "B-aliased"})
+            >>> op.withset(renamer={"foo": "BAR",
+            ...                     'a': "A",
+            ...                     'b': "B",
+            ...                     sfx('c'): "cc",
+            ...                     "B-aliased": "new.B-aliased"})
+            FunctionalOperation(name='BAR',
+                                needs=['A'],
+                                provides=['B', sfx: 'cc'],
+                                aliases=[('B', 'new.B-aliased')],
+                                fn='str')
+
+        - Notice that ``'c'`` rename change the "sideffect name, without the destination name
+          being an ``sfx()`` modifier (but source name must match the sfx-specifier).
+        - Notice that the source of aliases from ``b-->B`` is handled implicitely
+          from the respective rename on the `provides`.
+
+        But usually a callable is more practical, like the one below renaming
+        only data names:
+
+            >>> op.withset(renamer=lambda ren_args:
+            ...            dep_renamed(ren_args.name, f"parent.{ren_args.name}")
+            ...            if ren_args.typ != 'op' else
+            ...            False)
+            FunctionalOperation(name='foo',
+                                needs=['parent.a'],
+                                provides=['parent.b', sfx: 'parent.sfx: 'c''],
+                                aliases=[('parent.b', 'parent.B-aliased')],
+                                fn='str')
+        """
+        kw = {
+            k: v
+            for k, v in locals().items()
+            if v is not ... and k not in ("self", "renamer", "rename_driver")
+        }
         ## Exclude calculated dep-fields.
         #
         me = {
@@ -828,10 +1013,12 @@ class FunctionalOperation(Operation, Plottable):
             for k, v in vars(self).items()
             if not k.startswith("_") and not k.startswith("op_")
         }
-        if fn:
-            me["fn"] = fn
-        me.update(kw)
-        return FunctionalOperation(**me)
+        kw = {**me, **kw}
+
+        if renamer:
+            self._rename_graph_names(kw, renamer, rename_driver)
+
+        return FunctionalOperation(**kw)
 
     def _prepare_match_inputs_error(
         self,
@@ -1607,7 +1794,7 @@ def compose(
     endured=None,
     parallel=None,
     marshalled=None,
-    nest: Union[Callable[["RenArgs"], str], Union[bool, str]] = None,
+    nest: Union[Callable[[RenArgs], str], Mapping[str, str], Union[bool, str]] = None,
     node_props=None,
 ) -> NetworkOperation:
     """
