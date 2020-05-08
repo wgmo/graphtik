@@ -309,7 +309,7 @@ def test_compose_nester_bad_dict(caplog):
 
 
 def test_compose_nester_bad_screamy(caplog):
-    def screamy_nester(nest_args):
+    def screamy_nester(ren_args):
         raise RuntimeError("Bluff")
 
     with pytest.raises(RuntimeError, match="Bluff"):
@@ -321,7 +321,7 @@ def test_compose_nester_bad_screamy(caplog):
         )
     for record in caplog.records:
         if record.levelname == "WARNING":
-            assert "(parent=None, typ='op', op=None, name='op1')" in record.message
+            assert "(typ='op', op=None, name='op1', parent=None)" in record.message
 
 
 def test_compose_nester_preserve_ops(caplog):
@@ -330,8 +330,8 @@ def test_compose_nester_preserve_ops(caplog):
 
 
 def test_compose_nest_ops_only():
-    def ops_only(nest_args):
-        return nest_args.typ == "op"
+    def ops_only(ren_args):
+        return ren_args.typ == "op"
 
     sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
     sum_op2 = operation(name="sum_op2", needs=["a", "b"], provides="sum2")(add)
@@ -446,8 +446,8 @@ def test_network_merge_in_doctests():
     week = compose("week", *weekdays, nest=True)
     assert len(week.ops) == 6
 
-    def nester(nest_args):
-        if nest_args.name not in ("backlog", "tasks done", "todos"):
+    def nester(ren_args):
+        if ren_args.name not in ("backlog", "tasks done", "todos"):
             return True
 
     week = compose("week", *weekdays, nest=nester)
@@ -1692,7 +1692,7 @@ def test_combine_networks(exemethod, bools):
             name="sub2", needs=["a_minus_ab", "c"], provides="a_minus_ab_minus_c"
         )(sub),
         parallel=parallel2,
-        nest=lambda nest_args: nest_args.typ == "op",
+        nest=lambda ren_args: ren_args.typ == "op",
     )
     ## Ensure all old-nodes were prefixed.
     #

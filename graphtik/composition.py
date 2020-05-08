@@ -1587,7 +1587,7 @@ def compose(
     endured=None,
     parallel=None,
     marshalled=None,
-    nest: Union[Callable[["NestArgs"], str], Union[bool, str]] = None,
+    nest: Union[Callable[["RenArgs"], str], Union[bool, str]] = None,
     node_props=None,
 ) -> NetworkOperation:
     """
@@ -1610,7 +1610,7 @@ def compose(
           (performed by :func:`.nest_any_node()`;
         - if it is a dictionary, it renames any operations & data named as keys
           into the respective values.
-        - if it is a :func:`.callable`, it is given a :class:`.NestArgs` instance
+        - if it is a :func:`.callable`, it is given a :class:`.RenArgs` instance
           to decide the node's name.
 
           The callable may return a *str* for the new-name, or any other true/false
@@ -1622,7 +1622,7 @@ def compose(
 
               compose(
                   ...,
-                  nest=lambda nest_args: nest_args.typ == "op"
+                  nest=lambda ren_args: ren_args.typ == "op"
               )
 
           .. Attention::

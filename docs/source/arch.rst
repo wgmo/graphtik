@@ -86,7 +86,7 @@ Architecture
         by the name of the respective original pipeline that contained them
         (or the user defines the renames).
 
-        :seealso: :ref:`operation-nesting`, :func:`.compose`, :class:`.NestArgs`,
+        :seealso: :ref:`operation-nesting`, :func:`.compose`, :class:`.RenArgs`,
             :func:`.nest_any_node()`, :func:`.dep_renamed()`, :attr:`.PlotArgs.clusters`
 
     compile

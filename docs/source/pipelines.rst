@@ -203,10 +203,10 @@ a "feeder" & "collector" operations).
 
 We do that by passing as the ``nest`` parameter a :func:`.callable` which will decide
 which names of the original pipeline (operations & dependencies) should be prefixed
-(see also :func:`.compose` & :class:`.NestArgs` for how to use that param):
+(see also :func:`.compose` & :class:`.RenArgs` for how to use that param):
 
-    >>> def rename_predicate(nest_args):
-    ...     if nest_args.name not in ("backlog", "tasks done", "todos"):
+    >>> def rename_predicate(ren_args):
+    ...     if ren_args.name not in ("backlog", "tasks done", "todos"):
     ...         return True
 
     >>> week = compose("week", *weekdays, nest=rename_predicate)

@@ -609,11 +609,9 @@ class Network(Plottable):
         return plan
 
 
-class NestArgs(NamedTuple):
+class RenArgs(NamedTuple):
     """:term:`operation nesting` `nest` callables receive instances of this class."""
 
-    #: the parent :class:`.NetworkOperation` of the operation currently being processed
-    parent: "NetworkOperation"
     #: what is currently being renamed,
     #: one of the string: ``(op | needs | provides)``
     typ: str
@@ -621,6 +619,8 @@ class NestArgs(NamedTuple):
     op: Operation
     # the name of the item to be renamed/nested
     name: str
+    #: the parent :class:`.NetworkOperation` of the operation currently being processed
+    parent: "NetworkOperation"
 
 
 def build_network(
@@ -675,13 +675,13 @@ def build_network(
             #  by prefixing them with their parent netop.
             #
             if nest:
-                nest_args = NestArgs(parent, op, None, None)
-                kw["name"] = renamer(nest_args._replace(typ="op", name=op.name))
+                ren_args = RenArgs(op, None, None, parent)
+                kw["name"] = renamer(ren_args._replace(typ="op", name=op.name))
                 kw["needs"] = [
-                    renamer(nest_args._replace(typ="needs", name=n)) for n in op.needs
+                    renamer(ren_args._replace(typ="needs", name=n)) for n in op.needs
                 ]
                 kw["provides"] = [
-                    renamer(nest_args._replace(typ="provides", name=n))
+                    renamer(ren_args._replace(typ="provides", name=n))
                     for n in op.provides
                 ]
 
@@ -689,24 +689,24 @@ def build_network(
 
         return op
 
-    def renamer(nest_args: NestArgs) -> str:
+    def renamer(ren_args: RenArgs) -> str:
         """Handle user's or default `nest` callable's results."""
 
         ok = False
         try:
-            new_name = old_name = nest_args.name
+            new_name = old_name = ren_args.name
             if isinstance(nest, abc.Mapping):
                 if old_name in nest:
                     # Preserve any modifier.
                     new_name = dep_renamed(old_name, nest[old_name])
             elif callable(nest):
-                new_name = nest(nest_args)
+                new_name = nest(ren_args)
                 if not new_name:
                     # A falsy means don't touch the node.
                     new_name = old_name
                 elif not isinstance(new_name, str):
                     # Truthy but not str values mean apply default nesting.
-                    new_name = nest_any_node(nest_args)
+                    new_name = nest_any_node(ren_args)
             else:
                 raise AssertionError(f"Truthy `nest` to invalid {nest!r}: {locals()}")
 
@@ -720,7 +720,7 @@ def build_network(
             return new_name
         finally:
             if not ok:
-                log.warning("Failed to nest-rename %s", nest_args)
+                log.warning("Failed to nest-rename %s", ren_args)
 
     if nest:
         ## Set default nesting if not one provided by user.
@@ -742,7 +742,7 @@ def build_network(
     return net
 
 
-def nest_any_node(nest_args: NestArgs) -> str:
+def nest_any_node(ren_args: RenArgs) -> str:
     """Nest both operation & data under `parent`'s name (if given).
 
     :return:
@@ -750,10 +750,10 @@ def nest_any_node(nest_args: NestArgs) -> str:
     """
 
     def prefixed(name):
-        return f"{nest_args.parent.name}.{name}" if nest_args.parent else name
+        return f"{ren_args.parent.name}.{name}" if ren_args.parent else name
 
     return (
-        prefixed(nest_args.name)
-        if nest_args.typ == "op"
-        else dep_renamed(nest_args.name, prefixed)
+        prefixed(ren_args.name)
+        if ren_args.typ == "op"
+        else dep_renamed(ren_args.name, prefixed)
     )

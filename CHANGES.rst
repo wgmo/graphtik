@@ -115,7 +115,7 @@ v8.0.2 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modi
 
   + FEAT: introduce the :class:`NULL_OP` operation that can "erase" an existing
     operation when merging pipelines.
-  + ENH: ``compose(..., nest=nest_cb)`` where the callback accepts :class:`.NestArgs`
+  + ENH: ``compose(..., nest=nest_cb)`` where the callback accepts class ``.RenArgs``
     and can perform any kind of renaming on data + operations before :term:`combining
     pipelines <combine pipelines>`.
   + doc: "merge" identically-named ops override each other, "nest" means they are prefixed,
