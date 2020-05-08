@@ -142,7 +142,7 @@ def test_func_op_validation(opargs, exp):
         with pytest.raises(type(exp), match=str(exp)):
             reparse_operation_data(*opargs)
     else:
-        assert reparse_operation_data(*opargs) == exp
+        assert reparse_operation_data(*opargs)[:-1] == exp
 
 
 @pytest.mark.parametrize(
@@ -346,30 +346,43 @@ def test_as_renames(inp, exp):
 
 
 @pytest.mark.parametrize(
-    "op_kw, ex",
+    "prov_aliases, ex",
     [
         (
-            lambda: dict(aliases={"a": 1}),
-            r"The `aliases` for ['a'] rename ['a'], not found in provides []!",
+            ((), {"a": 1}),
+            TypeError(r"All `aliases` must be non-empty str, got: \[\('a', 1\)\]"),
         ),
         (
-            lambda: dict(name="t", provides="a", aliases={"a": 1, "b": 2}),
-            r"The `aliases` for ['a', 'b'] rename ['b'], not found in provides ['a']!",
+            ((), {"a": None}),
+            TypeError(r"All `aliases` must be non-empty str, got: \[\('a', None\)\]"),
         ),
         (
-            lambda: dict(name="t", provides=sfx("a"), aliases={sfx("a"): 1}),
-            "must not contain `sideffects",
+            ((), {"a": ""}),
+            TypeError(r"All `aliases` must be non-empty str, got: \[\('a', ''\)\]"),
         ),
         (
-            lambda: dict(name="t", provides="a", aliases={"a": sfx("AA")}),
-            "must not contain `sideffects",
+            ((), {"a": "A"}),
+            ValueError(
+                r"The `aliases` \['a'-->'A'\] rename non-existent provides in \[\]"
+            ),
+        ),
+        (
+            ("a", {"a": "A", "b": "B"}),
+            ValueError(
+                r"The `aliases` \['b'-->'B'\] rename non-existent provides in \['a'\]"
+            ),
+        ),
+        ((sfx("a"), {sfx("a"): "a"}), ValueError("must not contain `sideffects"),),
+        (("a", {"a": sfx("AA")}), ValueError("must not contain `sideffects"),),
+        (
+            (["a", "b"], {"a": "b"}),
+            ValueError(r"clash with existing provides in \['a', 'b'\]"),
         ),
     ],
 )
-def test_provides_aliases_BAD(op_kw, ex):
-    op_kw = op_kw()
-    with pytest.raises(ValueError, match=re.escape(ex)):
-        operation(str, **op_kw)()
+def test_func_op_validation_aliases_BAD(prov_aliases, ex):
+    with pytest.raises(type(ex), match=str(ex)):
+        reparse_operation_data("t", None, *prov_aliases)
 
 
 def test_provides_aliases():

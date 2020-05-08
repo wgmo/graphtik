@@ -19,7 +19,17 @@ import re
 import textwrap
 from collections import abc as cabc
 from functools import wraps
-from typing import Any, Callable, Collection, List, Mapping, NamedTuple, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Hashable,
+    List,
+    Mapping,
+    NamedTuple,
+    Tuple,
+    Union,
+)
 
 from boltons.setutils import IndexedSet as iset
 
@@ -508,18 +518,19 @@ def as_renames(i, argname):
 
 
 def reparse_operation_data(
-    name, needs, provides
-) -> Tuple[cabc.Hashable, cabc.Collection, cabc.Collection]:
+    name, needs, provides, aliases=()
+) -> Tuple[
+    Hashable, Collection[str], Collection[str], Collection[Tuple[str, str]],
+]:
     """
     Validate & reparse operation data as lists.
 
     :return:
-        name, needs, provides,
+        name, needs, provides, aliases
 
     As a separate function to be reused by client building operations,
     to detect errors early.
     """
-
     if not isinstance(name, cabc.Hashable):
         raise TypeError(f"Operation `name` must be hashable, got: {name}")
 
@@ -533,12 +544,45 @@ def reparse_operation_data(
     if not all(isinstance(i, str) for i in provides):
         raise TypeError(f"All `provides` must be str, got: {provides!r}")
 
-    return name, needs, provides
+    aliases = as_renames(aliases, "aliases")
+    if aliases:
+        if not all(
+            src and isinstance(src, str) and dst and isinstance(dst, str)
+            for src, dst in aliases
+        ):
+            raise TypeError(f"All `aliases` must be non-empty str, got: {aliases!r}")
+        if any(1 for src, dst in aliases if dst in provides):
+            bad = ", ".join(
+                f"{src} -> {dst}" for src, dst in aliases if dst in provides
+            )
+            raise ValueError(
+                f"The `aliases` [{bad}] clash with existing provides in {list(provides)}!"
+            )
+
+        alias_src = iset(src for src, _dst in aliases)
+        if not alias_src <= set(provides):
+            bad_alias_sources = alias_src - provides
+            bad_aliases = ", ".join(
+                f"{src!r}-->{dst!r}" for src, dst in aliases if src in bad_alias_sources
+            )
+            raise ValueError(
+                f"The `aliases` [{bad_aliases}] rename non-existent provides in {list(provides)}!"
+            )
+        sfx_aliases = [
+            f"{src} -> {dst}" for src, dst in aliases if is_sfx(src) or is_sfx(dst)
+        ]
+        if sfx_aliases:
+            raise ValueError(
+                f"The `aliases` must not contain `sideffects` {sfx_aliases}"
+                "\n  Simply add any extra `sideffects` in the `provides`."
+            )
+
+    return name, needs, provides, aliases
 
 
 def _spread_sideffects(
-    deps: cabc.Collection,
-) -> Tuple[cabc.Collection, cabc.Collection]:
+    deps: Collection[str],
+) -> Tuple[Collection[str], Collection[str]]:
     """
     Build fn/op dependencies from user ones by stripping or singularizing any :term:`sideffects`.
 
@@ -627,38 +671,14 @@ class FunctionalOperation(Operation, Plottable):
         if name is None and fn:
             name = func_name(fn, None, mod=0, fqdn=0, human=0, partials=1)
         ## Overwrite reparsed op-data.
-        name, needs, provides = reparse_operation_data(name, needs, provides)
+        name, needs, provides, aliases = reparse_operation_data(
+            name, needs, provides, aliases
+        )
 
         needs, _fn_needs = _spread_sideffects(needs)
         provides, _fn_provides = _spread_sideffects(provides)
         op_needs = iset(needs)
-
-        if aliases:
-            aliases = as_renames(aliases, "aliases")
-            if any(1 for src, dst in aliases if dst in provides):
-                bad = ", ".join(
-                    f"{src} -> {dst}" for src, dst in aliases if dst in provides
-                )
-                raise ValueError(
-                    f"The `aliases` ({bad}) clash with existing provides {list(provides)}!"
-                )
-
-            alias_src, alias_dst = list(zip(*aliases))
-            if not set(alias_src) <= set(provides):
-                raise ValueError(
-                    f"The `aliases` for {list(alias_src)} rename {list(iset(alias_src) - provides)}"
-                    f", not found in provides {list(provides)}!"
-                )
-            sfx_aliases = [
-                f"{src} -> {dst}" for src, dst in aliases if is_sfx(src) or is_sfx(dst)
-            ]
-            if sfx_aliases:
-                raise ValueError(
-                    f"The `aliases` must not contain `sideffects` {sfx_aliases}"
-                    "\n  Simply add any extra `sideffects` in the `provides`."
-                )
-        else:
-            alias_dst = ()
+        alias_dst = aliases and tuple(dst for _src, dst in aliases)
         op_provides = iset(itt.chain(provides, alias_dst))
 
         #: The :term:`operation`'s underlying function.
@@ -1331,7 +1351,7 @@ class NetworkOperation(Operation, Plottable):
         self.net = build_network(
             operations, rescheduled, endured, parallel, marshalled, nest, node_props
         )
-        self.name, self.needs, self.provides = reparse_operation_data(
+        self.name, self.needs, self.provides, _aliases = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
         )
 
