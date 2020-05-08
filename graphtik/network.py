@@ -610,7 +610,7 @@ class Network(Plottable):
 
 
 class NestArgs(NamedTuple):
-    """:term:`operation nesting` callables receive instances of this class."""
+    """:term:`operation nesting` `nest` callables receive instances of this class."""
 
     #: the parent :class:`.NetworkOperation` of the operation currently being processed
     parent: "NetworkOperation"
@@ -674,8 +674,8 @@ def build_network(
             ## If `nest`, rename the op & data (predicated by `nest`)
             #  by prefixing them with their parent netop.
             #
-            nest_args = NestArgs(parent, op, None, None)
             if nest:
+                nest_args = NestArgs(parent, op, None, None)
                 kw["name"] = renamer(nest_args._replace(typ="op", name=op.name))
                 kw["needs"] = [
                     renamer(nest_args._replace(typ="needs", name=n)) for n in op.needs
@@ -691,19 +691,32 @@ def build_network(
 
     def renamer(nest_args: NestArgs) -> str:
         """Handle user's or default `nest` callable's results."""
-        assert callable(nest), (nest, nest_args)
 
         ok = False
         try:
-            new_name = nest(nest_args)
-            if not new_name:
-                # A falsy means don't touch the node.
-                new_name = nest_args.name
-            elif not isinstance(new_name, str):
-                # Truthy but not str values mean apply default nesting.
-                new_name = nest_any_node(nest_args)
+            new_name = old_name = nest_args.name
+            if isinstance(nest, abc.Mapping):
+                if old_name in nest:
+                    # Preserve any modifier.
+                    new_name = dep_renamed(old_name, nest[old_name])
+            elif callable(nest):
+                new_name = nest(nest_args)
+                if not new_name:
+                    # A falsy means don't touch the node.
+                    new_name = old_name
+                elif not isinstance(new_name, str):
+                    # Truthy but not str values mean apply default nesting.
+                    new_name = nest_any_node(nest_args)
+            else:
+                raise AssertionError(f"Truthy `nest` to invalid {nest!r}: {locals()}")
 
-            ok = True
+            ok = True  # Don't log-warn if raising below.
+
+            if not new_name or not isinstance(new_name, str):
+                raise ValueError(
+                    f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
+                )
+
             return new_name
         finally:
             if not ok:
@@ -712,7 +725,7 @@ def build_network(
     if nest:
         ## Set default nesting if not one provided by user.
         #
-        if not callable(nest):
+        if not callable(nest) and not isinstance(nest, abc.Mapping):
             nest = nest_any_node
 
     merge_set = iset()  # Preseve given node order.

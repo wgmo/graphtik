@@ -1608,6 +1608,8 @@ def compose(
         - If false (default), applies :term:`operation merging`, not *nesting*.
         - if true, applies :term:`operation nesting` to :all types of nodes
           (performed by :func:`.nest_any_node()`;
+        - if it is a dictionary, it renames any operations & data named as keys
+          into the respective values.
         - if it is a :func:`.callable`, it is given a :class:`.NestArgs` instance
           to decide the node's name.
 
@@ -1625,7 +1627,7 @@ def compose(
 
           .. Attention::
               The callable SHOULD wish to preserve any :term:`modifier` on dependencies,
-              and use :func:`.dep_renamed`.
+              and use :func:`.dep_renamed()`.
 
           :seealso: :ref:`operation-nesting` for examples
 

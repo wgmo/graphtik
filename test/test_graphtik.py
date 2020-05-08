@@ -283,6 +283,31 @@ def test_network_plan_execute():
     assert sol == exp
 
 
+def test_compose_nester_dict(caplog):
+    pip = compose(
+        "t",
+        operation(str, "op1", provides=["a", "aa"]),
+        operation(str, "op2", needs="a", provides=["b", "c"]),
+        nest={"op1": "OP1", "a": "A", "b": "bb"},
+    )
+    assert str(pip) == (
+        "NetworkOperation('t', needs=['A'], "
+        "provides=['A', 'aa', 'bb', 'c'], x2 ops: OP1, op2)"
+    )
+
+
+def test_compose_nester_bad_dict(caplog):
+    with pytest.raises(ValueError, match="Must rename .+op1.+ into a non-empty string"):
+        compose(
+            "test_nest_err",
+            operation(str, "op1"),
+            operation(str, "op2"),
+            nest={"op1": 1},
+        )
+    for record in caplog.records:
+        assert "Failed to nest-rename" in record.message
+
+
 def test_compose_nester_bad_screamy(caplog):
     def screamy_nester(nest_args):
         raise RuntimeError("Bluff")
