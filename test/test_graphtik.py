@@ -284,7 +284,7 @@ def test_network_plan_execute():
     assert sol == exp
 
 
-def test_compose_nester_dict(caplog):
+def test_compose_rename_dict(caplog):
     pip = compose(
         "t",
         operation(str, "op1", provides=["a", "aa"]),
@@ -295,12 +295,12 @@ def test_compose_nester_dict(caplog):
             provides=["b", sfx("c")],
             aliases=[("b", "B"), ("b", "p")],
         ),
-        nest={"op1": "OP1", "a": "A", "b": "bb"},
+        nest={"op1": "OP1", "op2": lambda n: "OP2", "a": "A", "b": "bb"},
     )
     print(str(pip))
     assert str(pip) == (
         "NetworkOperation('t', needs=['A'], "
-        "provides=['A', 'aa', 'bb', sfx: 'c', 'B', 'p'], x2 ops: OP1, op2)"
+        "provides=['A', 'aa', 'bb', sfx: 'c', 'B', 'p'], x2 ops: OP1, OP2)"
     )
     print(str(pip.ops))
     assert (
@@ -308,14 +308,14 @@ def test_compose_nester_dict(caplog):
         == dedent(
             """
         [FunctionalOperation(name='OP1', needs=[], provides=['A', 'aa'], fn='str'),
-         FunctionalOperation(name='op2', needs=['A'], provides=['bb', sfx: 'c'],
+         FunctionalOperation(name='OP2', needs=['A'], provides=['bb', sfx: 'c'],
          aliases=[('bb', 'B'), ('bb', 'p')], fn='str')]
     """
         ).replace("\n", "")
     )
 
 
-def test_compose_nester_dict_non_str(caplog):
+def test_compose_rename_dict_non_str(caplog):
     pip = compose("t", operation(str, "op1"), operation(str, "op2"), nest={"op1": 1},)
     exp = "NetworkOperation('t', needs=[], provides=[], x2 ops: op1, op2)"
     print(pip)
@@ -329,7 +329,7 @@ def test_compose_nester_dict_non_str(caplog):
         assert "Failed to nest-rename" not in record.message
 
 
-def test_compose_nester_bad_screamy(caplog):
+def test_compose_rename_bad_screamy(caplog):
     def screamy_nester(ren_args):
         raise RuntimeError("Bluff")
 
@@ -345,12 +345,20 @@ def test_compose_nester_bad_screamy(caplog):
             assert "name='op1', parent=None)" in record.message
 
 
-def test_compose_nester_preserve_ops(caplog):
-    pip = compose("t", operation(str, "op1"), operation(str, "op2"), nest=lambda na: 1,)
-    assert str(pip) == "NetworkOperation('t', needs=[], provides=[], x2 ops: op1, op2)"
+def test_compose_rename_preserve_ops(caplog):
+    pip = compose(
+        "t",
+        operation(str, "op1"),
+        operation(str, "op2"),
+        nest=lambda na: f"aa.{na.name}",
+    )
+    assert (
+        str(pip)
+        == "NetworkOperation('t', needs=[], provides=[], x2 ops: aa.op1, aa.op2)"
+    )
 
 
-def test_compose_nest_ops_only():
+def test_compose_merge_ops():
     def ops_only(ren_args):
         return ren_args.typ == "op"
 

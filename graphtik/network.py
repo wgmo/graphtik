@@ -617,8 +617,6 @@ def build_network(
     marshalled=None,
     node_props=None,
     renamer=None,
-    rename_driver=None,
-    ren_args=None,
 ):
     """
     The :term:`network` factory that does :term:`operation merging` before constructing it.
@@ -626,6 +624,10 @@ def build_network(
     :param nest:
         see same-named param in :func:`.compose`
     """
+    kw = {
+        k: v for k, v in locals().items() if v is not None and k not in ("operations")
+    }
+
     from boltons.setutils import IndexedSet as iset
     from .composition import NULL_OP, NetworkOperation
 
@@ -636,35 +638,18 @@ def build_network(
         ## Convey any node-props specified in the netop here
         #  to all sub-operations.
         #
-        if (
-            node_props
-            or renamer
-            or rescheduled is not None
-            or endured is not None
-            or parallel is not None
-            or marshalled is not None
-        ):
-            kw = {
-                k: v
-                for k, v in [
-                    ("rescheduled", rescheduled),
-                    ("endured", endured),
-                    ("parallel", parallel),
-                    ("marshalled", marshalled),
-                ]
-                if v is not None
-            }
+        if kw:
             if node_props:
-                op_node_props = op.node_props.copy()
-                op_node_props.update(node_props)
-                kw["node_props"] = op_node_props
+                kw["node_props"] = {**op.node_props, **node_props}
 
-            if renamer:
-                kw["renamer"] = renamer
-                kw["rename_driver"] = rename_driver
-                kw["ren_args"] = ren_args or RenArgs(None, op, None, parent=parent)
+            if callable(renamer):
 
-            op = op.withset(**kw)
+                def rename_wrapper(ren_args: RenArgs) -> str:
+                    # Provide RenArgs.parent.
+                    return renamer(ren_args._replace(parent=parent))
+
+                kw["renamer"] = rename_wrapper
+            op = op = op.withset(**kw)
 
         return op
 

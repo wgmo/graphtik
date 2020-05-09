@@ -598,7 +598,7 @@ def test_op_rename():
 
 def test_pipe_rename():
     pipe = compose(
-        "1",
+        "t",
         operation(str, name="op1", needs=sfx("a")),
         operation(
             str,
@@ -618,7 +618,7 @@ def test_pipe_rename():
     got = str(ren)
     assert got == (
         """
-    NetworkOperation('1', needs=[sfx: 'PP.a'], provides=['PP.a', sfx: 'PP.b', 'PP.b'], x2 ops: PP.op1, PP.op2)
+    NetworkOperation('t', needs=[sfx: 'PP.a'], provides=['PP.a', sfx: 'PP.b', 'PP.b'], x2 ops: PP.op1, PP.op2)
         """.strip()
     )
     got = str(ren.ops)
@@ -629,5 +629,21 @@ def test_pipe_rename():
         [FunctionalOperation(name='PP.op1', needs=[sfx: 'PP.a'], provides=[], fn='str'),
          FunctionalOperation(name='PP.op2', needs=[sfx: 'PP.a'], provides=['PP.a', sfx: 'PP.b'],
          aliases=[('PP.a', 'PP.b')], fn='str')]
+        """.strip(),
+    )
+
+    ## Check dictionary with callables
+    #
+    ren = pipe.withset(
+        renamer={"op1": lambda n: "OP1", "op2": False, "a": optional("a"), "b": "B",}
+    )
+    got = str(ren.ops)
+    assert got == re.sub(
+        r"[\n ]+",  # collapse all space-chars into a single space
+        " ",
+        """
+        [FunctionalOperation(name='OP1', needs=[sfx: 'a'], provides=[], fn='str'),
+         FunctionalOperation(name='op2', needs=[sfx: 'a'], provides=['a'(?), sfx: 'b'],
+         aliases=[('a'(?), 'B')], fn='str')]
         """.strip(),
     )
