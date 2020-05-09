@@ -1558,12 +1558,11 @@ class NetworkOperation(Operation, Plottable):
         Display more informative names for the Operation class
         """
         from .config import is_debug
-        from .network import yield_ops
 
         clsname = type(self).__name__
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
-        ops = list(yield_ops(self.net.graph))
+        ops = self.ops
         steps = (
             "".join(f"\n  +--{s}" for s in ops)
             if is_debug()
@@ -1588,6 +1587,9 @@ class NetworkOperation(Operation, Plottable):
         endured=None,
         parallel=None,
         marshalled=None,
+        renamer=None,
+        rename_driver=None,
+        ren_args=None,
     ) -> "NetworkOperation":
         """
         Return a copy with a network pruned for the given `needs` & `provides`.
@@ -1626,8 +1628,6 @@ class NetworkOperation(Operation, Plottable):
                 *Unknown output nodes: ...*
 
         """
-        from .network import yield_ops
-
         outputs = self.outputs if outputs == UNSET else outputs
         predicate = self.predicate if predicate == UNSET else predicate
 
@@ -1654,7 +1654,7 @@ class NetworkOperation(Operation, Plottable):
             name = f"{name}-{uid}"
 
         return NetworkOperation(
-            list(yield_ops(self.net.graph)),
+            self.ops,
             name,
             outputs=outputs,
             predicate=predicate,

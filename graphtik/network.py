@@ -725,7 +725,7 @@ def build_network(
     merge_set = iset()  # Preseve given node order.
     for op in operations:
         if isinstance(op, NetworkOperation):
-            merge_set.update(proc_op(s, op) for s in yield_ops(op.net.graph))
+            merge_set.update(proc_op(s, op) for s in op.ops)
         else:
             merge_set.add(proc_op(op))
     merge_set = iset(i for i in merge_set if not isinstance(i, NULL_OP))
