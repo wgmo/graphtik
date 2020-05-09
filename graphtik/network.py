@@ -682,7 +682,6 @@ def build_network(
                             # A falsy means don't touch the node.
 
                     elif callable(nest):
-                        ren_args = ren_args._replace(parent=parent)
                         ok = False
                         try:
                             new_name = nest(ren_args)
@@ -711,6 +710,7 @@ def build_network(
 
                 kw["renamer"] = nest
                 kw["rename_driver"] = rename_driver
+                kw["ren_args"] = RenArgs(op, None, None,parent=parent)
 
             op = op.withset(**kw)
 

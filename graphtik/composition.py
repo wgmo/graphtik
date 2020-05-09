@@ -509,6 +509,7 @@ class Operation(Plottable, abc.ABC):
         kw,
         renamer: Union[Callable[[RenArgs], str], Mapping[str, str]],
         rename_driver: Callable[[RenArgs], str] = None,
+        ren_args: RenArgs = None,
     ) -> None:
         """
         Pass operation & dependency names through `renamer`, as handled by `rename_driver`.
@@ -560,7 +561,7 @@ class Operation(Plottable, abc.ABC):
 
         if not rename_driver:
             rename_driver = default_rename_driver
-        ren_args = RenArgs(self, None, None)
+        ren_args = ren_args or RenArgs(self, None, None)
 
         kw["name"] = rename_driver(
             ren_args._replace(
@@ -933,6 +934,7 @@ class FunctionalOperation(Operation, Plottable):
         *,
         renamer=None,
         rename_driver=None,
+        ren_args=None,
         rescheduled=...,
         endured=...,
         parallel=...,
@@ -962,6 +964,8 @@ class FunctionalOperation(Operation, Plottable):
         :param rename_driver:
             Feeds all op-names and handles non-str result names ; if not given,
             a default one is used.
+        :param ren_args:
+            the base :class:`RenArgs` to pass to `rename_driver`
 
         :return:
             a clone operation with changed/renamed values asked
@@ -1011,7 +1015,7 @@ class FunctionalOperation(Operation, Plottable):
         kw = {
             k: v
             for k, v in locals().items()
-            if v is not ... and k not in ("self", "renamer", "rename_driver")
+            if v is not ... and k not in "self renamer rename_driver ren_args".split()
         }
         ## Exclude calculated dep-fields.
         #
@@ -1023,7 +1027,7 @@ class FunctionalOperation(Operation, Plottable):
         kw = {**me, **kw}
 
         if renamer:
-            self._rename_graph_names(kw, renamer, rename_driver)
+            self._rename_graph_names(kw, renamer, rename_driver, ren_args)
 
         return FunctionalOperation(**kw)
 
