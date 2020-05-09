@@ -1352,7 +1352,7 @@ class Plotter:
             You may increase the height of the SVG cell output with
             something like this::
 
-                netop.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
+                plottable.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
         :return:
             the matplotlib image if ``filename=-1``, or the given `dot` annotated with any
             jupyter-rendering configurations given in `jupyter_render` parameter.

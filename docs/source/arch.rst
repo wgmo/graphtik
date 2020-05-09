@@ -137,7 +137,7 @@ Architecture
         A graph of `operation`\s linked by their `dependencies <dependency>` forming a `pipeline`.
 
         The :attr:`.Network.graph` (currently a DAG) contains all :class:`.FunctionalOperation`
-        and data-nodes (string or `modifier`) of a `netop`.
+        and data-nodes (string or `modifier`) of a `pipeline`.
 
         They are layed out and connected by repeated calls of
         :meth:`.Network._append_operation()` by Network constructor during `composition`.
@@ -197,16 +197,16 @@ Architecture
         Note that a `sideffected` `dependency` produce usually an *overwrite*.
 
     inputs
-        The named input values that are fed into an `operation` (or `netop`)
+        The named input values that are fed into an `operation` (or `pipeline`)
         through :meth:`.Operation.compute()` method according to its `needs`.
 
         These values are either:
 
-        - given by the user to the outer `netop`, at the start of a `computation`, or
+        - given by the user to the outer `pipeline`, at the start of a `computation`, or
         - derived from `solution` using *needs* as keys, during intermediate `execution`.
 
     outputs
-        The dictionary of computed values returned by an `operation` (or a `netop`)
+        The dictionary of computed values returned by an `operation` (or a `pipeline`)
         matching its `provides`, when method :meth:`.Operation.compute()` is called.
 
         Those values are either:
@@ -231,7 +231,7 @@ Architecture
         Either the abstract notion of an action with specified `needs` and `provides`,
         *dependencies*, or the concrete wrapper :class:`.FunctionalOperation` for
         (any :func:`callable`), that feeds on `inputs` and update `outputs`,
-        from/to `solution`, or given-by/returned-to the user by a `netop`.
+        from/to `solution`, or given-by/returned-to the user by a `pipeline`.
 
         The distinction between *needs*/*provides* and *inputs*/*outputs* is akin to
         function *parameters* and *arguments* during define-time and run-time,
@@ -425,7 +425,7 @@ Architecture
     task
         `execute` `operation`\s *in parallel*, with a `thread pool` or `process pool`
         (instead of `sequential`).
-        Operations and `netop` are marked as such on construction, or enabled globally
+        Operations and `pipeline` are marked as such on construction, or enabled globally
         from `configurations`.
 
         Note a `sideffects` are not expected to function with *process pools*,
@@ -449,7 +449,7 @@ Architecture
         Pickling `parallel` `operation`\s and their `inputs`/`outputs` using
         the :mod:`dill` module. It is `configured <configurations>` either globally
         with :func:`.set_marshal_tasks()` or set with a flag on each
-        operation / `netop`.
+        operation / `pipeline`.
 
         Note that `sideffects` do not work when this is enabled.
 

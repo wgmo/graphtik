@@ -285,10 +285,10 @@ def test_op_node_props():
     assert op.node_props == np
 
 
-def _collect_op_props(netop):
+def _collect_op_props(pipe):
     return {
         k.name: v
-        for k, v in netop.net.graph.nodes.data(True)
+        for k, v in pipe.net.graph.nodes.data(True)
         if isinstance(k, Operation)
     }
 

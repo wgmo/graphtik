@@ -38,7 +38,7 @@ class AbortedException(Exception):
 
 class IncompleteExecutionError(Exception):
     """
-    Error report when any `netop` operations were canceled/failed.
+    Reported when any :term:`endured`/:term:`reschedule` operations were are canceled.
 
     The exception contains 3 arguments:
 

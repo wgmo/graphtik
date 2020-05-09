@@ -63,7 +63,7 @@ class _Modifier(str):
 
     - the factory functions :func:`.mapped`, :func:`optional` etc,
     - the predicates :func:`is_optional()`, :func:`is_pure_sfx()` predicates, etc,
-    - and the :func:`dep_rename()`, :func:`dep_strip()` conversion functions
+    - and the :func:`dep_renamed()`, :func:`dep_stripped()` conversion functions
 
     respectively.
 

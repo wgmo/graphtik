@@ -34,13 +34,10 @@ attribute:
    >>> add_op.fn(3, 4) == add(3, 4)
    True
 
-   But that is just for a quick experimentation - it does not perform any checks
-   or matching of *needs*/*provides* to function arguments & results
-   (which happen when :term:`pipeline`\s :term:`compute`).
-
-   The way Graphtik works is by invoking their :meth:`.Operation.compute()` method,
-   which, among others, allow to specify what results you desire to receive back
-   (read more on :ref:`graph-computations`).
+   Calling an operation, it delegates to :meth:`.Operation.compute()` method,
+   which checks the inputs, match the *needs*/*provides* to function arguments,
+   calls the function,  and finally "zip" the function results with the operation's
+   *provides*. (read more on :ref:`graph-computations`).
 
 
 Builder pattern

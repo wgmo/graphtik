@@ -658,7 +658,7 @@ def build_network(
                 kw["node_props"] = op_node_props
 
             ## If `nest`, rename the op & data (predicated by `nest`)
-            #  by prefixing them with their parent netop.
+            #  by prefixing them with their parent pipeline.
             #
             if nest:
 

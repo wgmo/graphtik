@@ -281,7 +281,7 @@ def test_plotters_hierarchy(pipeline: NetworkOperation, inputs, outputs):
     assert sol_dot != str(pipeline.plot(inputs=inputs, outputs=outputs, solution=sol))
     assert sol_dot != str(pipeline.plot(solution=sol))
 
-    # Calling plot directly on plan misses netop.name
+    # Calling plot directly on plan misses pipeline name
     raw_plan_dot = str(sol.plan.plot(inputs=inputs, outputs=outputs))
     assert f"digraph {pipeline.name} {{" not in str(raw_plan_dot)  # graph-name
     assert f"label=<{pipeline.name}>;" not in str(raw_plan_dot)  # graph-label
