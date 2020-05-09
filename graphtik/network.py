@@ -615,8 +615,10 @@ def build_network(
     endured=None,
     parallel=None,
     marshalled=None,
-    nest=None,
     node_props=None,
+    renamer=None,
+    rename_driver=None,
+    ren_args=None,
 ):
     """
     The :term:`network` factory that does :term:`operation merging` before constructing it.
@@ -636,7 +638,7 @@ def build_network(
         #
         if (
             node_props
-            or nest
+            or renamer
             or rescheduled is not None
             or endured is not None
             or parallel is not None
@@ -657,70 +659,14 @@ def build_network(
                 op_node_props.update(node_props)
                 kw["node_props"] = op_node_props
 
-            ## If `nest`, rename the op & data (predicated by `nest`)
-            #  by prefixing them with their parent pipeline.
-            #
-            if nest:
-
-                def rename_driver(ren_args: RenArgs) -> str:
-                    """Handle user's or default `nest` callable's results."""
-
-                    new_name = old_name = ren_args.name
-                    if isinstance(nest, abc.Mapping):
-                        if old_name in nest:
-                            dst = nest.get(old_name)
-                            if dst:
-                                if isinstance(dst, str):
-                                    new_name = (
-                                        dep_renamed(old_name, nest[old_name])
-                                        if type(dst) is str
-                                        else dst
-                                    )
-                                else:
-                                    # Truthy but not str values mean apply default nesting.
-                                    new_name = nest_any_node(ren_args)
-                            # A falsy means don't touch the node.
-
-                    elif callable(nest):
-                        ok = False
-                        try:
-                            new_name = nest(ren_args)
-                            ok = True
-                        finally:
-                            if not ok:
-                                log.warning("Failed to nest-rename %s", ren_args)
-
-                        if not new_name:
-                            # A falsy means don't touch the node.
-                            new_name = old_name
-                        elif not isinstance(new_name, str):
-                            # Truthy but not str values mean apply default nesting.
-                            new_name = nest_any_node(ren_args)
-                    else:
-                        raise AssertionError(
-                            f"Truthy `nest` to invalid {nest!r}: {locals()}"
-                        )
-
-                    if not new_name or not isinstance(new_name, str):
-                        raise ValueError(
-                            f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
-                        )
-
-                    return new_name
-
-                kw["renamer"] = nest
+            if renamer:
+                kw["renamer"] = renamer
                 kw["rename_driver"] = rename_driver
-                kw["ren_args"] = RenArgs(op, None, None,parent=parent)
+                kw["ren_args"] = ren_args or RenArgs(None, op, None, parent=parent)
 
             op = op.withset(**kw)
 
         return op
-
-    if nest:
-        ## Set default nesting if not one provided by user.
-        #
-        if not callable(nest) and not isinstance(nest, abc.Mapping):
-            nest = nest_any_node
 
     merge_set = iset()  # Preseve given node order.
     for op in operations:
@@ -734,20 +680,3 @@ def build_network(
     net = Network(*merge_set)
 
     return net
-
-
-def nest_any_node(ren_args: RenArgs) -> str:
-    """Nest both operation & data under `parent`'s name (if given).
-
-    :return:
-        the nested name of the operation or data
-    """
-
-    def prefixed(name):
-        return f"{ren_args.parent.name}.{name}" if ren_args.parent else name
-
-    return (
-        prefixed(ren_args.name)
-        if ren_args.typ == "op"
-        else dep_renamed(ren_args.name, prefixed)
-    )

@@ -5,6 +5,7 @@ import logging
 import re
 from collections import OrderedDict, namedtuple
 from functools import partial
+from textwrap import dedent
 from types import SimpleNamespace
 
 import dill
@@ -20,19 +21,20 @@ from graphtik import (
     vararg,
     varargs,
 )
-from graphtik.config import (
-    operations_endured,
-    operations_reschedullled,
-    tasks_in_parallel,
-    tasks_marshalled,
-)
-from graphtik.network import yield_ops
 from graphtik.composition import (
     FunctionalOperation,
     Operation,
     as_renames,
     reparse_operation_data,
 )
+from graphtik.config import (
+    operations_endured,
+    operations_reschedullled,
+    tasks_in_parallel,
+    tasks_marshalled,
+)
+from graphtik.modifiers import dep_renamed
+from graphtik.network import yield_ops
 
 
 @pytest.fixture(params=[None, "got"])
@@ -573,3 +575,59 @@ def test_netop_conveys_attr_to_ops(attr, value):
 )
 def test_dill_ops(op_fact):
     dill.loads(dill.dumps(op_fact()))
+
+
+def test_op_rename():
+    op = operation(
+        str, name="op1", needs=sfx("a"), provides=["a", sfx("b")], aliases=[("a", "b")],
+    )
+
+    def renamer(na):
+        assert na.op
+        assert not na.parent
+        return dep_renamed(na.name, lambda name: f"PP.{name}")
+
+    ren = op.withset(renamer=renamer)
+    got = str(ren)
+    assert got == (
+        """
+    FunctionalOperation(name='PP.op1', needs=[sfx: 'PP.a'], provides=['PP.a', sfx: 'PP.b'], aliases=[('PP.a', 'PP.b')], fn='str')
+        """.strip()
+    )
+
+
+def test_pipe_rename():
+    pipe = compose(
+        "1",
+        operation(str, name="op1", needs=sfx("a")),
+        operation(
+            str,
+            name="op2",
+            needs=sfx("a"),
+            provides=["a", sfx("b")],
+            aliases=[("a", "b")],
+        ),
+    )
+
+    def renamer(na):
+        assert na.op
+        assert not na.parent
+        return dep_renamed(na.name, lambda name: f"PP.{name}")
+
+    ren = pipe.withset(renamer=renamer)
+    got = str(ren)
+    assert got == (
+        """
+    NetworkOperation('1', needs=[sfx: 'PP.a'], provides=['PP.a', sfx: 'PP.b', 'PP.b'], x2 ops: PP.op1, PP.op2)
+        """.strip()
+    )
+    got = str(ren.ops)
+    assert got == re.sub(
+        r"[\n ]+",  # collapse all space-chars into a single space
+        " ",
+        """
+        [FunctionalOperation(name='PP.op1', needs=[sfx: 'PP.a'], provides=[], fn='str'),
+         FunctionalOperation(name='PP.op2', needs=[sfx: 'PP.a'], provides=['PP.a', sfx: 'PP.b'],
+         aliases=[('PP.a', 'PP.b')], fn='str')]
+        """.strip(),
+    )

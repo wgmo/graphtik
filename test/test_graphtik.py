@@ -342,7 +342,7 @@ def test_compose_nester_bad_screamy(caplog):
         )
     for record in caplog.records:
         if record.levelname == "WARNING":
-            assert "(typ='op', op=None, name='op1', parent=None)" in record.message
+            assert "name='op1', parent=None)" in record.message
 
 
 def test_compose_nester_preserve_ops(caplog):

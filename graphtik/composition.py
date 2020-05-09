@@ -561,7 +561,7 @@ class Operation(Plottable, abc.ABC):
 
         if not rename_driver:
             rename_driver = default_rename_driver
-        ren_args = ren_args or RenArgs(self, None, None)
+        ren_args = ren_args or RenArgs(None, self, None)
 
         kw["name"] = rename_driver(
             ren_args._replace(
@@ -932,15 +932,15 @@ class FunctionalOperation(Operation, Plottable):
         provides: Items = ...,
         aliases: Mapping = ...,
         *,
-        renamer=None,
-        rename_driver=None,
-        ren_args=None,
         rescheduled=...,
         endured=...,
         parallel=...,
         marshalled=...,
         returns_dict=...,
         node_props: Mapping = ...,
+        renamer=None,
+        rename_driver=None,
+        ren_args=None,
     ) -> "FunctionalOperation":
         """
         Make a *clone* with the some values replaced, or operation and dependencies renamed.
@@ -1526,8 +1526,10 @@ class NetworkOperation(Operation, Plottable):
         endured=None,
         parallel=None,
         marshalled=None,
-        nest=None,
         node_props=None,
+        renamer=None,
+        rename_driver=None,
+        ren_args=None,
     ):
         """
         For arguments, ee :meth:`withset()` & class attributes.
@@ -1547,7 +1549,15 @@ class NetworkOperation(Operation, Plottable):
 
         # Prune network
         self.net = build_network(
-            operations, rescheduled, endured, parallel, marshalled, nest, node_props
+            operations,
+            rescheduled,
+            endured,
+            parallel,
+            marshalled,
+            node_props,
+            renamer,
+            rename_driver,
+            ren_args,
         )
         self.name, self.needs, self.provides, _aliases = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
@@ -1587,6 +1597,7 @@ class NetworkOperation(Operation, Plottable):
         endured=None,
         parallel=None,
         marshalled=None,
+        node_props=None,
         renamer=None,
         rename_driver=None,
         ren_args=None,
@@ -1662,6 +1673,10 @@ class NetworkOperation(Operation, Plottable):
             endured=endured,
             parallel=parallel,
             marshalled=marshalled,
+            node_props=node_props,
+            renamer=renamer,
+            rename_driver=rename_driver,
+            ren_args=ren_args,
         )
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
@@ -1796,6 +1811,23 @@ class NetworkOperation(Operation, Plottable):
         return self.compute(input_kwargs, outputs=self.outputs)
 
 
+def nest_any_node(ren_args: RenArgs) -> str:
+    """Nest both operation & data under `parent`'s name (if given).
+
+    :return:
+        the nested name of the operation or data
+    """
+
+    def prefixed(name):
+        return f"{ren_args.parent.name}.{name}" if ren_args.parent else name
+
+    return (
+        prefixed(ren_args.name)
+        if ren_args.typ == "op"
+        else dep_renamed(ren_args.name, prefixed)
+    )
+
+
 def compose(
     name,
     op1,
@@ -1874,6 +1906,63 @@ def compose(
     operations = (op1,) + operations
     if not all(isinstance(op, Operation) for op in operations):
         raise TypeError(f"Non-Operation instances given: {operations}")
+    ## If `nest`, rename the op & data (predicated by `nest`)
+    #  by prefixing them with their parent pipeline.
+    #
+    if nest:
+
+        def rename_driver(ren_args: RenArgs) -> str:
+            """Handle user's or default `nest` callable's results."""
+
+            new_name = old_name = ren_args.name
+            if isinstance(nest, cabc.Mapping):
+                if old_name in nest:
+                    dst = nest.get(old_name)
+                    if dst:
+                        if isinstance(dst, str):
+                            new_name = (
+                                dep_renamed(old_name, nest[old_name])
+                                if type(dst) is str
+                                else dst
+                            )
+                        else:
+                            # Truthy but not str values mean apply default nesting.
+                            new_name = nest_any_node(ren_args)
+                    # A falsy means don't touch the node.
+
+            elif callable(nest):
+                ok = False
+                try:
+                    new_name = nest(ren_args)
+                    ok = True
+                finally:
+                    if not ok:
+                        log.warning("Failed to nest-rename %s", ren_args)
+
+                if not new_name:
+                    # A falsy means don't touch the node.
+                    new_name = old_name
+                elif not isinstance(new_name, str):
+                    # Truthy but not str values mean apply default nesting.
+                    new_name = nest_any_node(ren_args)
+            else:
+                raise AssertionError(f"Truthy `nest` to invalid {nest!r}: {locals()}")
+
+            if not new_name or not isinstance(new_name, str):
+                raise ValueError(
+                    f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
+                )
+
+            return new_name
+
+        ## Set default nesting if not one provided by user.
+        #
+        if not callable(nest) and not isinstance(nest, cabc.Mapping):
+            nest = nest_any_node
+
+    else:
+        rename_driver = None
+
     return NetworkOperation(
         operations,
         name,
@@ -1882,6 +1971,7 @@ def compose(
         endured=endured,
         parallel=parallel,
         marshalled=marshalled,
-        nest=nest,
         node_props=node_props,
+        renamer=nest,
+        rename_driver=rename_driver,
     )
