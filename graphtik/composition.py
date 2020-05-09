@@ -514,7 +514,8 @@ class Operation(Plottable, abc.ABC):
         Pass operation & dependency names through `renamer`, as handled by `rename_driver`.
 
         :param kw:
-            all data extracted from an operation, to be modified it in-place
+            all data are extracted 1st from this kw, falling back on the operation's
+            attributes, and ti is modified in-place
 
         For the other 2 params, see :meth:`.FunctionalOperation.withset()`.
 
@@ -537,9 +538,10 @@ class Operation(Plottable, abc.ABC):
                 ok = False
                 try:
                     new_name = renamer(ren_args)
+                    ok = True
                 finally:
-                    if not ok:
-                        log.warning("Failed to nest-rename %s", ren_args)
+                    if not ok:  # Debug aid without touching ex.
+                        log.warning("Failed to rename %s", ren_args)
 
                 if not new_name:
                     # A falsy means don't touch the node.
@@ -560,23 +562,28 @@ class Operation(Plottable, abc.ABC):
             rename_driver = default_rename_driver
         ren_args = RenArgs(self, None, None)
 
-        kw["name"] = rename_driver(ren_args._replace(typ="op", name=kw["name"]))
+        kw["name"] = rename_driver(
+            ren_args._replace(
+                typ="op", name=kw.get("name", self.name)  # pylint: disable=no-member
+            )
+        )
         kw["needs"] = [
-            rename_driver(ren_args._replace(typ="needs", name=n)) for n in kw["needs"]
+            rename_driver(ren_args._replace(typ="needs", name=n))
+            for n in kw.get("needs", self.needs)  # pylint: disable=no-member
         ]
         # Store renamed `provides` as map, used for `aliases` below.
         renamed_provides = {
             n: rename_driver(ren_args._replace(typ="provides", name=n))
-            for n in kw["provides"]
+            for n in kw.get("provides", self.provides)  # pylint: disable=no-member
         }
         kw["provides"] = list(renamed_provides.values())
-        if "aliases" in kw:
+        if hasattr(self, "aliases"):
             kw["aliases"] = [
                 (
                     renamed_provides[k],
                     rename_driver(ren_args._replace(typ="aliases", name=v)),
                 )
-                for k, v in kw["aliases"]
+                for k, v in kw.get("aliases", self.aliases)  # pylint: disable=no-member
             ]
 
 

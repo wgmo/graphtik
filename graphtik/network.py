@@ -661,62 +661,60 @@ def build_network(
             #  by prefixing them with their parent netop.
             #
             if nest:
-                ren_args = RenArgs(op, None, None, parent)
-                kw["name"] = renamer(ren_args._replace(typ="op", name=op.name))
-                kw["needs"] = [
-                    renamer(ren_args._replace(typ="needs", name=n)) for n in op.needs
-                ]
-                # Store renamed `provides` as map, used for `aliases` below.
-                renamed_provides = {
-                    n: renamer(ren_args._replace(typ="provides", name=n))
-                    for n in op.provides
-                }
-                kw["provides"] = list(renamed_provides.values())
-                if op.aliases:
-                    kw["aliases"] = [
-                        (
-                            renamed_provides[k],
-                            renamer(ren_args._replace(typ="aliases", name=v)),
+
+                def rename_driver(ren_args: RenArgs) -> str:
+                    """Handle user's or default `nest` callable's results."""
+
+                    new_name = old_name = ren_args.name
+                    if isinstance(nest, abc.Mapping):
+                        if old_name in nest:
+                            dst = nest.get(old_name)
+                            if dst:
+                                if isinstance(dst, str):
+                                    new_name = (
+                                        dep_renamed(old_name, nest[old_name])
+                                        if type(dst) is str
+                                        else dst
+                                    )
+                                else:
+                                    # Truthy but not str values mean apply default nesting.
+                                    new_name = nest_any_node(ren_args)
+                            # A falsy means don't touch the node.
+
+                    elif callable(nest):
+                        ren_args = ren_args._replace(parent=parent)
+                        ok = False
+                        try:
+                            new_name = nest(ren_args)
+                            ok = True
+                        finally:
+                            if not ok:
+                                log.warning("Failed to nest-rename %s", ren_args)
+
+                        if not new_name:
+                            # A falsy means don't touch the node.
+                            new_name = old_name
+                        elif not isinstance(new_name, str):
+                            # Truthy but not str values mean apply default nesting.
+                            new_name = nest_any_node(ren_args)
+                    else:
+                        raise AssertionError(
+                            f"Truthy `nest` to invalid {nest!r}: {locals()}"
                         )
-                        for k, v in op.aliases
-                    ]
+
+                    if not new_name or not isinstance(new_name, str):
+                        raise ValueError(
+                            f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
+                        )
+
+                    return new_name
+
+                kw["renamer"] = nest
+                kw["rename_driver"] = rename_driver
 
             op = op.withset(**kw)
 
         return op
-
-    def renamer(ren_args: RenArgs) -> str:
-        """Handle user's or default `nest` callable's results."""
-
-        ok = False
-        try:
-            new_name = old_name = ren_args.name
-            if isinstance(nest, abc.Mapping):
-                if old_name in nest:
-                    # Preserve any modifier.
-                    new_name = dep_renamed(old_name, nest[old_name])
-            elif callable(nest):
-                new_name = nest(ren_args)
-                if not new_name:
-                    # A falsy means don't touch the node.
-                    new_name = old_name
-                elif not isinstance(new_name, str):
-                    # Truthy but not str values mean apply default nesting.
-                    new_name = nest_any_node(ren_args)
-            else:
-                raise AssertionError(f"Truthy `nest` to invalid {nest!r}: {locals()}")
-
-            ok = True  # Don't log-warn if raising below.
-
-            if not new_name or not isinstance(new_name, str):
-                raise ValueError(
-                    f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
-                )
-
-            return new_name
-        finally:
-            if not ok:
-                log.warning("Failed to nest-rename %s", ren_args)
 
     if nest:
         ## Set default nesting if not one provided by user.

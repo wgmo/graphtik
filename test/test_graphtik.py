@@ -315,16 +315,18 @@ def test_compose_nester_dict(caplog):
     )
 
 
-def test_compose_nester_bad_dict(caplog):
-    with pytest.raises(ValueError, match="Must rename .+op1.+ into a non-empty string"):
-        compose(
-            "test_nest_err",
-            operation(str, "op1"),
-            operation(str, "op2"),
-            nest={"op1": 1},
-        )
+def test_compose_nester_dict_non_str(caplog):
+    pip = compose("t", operation(str, "op1"), operation(str, "op2"), nest={"op1": 1},)
+    exp = "NetworkOperation('t', needs=[], provides=[], x2 ops: op1, op2)"
+    print(pip)
+    assert str(pip) == exp
+    exp = "NetworkOperation('t', needs=[], provides=[], x2 ops: t.op1, op2)"
+    pip = compose("t", pip, nest={"op1": 1, "op2": 0})
+    assert str(pip) == exp
+    pip = compose("t", pip, nest={"op1": 1, "op2": ""})
+    assert str(pip) == exp
     for record in caplog.records:
-        assert "Failed to nest-rename" in record.message
+        assert "Failed to nest-rename" not in record.message
 
 
 def test_compose_nester_bad_screamy(caplog):
