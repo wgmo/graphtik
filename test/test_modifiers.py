@@ -129,6 +129,9 @@ def test_modifs_rename_fn(mod, exp):
     got = repr(dep_renamed(mod, renamer))
     print(got)
     assert got == exp
+    if hasattr(got, "sideffected"):
+        # Check not just(!) `_repr` has changed.
+        assert got.sideffected == renamer(mod.sideffected)
 
 
 @pytest.mark.parametrize(

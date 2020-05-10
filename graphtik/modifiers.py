@@ -684,6 +684,10 @@ def dep_renamed(dep, ren):
     Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
 
     preserving any :func:`mapped` to old-name.
+
+    For :term:`sideffected` it renames the dependency (not the *sfx-list*) --
+    you have to do it that manually with a custom renamer-function, if ever
+    the need arise.
     """
     if callable(ren):
         renamer = ren
@@ -691,9 +695,11 @@ def dep_renamed(dep, ren):
         renamer = lambda n: ren
 
     if isinstance(dep, _Modifier):
-        old_name = dep.sideffected if is_sfx(dep) else str(dep)
-        new_name = renamer(old_name)
-        dep = dep._withset(name=new_name)
+        if is_sfx(dep):
+            new_name = renamer(dep.sideffected)
+            dep = dep._withset(name=new_name, sideffected=new_name)
+        else:
+            dep = dep._withset(name=renamer(str(dep)))
     else:  # plain string
         dep = renamer(dep)
 
