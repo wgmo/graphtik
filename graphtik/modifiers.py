@@ -18,19 +18,19 @@ from typing import Optional, Tuple, Union
 #: Arguments-presence patterns for :class:`_Modifier` constructor.
 #: Combinations missing raise errors.
 _modifier_cstor_matrix = {
-# (7, kw, opt, sfxed, sfx): (STR, REPR) OR None
+# (7, kw, opt, sfxed, sfx): (STR, REPR, FUNC) OR None
 70000: None,
-71000: (       "%(dep)s",                  "'%(dep)s'(%(kw)s)"           ),
-71100: (       "%(dep)s",                  "'%(dep)s'(?%(kw)s)"          ),
-70200: (       "%(dep)s",                  "'%(dep)s'(*)"                ),
-70300: (       "%(dep)s",                  "'%(dep)s'(+)"                ),
-70010: (  "sfx('%(dep)s')",            "sfx('%(dep)s')"                  ),
-70110: (  "sfx('%(dep)s')",            "sfx('%(dep)s'(?))"               ),
-70011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s', %(sfx)s)"         ),
-71011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(%(kw)s), %(sfx)s)" ),
-71111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(?%(kw)s), %(sfx)s)"),
-70211: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(*), %(sfx)s)"      ),
-70311: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(+), %(sfx)s)"      ),
+71000: (       "%(dep)s",                  "'%(dep)s'(%(kw)s)"           , "mapped"),
+71100: (       "%(dep)s",                  "'%(dep)s'(?%(kw)s)"          , "optional"),
+70200: (       "%(dep)s",                  "'%(dep)s'(*)"                , "vararg"),
+70300: (       "%(dep)s",                  "'%(dep)s'(+)"                , "varargs"),
+70010: (  "sfx('%(dep)s')",            "sfx('%(dep)s')"                  , "sfx"),
+70110: (  "sfx('%(dep)s')",            "sfx('%(dep)s'(?))"               , "sfx"),
+70011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s', %(sfx)s)"         , "sfxed"),
+71011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(%(kw)s), %(sfx)s)" , "sfxed"),
+71111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(?%(kw)s), %(sfx)s)", "sfxed"),
+70211: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(*), %(sfx)s)"      , "sfxed_vararg"),
+70311: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(+), %(sfx)s)"      , "sfxed_varargs"),
 }
 # fmt: on
 
@@ -79,6 +79,7 @@ class _Modifier(str):
         "sideffected",
         "sfx_list",
         "_repr",
+        "_func",
     )
 
     #: Map my name in `needs` into this kw-argument of the function.
@@ -101,9 +102,11 @@ class _Modifier(str):
     sfx_list: Tuple[Union[str, None]]
     #: pre-calculated representation
     _repr: str
+    #: needed to reconstruct cstor code in :attr:`cmd`
+    _func: str
 
     def __new__(
-        cls, name, fn_kwarg, optional: _Optionals, sideffected, sfx_list, _repr,
+        cls, name, fn_kwarg, optional: _Optionals, sideffected, sfx_list, _repr, _func
     ) -> "_Modifier":
         """Warning, returns None! """
         ## sanity checks & preprocessing
@@ -132,11 +135,26 @@ class _Modifier(str):
         obj.sideffected = sideffected
         obj.sfx_list = sfx_list
         obj._repr = _repr
+        obj._func = _func
 
         return obj
 
     def __repr__(self):
         return self._repr
+
+    @property
+    def cmd(self):
+        """the code to reproduce it"""
+        dep = self.sideffected or str(self)
+        items = [f"'{dep}'"]
+        if self.sfx_list:
+            items.append(", ".join(f"'{i}'" for i in self.sfx_list))
+        if self.fn_kwarg and self.fn_kwarg != dep:
+            fn_kwarg = f"'{self.fn_kwarg}'"
+            items.append(f"fn_kwarg={fn_kwarg}" if self.sfx_list else fn_kwarg)
+        if self.optional == _Optionals.keyword and self._func != "optional":
+            items.append(f"optional=1" if self.sfx_list else "1")
+        return f"{self._func}({', '.join(items)})"
 
     def __getnewargs__(self):
         return (
@@ -146,6 +164,7 @@ class _Modifier(str):
             self.sideffected,
             self.sfx_list,
             self._repr,
+            self._func,
         )
 
     def _withset(
@@ -189,7 +208,7 @@ def _modifier(
         # Make a plain string instead.
         return str(name)
 
-    str_fmt, repr_fmt = formats
+    str_fmt, repr_fmt, func = formats
     fmt_args = {
         "dep": name,
         # avoid a sole ``?>`` symbol on pure optionals
@@ -199,7 +218,7 @@ def _modifier(
     name = str_fmt % fmt_args
     _repr = repr_fmt % fmt_args
 
-    return _Modifier(name, fn_kwarg, optional, sideffected, sfx_list, _repr)
+    return _Modifier(name, fn_kwarg, optional, sideffected, sfx_list, _repr, func)
 
 
 def mapped(name: str, fn_kwarg: str = None):

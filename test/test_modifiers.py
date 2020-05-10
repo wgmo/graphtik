@@ -16,6 +16,10 @@ from graphtik.modifiers import (
 )
 
 
+def dilled(i):
+    return dill.loads(dill.dumps(i))
+
+
 def test_dill_modifier():
     s = sfxed("foo", "gg")
     s == dill.loads(dill.dumps(s))
@@ -72,6 +76,36 @@ def test_modifs_repr(mod, exp):
     got = repr(mod())
     print(got)
     assert got == exp
+
+
+@pytest.mark.parametrize(
+    "mod, exp",
+    [
+        (mapped("b", None), "mapped('b')"),
+        (mapped("b", ""), "mapped('b')"),
+        (mapped("b", "bb"), "mapped('b', 'bb')"),
+        (optional("b"), "optional('b')"),
+        (optional("b", "bb"), "optional('b', 'bb')"),
+        (vararg("c"), "vararg('c')"),
+        (varargs("d"), "varargs('d')"),
+        (sfx("e"), "sfx('e')"),
+        (sfx("e", optional=1), "sfx('e', 1)"),
+        (sfxed("f", "a", "b"), "sfxed('f', 'a', 'b')"),
+        (sfxed("f", "ff", fn_kwarg="F"), "sfxed('f', 'ff', fn_kwarg='F')",),
+        (
+            sfxed("f", "ff", optional=1, fn_kwarg="F"),
+            "sfxed('f', 'ff', fn_kwarg='F', optional=1)",
+        ),
+        (sfxed("f", "ff", optional=1), "sfxed('f', 'ff', optional=1)"),
+        (sfxed_vararg("f", "a"), "sfxed_vararg('f', 'a')"),
+        (sfxed_varargs("f", "a", "b"), "sfxed_varargs('f', 'a', 'b')"),
+    ],
+)
+def test_modifs_cmd(mod, exp):
+    got = mod.cmd
+    print(got)
+    assert str(got) == exp
+    assert dilled(str(got)) == exp
 
 
 def test_recreation():
