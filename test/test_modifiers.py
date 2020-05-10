@@ -22,9 +22,10 @@ def dilled(i):
 
 def test_dill_modifier():
     s = sfxed("foo", "gg")
-    s == dill.loads(dill.dumps(s))
+    s == dilled(s)
 
 
+## construct in lambdas, not to crash pytest while modifying core _Modifier
 @pytest.mark.parametrize(
     "mod, exp",
     [
@@ -44,11 +45,13 @@ def test_dill_modifier():
     ],
 )
 def test_modifs_str(mod, exp):
-    got = str(mod())
+    got = mod()
     print(got)
-    assert got == exp
+    assert str(got) == exp
+    assert dilled(str(got)) == exp
 
 
+## construct in lambdas, not to crash pytest while modifying core _Modifier
 @pytest.mark.parametrize(
     "mod, exp",
     [
@@ -73,9 +76,10 @@ def test_modifs_str(mod, exp):
     ],
 )
 def test_modifs_repr(mod, exp):
-    got = repr(mod())
-    print(got)
-    assert got == exp
+    got = mod()
+    print(repr(got))
+    assert repr(got) == exp
+    assert dilled(repr(got)) == exp
 
 
 @pytest.mark.parametrize(
@@ -186,9 +190,10 @@ def test_modifs_rename_fn(mod, exp):
     ],
 )
 def test_modifs_rename_str(mod, exp):
-    got = repr(dep_renamed(mod(), "D"))
-    print(got)
-    assert got == exp
+    got = dep_renamed(mod(), "D")
+    print(repr(got))
+    assert repr(got) == exp
+    assert dilled(repr(got)) == exp
 
 
 @pytest.mark.parametrize(
