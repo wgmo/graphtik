@@ -24,8 +24,8 @@ _modifier_cstor_matrix = {
 71100: (       "%(dep)s",                  "'%(dep)s'(?%(kw)s)"          ),
 70200: (       "%(dep)s",                  "'%(dep)s'(*)"                ),
 70300: (       "%(dep)s",                  "'%(dep)s'(+)"                ),
-70010: ( "sfx: '%(dep)s'",            "sfx: '%(dep)s'"                   ),
-70110: ( "sfx: '%(dep)s'",         "sfx(?): '%(dep)s'"                    ),
+70010: (  "sfx('%(dep)s')",            "sfx('%(dep)s')"                  ),
+70110: (  "sfx('%(dep)s')",            "sfx('%(dep)s'(?))"               ),
 70011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s', %(sfx)s)"         ),
 71011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(%(kw)s), %(sfx)s)" ),
 71111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(?%(kw)s), %(sfx)s)"),
@@ -191,6 +191,7 @@ def _dep(
     str_fmt, repr_fmt = formats
     fmt_args = {
         "dep": name,
+        # avoid a sole ``?>`` symbol on pure optionals
         "kw": f">'{fn_kwarg}'" if fn_kwarg != name else ">" if not optional else "",
         "sfx": ", ".join(f"'{i}'" for i in sfx_list),
     }
@@ -445,7 +446,7 @@ def sfx(name, optional: bool = None):
         >>> from graphtik import sfx
 
         >>> sfx("price[sales_df]")
-        sfx: 'price[sales_df]'
+        sfx('price[sales_df]')
 
     **Example:**
 
@@ -468,8 +469,8 @@ def sfx(name, optional: bool = None):
         ... )
         >>> graph
         NetworkOperation('strip ease',
-                         needs=[sfx: 'lights off'],
-                         provides=[sfx: 'lights off', 'body'],
+                         needs=[sfx('lights off')],
+                         provides=[sfx('lights off'), 'body'],
                          x2 ops: close_the_lights, undress)
 
         >>> sol = graph()

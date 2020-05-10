@@ -300,7 +300,7 @@ def test_compose_rename_dict(caplog):
     print(str(pip))
     assert str(pip) == (
         "NetworkOperation('t', needs=['A'], "
-        "provides=['A', 'aa', 'bb', sfx: 'c', 'B', 'p'], x2 ops: OP1, OP2)"
+        "provides=['A', 'aa', 'bb', sfx('c'), 'B', 'p'], x2 ops: OP1, OP2)"
     )
     print(str(pip.ops))
     assert (
@@ -308,7 +308,7 @@ def test_compose_rename_dict(caplog):
         == dedent(
             """
         [FunctionalOperation(name='OP1', provides=['A', 'aa'], fn='str'),
-         FunctionalOperation(name='OP2', needs=['A'], provides=['bb', sfx: 'c'],
+         FunctionalOperation(name='OP2', needs=['A'], provides=['bb', sfx('c')],
          aliases=[('bb', 'B'), ('bb', 'p')], fn='str')]
     """
         ).replace("\n", "")
@@ -528,10 +528,10 @@ def test_compose_nest_dict(caplog):
         r"[\n ]{2,}",  # collapse all space-chars into a single space
         " ",
         """
-        [FunctionalOperation(name='p1.op1', needs=[sfx: 'p1.a', 'aa'],
+        [FunctionalOperation(name='p1.op1', needs=[sfx('p1.a'), 'aa'],
          provides=[sfxed('p1.S1', 'g'), sfxed('ss2', 'h')], fn='str'),
-        FunctionalOperation(name='p2.op2', needs=[sfx: 'p2.a'],
-         provides=['a', sfx: 'p2.b'], aliases=[('a', 'PP.b')], fn='str')]
+        FunctionalOperation(name='p2.op2', needs=[sfx('p2.a')],
+         provides=['a', sfx('p2.b')], aliases=[('a', 'PP.b')], fn='str')]
 
         """.strip(),
     )

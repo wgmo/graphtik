@@ -977,7 +977,7 @@ class FunctionalOperation(Operation, Plottable):
             ...                     "B-aliased": "new.B-aliased"})
             FunctionalOperation(name='BAR',
                                 needs=['A'],
-                                provides=['B', sfx: 'cc'],
+                                provides=['B', sfx('cc')],
                                 aliases=[('B', 'new.B-aliased')],
                                 fn='str')
 
@@ -990,14 +990,17 @@ class FunctionalOperation(Operation, Plottable):
         only data names:
 
             >>> op.withset(renamer=lambda ren_args:
-            ...            dep_renamed(ren_args.name, f"parent.{ren_args.name}")
+            ...            dep_renamed(ren_args.name, lambda n: f"parent.{n}")
             ...            if ren_args.typ != 'op' else
             ...            False)
             FunctionalOperation(name='foo',
                                 needs=['parent.a'],
-                                provides=['parent.b', sfx: 'parent.sfx: 'c''],
+                                provides=['parent.b', sfx('parent.c')],
                                 aliases=[('parent.b', 'parent.B-aliased')],
                                 fn='str')
+
+
+        Notice the double use of lambdas with :func:`dep_renamed()`.
         """
         kw = {
             k: v
