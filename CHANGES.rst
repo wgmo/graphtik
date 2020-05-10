@@ -33,7 +33,9 @@ Graphtik Changelog
   - [+] modifiers inherit a single class (to allow combinations)
   - [+] Optional sideffected
   - [+] Delegate FuncOp.__call__() --> compute().
-  - [ ] Rename NetOp -> pipeline;  unify compose() -> Pipeline class
+  - [+] Rename NetOp -> pipelines;
+    cannot unify compose() -> Pipeline class due to `nest` arg.
+
   - [ ] Function access executing Operation & Plan from its context.
       - [ ] Unify OpTask & FuncOp
       - [ ] function self-toggles `returns-dict` amidst execution.
@@ -84,6 +86,32 @@ https://github.com/pygraphkit/graphtik/releases
 
 Changelog
 %%%%%%%%%
+
+
+v8.1.0 (11 May 2020, @ankostis): drop last plan, Rename/Nest, Netop-->Pipeline, purify modules
+==============================================================================================
++ DROP(pipeline): After solution class was introduced, ``last_plan`` attribute was redundant.
+
++ ENH(op): Rename & Nest operations with dictionary or callable.
+
++ FEAT(pipeline): :data:`.NO_RESULT_BUT_SFX` token can cancel regular data but leave
+  sideffects of a rescheduled op.
+
++ REFACT: revert module splits and arrive back to :mod:`base.py`, :mod:`op.py` &
+  :mod:`pipeline.py`, to facilitate development with smaller files, but still
+  with very few import-time dependencies.
+
+  Importing project :term:`composition` classes takes less than 4ms in a fast 2019 PC
+  (down from 300ms).
+
++ FIX(plot): updated Legend, which had become outdated since v6+.
+
++ fix(modifiers): `dep_renamed()` was faking sideffect-renaming only on repr()
+  (but fix not stressed, bc v8.0.x is not actually released).
++ enh(pipe): accept a dictionary with renames when doing :term:`operation nesting`
+  (instead of callables or truthies).
++ refact(op): force abstract :class:`.Operation` to be :class:`.Plottable`.
++ enh(modifiers): add :attr:`._Modifier.cmd` with code to reproduce modifier.
 
 
 v8.0.2 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modifiers; invert "merge" meaning
