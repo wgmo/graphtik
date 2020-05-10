@@ -6,47 +6,66 @@ digraph {
     label="graphtik-v8.1+ module dependencies";
     labelloc=t;
     node [style=filled];
+    nodesep=0.55;
+    remincross=true;
 
-    subgraph cluster_core {
-         label="core modules";
-         tooltip="most modules depend on them";
-        "base.py"   [shape=component
-                    tooltip="(implicit) everything imports this module, not shown"
-                    fillcolor=AliceBlue
-                    URL="reference.html#module-graphtik.base"];
-        "config.py"      [shape=component tooltip="(public)"
-                    fillcolor=wheat
-                    URL="reference.html#module-graphtik.config"];
-    }
-    "modifiers.py"   [shape=component
-                tooltip="(public) almost everything imports this module"
-                fillcolor=wheat
-                URL="reference.html#module-graphtik.modifiers"];
-    "composition.py"    [shape=component
-                tooltip="(public)"
-                fillcolor=wheat
-                 URL="reference.html#module-graphtik.composition"];
-    "network.py"     [shape=component
-                tooltip="(private)"
-                 fillcolor=AliceBlue
-                 URL="reference.html#module-graphtik.network"];
-    "execution.py"   [shape=component
-                tooltip="(private)"
-                 fillcolor=AliceBlue
-                 URL="reference.html#module-graphtik.execution"];
     "plot.py"        [shape=component
                 tooltip="(extra)"
-                 fillcolor=Aquamarine
-                 URL="reference.html#module-graphtik.plot"];
+                fillcolor=Aquamarine
+                URL="reference.html#module-graphtik.plot"];
     "sphinxext/"   [shape=component
                 tooltip="(extra)"
                  fillcolor=Aquamarine
                  URL="reference.html#module-graphtik.sphinxext"];
 
-    {"composition.py", "network.py", "execution.py", "plot.py"} -> "modifiers.py" [tooltip="(import-time)"];
-    {"network.py", "execution.py", "plot.py", "sphinxext/"} -> "composition.py" [tooltip="(import-time)"];
+    subgraph cluster_base {
+        label="base";
+        labelloc=b;
+        tooltip="almost all other modules depend on these";
+
+        "config.py"      [shape=component tooltip="(public) almost everything import this module"
+                    fillcolor=wheat
+                    URL="reference.html#module-graphtik.config"];
+        "base.py"   [shape=component
+                    tooltip="(implicit) everything imports this module, not shown"
+                    fillcolor=wheat
+                    URL="reference.html#module-graphtik.base"];
+        "modifiers.py"   [shape=component
+                    tooltip="(public) almost everything imports this module"
+                    fillcolor=wheat
+                    URL="reference.html#module-graphtik.modifiers"];
+    }
+
+    "pipeline.py"    [shape=component
+                tooltip="(public)"
+                fillcolor=wheat
+                 URL="reference.html#module-graphtik.pipeline"];
+    "op.py"    [shape=component
+                tooltip="(public)"
+                fillcolor=wheat
+                 URL="reference.html#module-graphtik.op"];
+
+    subgraph cluster_network {
+        label="core modules";
+        tooltip="related to graph solution";
+        URL="arch.html#term-execution";
+
+        "execution.py"   [shape=component
+                    tooltip="(private)"
+                    fillcolor=AliceBlue
+                    URL="reference.html#module-graphtik.execution"];
+        "network.py"     [shape=component
+                    tooltip="(private)"
+                    fillcolor=AliceBlue
+                    URL="reference.html#module-graphtik.network"];
+    }
+
+    {"op.py", "pipeline.py", "network.py", "execution.py", "plot.py"} -> "base.py" [tooltip="(import-time)"];
+    "base.py" -> "plot.py"                      [tooltip="(run-time)" style=dashed];
     "execution.py" -> "network.py"    [tooltip="(import-time)"];
-    "network.py" -> "execution.py"    [tooltip="(run-time)" style=dashed];
-    "composition.py" -> {"network.py", "execution.py", "plot.py"}       [tooltip="(run-time)" style=dashed];
-    "sphinxext/" -> "plot.py"    [tooltip="(import-time)"];
+    "network.py" -> {"op.py", "pipeline.py", "execution.py"}    [tooltip="(run-time)" style=dashed];
+    "op.py" -> "pipeline.py"    [style=dashed
+                                 tooltip="(run-time) for plotting"];
+    "pipeline.py" -> {"op.py", "network.py"}    [tooltip="(run-time)" style=dashed];
+    "sphinxext/" -> "plot.py"                   [tooltip="(import-time)"];
 }

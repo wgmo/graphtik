@@ -184,6 +184,7 @@ def _merge_conditions(*conds):
     return sum(int(bool(c)) << i for i, c in enumerate(conds))
 
 
+# TODO: move to base.py, to reduce fan-in imports (and be frank with module diagram).
 def graphviz_html_string(
     s, *, repl_nl=None, repl_colon=None, xmltext=None,
 ):
