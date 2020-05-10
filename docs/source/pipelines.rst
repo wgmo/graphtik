@@ -262,7 +262,7 @@ are raising errors, if they are marked as :term:`endured`:
     ... def get_out():
     ...     raise ValueError("Quarantined!")
     >>> get_out
-    FunctionalOperation!(name='get_out', needs=[], provides=['space', 'time'], fn='get_out')
+    FunctionalOperation!(name='get_out', provides=['space', 'time'], fn='get_out')
 
 Notice the exclamation(``!``) before the parenthesis in the string representation
 of the operation.

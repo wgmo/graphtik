@@ -307,7 +307,7 @@ def test_compose_rename_dict(caplog):
         str(pip.ops)
         == dedent(
             """
-        [FunctionalOperation(name='OP1', needs=[], provides=['A', 'aa'], fn='str'),
+        [FunctionalOperation(name='OP1', provides=['A', 'aa'], fn='str'),
          FunctionalOperation(name='OP2', needs=['A'], provides=['bb', sfx: 'c'],
          aliases=[('bb', 'B'), ('bb', 'p')], fn='str')]
     """
@@ -317,10 +317,10 @@ def test_compose_rename_dict(caplog):
 
 def test_compose_rename_dict_non_str(caplog):
     pip = compose("t", operation(str, "op1"), operation(str, "op2"), nest={"op1": 1},)
-    exp = "NetworkOperation('t', needs=[], provides=[], x2 ops: op1, op2)"
+    exp = "NetworkOperation('t', x2 ops: op1, op2)"
     print(pip)
     assert str(pip) == exp
-    exp = "NetworkOperation('t', needs=[], provides=[], x2 ops: t.op1, op2)"
+    exp = "NetworkOperation('t', x2 ops: t.op1, op2)"
     pip = compose("t", pip, nest={"op1": 1, "op2": 0})
     assert str(pip) == exp
     pip = compose("t", pip, nest={"op1": 1, "op2": ""})
@@ -352,10 +352,7 @@ def test_compose_rename_preserve_ops(caplog):
         operation(str, "op2"),
         nest=lambda na: f"aa.{na.name}",
     )
-    assert (
-        str(pip)
-        == "NetworkOperation('t', needs=[], provides=[], x2 ops: aa.op1, aa.op2)"
-    )
+    assert str(pip) == "NetworkOperation('t', x2 ops: aa.op1, aa.op2)"
 
 
 def test_compose_merge_ops():

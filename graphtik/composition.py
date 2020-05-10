@@ -869,32 +869,30 @@ class FunctionalOperation(Operation, Plottable):
             reset_abort,
         )
 
-        needs = aslist(self.needs, "needs")
-        provides = aslist(self.provides, "provides")
-        aliases = aslist(self.aliases, "aliases")
-        aliases = f", aliases={aliases!r}" if aliases else ""
+        dep_names = (
+            "needs op_needs _fn_needs provides op_provides _fn_provides aliases"
+            if is_debug()
+            else "needs provides aliases"
+        ).split()
+        deps = [(i, getattr(self, i)) for i in dep_names]
         fn_name = self.fn and func_name(self.fn, None, mod=0, fqdn=0, human=0)
-        nprops = f", x{len(self.node_props)}props" if self.node_props else ""
+        returns_dict_marker = self.returns_dict and "{}" or ""
+        items = [
+            f"name={self.name!r}",
+            *(f"{n}={aslist(d, n)}" for n, d in deps if d),
+            f"fn{returns_dict_marker}={fn_name!r}",
+        ]
+        if self.node_props:
+            items.append(f"x{len(self.node_props)}props")
+
         resched = (
             "?" if first_solid(self.rescheduled, is_reschedule_operations()) else ""
         )
         endured = "!" if first_solid(self.endured, is_endure_operations()) else ""
         parallel = "|" if first_solid(self.parallel, is_parallel_tasks()) else ""
         marshalled = "&" if first_solid(self.marshalled, is_marshal_tasks()) else ""
-        returns_dict_marker = self.returns_dict and "{}" or ""
 
-        if is_debug():
-            debug_needs = (
-                f", op_needs={list(self.op_needs)}, fn_needs={list(self._fn_needs)}"
-            )
-            debug_provides = f", op_provides={list(self.op_provides)}, fn_provides={list(self._fn_provides)}"
-        else:
-            debug_needs = debug_provides = ""
-        return (
-            f"FunctionalOperation{endured}{resched}{parallel}{marshalled}(name={self.name!r}, "
-            f"needs={needs!r}{debug_needs}, provides={provides!r}{debug_provides}{aliases}, "
-            f"fn{returns_dict_marker}={fn_name!r}{nprops})"
-        )
+        return f"FunctionalOperation{endured}{resched}{parallel}{marshalled}({', '.join(items)})"
 
     @property
     def deps(self) -> Mapping[str, Collection]:
@@ -1423,7 +1421,7 @@ def operation(
 
         >>> op = op.withset(needs=['a', 'b'])
         >>> op
-        FunctionalOperation(name=None, needs=['a', 'b'], provides=[], fn=None)
+        FunctionalOperation(name=None, needs=['a', 'b'], fn=None)
 
     If you call an operation with `fn` un-initialized, it will scream:
 
@@ -1449,7 +1447,8 @@ def operation(
 
     if "fn" in kw:
         # Either used as a "naked" decorator (without any arguments)
-        # or not used as decorator at all (manually called and passed in `fn`) .
+        # or not used as decorator at all (manually called and passed in `fn`).
+        # Don't bother returning a decorator.
         return op
 
     @wraps(op.withset)
@@ -1549,15 +1548,20 @@ class NetworkOperation(Operation, Plottable):
         from .config import is_debug
 
         clsname = type(self).__name__
-        needs = aslist(self.needs, "needs")
-        provides = aslist(self.provides, "provides")
+        items = [repr(self.name)]
+        if self.needs:
+            items.append(f"needs={aslist(self.needs, 'needs')}")
+        if self.provides:
+            items.append(f"provides={aslist(self.provides, 'provides')}")
         ops = self.ops
-        steps = (
-            "".join(f"\n  +--{s}" for s in ops)
-            if is_debug()
-            else ", ".join(str(s.name) for s in ops)
-        )
-        return f"{clsname}({self.name!r}, needs={needs}, provides={provides}, x{len(ops)} ops: {steps})"
+        if ops:
+            steps = (
+                "".join(f"\n  +--{s}" for s in ops)
+                if is_debug()
+                else ", ".join(str(s.name) for s in ops)
+            )
+            items.append(f"x{len(ops)} ops: {steps}")
+        return f"{clsname}({', '.join(items)})"
 
     @property
     def ops(self) -> List[Operation]:

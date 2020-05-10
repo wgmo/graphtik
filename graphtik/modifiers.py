@@ -556,10 +556,10 @@ def sfxed(
         FunctionalOperation(name='finalize_prices',
                             needs=[sfxed('ORDER', 'Prices'), sfxed('ORDER', 'VAT')],
                             op_needs=[sfxed('ORDER', 'Prices'), sfxed('ORDER', 'VAT')],
-                            fn_needs=['ORDER'],
+                            _fn_needs=['ORDER'],
                             provides=[sfxed('ORDER', 'Totals')],
                             op_provides=[sfxed('ORDER', 'Totals')],
-                            fn_provides=['ORDER'],
+                            _fn_provides=['ORDER'],
                             fn='finalize_prices')
 
     Notice that declaring a single *sideffected* with many items in `sfx_list`,

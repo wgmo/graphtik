@@ -64,11 +64,11 @@ def test_repr_smoke(opname, opneeds, opprovides):
 def test_repr_returns_dict():
     assert (
         str(operation(lambda: None, name="", returns_dict=True))
-        == "FunctionalOperation(name='', needs=[], provides=[], fn{}='<lambda>')"
+        == "FunctionalOperation(name='', fn{}='<lambda>')"
     )
     assert (
         str(operation(lambda: None, name="myname"))
-        == "FunctionalOperation(name='myname', needs=[], provides=[], fn='<lambda>')"
+        == "FunctionalOperation(name='myname', fn='<lambda>')"
     )
 
 
@@ -84,19 +84,19 @@ def test_builder_pattern():
 
     assert (
         str(opb(sum))
-        == "FunctionalOperation(name='sum', needs=[], provides=[], fn='sum')"
+        == "FunctionalOperation(name='sum', fn='sum')"
     )
 
     assert (
         str(opb(name="K"))
-        == "FunctionalOperation(name='K', needs=[], provides=[], fn=None)"
+        == "FunctionalOperation(name='K', fn=None)"
     )
 
     op = opb.withset(needs=["a", "b"])
     assert isinstance(op, FunctionalOperation)
     assert (
         str(op)
-        == "FunctionalOperation(name=None, needs=['a', 'b'], provides=[], fn=None)"
+        == "FunctionalOperation(name=None, needs=['a', 'b'], fn=None)"
     )
     with pytest.raises(
         ValueError, match=f"Operation was not yet provided with a callable `fn`!"
@@ -425,45 +425,45 @@ def test_reschedule_unknown_dict_outs(caplog):
 def test_rescheduled_op_repr():
     op = operation(str, name="t", provides=["a"], rescheduled=True)
     assert (
-        str(op) == "FunctionalOperation?(name='t', needs=[], provides=['a'], fn='str')"
+        str(op) == "FunctionalOperation?(name='t', provides=['a'], fn='str')"
     )
 
 
 def test_endured_op_repr():
     op = operation(str, name="t", provides=["a"], endured=True)
     assert (
-        str(op) == "FunctionalOperation!(name='t', needs=[], provides=['a'], fn='str')"
+        str(op) == "FunctionalOperation!(name='t', provides=['a'], fn='str')"
     )
 
 
 def test_endured_rescheduled_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1)
-    assert str(op) == "FunctionalOperation!?(name='t', needs=[], provides=[], fn='str')"
+    assert str(op) == "FunctionalOperation!?(name='t', fn='str')"
 
 
 def test_parallel_op_repr():
     op = operation(str, name="t", provides=["a"], parallel=True)
     assert (
-        str(op) == "FunctionalOperation|(name='t', needs=[], provides=['a'], fn='str')"
+        str(op) == "FunctionalOperation|(name='t', provides=['a'], fn='str')"
     )
 
 
 def test_marshalled_op_repr():
     op = operation(str, name="t", provides=["a"], marshalled=True)
     assert str(op) == (
-        "FunctionalOperation&(name='t', needs=[], provides=['a'], fn='str')"
+        "FunctionalOperation&(name='t', provides=['a'], fn='str')"
     )
 
 
 def test_marshalled_parallel_op_repr():
     op = operation(str, name="t", parallel=1, marshalled=1)
-    assert str(op) == "FunctionalOperation|&(name='t', needs=[], provides=[], fn='str')"
+    assert str(op) == "FunctionalOperation|&(name='t', fn='str')"
 
 
 def test_ALL_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1, parallel=1, marshalled=1)
     assert (
-        str(op) == "FunctionalOperation!?|&(name='t', needs=[], provides=[], fn='str')"
+        str(op) == "FunctionalOperation!?|&(name='t', fn='str')"
     )
 
 
@@ -474,10 +474,10 @@ def test_CONFIG_op_repr():
         op = operation(str, name="t")
         assert (
             str(op)
-            == "FunctionalOperation!?|&(name='t', needs=[], provides=[], fn='str')"
+            == "FunctionalOperation!?|&(name='t', fn='str')"
         )
     op = operation(str, name="t", rescheduled=0, endured=0, parallel=0, marshalled=0)
-    assert str(op) == "FunctionalOperation(name='t', needs=[], provides=[], fn='str')"
+    assert str(op) == "FunctionalOperation(name='t', fn='str')"
 
 
 def test_reschedule_outputs():
@@ -626,7 +626,7 @@ def test_pipe_rename():
         r"[\n ]+",  # collapse all space-chars into a single space
         " ",
         """
-        [FunctionalOperation(name='PP.op1', needs=[sfx: 'PP.a'], provides=[], fn='str'),
+        [FunctionalOperation(name='PP.op1', needs=[sfx: 'PP.a'], fn='str'),
          FunctionalOperation(name='PP.op2', needs=[sfx: 'PP.a'], provides=['PP.a', sfx: 'PP.b'],
          aliases=[('PP.a', 'PP.b')], fn='str')]
         """.strip(),
@@ -642,7 +642,7 @@ def test_pipe_rename():
         r"[\n ]+",  # collapse all space-chars into a single space
         " ",
         """
-        [FunctionalOperation(name='OP1', needs=[sfx: 'a'], provides=[], fn='str'),
+        [FunctionalOperation(name='OP1', needs=[sfx: 'a'], fn='str'),
          FunctionalOperation(name='op2', needs=[sfx: 'a'], provides=['a'(?), sfx: 'b'],
          aliases=[('a'(?), 'B')], fn='str')]
         """.strip(),
