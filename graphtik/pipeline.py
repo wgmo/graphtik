@@ -16,12 +16,11 @@ from typing import Callable, List, Mapping, Union
 
 from .base import UNSET, Items, Operation, PlotArgs, Plottable, RenArgs, aslist, jetsam
 from .modifiers import dep_renamed
-from .op import FunctionalOperation, reparse_operation_data
 
 log = logging.getLogger(__name__)
 
 
-class NULL_OP(FunctionalOperation):
+class NULL_OP(Operation):
     """
     Eliminates same-named operations added later during term:`operation merging`.
 
@@ -29,10 +28,22 @@ class NULL_OP(FunctionalOperation):
     """
 
     def __init__(self, name):
-        super().__init__(name=name)
+        self.name = name
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(self, o):
+        return self.name == o.name
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.name})"
 
     def compute(self, *args, **kw):
-        raise AssertionError("Should have been eliminated!")
+        raise AssertionError(f"{self} should have been eliminated!")
+
+    def prepare_plot_args(self, *args, **kw):
+        raise AssertionError(f"{self} should have been eliminated!")
 
 
 def _id_bool(b):
@@ -85,6 +96,7 @@ class Pipeline(Operation, Plottable):
                 *Operations may only be added once, ...*
         """
         from .network import build_network
+        from .op import reparse_operation_data
 
         ## Set data asap, for debugging, although `net.withset()` will reset them.
         self.name = name

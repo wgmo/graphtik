@@ -634,12 +634,10 @@ def build_network(
         """clone FuncOperation with certain props changed"""
         from .op import FunctionalOperation
 
-        assert isinstance(op, FunctionalOperation), op
-
         ## Convey any node-props specified in the pipeline here
         #  to all sub-operations.
         #
-        if kw:
+        if kw and isinstance(op, FunctionalOperation):
             if node_props:
                 kw["node_props"] = {**op.node_props, **node_props}
 
@@ -650,7 +648,7 @@ def build_network(
                     return renamer(ren_args._replace(parent=parent))
 
                 kw["renamer"] = parent_wrapper
-            op = op = op.withset(**kw)
+            op = op.withset(**kw)
 
         return op
 
