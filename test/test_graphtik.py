@@ -44,7 +44,7 @@ from graphtik.config import (
     tasks_marshalled,
 )
 from graphtik.execution import Solution
-from graphtik.modifiers import optional, sfx, sfxed, vararg
+from graphtik.modifiers import optional, sfx, sfxed, vararg, dep_renamed
 
 log = logging.getLogger(__name__)
 
@@ -491,8 +491,55 @@ def test_network_merge_in_doctests():
         "day 2.tasks": "a lot!",
     }
 
-    dot = sol.plot()
-    assert len(dot.get_subgraphs()) == days_count
+
+def test_compose_nest_dict(caplog):
+    pipe = compose(
+        "t",
+        compose(
+            "p1",
+            operation(
+                str,
+                name="op1",
+                needs=[sfx("a"), "aa"],
+                provides=[sfxed("S1", "g"), sfxed("S2", "h")],
+            ),
+        ),
+        compose(
+            "p2",
+            operation(
+                str,
+                name="op2",
+                needs=sfx("a"),
+                provides=["a", sfx("b")],
+                aliases=[("a", "b")],
+            ),
+        ),
+        nest={
+            "op1": True,
+            "op2": lambda n: "p2.op2",
+            "aa": False,
+            sfx("a"): True,
+            "b": lambda n: f"PP.{n}",
+            sfxed("S1", "g"): True,
+            sfxed("S2", "h"): lambda n: dep_renamed(n, "ss2"),
+            sfx("b"): True,
+        },
+    )
+    got = str(pipe.ops)
+    print(got)
+    assert got == re.sub(
+        r"[\n ]{2,}",  # collapse all space-chars into a single space
+        " ",
+        """
+        [FunctionalOperation(name='p1.op1', needs=[sfx: 'p1.a', 'aa'],
+         provides=[sfxed('p1.S1', 'g'), sfxed('ss2', 'h')], fn='str'),
+        FunctionalOperation(name='p2.op2', needs=[sfx: 'p2.a'],
+         provides=['a', sfx: 'p2.b'], aliases=[('a', 'PP.b')], fn='str')]
+
+        """.strip(),
+    )
+    for record in caplog.records:
+        assert record.levelname != "WARNING"
 
 
 def test_aliases(exemethod):

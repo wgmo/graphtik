@@ -644,11 +644,11 @@ def build_network(
 
             if callable(renamer):
 
-                def rename_wrapper(ren_args: RenArgs) -> str:
+                def parent_wrapper(ren_args: RenArgs) -> str:
                     # Provide RenArgs.parent.
                     return renamer(ren_args._replace(parent=parent))
 
-                kw["renamer"] = rename_wrapper
+                kw["renamer"] = parent_wrapper
             op = op = op.withset(**kw)
 
         return op

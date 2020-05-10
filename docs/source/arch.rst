@@ -66,8 +66,7 @@ Architecture
         two ways to combine the operations contained into the new pipeline:
         `operation merging` (default) and `operation nesting`.
 
-        They are selected by the ``nest`` functional parameter of :func:`.compose()`
-        factory.
+        They are selected by the ``nest`` parameter of :func:`.compose()` factory.
 
     operation merging
         The default method to `combine pipelines`, also applied when simply merging `operation`\s.
