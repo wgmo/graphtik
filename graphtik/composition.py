@@ -1000,7 +1000,10 @@ class FunctionalOperation(Operation, Plottable):
                                 fn='str')
 
 
-        Notice the double use of lambdas with :func:`dep_renamed()`.
+        Notice the double use of lambdas with :func:`dep_renamed()` -- an equivalent
+        rename callback would be::
+
+            dep_renamed(ren_args.name, f"parent.{dependency(ren_args.name)}")
         """
         kw = {
             k: v

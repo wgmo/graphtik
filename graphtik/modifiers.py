@@ -9,7 +9,7 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 .. note::
     This module (along with :mod:`.composition`) is what client code needs
     to define pipelines *on import time* without incurring a heavy price
-    (<5ms on a 2019 fast PC)
+    (~7ms on a 2019 fast PC)
 """
 import enum
 from typing import Optional, Tuple, Union
@@ -65,7 +65,7 @@ class _Modifier(str):
     - the predicates :func:`is_optional()`, :func:`is_pure_sfx()` predicates, etc,
     - and the :func:`dep_renamed()`, :func:`dep_stripped()` conversion functions
 
-    respectively.
+    respectively, or at least :func:`_modifier()`.
 
     .. Note::
         User code better call :func:`_modifier()` factory which may return a plain string
@@ -88,7 +88,8 @@ class _Modifier(str):
     #: :func:`is_optional()` returns it.
     #: All regulars are `mapped`.
     optional: _Optionals
-    #: the pure-sideffect string or the existing :term:`sideffected` dependency
+    #: Has value only for sideffects: the pure-sideffect string or
+    #: the existing :term:`sideffected` dependency.
     sideffected: str
     #: At least one name(s) denoting the :term:`sideffects` modification(s) on
     #: the :term:`sideffected`, performed/required by the operation.
@@ -159,7 +160,7 @@ class _Modifier(str):
         Make a new modifier with changes -- handle with care.
 
         :return:
-             Delegates to :func:`_dep`, so returns a plain string if no args left.
+             Delegates to :func:`_modifier`, so returns a plain string if no args left.
         """
         kw = {
             k: getattr(self, k) if v is ... else v
@@ -171,10 +172,10 @@ class _Modifier(str):
         if name is ...:
             name = self.sideffected or str(self)
 
-        return _dep(name=name, **kw)
+        return _modifier(name=name, **kw)
 
 
-def _dep(
+def _modifier(
     name, fn_kwarg=None, optional: _Optionals = None, sideffected=None, sfx_list=(),
 ):
     """
@@ -251,7 +252,7 @@ def mapped(name: str, fn_kwarg: str = None):
         .. graphtik::
     """
     # Must pass a truthy `fn_kwarg` bc cstor cannot not know its mapped.
-    return _dep(name, fn_kwarg=fn_kwarg or name)
+    return _modifier(name, fn_kwarg=fn_kwarg or name)
 
 
 def optional(name: str, fn_kwarg: str = None):
@@ -309,7 +310,7 @@ def optional(name: str, fn_kwarg: str = None):
 
     """
     # Must pass a truthy `fn_kwarg` as cstor-matrix requires.
-    return _dep(name, fn_kwarg=fn_kwarg or name, optional=_Optionals.keyword)
+    return _modifier(name, fn_kwarg=fn_kwarg or name, optional=_Optionals.keyword)
 
 
 def vararg(name: str):
@@ -353,7 +354,7 @@ def vararg(name: str):
         {'a': 5, 'sum': 5}
 
     """
-    return _dep(name, optional=_Optionals.vararg)
+    return _modifier(name, optional=_Optionals.vararg)
 
 
 def varargs(name: str):
@@ -415,7 +416,7 @@ def varargs(name: str):
 
     .. varargs-mistake-end
     """
-    return _dep(name, optional=_Optionals.varargs)
+    return _modifier(name, optional=_Optionals.varargs)
 
 
 def sfx(name, optional: bool = None):
@@ -490,7 +491,7 @@ def sfx(name, optional: bool = None):
         .. graphtik::
 
     """
-    return _dep(
+    return _modifier(
         name, optional=_Optionals.keyword if optional else None, sideffected=name,
     )
 
@@ -592,7 +593,7 @@ def sfxed(
 
 
     """
-    return _dep(
+    return _modifier(
         dependency,
         optional=_Optionals.keyword if optional else None,
         fn_kwarg=dependency if optional and not fn_kwarg else fn_kwarg,
@@ -603,7 +604,7 @@ def sfxed(
 
 def sfxed_vararg(dependency: str, sfx0: str, *sfx_list: str):
     """Like :func:`sideffected` + :func:`vararg`. """
-    return _dep(
+    return _modifier(
         dependency,
         optional=_Optionals.vararg,
         sideffected=dependency,
@@ -613,7 +614,7 @@ def sfxed_vararg(dependency: str, sfx0: str, *sfx_list: str):
 
 def sfxed_varargs(dependency: str, sfx0: str, *sfx_list: str):
     """Like :func:`sideffected` + :func:`varargs`. """
-    return _dep(
+    return _modifier(
         dependency,
         optional=_Optionals.varargs,
         sideffected=dependency,
@@ -678,6 +679,15 @@ def is_pure_sfx(dep) -> bool:
 def is_sfxed(dep) -> bool:
     """Check if it is :term:`sideffected`."""
     return getattr(dep, "sideffected", None) and getattr(dep, "sfx_list", None)
+
+
+def dependency(dep):
+    """
+    For non-sideffects, it coincides with str(), otherwise,
+    the the pure-sideffect string or the existing :term:`sideffected` dependency
+    stored in :attr:`sideffected`.
+    """
+    return str(dep) if is_sfx(dep) else dep.sideffected
 
 
 def dep_renamed(dep, ren):
