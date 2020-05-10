@@ -10,7 +10,7 @@ import pytest
 
 from graphtik import base, network, operation, pipeline
 from graphtik.execution import ExecutionPlan, Solution, _OpTask
-from graphtik.op import Operation
+from graphtik.base import Operation
 from graphtik.pipeline import Pipeline
 
 

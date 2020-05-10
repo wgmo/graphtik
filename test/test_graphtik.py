@@ -35,8 +35,9 @@ from graphtik.config import (
     tasks_marshalled,
 )
 from graphtik.execution import Solution
+from graphtik.base import Operation
 from graphtik.modifiers import dep_renamed, optional, sfx, sfxed, vararg
-from graphtik.op import NO_RESULT, NO_RESULT_BUT_SFX, Operation, operation
+from graphtik.op import NO_RESULT, NO_RESULT_BUT_SFX, operation
 from graphtik.pipeline import NULL_OP, Pipeline, compose
 
 log = logging.getLogger(__name__)

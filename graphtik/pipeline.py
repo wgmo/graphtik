@@ -12,28 +12,11 @@
 import logging
 import re
 from collections import abc as cabc
-from typing import (
-    Callable,
-    List,
-    Mapping,
-    Union,
-)
+from typing import Callable, List, Mapping, Union
 
-from .base import (
-    UNSET,
-    Items,
-    aslist,
-    jetsam,
-)
+from .base import UNSET, Items, Operation, PlotArgs, Plottable, RenArgs, aslist, jetsam
 from .modifiers import dep_renamed
-from .op import (
-    FunctionalOperation,
-    Operation,
-    Plottable,
-    PlotArgs,
-    RenArgs,
-    reparse_operation_data,
-)
+from .op import FunctionalOperation, reparse_operation_data
 
 log = logging.getLogger(__name__)
 

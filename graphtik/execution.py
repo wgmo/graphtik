@@ -39,7 +39,7 @@ from .network import (
     yield_node_names,
     yield_ops,
 )
-from .op import Operation, PlotArgs, Plottable
+from .base import Operation, PlotArgs, Plottable
 
 #: If this logger is *eventually* DEBUG-enabled,
 #: the string-representation of network-objects (network, plan, solution)
