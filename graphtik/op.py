@@ -1,11 +1,8 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-.. default-role: term
+Define :term:`operation` & :term:`dependency` and match/zip inputs/outputs during :term:`execution`.
 
-Define `operation` and their `dependency` and match/zip inputs/outputs during `execution`.
-
-.. default-role:
 .. note::
     This module (along with :mod:`.modifiers` & :mod:`.pipeline`) is what client code needs
     to define pipelines *on import time* without incurring a heavy price
