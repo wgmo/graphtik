@@ -34,7 +34,7 @@ from graphtik.config import (
     operations_reschedullled,
     tasks_marshalled,
 )
-from graphtik.execution import Solution
+from graphtik.execution import Solution, task_context
 from graphtik.base import Operation
 from graphtik.modifiers import dep_renamed, optional, sfx, sfxed, vararg
 from graphtik.op import NO_RESULT, NO_RESULT_BUT_SFX, operation
@@ -283,6 +283,27 @@ def test_network_plan_execute():
     assert sol == exp
     sol = plan.execute(inputs, outputs)
     assert sol == exp
+
+
+def test_task_context(exemethod):
+    def check_task_context():
+        assert task_context.get().op == next(iop)
+
+    n_ops = 30
+    pipe = compose(
+        "t",
+        *(operation(check_task_context, f"op{i}", provides="a") for i in range(n_ops)),
+        parallel=exemethod,
+    )
+    iop = iter(pipe.ops)
+    if exemethod and is_marshal_tasks():
+        with pytest.raises(AssertionError, match="^assert FunctionalOperation"):
+            pipe.compute()
+        raise pytest.xfail("Cannot marshal `task_context` :-(.")
+    else:
+        pipe.compute()
+        with pytest.raises(StopIteration):
+            next(iop)
 
 
 def test_compose_rename_dict(caplog):

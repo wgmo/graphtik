@@ -50,10 +50,10 @@ positional parameters are not supported:
       >>> add_op(a=3, b=4)
       {'a_plus_b': 7}
 
-   Calling an operation, it delegates to :meth:`.Operation.compute()` method,
-   which checks the inputs, match the *needs*/*provides* to function arguments,
-   calls the function,  and finally "zip" the function results with the operation's
-   *provides*. (read more on :ref:`graph-computations`).
+.. tip::
+   In case your function needs to access the :mod:`.execution` machinery
+   or its wrapping operation, it can do that through the :data:`.task_context`
+   (unstable API).
 
 
 Builder pattern

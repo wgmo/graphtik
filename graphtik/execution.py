@@ -5,6 +5,7 @@ import logging
 import random
 import time
 from collections import ChainMap, abc, defaultdict, namedtuple
+from contextvars import ContextVar
 from functools import partial
 from itertools import chain
 from typing import Any, Collection, List, Mapping, Optional, Tuple, Union
@@ -17,6 +18,9 @@ from .base import (
     AbortedException,
     IncompleteExecutionError,
     Items,
+    Operation,
+    PlotArgs,
+    Plottable,
     aslist,
     astuple,
     first_solid,
@@ -39,7 +43,6 @@ from .network import (
     yield_node_names,
     yield_ops,
 )
-from .base import Operation, PlotArgs, Plottable
 
 #: If this logger is *eventually* DEBUG-enabled,
 #: the string-representation of network-objects (network, plan, solution)
@@ -302,7 +305,13 @@ class _OpTask:
             self.result = None
             log = logging.getLogger(self.logname)
             log.debug("+++ (%s) Executing %s...", self.solid, self)
-            self.result = self.op.compute(self.sol)
+            token = task_context.set(self)
+            try:
+                ## Not really needed ...
+                # self.result = copy_context().run(self.op.compute, self.sol)
+                self.result = self.op.compute(self.sol)
+            finally:
+                task_context.reset(token)
 
         return self.result
 
@@ -314,6 +323,11 @@ class _OpTask:
         except Exception:
             sol_items = type(self.sol).__name__
         return f"OpTask({self.op}, sol_keys={sol_items!r})"
+
+
+#: Populated with the :class:`_OpTask` for the currently executing operation.
+#: It does not work for :term:`parallel execution`.
+task_context: ContextVar[_OpTask] = ContextVar("task_context")
 
 
 def _do_task(task):
