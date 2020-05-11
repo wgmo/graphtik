@@ -36,7 +36,7 @@ Graphtik Changelog
   - [+] Rename NetOp -> pipelines;
     cannot unify compose() -> Pipeline class due to `nest` arg.
 
-  - [ ] Function access executing Operation & Plan from its context.
+  - [+] Function access executing Operation & Plan from its context.
       - [ ] Unify OpTask & FuncOp
       - [ ] function self-toggles `returns-dict` amidst execution.
   - [ ] break cycles with dijkstra; weights
@@ -86,6 +86,12 @@ https://github.com/pygraphkit/graphtik/releases
 
 Changelog
 %%%%%%%%%
+
+
+v8.2.0 (11 May 2020, @ankostis): custom Solutions, Task-context
+===============================================================
++ FEAT(exe): ``compute()`` supports custom Solution classes.
++ FEAT(exe): underlying functions gain access to wrapping Operation with :data:`.execution.task_context`.
 
 
 v8.1.0 (11 May 2020, @ankostis): drop last plan, Rename/Nest, Netop-->Pipeline, purify modules
