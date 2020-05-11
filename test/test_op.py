@@ -8,7 +8,6 @@ from functools import partial
 from textwrap import dedent
 from types import SimpleNamespace
 
-import dill
 import pytest
 
 from graphtik import (
@@ -553,8 +552,14 @@ def test_pipeline_conveys_attr_to_ops(attr, value):
         lambda: operation(lambda: None),
     ],
 )
-def test_dill_ops(op_fact):
-    dill.loads(dill.dumps(op_fact()))
+def test_serialize_op(op_fact, ser_method):
+    op = op_fact()
+    if "pickle" in str(ser_method) and "lambda" in str(getattr(op, "fn", ())):
+        with pytest.raises(AttributeError, match="^Can't pickle local object"):
+            ser_method(op) == op
+        raise pytest.xfail(reason="Pickling fails for locals i.e. lambas")
+
+    assert ser_method(op) == op
 
 
 def test_op_rename():

@@ -1,8 +1,10 @@
+import pickle
 import re
 from itertools import chain, cycle
 from pathlib import Path
 from typing import Union
 
+import dill
 import pytest
 
 ###################################################
@@ -88,3 +90,11 @@ def check_xpath(etree, fname, path, check, be_found=True):
             f"{Path(fname).absolute()}:\n  {check!r} {msg} node at path {path!r}: "
             f"{[node.text for node in nodes]}"
         )
+
+
+def dilled(i):
+    return dill.loads(dill.dumps(i))
+
+
+def pickled(i):
+    return pickle.loads(pickle.dumps(i))

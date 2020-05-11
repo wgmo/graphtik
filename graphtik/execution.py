@@ -286,14 +286,14 @@ class _OpTask:
     This intermediate class is needed to solve pickling issue with process executor.
     """
 
-    __slots__ = ("op", "sol", "result", "solid")
+    __slots__ = ("op", "sol", "solid", "result")
     logname = __name__
 
-    def __init__(self, op, sol, solid):
+    def __init__(self, op, sol, solid, result=UNSET):
         self.op = op
         self.sol = sol
-        self.result = UNSET
         self.solid = solid
+        self.result = result
 
     def marshalled(self):
         import dill

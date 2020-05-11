@@ -8,6 +8,7 @@ import re
 import sys
 import time
 import types
+from collections import namedtuple
 from functools import partial
 from itertools import cycle
 from multiprocessing import Pool, cpu_count
@@ -22,7 +23,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from graphtik import network
-from graphtik.base import AbortedException, IncompleteExecutionError
+from graphtik.base import AbortedException, IncompleteExecutionError, Operation
 from graphtik.config import (
     abort_run,
     debug_enabled,
@@ -34,8 +35,7 @@ from graphtik.config import (
     operations_reschedullled,
     tasks_marshalled,
 )
-from graphtik.execution import Solution, task_context
-from graphtik.base import Operation
+from graphtik.execution import Solution, _OpTask, task_context
 from graphtik.modifiers import dep_renamed, optional, sfx, sfxed, vararg
 from graphtik.op import NO_RESULT, NO_RESULT_BUT_SFX, operation
 from graphtik.pipeline import NULL_OP, Pipeline, compose
@@ -49,10 +49,13 @@ _thread = pytest.mark.thread
 _parallel = pytest.mark.parallel
 _marshal = pytest.mark.marshal
 
+_ExeParams = namedtuple("_ExeParams", "parallel, proc, marshal")
+_exe_params = _ExeParams(None, None, None)
+
 
 @pytest.fixture(
     params=[
-        # PARALLEL?, Proc/Thread?, Marshalled?
+        # PARALLEL?, Thread/Proc?, Marshalled?
         (None, None, None),
         pytest.param((1, 0, 0), marks=(_parallel, _thread)),
         pytest.param((1, 0, 1), marks=(_parallel, _thread, _marshal)),
@@ -70,7 +73,10 @@ _marshal = pytest.mark.marshal
 )
 def exemethod(request):
     """Returns (exemethod, marshal) combinations"""
+    global _exe_params
     parallel, proc_pool, marshal = request.param
+    _exe_params = _ExeParams(*request.param)
+
     nsharks = None  # number of pool swimmers....
 
     with tasks_marshalled(marshal):
@@ -116,6 +122,21 @@ def addall(*a, **kw):
 def abspow(a, p):
     c = abs(a) ** p
     return c
+
+
+def test_serialize_pipeline(samplenet, ser_method):
+    def eq(pipe1, pipe2):
+        return pipe1.name == pipe2.name and pipe1.ops == pipe2.ops
+
+    assert eq(ser_method(samplenet), samplenet)
+
+
+def test_serialize_OpTask(ser_method):
+    def eq(o1, o2):
+        return all(getattr(o1, a) == getattr(o2, a) for a in _OpTask.__slots__)
+
+    ot = _OpTask(1, 2, 3, 4)
+    assert eq(ser_method(ot), ot)
 
 
 def test_solution_finalized():
@@ -285,7 +306,7 @@ def test_network_plan_execute():
     assert sol == exp
 
 
-def test_task_context(exemethod):
+def test_task_context(exemethod, request):
     def check_task_context():
         assert task_context.get().op == next(iop)
 
@@ -296,10 +317,17 @@ def test_task_context(exemethod):
         parallel=exemethod,
     )
     iop = iter(pipe.ops)
-    if exemethod and is_marshal_tasks():
-        with pytest.raises(AssertionError, match="^assert FunctionalOperation"):
+
+    print(_exe_params)
+    err = None
+    if _exe_params.parallel and _exe_params.marshal:
+        err = AssertionError("^assert FunctionalOperation")
+    if _exe_params.proc and _exe_params.marshal:
+        err = Exception("^Error sending result")
+    if err:
+        with pytest.raises(type(err), match=str(err)):
             pipe.compute()
-        raise pytest.xfail("Cannot marshal `task_context` :-(.")
+        raise pytest.xfail("Cannot marshal parallel processes with `task_context` :-(.")
     else:
         pipe.compute()
         with pytest.raises(StopIteration):

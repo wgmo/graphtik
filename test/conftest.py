@@ -1,4 +1,6 @@
 import pytest
+from .helpers import dilled, pickled
+
 
 # Enable pytest-sphinx fixtures
 # See https://www.sphinx-doc.org/en/master/devguide.html#unit-testing
@@ -15,3 +17,8 @@ def debug_mode():
 
     with debug_enabled(True):
         yield
+
+
+@pytest.fixture(params=[dilled, pickled])
+def ser_method(request):
+    return request.param

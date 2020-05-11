@@ -14,6 +14,10 @@ from graphtik.base import Operation
 from graphtik.pipeline import Pipeline
 
 
+def test_serialize_Token(ser_method):
+    assert ser_method(base.UNSET) == base.UNSET
+
+
 @pytest.mark.parametrize("locs", [None, (), [], [0], "bad"])
 def test_jetsam_bad_locals(locs, caplog):
     caplog.set_level(logging.INFO)

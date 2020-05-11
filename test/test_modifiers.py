@@ -1,4 +1,5 @@
-import dill
+# Copyright 2020, Kostis Anagnostopoulos.
+# Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 import pytest
 
 from graphtik.modifiers import (
@@ -16,13 +17,9 @@ from graphtik.modifiers import (
 )
 
 
-def dilled(i):
-    return dill.loads(dill.dumps(i))
-
-
-def test_dill_modifier():
+def test_serialize_modifier(ser_method):
     s = sfxed("foo", "gg")
-    s == dilled(s)
+    assert repr(ser_method(s)) == repr(s)
 
 
 ## construct in lambdas, not to crash pytest while modifying core _Modifier
@@ -48,7 +45,6 @@ def test_modifs_str(mod, exp):
     got = mod()
     print(got)
     assert str(got) == exp
-    assert dilled(str(got)) == exp
 
 
 ## construct in lambdas, not to crash pytest while modifying core _Modifier
@@ -75,11 +71,11 @@ def test_modifs_str(mod, exp):
         (lambda: sfxed_varargs("f", "a", "b"), "sfxed('f'(+), 'a', 'b')"),
     ],
 )
-def test_modifs_repr(mod, exp):
+def test_modifs_repr(mod, exp, ser_method):
     got = mod()
     print(repr(got))
     assert repr(got) == exp
-    assert dilled(repr(got)) == exp
+    assert repr(ser_method(got)) == exp
 
 
 @pytest.mark.parametrize(
@@ -105,11 +101,11 @@ def test_modifs_repr(mod, exp):
         (sfxed_varargs("f", "a", "b"), "sfxed_varargs('f', 'a', 'b')"),
     ],
 )
-def test_modifs_cmd(mod, exp):
+def test_modifs_cmd(mod, exp, ser_method):
     got = mod.cmd
     print(got)
     assert str(got) == exp
-    assert dilled(str(got)) == exp
+    assert str(ser_method(got)) == exp
 
 
 def test_recreation():
@@ -189,11 +185,11 @@ def test_modifs_rename_fn(mod, exp):
         ),
     ],
 )
-def test_modifs_rename_str(mod, exp):
+def test_modifs_rename_str(mod, exp, ser_method):
     got = dep_renamed(mod(), "D")
     print(repr(got))
     assert repr(got) == exp
-    assert dilled(repr(got)) == exp
+    assert repr(ser_method(got)) == exp
 
 
 @pytest.mark.parametrize(
