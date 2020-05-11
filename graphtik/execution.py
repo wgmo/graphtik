@@ -667,6 +667,8 @@ class ExecutionPlan(
         :param outputs:
             If not None, they are just checked if possible, based on :attr:`provides`,
             and scream if not.
+        :param name:
+            name of the pipeline used for logging
 
         :return:
             The :term:`solution` which contains the results of each operation executed

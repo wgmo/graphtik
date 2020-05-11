@@ -307,6 +307,8 @@ class Pipeline(Operation, Plottable):
         :param outputs:
             A string or a list of strings with all data asked to compute.
             If ``None``, all intermediate data will be kept.
+        :param predicate:
+            filter-out nodes before compiling
 
         :return:
             The :term:`solution` which contains the results of each operation executed
