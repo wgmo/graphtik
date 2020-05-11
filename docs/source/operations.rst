@@ -1,23 +1,32 @@
 Operations
 ==========
 
-At a high level, an :term:`operation` is a function in a computation :term:`pipeline`,
+An :term:`operation` is a function in a computation :term:`pipeline`,
 abstractly represented by the :class:`.Operation` class.
-This class specifies the :term:`dependencies <dependency>` of the *operation*
-in the *pipeline*.
+This class specifies the :term:`dependencies <dependency>` forming the *pipeline*'s
+:term:`network`.
 
-You may inherit this class and access the declared values in :term:`needs` from :term:`solution`
-and produce the declared :term:`provides` when :meth:`Operation.compute()` method is called.
-But there is an easier way...actually half of the code of this project is to retrofit
-existing functions into *operations*.
 
+Defining Operations
+-------------------
+You may inherit the :class:`.Operation` abstract class and override its
+:meth:`.Operation.compute()` method to manually do the following:
+
+- read declared as :term:`needs` values from :term:`solution`,
+- match those values into function arguments,
+- call your function to do it's business,
+- "zip" the function's results with the operation's declared :term:`provides`,
+  and finally
+- hand back those zipped values to *solution* for further actions.
+
+But there is an easier way -- actually half of the code in this project is dedicated
+to retrofitting existing *functions* unaware of all these, into :term:`operation`\s.
 
 Operations from existing functions
-----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The :class:`.FunctionalOperation` provides a concrete lightweight wrapper
-around any arbitrary function to define those *dependencies*.
-Instead of constructing it directly, prefer to instantiate it by calling
-the :func:`.operation()` factory:
+around any arbitrary function to define and execute within a *pipeline*.
+Use the :func:`.operation()` factory to instantiate one:
 
    >>> from operator import add
    >>> from graphtik import operation
@@ -28,11 +37,18 @@ the :func:`.operation()` factory:
    >>> add_op
    FunctionalOperation(name='add', needs=['a', 'b'], provides=['a_plus_b'], fn='add')
 
-You may still call the original function, by accessing the :attr:`.FunctionalOperation.fn`
-attribute:
+You may still call the original function at :attr:`.FunctionalOperation.fn`,
+bypassing thus any operation pre-processing:
 
-   >>> add_op.fn(3, 4) == add(3, 4)
-   True
+      >>> add_op.fn(3, 4)
+      7
+
+But the proper way is to *call the operation* (either directly or by calling the
+:meth:`.FunctionalOperation.compute()` method).  Notice though that unnamed
+positional parameters are not supported:
+
+      >>> add_op(a=3, b=4)
+      {'a_plus_b': 7}
 
    Calling an operation, it delegates to :meth:`.Operation.compute()` method,
    which checks the inputs, match the *needs*/*provides* to function arguments,
@@ -143,8 +159,8 @@ Map inputs to different function arguments
 .. autofunction:: graphtik.modifiers.mapped
    :noindex:
 
-Execute operations with missing inputs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Operations may execute with missing inputs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autofunction:: graphtik.modifiers.optional
    :noindex:
 
