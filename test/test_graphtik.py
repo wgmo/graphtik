@@ -1668,7 +1668,9 @@ def test_rescheduling_NO_RESULT(exemethod):
         assert sol.scream_if_incomplete()
 
 
-@pytest.mark.xfail(reason="Spurious copied-reversed graphs, with dubious cause....")
+@pytest.mark.xfail(
+    reason="Spurious copied-reversed graphs in Travis, with dubious cause...."
+)
 def test_multithreading_plan_execution():
     # Compose the mul, sub, and abspow operations into a computation graph.
     # From Huygn's test-code given in yahoo/graphkit#31
@@ -1745,7 +1747,9 @@ def test_parallel_execution(exemethod):
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(reason="Spurious copied-reversed graphs, with dubious cause....")
+@pytest.mark.xfail(
+    reason="Spurious copied-reversed graphs in Travis, with dubious cause...."
+)
 def test_multi_threading_computes():
     import random
 
