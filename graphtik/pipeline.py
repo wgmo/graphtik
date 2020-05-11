@@ -292,7 +292,8 @@ class Pipeline(Operation, Plottable):
         self,
         named_inputs: Mapping = UNSET,
         outputs: Items = UNSET,
-        predicate: "NodePredicate" = UNSET,
+        predicate: "NodePredicate" = None,
+        solution_class: "Type[Solution]" = None,
     ) -> "Solution":
         """
         Compile a plan & :term:`execute` the graph, sequentially or parallel.
@@ -309,6 +310,8 @@ class Pipeline(Operation, Plottable):
             If ``None``, all intermediate data will be kept.
         :param predicate:
             filter-out nodes before compiling
+        :param solution_class:
+            a custom solution factory to use
 
         :return:
             The :term:`solution` which contains the results of each operation executed
@@ -341,7 +344,8 @@ class Pipeline(Operation, Plottable):
 
             net = self.net  # jetsam
             outputs = self.outputs if outputs == UNSET else outputs
-            predicate = self.predicate if predicate == UNSET else predicate
+            if not predicate:
+                predicate = self.predicate
 
             # Build the execution plan.
             log.debug("=== Compiling pipeline(%s)...", self.name)
@@ -350,7 +354,9 @@ class Pipeline(Operation, Plottable):
             # Restore `abort` flag for next run.
             reset_abort()
 
-            solution = plan.execute(named_inputs, outputs, name=self.name)
+            solution = plan.execute(
+                named_inputs, outputs, name=self.name, solution_class=solution_class
+            )
 
             return solution
         except Exception as ex:

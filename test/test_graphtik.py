@@ -253,6 +253,13 @@ def test_network_plan_execute():
     plan = net.compile(outputs=outputs, inputs=inputs.keys())
     sol = plan.execute(inputs)
     assert sol == exp
+
+    # test solution factory
+    sol = plan.execute(
+        inputs, solution_class=(lambda *args, **kw: Solution(*args, **kw))
+    )
+    assert sol == exp
+
     sol = plan.execute(inputs, outputs)
     assert sol == exp
 

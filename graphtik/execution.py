@@ -657,7 +657,9 @@ class ExecutionPlan(
             else:
                 raise AssertionError(f"Unrecognized instruction.{step}")
 
-    def execute(self, named_inputs, outputs=None, *, name="") -> Solution:
+    def execute(
+        self, named_inputs, outputs=None, *, name="", solution_class=None
+    ) -> Solution:
         """
         :param named_inputs:
             A mapping of names --> values that must contain at least
@@ -669,6 +671,8 @@ class ExecutionPlan(
             and scream if not.
         :param name:
             name of the pipeline used for logging
+        :param solution_class:
+            a custom solution factory to use
 
         :return:
             The :term:`solution` which contains the results of each operation executed
@@ -706,7 +710,11 @@ class ExecutionPlan(
             #
             evict = self.asked_outs and not is_skip_evictions()
             # Note: clone and keep original `inputs` in the 1st chained-map.
-            solution = Solution(
+
+            if solution_class is None:
+                solution_class = Solution
+
+            solution = solution_class(
                 self,
                 {k: v for k, v in named_inputs.items() if k in self.dag.nodes}
                 if evict
