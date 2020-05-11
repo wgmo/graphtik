@@ -323,11 +323,14 @@ def test_task_context(exemethod, request):
     )
     iop = iter(pipe.ops)
 
-    print(_exe_params)
+    print(_exe_params, os.cpu_count())
     err = None
     if _exe_params.proc and _exe_params.marshal:
         err = Exception("^Error sending result")
-    elif _exe_params.parallel:
+    elif _exe_params.parallel and _exe_params.marshal:
+        err = AssertionError("^Corrupted task-context")
+    elif _exe_params.parallel and not os.environ.get("TRAVIS"):
+        # Travis has low parallelism and error does not surface
         err = AssertionError("^Corrupted task-context")
 
     if err:
