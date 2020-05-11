@@ -17,6 +17,7 @@ from multiprocessing import get_context
 from operator import add, floordiv, mul, sub
 from pprint import pprint
 from textwrap import dedent
+from time import sleep
 from typing import Tuple
 from unittest.mock import MagicMock
 
@@ -308,22 +309,27 @@ def test_network_plan_execute():
 
 def test_task_context(exemethod, request):
     def check_task_context():
-        assert task_context.get().op == next(iop)
+        sleep(0.1)
+        assert task_context.get().op == next(iop), "Corrupted task-context"
 
-    n_ops = 30
+    n_ops = 10
     pipe = compose(
         "t",
-        *(operation(check_task_context, f"op{i}", provides="a") for i in range(n_ops)),
+        *(
+            operation(check_task_context, f"op{i}", provides=f"{i}")
+            for i in range(n_ops)
+        ),
         parallel=exemethod,
     )
     iop = iter(pipe.ops)
 
     print(_exe_params)
     err = None
-    if _exe_params.parallel and _exe_params.marshal:
-        err = AssertionError("^assert FunctionalOperation")
     if _exe_params.proc and _exe_params.marshal:
         err = Exception("^Error sending result")
+    elif _exe_params.parallel:
+        err = AssertionError("^Corrupted task-context")
+
     if err:
         with pytest.raises(type(err), match=str(err)):
             pipe.compute()
