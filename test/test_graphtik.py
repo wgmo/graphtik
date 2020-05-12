@@ -297,7 +297,7 @@ def test_network_plan_execute():
 
 def test_task_context(exemethod, request):
     def check_task_context():
-        sleep(0.1)
+        sleep(0.15)
         assert task_context.get().op == next(iop), "Corrupted task-context"
 
     n_ops = 10

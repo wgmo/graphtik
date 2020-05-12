@@ -95,6 +95,7 @@ v8.3.0.dev0 (12 May 2020, @ankostis): mapped-->keyword, drop sol-finalize
   since sfxed have been introduced (v7+).
 + doc(modifiers): explain :term:`diacritic` symbols of dependencies when in printouts.
 
+
 v8.2.0 (11 May 2020, @ankostis): custom Solutions, Task-context
 ===============================================================
 + FEAT(exe): ``compute()`` supports custom Solution classes.
