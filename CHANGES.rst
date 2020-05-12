@@ -2,6 +2,8 @@
 Graphtik Changelog
 ##################
 
+.. contents::
+
 ..
   TODOs
   %%%%%
@@ -199,8 +201,8 @@ v7.1.0 (4 May 2020, @ankostis): Cancelable sideffects, theme-ize & expand everyt
 Should have been a MAJOR BUMP due to breaking renames, but just out of
 another 6.x --> 7.x major bump.
 
-NET
----
+NET: fix rescheduled, cancelable sfx, improve compute API
+---------------------------------------------------------
 + FIX: rescheduled operations were not canceling all downstream deps & operations.
 + FEAT: Cancelable sideffects: a :term:`reschedule`\s operation may return
   a "falsy" sideffect to cancel downstream operations.
@@ -212,16 +214,16 @@ NET
   to ``compute()`` - to quickly experiment with function, access it from the
   operation's :attr:`.FunctionalOperation.fn` attribute
 
-MODIFIERS
----------
+MODIFIERS: modifier combinations, rename sol_sideffects
+-------------------------------------------------------
 + BREAK: renamed modifiers ``sol_sideffect --> sideffected``, to reduce terminology
   mental load for the users.
 + ENH: support combinations of modifiers (e.g. optional sideffects).
 + REFACT: convert modifiers classes --> factory functions, producing :class:`._Modifier`
   instances (normally not managed by the user).
 
-PLOT
-----
+PLOT: them-ize all, convey user-attrs, draw nest clusters, click SVGs to open in tab, ...
+-----------------------------------------------------------------------------------------
 + ENH: Theme-ize all; expand callables (beyond Refs and templates).
 + BREAK: rename ``Theme.with_set()`` --> :meth:`.Theme.withset()`.
 + break: pass verbatim any `nx-attrs` starting with ``'graphviz.'`` into
@@ -238,8 +240,8 @@ PLOT
 + fix(sphinxext): don't choke on duplicate ``:name:`` in :rst:dir:`graphtik` directives.
 + fix(sphinxext): fix deprecation of sphinx ``add_object()`` with ``note_object()``.
 
-Various
--------
+Various: raise TypeErrors, improve "operations" section
+-------------------------------------------------------
 + break: raise ``TypeError`` instead of ``ValueError`` wherever it must.
 + DOC(operations): heavily restructured chapter - now might stand alone.
   Started using the `pipeline` name more often.
@@ -276,8 +278,8 @@ v7.0.0 (28 Apr 2020, @ankostis): In-solution sideffects, unified OpBuilder, plot
 
 + DROP(NET): ``_DataNode`` and use str +  modifier-classes as data-nodes;
 
-MODIFIERS:
-----------
+MODIFIERS: Sideffecteds;  arg--> mapped
+---------------------------------------
 + BREAK: rename `arg --> mapped``, which conveys the correct meaning.
 
 + FEAT: Introduced :term`sideffected`\s, to allow for certain dependencies
@@ -289,8 +291,8 @@ MODIFIERS:
     graph.
   + FEAT(op): print detailed deps when DEBUG enabled.
 
-PLOT:
------
+PLOT: Badges, StyleStacks, refact Themes, fix style mis-classifications, don't plot steps
+-----------------------------------------------------------------------------------------
 + ENH: recursively merge Graphviz-styles attributes, with expanding jinja2-template
   and extending lists while preserving theme-provenance, for debugging.
 
