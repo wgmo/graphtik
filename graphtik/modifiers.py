@@ -18,7 +18,7 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 When printed, *modifiers* annotate regular or sideffect dependencies with
 these **diacritics**::
 
-    >   : mapped (fn_keyword)
+    >   : keyword (fn_keyword)
     ?   : optional (fn_keyword)
     *   : vararg
     +   : varargs
@@ -34,7 +34,7 @@ from typing import Optional, Tuple, Union
 _modifier_cstor_matrix = {
 # (7, kw, opt, sfxed, sfx): (STR, REPR, FUNC) OR None
 70000: None,
-71000: (       "%(dep)s",                  "'%(dep)s'(%(kw)s)"           , "mapped"),
+71000: (       "%(dep)s",                  "'%(dep)s'(%(kw)s)"           , "keyword"),
 71100: (       "%(dep)s",                  "'%(dep)s'(?%(kw)s)"          , "optional"),
 70200: (       "%(dep)s",                  "'%(dep)s'(*)"                , "vararg"),
 70300: (       "%(dep)s",                  "'%(dep)s'(+)"                , "varargs"),
@@ -75,7 +75,7 @@ class _Modifier(str):
 
     It is private, in the sense that users should use only:
 
-    - the factory functions :func:`.mapped`, :func:`optional` etc,
+    - the factory functions :func:`.keyword`, :func:`optional` etc,
     - the predicates :func:`is_optional()`, :func:`is_pure_sfx()` predicates, etc,
     - and the :func:`dep_renamed()`, :func:`dep_stripped()` conversion functions
 
@@ -101,7 +101,7 @@ class _Modifier(str):
     fn_kwarg: str
     #: required is None, regular optional or varargish?
     #: :func:`is_optional()` returns it.
-    #: All regulars are `mapped`.
+    #: All regulars are `keyword`.
     optional: _Optionals
     #: Has value only for sideffects: the pure-sideffect string or
     #: the existing :term:`sideffected` dependency.
@@ -235,11 +235,11 @@ def _modifier(
     return _Modifier(name, fn_kwarg, optional, sideffected, sfx_list, _repr, func)
 
 
-def mapped(name: str, fn_kwarg: str = None):
+def keyword(name: str, fn_kwarg: str = None):
     """
-    Annotate a :term:`needs` that (optionally) map `inputs` name --> argument-name.
+    Annotate a :term:`needs` that (optionally) maps `inputs` name --> *keyword* argument name.
 
-    The value of a mapped dependencies is passed in as *keyword argument*
+    The value of a *keyword* dependency is passed in as *keyword argument*
     to the underlying function.
 
     :param fn_kwarg:
@@ -261,11 +261,11 @@ def mapped(name: str, fn_kwarg: str = None):
 
     In case the name of the function arguments is different from the name in the
     `inputs` (or just because the name in the `inputs` is not a valid argument-name),
-    you may *map* it with the 2nd argument of :func:`.mapped`:
+    you may *map* it with the 2nd argument of :func:`.keyword`:
 
-        >>> from graphtik import operation, compose, mapped
+        >>> from graphtik import operation, compose, keyword
 
-        >>> @operation(needs=['a', mapped("name-in-inputs", "b")], provides="sum")
+        >>> @operation(needs=['a', keyword("name-in-inputs", "b")], provides="sum")
         ... def myadd(a, *, b):
         ...    return a + b
         >>> myadd
@@ -284,7 +284,7 @@ def mapped(name: str, fn_kwarg: str = None):
 
         .. graphtik::
     """
-    # Must pass a truthy `fn_kwarg` bc cstor cannot not know its mapped.
+    # Must pass a truthy `fn_kwarg` bc cstor cannot not know its keyword.
     return _modifier(name, fn_kwarg=fn_kwarg or name)
 
 
@@ -294,7 +294,7 @@ def optional(name: str, fn_kwarg: str = None):
 
     received only if present in the `inputs` (when operation is invoked).
 
-    The value of an optional is passed in as a *keyword argument*
+    The value of an *optional* dependency is passed in as a *keyword argument*
     to the underlying function.
 
     :param fn_kwarg:
@@ -331,7 +331,7 @@ def optional(name: str, fn_kwarg: str = None):
         >>> graph(a=5)
         {'a': 5, 'sum': 5}
 
-    Like :func:`.mapped` you may map input-name to a different function-argument:
+    Like :func:`.keyword` you may map input-name to a different function-argument:
 
         >>> operation(needs=['a', optional("quasi-real", "b")],
         ...           provides="sum"
@@ -657,9 +657,9 @@ def sfxed_varargs(dependency: str, sfx0: str, *sfx_list: str):
 
 def is_mapped(dep) -> Optional[str]:
     """
-    Check if a :term:`dependency` is mapped (and get it).
+    Check if a :term:`dependency` is keyword (and get it).
 
-    All non-varargish optionals are "mapped" (including sideffected ones).
+    All non-varargish optionals are "keyword" (including sideffected ones).
 
     :return:
         the :attr:`fn_kwarg`
@@ -727,7 +727,7 @@ def dep_renamed(dep, ren):
     """
     Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
 
-    preserving any :func:`mapped` to old-name.
+    preserving any :func:`keyword` to old-name.
 
     For :term:`sideffected` it renames the dependency (not the *sfx-list*) --
     you have to do it that manually with a custom renamer-function, if ever

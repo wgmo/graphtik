@@ -152,11 +152,11 @@ to the :func:`.operation` factory, specifically:
       :attr:`.FunctionalOperation.op_provides`, :attr:`.FunctionalOperation._fn_provides`
 
 Declarations of *needs* and *provides* is affected by :term:`modifier`\s like
-:func:`.mapped`:
+:func:`.keyword`:
 
 Map inputs to different function arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.mapped
+.. autofunction:: graphtik.modifiers.keyword
    :noindex:
 
 Operations may execute with missing inputs
@@ -179,7 +179,7 @@ Aliased `provides`
 Sometimes, you need to interface functions & operations where they name a
 :term:`dependency` differently.
 This is doable without introducing "pipe-through" interface operation, either
-by annotating certain `needs` with :func:`.mapped` `modifiers` (above), or
+by annotating certain `needs` with :func:`.keyword` `modifiers` (above), or
 by :term:`alias`\sing certain `provides` to different names:
 
    >>> op = operation(str,

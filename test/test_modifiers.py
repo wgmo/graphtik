@@ -6,7 +6,7 @@ from graphtik.modifiers import (
     dep_renamed,
     dep_singularized,
     dep_stripped,
-    mapped,
+    keyword,
     optional,
     sfx,
     sfxed,
@@ -26,9 +26,9 @@ def test_serialize_modifier(ser_method):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (lambda: mapped("b", None), "b"),
-        (lambda: mapped("b", ""), "b"),
-        (lambda: mapped("b", "bb"), "b"),
+        (lambda: keyword("b", None), "b"),
+        (lambda: keyword("b", ""), "b"),
+        (lambda: keyword("b", "bb"), "b"),
         (lambda: optional("b"), "b"),
         (lambda: optional("b", "bb"), "b"),
         (lambda: vararg("c"), "c"),
@@ -51,9 +51,9 @@ def test_modifs_str(mod, exp):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (lambda: mapped("b", None), "'b'(>)"),
-        (lambda: mapped("b", ""), "'b'(>)"),
-        (lambda: mapped("b", "bb"), "'b'(>'bb')"),
+        (lambda: keyword("b", None), "'b'(>)"),
+        (lambda: keyword("b", ""), "'b'(>)"),
+        (lambda: keyword("b", "bb"), "'b'(>'bb')"),
         (lambda: optional("b"), "'b'(?)"),
         (lambda: optional("b", "bb"), "'b'(?>'bb')"),
         (lambda: vararg("c"), "'c'(*)"),
@@ -81,9 +81,9 @@ def test_modifs_repr(mod, exp, ser_method):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (mapped("b", None), "mapped('b')"),
-        (mapped("b", ""), "mapped('b')"),
-        (mapped("b", "bb"), "mapped('b', 'bb')"),
+        (keyword("b", None), "keyword('b')"),
+        (keyword("b", ""), "keyword('b')"),
+        (keyword("b", "bb"), "keyword('b', 'bb')"),
         (optional("b"), "optional('b')"),
         (optional("b", "bb"), "optional('b', 'bb')"),
         (vararg("c"), "vararg('c')"),
@@ -110,14 +110,14 @@ def test_modifs_cmd(mod, exp, ser_method):
 
 def test_recreation():
     assert optional(optional("a")) == optional("a")
-    assert mapped(mapped("a", 1), 1) == mapped("a", 1)
+    assert keyword(keyword("a", 1), 1) == keyword("a", 1)
     assert vararg(vararg("a")) == vararg("a")
     assert varargs(varargs("a")) == varargs("a")
 
 
 def test_recreation_repr():
     assert repr(optional(optional("a"))) == repr(optional("a"))
-    assert repr(mapped(mapped("a", 1), 1)) == repr(mapped("a", 1))
+    assert repr(keyword(keyword("a", 1), 1)) == repr(keyword("a", 1))
     assert repr(vararg(vararg("a"))) == repr(vararg("a"))
     assert repr(varargs(varargs("a"))) == repr(varargs("a"))
 
@@ -141,9 +141,9 @@ def test_sideffected_bad(call, exp):
     "mod, exp",
     [
         ("b", "'p.b'"),
-        (mapped("b", None), "'p.b'(>'b')"),
-        (mapped("b", ""), "'p.b'(>'b')"),
-        (mapped("b", "bb"), "'p.b'(>'bb')"),
+        (keyword("b", None), "'p.b'(>'b')"),
+        (keyword("b", ""), "'p.b'(>'b')"),
+        (keyword("b", "bb"), "'p.b'(>'bb')"),
         (optional("b"), "'p.b'(?>'b')"),
         (optional("b", "bb"), "'p.b'(?>'bb')"),
         (vararg("c"), "'p.c'(*)"),
@@ -172,7 +172,7 @@ def test_modifs_rename_fn(mod, exp):
     "mod, exp",
     [
         (lambda: "s", "'D'"),
-        (lambda: mapped("b", "bb"), "'D'(>'bb')"),
+        (lambda: keyword("b", "bb"), "'D'(>'bb')"),
         (lambda: optional("b"), "'D'(?>'b')"),
         (lambda: optional("b", "bb"), "'D'(?>'bb')"),
         (lambda: vararg("c"), "'D'(*)"),

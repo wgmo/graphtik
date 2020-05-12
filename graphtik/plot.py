@@ -624,9 +624,8 @@ class Theme:
     #: Rendered if ``fn_kwarg`` exists in `nx_attrs`.
     kw_edge_mapping_fn_kwarg = {
         "fontsize": 11,  # default: 14
-        "label": make_template(
-            "<<I>(mapped)</I><BR/>{{ nx_attrs['fn_kwarg'] | eee }}>"
-        ),
+        "fontname": "italic",
+        "label": make_template("<&gt;{{ nx_attrs['fn_kwarg'] | eee }}>"),
     }
     kw_edge_pruned = {"color": Ref("pruned_color")}
     kw_edge_rescheduled = {"style": ["dashed"]}

@@ -90,6 +90,7 @@ Changelog
 
 v8.3.0.dev0 (XX May 2020, @ankostis): drop sol-finalize
 =======================================================
++ BREAK: rename ``mapped --> keyword``, which conveys the mot important meaning.
 + DROP Solution.finalized() method -- has stopped being used to reverse values
   since sfxed have been introduced (v7+).
 
