@@ -295,6 +295,7 @@ def test_network_plan_execute():
     assert sol == exp
 
 
+@pytest.mark.xfail(reason="Spurious passes when threading with on low-cores?")
 def test_task_context(exemethod, request):
     def check_task_context():
         sleep(0.15)
