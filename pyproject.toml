@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=30.3.0", "wheel"]
+
+[tool.black]
+## Also `.gitignore` is sourced.
+exclude = '''
+    /(
+        \.eggs
+        |\.git
+        |\.hg
+        |\.mypy_cache
+        |\.pytype
+        |\.nox
+        |\.tox
+        |build
+        |_build
+        |buck-out
+        |dist
+        |.vscode/.+
+    )/ | (
+    \..*cache.*
+    )
+'''
