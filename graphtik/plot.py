@@ -161,7 +161,7 @@ def _monkey_patch_for_jupyter(pydot):
 
         def parse_dot_data(s):
             """Patched to fix pydot/pydot#171 by letting ex bubble-up."""
-            global top_graphs
+            global top_graphs  # lint: disable=variable-not-defined-globally
 
             top_graphs = list()
             graphparser = dot_parser.graph_definition()
