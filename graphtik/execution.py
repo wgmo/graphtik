@@ -529,6 +529,7 @@ class ExecutionPlan(
                 elapsed,
                 type(ex).__name__,
                 ex,
+                exc_info=is_debug(),
             )
 
             if is_endured:
