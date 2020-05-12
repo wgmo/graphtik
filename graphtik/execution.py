@@ -79,9 +79,6 @@ class Solution(ChainMap, Plottable):
         self.executed = {}
         #: A sorted set of :term:`canceled operation`\\s due to upstream failures.
         self.canceled = iset()  # not iterated, order not important, but ...
-        #: a flag controlled by `plan` (by invoking :meth:`finalized` is invoked)
-        #: which becomes `True` when this instance has finished accepting results.
-        self.finalized = False
         self.elapsed_ms = {}
         #: A unique identifier to distinguish separate flows in execution logs.
         self.solid = "%X" % random.randint(0, 2 ** 16)
@@ -105,7 +102,7 @@ class Solution(ChainMap, Plottable):
     def __copy__(self):
         clone = type(self)(self.plan, {})
         props = (
-            "maps executed canceled finalized elapsed_ms solid _layers"
+            "maps executed canceled elapsed_ms solid _layers"
             " is_endurance is_reschedule is_parallel is_marshal dag"
         ).split()
         for p in props:
@@ -168,7 +165,6 @@ class Solution(ChainMap, Plottable):
                 return ()
             return dep_singularized(dep)
 
-        assert not self.finalized, f"Cannot reuse solution: {self}"
         self._layers[op].update(outputs)
         self.executed[op] = None
 
@@ -203,15 +199,8 @@ class Solution(ChainMap, Plottable):
         It will update :attr:`executed` with the operation status and
         the :attr:`canceled` with the unsatisfied ops downstream of `op`.
         """
-        assert not self.finalized, f"Cannot reuse solution: {self}"
         self.executed[op] = ex
         self._reschedule(self.dag, op, op)
-
-    def finalize(self):
-        """invoked only once, after all ops have been executed"""
-        # Invert solution so that last value wins
-        if not self.finalized:
-            self.finalized = True
 
     def __delitem__(self, key):
         for d in self.maps:
@@ -226,10 +215,8 @@ class Solution(ChainMap, Plottable):
         The data in the solution that exist more than once.
 
         A "virtual" property to a dictionary with keys the names of values that
-        exist more than once, and values, all those values in a list, ordered:
-
-        - before :meth:`finalized()`, as computed;
-        - after :meth:`finalized()`, in reverse.
+        exist more than once, and values, all those values in a list, ordered
+        in reverse compute order (1st is the last one computed).
         """
         maps = self.maps
         dd = defaultdict(list)
@@ -745,18 +732,19 @@ class ExecutionPlan(
                 self,
             )
 
+            ok = False
             try:
                 executor(solution)
+                ok = True
             finally:
-                solution.finalize()
-
                 ## Log cumulative operations elapsed time.
                 #
                 if _isDebugLogging():
                     elapsed = sum(solution.elapsed_ms.values())
                     log.debug(
-                        "=== (%s) Completed pipeline(%s) in %0.3fms.",
+                        "=== (%s) %s pipeline(%s) in %0.3fms.",
                         solution.solid,
+                        "Completed" if ok else "FAILED",
                         name,
                         elapsed,
                     )

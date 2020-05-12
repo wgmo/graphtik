@@ -88,6 +88,12 @@ Changelog
 %%%%%%%%%
 
 
+v8.3.0.dev0 (XX May 2020, @ankostis): drop sol-finalize
+=======================================================
++ DROP Solution.finalized() method -- has stopped being used to reverse values
+  since sfxed have been introduced (v7+).
+
+
 v8.2.0 (11 May 2020, @ankostis): custom Solutions, Task-context
 ===============================================================
 + FEAT(exe): ``compute()`` supports custom Solution classes.

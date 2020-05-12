@@ -140,18 +140,6 @@ def test_serialize_OpTask(ser_method):
     assert eq(ser_method(ot), ot)
 
 
-def test_solution_finalized():
-    sol = Solution(MagicMock(), {})
-
-    sol.finalize()
-    with pytest.raises(AssertionError):
-        sol.operation_executed(MagicMock(), [])
-
-    sol.finalize()
-    with pytest.raises(AssertionError):
-        sol.operation_failed(MagicMock(), None)
-
-
 def test_smoke_test():
 
     # Sum operation, late-bind compute function
