@@ -29,10 +29,8 @@ from functools import partial
 import packaging.version
 from sphinx.application import Sphinx
 
-from graphtik.base import func_sourcelines
 from graphtik import plot
-from graphtik import base
-
+from graphtik.base import func_name, func_sourcelines
 
 log = logging.getLogger(__name__)
 
@@ -107,7 +105,7 @@ extlinks = {
 #
 def _make_py_item_url(fn):
     if not inspect.isbuiltin(fn):
-        fn_name = base.func_name(fn, None, mod=1, fqdn=1, human=0)
+        fn_name = func_name(fn, None, mod=1, fqdn=1, human=0)
         if fn_name:
             return f"../reference.html#{fn_name}"
 
