@@ -252,7 +252,7 @@ Architecture
           - operation *needs* & *provides* are zipped against the underlying function's
             arguments and results.
 
-          These matchings are affected by `modifier`\s.
+          These matchings are affected by `modifier`\s, print-out with `diacritic`\s.
 
     needs
     fn_needs
@@ -299,10 +299,15 @@ Architecture
         over which `outputs` were actually produced, or to cancel `sideffects`.
 
     modifier
+    diacritic
         A `modifier` change `dependency` behavior during `compilation` or `execution`.
 
         For instance, `needs` may be annotated as `optionals` function arguments,
-        `provides` and *needs* can be annotated as "ghost" `sideffects`
+        `provides` and *needs* can be annotated as "ghost" `sideffects`.
+
+        .. include:: ../../graphtik/modifiers.py
+            :start-after: .. diacritics-start
+            :end-before: .. diacritics-end
 
         See :mod:`graphtik.modifiers` module.
 
@@ -331,6 +336,8 @@ Architecture
             :start-after: .. varargs-mistake-start
             :end-before: .. varargs-mistake-end
 
+        In printouts, it is denoted either with ``*`` or ``+`` `diacritic`.
+
     sideffects
         A `modifier` denoting a fictive `dependency` linking `operation`\s into virtual flows,
         without real data exchanges.
@@ -342,6 +349,7 @@ Architecture
 
         - An *abstract sideffect* modifier (annotated with :func:`.sfx`)
           describing modifications taking place beyond the scope of the solution.
+          It may have just the "optional" `diacritic` in printouts.
 
         - The `sideffected` modifier (annotated with :func:`.sfxed`)
           denoting modifications on a *real* dependency read from and written to
@@ -367,7 +375,8 @@ Architecture
         the *sideffected dependency* is declared both as *needs* and *provides*
         of some operation.
 
-        It is annotated with :func:`.sfxed`.
+        It is annotated with :func:`.sfxed`;  it may have all `diacritic`\s
+        in printouts.
 
     reschedule
     rescheduling

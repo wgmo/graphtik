@@ -221,6 +221,7 @@ class FunctionalOperation(Operation, Plottable):
     .. Tip::
         - Use :func:`.operation()` factory to build instances of this class instead.
         - Call :meth:`withset()` on existing instances to re-configure new clones.
+        - See :term:`diacritic`\\s to understand printouts of this class.
     """
 
     def __init__(
@@ -343,7 +344,7 @@ class FunctionalOperation(Operation, Plottable):
 
     def __repr__(self):
         """
-        Display more informative names for the Operation class
+        Display operation & dependency names annotated with :term:`diacritic`\\s.
         """
         from .config import (
             is_debug,

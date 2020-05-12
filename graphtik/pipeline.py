@@ -59,8 +59,9 @@ class Pipeline(Operation, Plottable):
     An operation that can :term:`compute` a network-graph of operations.
 
     .. Tip::
-        Use :func:`compose()` factory to prepare the `net` and build
-        instances of this class.
+        - Use :func:`compose()` factory to prepare the `net` and build
+          instances of this class.
+        - See :term:`diacritic`\\s to understand printouts of this class.
     """
 
     #: The name for the new pipeline, used when nesting them.

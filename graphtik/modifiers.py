@@ -10,6 +10,20 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
     This module (along with :mod:`.op` & :mod:`.pipeline`) is what client code needs
     to define pipelines *on import time* without incurring a heavy price
     (~7ms on a 2019 fast PC)
+
+**Diacritics**
+
+.. diacritics-start
+
+When printed, *modifiers* annotate regular or sideffect dependencies with
+these **diacritics**::
+
+    >   : mapped (fn_keyword)
+    ?   : optional (fn_keyword)
+    *   : vararg
+    +   : varargs
+
+.. diacritics-end
 """
 import enum
 from typing import Optional, Tuple, Union
