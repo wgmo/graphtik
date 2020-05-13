@@ -612,6 +612,8 @@ class Theme:
     ##
 
     kw_edge = {"tailport": "s", "headport": "n"}
+    kw_edge_tail_op = {}
+    kw_edge_head_op = {"arrowtail": "dot", "dir": "both"}
     kw_edge_optional = {"style": ["dashed"]}
     kw_edge_sideffect = {"color": "blue"}
     #: Added conditionally if `alias_of` found in edge-attrs.
@@ -1263,6 +1265,10 @@ class Plotter:
         styles = self._new_styles_stack(plot_args)
 
         styles.add("kw_edge")
+        if isinstance(src, Operation):
+            styles.add("kw_edge_tail_op")
+        if isinstance(dst, Operation):
+            styles.add("kw_edge_head_op")
         if edge_attrs.get("optional"):
             styles.add("kw_edge_optional")
         if edge_attrs.get("sideffect"):

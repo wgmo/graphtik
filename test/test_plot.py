@@ -562,10 +562,10 @@ def test_node_dot_str0(dot_str_pipeline):
                 ><B>FN:</B> test.test_plot.func</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
-        <edge> -> <node>  [headport=n, tailport=s];
-        <edge> -> <cu&#58;sto&#58;m>  [headport=n, tailport=s];
-        <digraph&#58; strict> -> <node>  [headport=n, tailport=s];
-        <digraph&#58; strict> -> <cu&#58;sto&#58;m>  [headport=n, tailport=s];
+        <edge> -> <node>  [arrowtail=dot, dir=both, headport=n, tailport=s];
+        <edge> -> <cu&#58;sto&#58;m>  [arrowtail=dot, dir=both, headport=n, tailport=s];
+        <digraph&#58; strict> -> <node>  [arrowtail=dot, dir=both, headport=n, tailport=s];
+        <digraph&#58; strict> -> <cu&#58;sto&#58;m>  [arrowtail=dot, dir=both, headport=n, tailport=s];
         <node> -> <&lt;graph&gt;>  [headport=n, tailport=s];
         <cu&#58;sto&#58;m> -> <&lt;graph&gt;>  [headport=n, tailport=s];
         legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
@@ -607,8 +607,8 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
         }
 
-        <edge> -> <cu&#58;sto&#58;m>  [headport=n, tailport=s];
-        <digraph&#58; strict> -> <cu&#58;sto&#58;m>  [headport=n, tailport=s];
+        <edge> -> <cu&#58;sto&#58;m>  [arrowtail=dot, dir=both, headport=n, tailport=s];
+        <digraph&#58; strict> -> <cu&#58;sto&#58;m>  [arrowtail=dot, dir=both, headport=n, tailport=s];
         <cu&#58;sto&#58;m> -> <&lt;graph&gt;>  [headport=n, tailport=s];
         legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
         }
