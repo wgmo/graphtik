@@ -90,6 +90,12 @@ Changelog
 %%%%%%%%%
 
 
+v8.3.1 (14 May 2020, @ankostis): plot edges from south-->north of nodes
+=======================================================================
++ ENH(plot): have all the link-edges between data and operations route out and into
+  the same point on the nodes (src: south, dst: north).
+  Distinguish needs edges from provides with a "dot".
+
 v8.3.0 (12 May 2020, @ankostis): mapped-->keyword, drop sol-finalize
 ====================================================================
 + BREAK: rename ``mapped --> keyword``, which conveys the mot important meaning.
