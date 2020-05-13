@@ -611,7 +611,7 @@ class Theme:
     ## EDGE
     ##
 
-    kw_edge = {}
+    kw_edge = {"tailport": "s", "headport": "n"}
     kw_edge_optional = {"style": ["dashed"]}
     kw_edge_sideffect = {"color": "blue"}
     #: Added conditionally if `alias_of` found in edge-attrs.
