@@ -1459,10 +1459,13 @@ class Plotter:
             label="Graphtik Legend %(ver)s";
 
             Dependencies   [shape=plaintext fontsize=16 fontname="bold italic"];
-            Dependencies -> dependency [tooltip="Compulsory: from src Operation --> dst `provides` OR src `needs` --> dst Operation."
-                        URL="%(arch_url)s#term-dependency"];
-            dependency [color=invis];
-            dependency -> optional     [style=dashed];
+            Dependencies -> needs [dir=both arrowtail=dot
+                                tooltip="Compulsory dependency from src `needs` data --> dst Operation."
+                                URL="%(arch_url)s#term-needs"];
+            needs [color=invis];
+            needs -> provides     [tooltip="Compulsory dependency from src Operation --> dst `provides` data"];
+            provides [color=invis];
+            provides -> optional     [style=dashed];
             optional    [color=invis label="optional\npartial out"
                         tooltip="Target operation may run without source `need` OR source operation may not `provide` target data."
                         URL="%(arch_url)s#term-needs"];
