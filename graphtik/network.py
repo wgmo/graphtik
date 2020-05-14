@@ -636,8 +636,10 @@ def build_network(
         #  to all sub-operations.
         #
         if kw:
+            op_kw = kw.copy()
+
             if node_props:
-                kw["node_props"] = {**op.node_props, **node_props}
+                op_kw["node_props"] = {**op.node_props, **node_props}
 
             if callable(renamer):
 
@@ -645,8 +647,8 @@ def build_network(
                     # Provide RenArgs.parent.
                     return renamer(ren_args._replace(parent=parent))
 
-                kw["renamer"] = parent_wrapper
-            op = op.withset(**kw)
+                op_kw["renamer"] = parent_wrapper
+            op = op.withset(**op_kw)
 
         return op
 
