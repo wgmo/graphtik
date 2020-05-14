@@ -14,6 +14,8 @@ import re
 from collections import abc as cabc
 from typing import Callable, List, Mapping, Union
 
+from boltons.setutils import IndexedSet as iset
+
 from .base import UNSET, Items, Operation, PlotArgs, Plottable, RenArgs, aslist, jetsam
 from .modifiers import dep_renamed
 
@@ -52,6 +54,64 @@ def _id_bool(b):
 
 def _id_tristate_bool(b):
     return 3 if b is None else (hash(bool(b)) + 1)
+
+
+def build_network(
+    operations,
+    rescheduled=None,
+    endured=None,
+    parallel=None,
+    marshalled=None,
+    node_props=None,
+    renamer=None,
+):
+    """
+    The :term:`network` factory that does :term:`operation merging` before constructing it.
+
+    :param nest:
+        see same-named param in :func:`.compose`
+    """
+    kw = {
+        k: v for k, v in locals().items() if v is not None and k not in ("operations")
+    }
+
+    def proc_op(op, parent=None):
+        """clone FuncOperation with certain props changed"""
+        ## Convey any node-props specified in the pipeline here
+        #  to all sub-operations.
+        #
+        from .op import FunctionalOperation
+
+        if kw:
+            op_kw = kw.copy()
+
+            if node_props:
+                op_kw["node_props"] = {**op.node_props, **node_props}
+
+            if callable(renamer):
+
+                def parent_wrapper(ren_args: RenArgs) -> str:
+                    # Provide RenArgs.parent.
+                    return renamer(ren_args._replace(parent=parent))
+
+                op_kw["renamer"] = parent_wrapper
+            op = op.withset(**op_kw)
+
+        return op
+
+    merge_set = iset()  # Preseve given node order.
+    for op in operations:
+        if isinstance(op, Pipeline):
+            merge_set.update(proc_op(s, op) for s in op.ops)
+        else:
+            merge_set.add(proc_op(op))
+    merge_set = iset(i for i in merge_set if not isinstance(i, NULL_OP))
+
+    assert all(bool(n) for n in merge_set)
+
+    from .network import Network  # Imported here not to affect locals() at the top.
+
+    return Network(*merge_set)
 
 
 class Pipeline(Operation, Plottable):
@@ -96,7 +156,6 @@ class Pipeline(Operation, Plottable):
 
                 *Operations may only be added once, ...*
         """
-        from .network import build_network
         from .op import reparse_operation_data
 
         ## Set data asap, for debugging, although `net.withset()` will reset them.
