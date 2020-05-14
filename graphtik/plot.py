@@ -524,11 +524,36 @@ class Theme:
     #: below.
     op_badge_styles = {
         "badge_styles": {
-            "!": {"tooltip": "endured", "bgcolor": "#04277d", "color": "white"},
-            "?": {"tooltip": "rescheduled", "bgcolor": "#fc89ac", "color": "white"},
-            "|": {"tooltip": "parallel", "bgcolor": "#b1ce9a", "color": "white"},
-            "&": {"tooltip": "marshalled", "bgcolor": "#4e3165", "color": "white"},
-            "}": {"tooltip": "returns_dict", "bgcolor": "#cc5500", "color": "white",},
+            "!": {
+                "tooltip": "endured",
+                "bgcolor": "#04277d",
+                "color": "white",
+                "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-endured",
+            },
+            "?": {
+                "tooltip": "rescheduled",
+                "bgcolor": "#fc89ac",
+                "color": "white",
+                "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-partial-outputs",
+            },
+            "|": {
+                "tooltip": "parallel",
+                "bgcolor": "#b1ce9a",
+                "color": "white",
+                "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-parallel-execution",
+            },
+            "&": {
+                "tooltip": "marshalled",
+                "bgcolor": "#4e3165",
+                "color": "white",
+                "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-marshalling",
+            },
+            "}": {
+                "tooltip": "returns_dict",
+                "bgcolor": "#cc5500",
+                "color": "white",
+                "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dict",
+            },
         }
     }
     #: props of the HTML-Table label for Operations
@@ -571,7 +596,10 @@ class Theme:
                     <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
                         <TR>
                         {%- for badge in badges -%}
-                            <TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor }}" TITLE="{{ badge_styles[badge].tooltip | e }}" TARGET="_self"
+                            <TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor
+                                }}" TITLE="{{ badge_styles[badge].tooltip | e
+                                }}" HREF="{{ badge_styles[badge].URL | hrefer | ee
+                                }}" TARGET="_blank"
                             ><FONT FACE="monospace" COLOR="{{ badge_styles[badge].color }}"><B>
                                 {{- badge | eee -}}
                             </B></FONT></TD>

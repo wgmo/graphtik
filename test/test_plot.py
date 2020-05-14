@@ -103,11 +103,11 @@ def test_op_label_template_full():
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
                 ><FONT COLOR="blue"><B>OP:</B> <I>the op</I></FONT></TD>
                 <TD BORDER="1" SIDES="b"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
-                        <TR><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#04277d" TITLE="endured" TARGET="_self"
-                            ><FONT FACE="monospace" COLOR="white"><B>!</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#fc89ac" TITLE="rescheduled" TARGET="_self"
-                            ><FONT FACE="monospace" COLOR="white"><B>?</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#b1ce9a" TITLE="parallel" TARGET="_self"
-                            ><FONT FACE="monospace" COLOR="white"><B>|</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#4e3165" TITLE="marshalled" TARGET="_self"
-                            ><FONT FACE="monospace" COLOR="white"><B>&amp;</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict" TARGET="_self"
+                        <TR><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#04277d" TITLE="endured" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-endured" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>!</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#fc89ac" TITLE="rescheduled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-partial-outputs" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>?</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#b1ce9a" TITLE="parallel" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-parallel-execution" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>|</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#4e3165" TITLE="marshalled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-marshalling" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>&amp;</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dict" TARGET="_blank"
                             ><FONT FACE="monospace" COLOR="white"><B>}</B></FONT></TD></TR>
                     </TABLE></TD>
             </TR><TR>
