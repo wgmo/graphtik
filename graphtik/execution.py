@@ -143,6 +143,10 @@ class Solution(ChainMap, Plottable):
                 op.name,
             )
 
+    def _update_op_outs(self, op, outputs):
+        """A separate method to allow subclasses with custom (e.g. nested) logic. """
+        self._layers[op].update(outputs)
+
     def operation_executed(self, op, outputs):
         """
         Invoked once per operation, with its results.
@@ -165,7 +169,7 @@ class Solution(ChainMap, Plottable):
                 return ()
             return dep_singularized(dep)
 
-        self._layers[op].update(outputs)
+        self._update_op_outs(op, outputs)
         self.executed[op] = None
 
         if first_solid(self.is_reschedule, op.rescheduled):
