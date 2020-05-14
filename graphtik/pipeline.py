@@ -114,7 +114,7 @@ def build_network(
     return Network(*merge_set)
 
 
-class Pipeline(Operation, Plottable):
+class Pipeline(Operation):
     """
     An operation that can :term:`compute` a network-graph of operations.
 

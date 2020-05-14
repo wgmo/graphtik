@@ -214,7 +214,7 @@ def _spread_sideffects(
         return deps, deps
 
 
-class FunctionalOperation(Operation, Plottable):
+class FunctionalOperation(Operation):
     """
     An :term:`operation` performing a callable (ie a function, a method, a lambda).
 
