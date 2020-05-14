@@ -632,12 +632,10 @@ def build_network(
 
     def proc_op(op, parent=None):
         """clone FuncOperation with certain props changed"""
-        from .op import FunctionalOperation
-
         ## Convey any node-props specified in the pipeline here
         #  to all sub-operations.
         #
-        if kw and isinstance(op, FunctionalOperation):
+        if kw:
             if node_props:
                 kw["node_props"] = {**op.node_props, **node_props}
 
