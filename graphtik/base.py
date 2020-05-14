@@ -909,3 +909,22 @@ class Operation(Plottable, abc.ABC):
                 (renamed_provides[k], rename_driver(ren_args._replace(name=v)),)
                 for k, v in kw.get("aliases", self.aliases)  # pylint: disable=no-member
             ]
+
+    def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
+        """Delegate to a provisional network with a single op . """
+        from .pipeline import compose
+        from .plot import graphviz_html_string
+
+        is_user_label = bool(plot_args.graph and plot_args.graph.get("graphviz.label"))
+        plottable = compose(self.name, self)
+        plot_args = plot_args.with_defaults(name=self.name)
+        plot_args = plottable.prepare_plot_args(plot_args)
+        assert plot_args.graph, plot_args
+
+        ## Operations don't need another name visible.
+        #
+        if is_user_label:
+            del plot_args.graph.graph["graphviz.label"]
+        plot_args = plot_args._replace(plottable=self)
+
+        return plot_args
