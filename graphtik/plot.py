@@ -433,15 +433,12 @@ class Theme:
 
     #: Reduce margins, since sideffects take a lot of space
     #: (default margin: x=0.11, y=0.055O)
-    kw_data = {"margin": "0.04,0.02"}
-    #: SHAPE change if with inputs/outputs,
-    #: see https://graphviz.gitlab.io/_pages/doc/info/shapes.html
-    kw_data_io_choice = {
-        0: {"shape": "rect"},  # no IO
-        1: {"shape": "invhouse"},  # Inp
-        2: {"shape": "house"},  # Out
-        3: {"shape": "hexagon"},  # Inp/Out
-    }
+    kw_data = {"shape": "rect", "margin": "0.04,0.02"}
+    kw_data_inp = {}
+    kw_data_out = {}
+    kw_data_inp_only = {"shape": "invhouse"}
+    kw_data_out_only = {"shape": "house"}
+    kw_data_io = {"shape": "hexagon"}
     kw_data_sideffect = {
         "color": "blue",
         "fontcolor": "blue",
@@ -1121,12 +1118,18 @@ class Plotter:
             #
             styles.add("node-name", {"name": quote_node_id(nx_node)})
 
-            io_choice = _merge_conditions(
-                inputs and nx_node in inputs, outputs and nx_node in outputs
-            )
-            styles.add(
-                f"kw_data_io_choice: {io_choice}", theme.kw_data_io_choice[io_choice]
-            )
+            is_inp = inputs and nx_node in inputs
+            is_out = outputs and nx_node in outputs
+            if is_inp:
+                styles.add("kw_data_inp")
+                if not is_out:
+                    styles.add("kw_data_inp_only")
+            if is_out:
+                styles.add("kw_data_out")
+                if not is_inp:
+                    styles.add("kw_data_out_only")
+            if is_inp and is_out:
+                styles.add("kw_data_io")
 
             if is_sfx(nx_node):
                 styles.add("kw_data_sideffect")
