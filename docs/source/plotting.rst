@@ -619,10 +619,54 @@ with the internal state of plan/operation often renders a debugger session
 unnecessary.  But since the state of the annotated values might be incomplete,
 you may not always avoid one.
 
-Your best shot is to enable "`post mortem debugging
+You may to enable "`post mortem debugging
 <https://docs.python.org/3/library/pdb.html>`_".
 
-If you set a :func:`breakpoint()` in one of your functions, move up a few frames
+If you set a :func:`breakpoint()` in one of your functions, *move up a few frames*
 to find the :meth:`.ExecutionPlan._handle_task()` method, where the "live"
 :class:`.ExecutionPlan` & :class:`.Solution` instances live, useful when investigating
 problems with computed values.
+
+
+.. _task-context:
+
+Accessing wrapper operation from task-context
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Alternatively, when the debugger is stopped inside an underlying function,
+you may access the wrapper :class:`.FunctionalOperation` and the :class:`.Solution`
+through the :data:`graphtik.execution.task_context` context-var.
+This is populated with the :class:`._OpTask` instance of the currently executing operation,
+as shown in the :mod:`pdb` session printout, below::
+
+   (Pdb) from graphtik.execution import task_context
+   (Pdb) op_task = task_context.get()
+
+Get possible completions on the returned operation-task with :kbd:`[TAB]`::
+
+   (Pdb) p op_task.[TAB][TAB]
+   op_task.__call__
+   op_task.__class__
+   ...
+   op_task.get
+   op_task.logname
+   op_task.marshalled
+   op_task.op
+   op_task.result
+   op_task.sol
+   op_task.solid
+
+Printing the operation-task gives you a quick overview of the operation and
+the available solution keys (but not the values, not to clutter the debugger console)::
+
+   (Pdb) p op_task
+   OpTask(FunctionalOperation(name=..., needs=..., provides=..., fn=...), sol_keys=[...])
+
+Print the wrapper operation::
+
+   (Pdb) p op_task.op
+   ...
+
+Print the solution::
+
+   (Pdb) p op_task.sol
+   ...

@@ -53,7 +53,7 @@ positional parameters are not supported:
 .. tip::
    In case your function needs to access the :mod:`.execution` machinery
    or its wrapping operation, it can do that through the :data:`.task_context`
-   (unstable API).
+   (unstable API, not working during :term:`parallel execution`, see :ref:`task-context`)
 
 
 Builder pattern
