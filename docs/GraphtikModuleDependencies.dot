@@ -3,7 +3,7 @@
 #   dot docs/GraphtikFlowchart.dot -Tsvg -odocs/source/images/GraphtikFlowchart-vX.Y.Z.svg
 #
 digraph {
-    label="graphtik-v8.1+ module dependencies";
+    label="graphtik-v8.3.1+ module dependencies";
     labelloc=t;
     node [style=filled];
     nodesep=0.55;
@@ -60,12 +60,17 @@ digraph {
                     URL="reference.html#module-graphtik.network"];
     }
 
-    {"op.py", "pipeline.py", "network.py", "execution.py", "plot.py"} -> "base.py" [tooltip="(import-time)"];
-    "base.py" -> "plot.py"                      [tooltip="(run-time)" style=dashed];
+    {"op.py", "network.py"} -> "base.py" [tooltip="(import-time)"
+                                        headport=n tailport=s];
+    "execution.py" -> "base.py" [tooltip="(import-time)"
+                                        headport=n tailport=se];
+    {"pipeline.py",  "plot.py"} -> "base.py" [tooltip="(import-time)"
+                                        headport=n tailport=sw];
+    "base.py" -> "plot.py"                      [tooltip="(run-time)" style=dashed  headport=s];
     "execution.py" -> "network.py"    [tooltip="(import-time)"];
-    "network.py" -> {"op.py", "pipeline.py", "execution.py"}    [tooltip="(run-time)" style=dashed];
+    "network.py" -> "execution.py"    [tooltip="(run-time)"  style=dashed];
     "op.py" -> "pipeline.py"    [style=dashed
                                  tooltip="(run-time) for plotting"];
     "pipeline.py" -> {"op.py", "network.py"}    [tooltip="(run-time)" style=dashed];
-    "sphinxext/" -> "plot.py"                   [tooltip="(import-time)"];
+    "sphinxext/" -> "plot.py"                   [tooltip="(import-time)" headport=n  tailport=s];
 }
