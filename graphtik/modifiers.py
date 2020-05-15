@@ -218,7 +218,7 @@ def _modifier(
     It decides the final `name` and `_repr` for the new modifier by matching
     the given inputs with the :data:`_modifier_cstor_matrix`.
     """
-    args = tuple(locals().values())
+    args = (name, fn_kwarg, optional, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
     if not formats:
         # Make a plain string instead.
