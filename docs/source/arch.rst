@@ -51,7 +51,7 @@ Architecture
 
     compose
     composition
-        The :term:`phase` where `operation`\s are constructed and grouped
+        The `phase` where `operation`\s are constructed and grouped
         into `pipeline`\s and corresponding `network`\s based on their `dependencies
         <dependency>`.
 
@@ -90,21 +90,21 @@ Architecture
 
     compile
     compilation
-        The :term:`phase` where the :class:`.Network` creates a new `execution plan`
+        The `phase` where the :class:`.Network` creates a new `execution plan`
         by `pruning` all `graph` nodes into a subgraph `dag`, and  deriving
         the `execution steps`.
 
     execute
     execution
     sequential
-        The :term:`phase` where the :class:`.ExecutionPlan` calls the underlying functions
-        of all `operation`\s contained in `execution steps`, with `inputs`/`outputs`
-        taken from the `solution`.
+        The `phase` where the `plan` derived from a `pipeline` calls the underlying
+        functions of all `operation`\s contained in its `execution steps`,
+        with `inputs`/`outputs` taken/written to the `solution`.
 
         Currently there are 2 ways to execute:
 
         - *sequential*
-        - *parallel*, with a :class:`multiprocessing.pool.ProcessPool`
+        - (unstable) *parallel*, with a :class:`multiprocessing.pool.ProcessPool`
 
         Plans may abort their execution by setting the `abort run` global flag.
 
@@ -123,13 +123,23 @@ Architecture
         across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     solution
-        A :class:`.Solution` instance created internally by :meth:`.Pipeline.compute()`
-        to hold the values both `inputs` & `outputs`, and the status of *executed* operations.
-        It is based on a :class:`collections.ChainMap`, to keep one dictionary
-        for each `operation` executed +1 for inputs.
+        A map of `dependency`-named values fed to/from the `pipeline` during `execution`.
 
-        The results of the last operation executed "wins" in the *outputs* produced,
-        and the base (least precedence) is the *inputs* given when the `execution` started.
+        It feeds operations with `inputs`, collects their `outputs`,
+        records the *status* of executed or `canceled operation`\s,
+        tracks any `overwrite`\s, and applies any `evictions`, as orchestrated
+        by the `plan`.
+
+        A new :class:`.Solution` instance is created either internally
+        by :meth:`.Pipeline.compute()` and populated with user-inputs, or must be
+        created externally with those values and fed into the said method.
+
+        The class inherits :class:`collections.ChainMap`, to keep a separate dictionary
+        for each operation executed (+1 for user-inputs).
+
+        The results of the last operation executed "win" in the *outputs* produced,
+        and the base (least precedence) is the user-inputs given when the execution
+        started.
 
     graph
     network graph
@@ -302,8 +312,8 @@ Architecture
     diacritic
         A `modifier` change `dependency` behavior during `compilation` or `execution`.
 
-        For instance, `needs` may be annotated as `optionals` function arguments,
-        `provides` and *needs* can be annotated as "ghost" `sideffects`.
+        For instance, a `needs` may be annotated as :func:`.keyword` and/or `optionals`
+        function arguments, `provides` and *needs* can be annotated as "ghost" `sideffects`.
 
         .. include:: ../../graphtik/modifiers.py
             :start-after: .. diacritics-start
@@ -359,7 +369,7 @@ Architecture
         and both may be given or asked in the `inputs` & `outputs` of a `pipeline`,
         but they are never given to functions.
         A function of a `returns dictionary` operation can return a falsy value
-        to declare it as :term:`canceled <partial outputs>`.
+        to declare it as `canceled <partial outputs>`.
 
     sideffected
         A `modifier` that denotes `sideffects` on a `dependency` that exists in `solution`,

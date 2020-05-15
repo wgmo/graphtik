@@ -57,6 +57,9 @@ def _isDebugLogging():
 class Solution(ChainMap, Plottable):
     """
     The :term:`solution` chain-map and execution state (e.g. :term:`overwrite` or :term:`canceled operation`)
+
+    It inherits :class:`collections.ChainMap`, to keep a separate dictionary
+    for each operation executed, +1 for the user inputs.
     """
 
     def __init__(self, plan, input_values: dict):
