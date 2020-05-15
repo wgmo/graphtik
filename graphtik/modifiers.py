@@ -16,17 +16,19 @@ The `needs` and `provides` annotated with *modifiers* designate, for instance,
 .. diacritics-start
 
 When printed, *modifiers* annotate regular or sideffect dependencies with
-these **diacritics**::
+these **diacritics**:
 
-    >   : keyword (fn_keyword)
-    ?   : optional (fn_keyword)
-    *   : vararg
-    +   : varargs
+.. parsed-literal::
+
+    >   : :func:`keyword` (fn_keyword)
+    ?   : :func:`optional` (fn_keyword)
+    *   : :func:`vararg`
+    +   : :func:`varargs`
 
 .. diacritics-end
 """
 import enum
-from typing import Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 
 # fmt: off
 #: Arguments-presence patterns for :class:`_Modifier` constructor.
@@ -73,17 +75,18 @@ class _Modifier(str):
     """
     Annotate a :term:`dependency` with a combination of :term:`modifier`.
 
-    It is private, in the sense that users should use only:
+    This class is private, because client code should never need to call its cstor,
+    or check if a dependency ``isinstance()``, but use facilities these instead:
 
-    - the factory functions :func:`.keyword`, :func:`optional` etc,
-    - the predicates :func:`is_optional()`, :func:`is_pure_sfx()` predicates, etc,
-    - and the :func:`dep_renamed()`, :func:`dep_stripped()` conversion functions
-
-    respectively, or at least :func:`_modifier()`.
+    - the *factory* functions like :func:`.keyword`, :func:`optional` etc,
+    - the *predicates* like :func:`is_optional()`, :func:`is_pure_sfx()` etc,
+    - the *conversion* functions like :func:`dep_renamed()`, :func:`dep_stripped()` etc,
+    - and only *rarely* (and with care) call its :meth:`_withset()` method or
+      :func:`_modifier()` factor functions.
 
     .. Note::
-        User code better call :func:`_modifier()` factory which may return a plain string
-        if no other arg but ``name`` are given.
+        Factory function:func:`_modifier()` may return a plain string, if no other
+        arg but ``name`` is given.
     """
 
     # avoid __dict__ on instances
@@ -197,10 +200,8 @@ class _Modifier(str):
         """
         kw = {
             k: getattr(self, k) if v is ... else v
-            for k, v in zip(
-                "fn_kwarg optional sideffected sfx_list".split(),
-                (fn_kwarg, optional, sideffected, sfx_list),
-            )
+            for k, v in locals().items()
+            if k not in ("self", "name")
         }
         if name is ...:
             name = self.sideffected or str(self)
@@ -210,14 +211,15 @@ class _Modifier(str):
 
 def _modifier(
     name, fn_kwarg=None, optional: _Optionals = None, sideffected=None, sfx_list=(),
-):
+) -> Union[str, _Modifier]:
     """
     A :class:`_Modifier` factory that may return a plain str when no other args given.
 
     It decides the final `name` and `_repr` for the new modifier by matching
     the given inputs with the :data:`_modifier_cstor_matrix`.
     """
-    formats = _match_modifier_args(name, fn_kwarg, optional, sideffected, sfx_list,)
+    args = tuple(locals().values())
+    formats = _match_modifier_args(*args)
     if not formats:
         # Make a plain string instead.
         return str(name)
@@ -231,10 +233,10 @@ def _modifier(
     name = str_fmt % fmt_args
     _repr = repr_fmt % fmt_args
 
-    return _Modifier(name, fn_kwarg, optional, sideffected, sfx_list, _repr, func)
+    return _Modifier(name, *args[1:], _repr, func)
 
 
-def keyword(name: str, fn_kwarg: str = None):
+def keyword(name: str, fn_kwarg: str = None) -> _Modifier:
     """
     Annotate a :term:`needs` that (optionally) maps `inputs` name --> *keyword* argument name.
 
@@ -287,7 +289,7 @@ def keyword(name: str, fn_kwarg: str = None):
     return _modifier(name, fn_kwarg=fn_kwarg or name)
 
 
-def optional(name: str, fn_kwarg: str = None):
+def optional(name: str, fn_kwarg: str = None) -> _Modifier:
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
@@ -345,7 +347,7 @@ def optional(name: str, fn_kwarg: str = None):
     return _modifier(name, fn_kwarg=fn_kwarg or name, optional=_Optionals.keyword)
 
 
-def vararg(name: str):
+def vararg(name: str) -> _Modifier:
     """
     Annotate a :term:`varargish` `needs` to  be fed as function's ``*args``.
 
@@ -389,7 +391,7 @@ def vararg(name: str):
     return _modifier(name, optional=_Optionals.vararg)
 
 
-def varargs(name: str):
+def varargs(name: str) -> _Modifier:
     """
     An :term:`varargish`  :func:`.vararg`, naming a *iterable* value in the inputs.
 
@@ -451,7 +453,7 @@ def varargs(name: str):
     return _modifier(name, optional=_Optionals.varargs)
 
 
-def sfx(name, optional: bool = None):
+def sfx(name, optional: bool = None) -> _Modifier:
     """
     :term:`sideffects` denoting modifications beyond the scope of the solution.
 
@@ -534,7 +536,7 @@ def sfxed(
     *sfx_list: str,
     fn_kwarg: str = None,
     optional: bool = None,
-):
+) -> _Modifier:
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
 
@@ -634,7 +636,7 @@ def sfxed(
     )
 
 
-def sfxed_vararg(dependency: str, sfx0: str, *sfx_list: str):
+def sfxed_vararg(dependency: str, sfx0: str, *sfx_list: str) -> _Modifier:
     """Like :func:`sideffected` + :func:`vararg`. """
     return _modifier(
         dependency,
@@ -644,7 +646,7 @@ def sfxed_vararg(dependency: str, sfx0: str, *sfx_list: str):
     )
 
 
-def sfxed_varargs(dependency: str, sfx0: str, *sfx_list: str):
+def sfxed_varargs(dependency: str, sfx0: str, *sfx_list: str) -> _Modifier:
     """Like :func:`sideffected` + :func:`varargs`. """
     return _modifier(
         dependency,
@@ -661,19 +663,19 @@ def is_mapped(dep) -> Optional[str]:
     All non-varargish optionals are "keyword" (including sideffected ones).
 
     :return:
-        the :attr:`fn_kwarg`
+        the :attr:`.fn_kwarg`
     """
     return getattr(dep, "fn_kwarg", None)
 
 
-def is_optional(dep) -> bool:
+def is_optional(dep) -> Optional[_Optionals]:
     """
     Check if a :term:`dependency` is optional.
 
     Varargish & optional sideffects are included.
 
     :return:
-        the :attr:`optional`
+        the :attr:`.optional`
     """
     return getattr(dep, "optional", None)
 
@@ -693,12 +695,12 @@ def is_varargish(dep) -> bool:
     return dep.optional in (_Optionals.vararg, _Optionals.vararg)
 
 
-def is_sfx(dep) -> bool:
+def is_sfx(dep) -> Optional[str]:
     """
     Check if a dependency is :term:`sideffects` or :term:`sideffected`.
 
     :return:
-        the :attr:`sideffected`
+        the :attr:`.sideffected`
     """
     return getattr(dep, "sideffected", None)
 
@@ -713,8 +715,10 @@ def is_sfxed(dep) -> bool:
     return getattr(dep, "sideffected", None) and getattr(dep, "sfx_list", None)
 
 
-def dependency(dep):
+def dependency(dep) -> str:
     """
+    Returns the underlying dependency name (just str)
+
     For non-sideffects, it coincides with str(), otherwise,
     the the pure-sideffect string or the existing :term:`sideffected` dependency
     stored in :attr:`sideffected`.
@@ -722,7 +726,7 @@ def dependency(dep):
     return str(dep) if is_sfx(dep) else dep.sideffected
 
 
-def dep_renamed(dep, ren):
+def dep_renamed(dep, ren) -> Union[_Modifier, str]:
     """
     Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
 
@@ -749,7 +753,7 @@ def dep_renamed(dep, ren):
     return dep
 
 
-def dep_singularized(dep):
+def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
     """
     Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
     """
@@ -758,7 +762,7 @@ def dep_singularized(dep):
     )
 
 
-def dep_stripped(dep):
+def dep_stripped(dep) -> Union[str, _Modifier]:
     """
     Return the :attr:`_Modifier.sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
 
