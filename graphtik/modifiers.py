@@ -34,14 +34,14 @@ from typing import Optional, Tuple, Union
 _modifier_cstor_matrix = {
 # (7, kw, opt, sfxed, sfx): (STR, REPR, FUNC) OR None
 70000: None,
-71000: (       "%(dep)s",                  "'%(dep)s'(%(kw)s)"           , "keyword"),
+71000: (       "%(dep)s",                  "'%(dep)s'(>%(kw)s)"           , "keyword"),
 71100: (       "%(dep)s",                  "'%(dep)s'(?%(kw)s)"          , "optional"),
 70200: (       "%(dep)s",                  "'%(dep)s'(*)"                , "vararg"),
 70300: (       "%(dep)s",                  "'%(dep)s'(+)"                , "varargs"),
 70010: (  "sfx('%(dep)s')",            "sfx('%(dep)s')"                  , "sfx"),
 70110: (  "sfx('%(dep)s')",            "sfx('%(dep)s'(?))"               , "sfx"),
 70011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s', %(sfx)s)"         , "sfxed"),
-71011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(%(kw)s), %(sfx)s)" , "sfxed"),
+71011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(>%(kw)s), %(sfx)s)" , "sfxed"),
 71111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(?%(kw)s), %(sfx)s)", "sfxed"),
 70211: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(*), %(sfx)s)"      , "sfxed_vararg"),
 70311: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(+), %(sfx)s)"      , "sfxed_varargs"),
@@ -167,7 +167,7 @@ class _Modifier(str):
             fn_kwarg = f"'{self.fn_kwarg}'"
             items.append(f"fn_kwarg={fn_kwarg}" if self.sfx_list else fn_kwarg)
         if self.optional == _Optionals.keyword and self._func != "optional":
-            items.append(f"optional=1" if self.sfx_list else "1")
+            items.append("optional=1" if self.sfx_list else "1")
         return f"{self._func}({', '.join(items)})"
 
     def __getnewargs__(self):
@@ -225,8 +225,7 @@ def _modifier(
     str_fmt, repr_fmt, func = formats
     fmt_args = {
         "dep": name,
-        # avoid a sole ``?>`` symbol on pure optionals
-        "kw": f">'{fn_kwarg}'" if fn_kwarg != name else ">" if not optional else "",
+        "kw": f"'{fn_kwarg}'" if fn_kwarg != name else "",
         "sfx": ", ".join(f"'{i}'" for i in sfx_list),
     }
     name = str_fmt % fmt_args
@@ -337,7 +336,7 @@ def optional(name: str, fn_kwarg: str = None):
         ...           provides="sum"
         ... )(myadd.fn)  # Cannot wrap an operation, its `fn` only.
         FunctionalOperation(name='myadd',
-                            needs=['a', 'quasi-real'(?>'b')],
+                            needs=['a', 'quasi-real'(?'b')],
                             provides=['sum'],
                             fn='myadd')
 
