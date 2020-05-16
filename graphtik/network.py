@@ -396,9 +396,9 @@ class Network(Plottable):
         if outputs is not None:
             # If caller requested specific outputs, we can prune any
             # unrelated nodes further up the dag.
-            ending_in_outputs = set()
+            # TODO: speedup prune-by-out with traversing code
+            ending_in_outputs = set(outputs)
             for output_name in outputs:
-                ending_in_outputs.add(output_name)
                 ending_in_outputs.update(nx.ancestors(dag, output_name))
             broken_dag = broken_dag.subgraph(ending_in_outputs)
             if log.isEnabledFor(logging.INFO) and len(broken_dag) != len(dag):
