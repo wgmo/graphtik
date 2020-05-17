@@ -29,6 +29,7 @@ utilize a combination of these **diacritics**:
 .. diacritics-end
 """
 import enum
+import functools
 from typing import Any, Callable, Iterable, NamedTuple, Optional, Tuple, Union
 
 # fmt: off
@@ -89,9 +90,9 @@ class _Optionals(enum.Enum):
 class Accessor(NamedTuple):
     """Getter/setter functions to extract/populate solution values. """
 
-    #: the getter, like:: ``get(sol, key) -> value``
+    #: the getter, like:: ``get(sol, dep) -> value``
     get: Callable[["Solution", str], Any]
-    #: the setter, like: ``set(sol, key, val)``
+    #: the setter, like: ``set(sol, dep, val)``
     set: Callable[["Solution", str, Any], None]
 
     def validate(self):
@@ -102,6 +103,17 @@ class Accessor(NamedTuple):
                 f"`get/set` must be callable, were: {self.get!r}, {self.set!r}"
             )
         return self
+
+
+@functools.lru_cache()
+def JsonpAccessor():
+    """Get/Set paths found on modifier's "extra' attribute `jsonpath` """
+    from .jsonpointer import iter_jsonpointer_parts, resolve_path, set_jsonpointer
+
+    return Accessor(
+        get=lambda sol, dep: resolve_path(sol, dep.jsonpath),
+        set=lambda sol, dep, val: set_jsonpointer(sol, dep.jsonpath, val),
+    )
 
 
 class _Modifier(str):
@@ -118,7 +130,8 @@ class _Modifier(str):
       :func:`_modifier()` factor functions.
 
     :param kw:
-        any extra attributes
+        any extra attributes not needed by execution machinery
+        such as the ``jsonpath``, which is used only by :term:`accessor`.
 
     .. Note::
         Factory function:func:`_modifier()` may return a plain string, if no other
@@ -244,11 +257,13 @@ class _Modifier(str):
 
 def _modifier(
     name,
+    *,
     keyword=None,
     optional: _Optionals = None,
     accessor=None,
     sideffected=None,
     sfx_list=(),
+    no_jsonp=None,
     **kw,
 ) -> Union[str, _Modifier]:
     """
@@ -261,6 +276,11 @@ def _modifier(
         Not used here, any given kKVs are assigned as :class:`_Modifier` attributes,
         for client code to extend its own modifiers.
     """
+    is_jsonp = "/" in name and not no_jsonp
+    if is_jsonp and not accessor:
+        accessor = JsonpAccessor()
+        kw["jsonp"] = True
+
     args = (name, keyword, optional, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
     if not formats:
@@ -274,8 +294,17 @@ def _modifier(
         "sfx": ", ".join(f"'{i}'" for i in sfx_list),
         "acs": "$" if accessor else "",
     }
-    name = str_fmt % fmt_args
     _repr = repr_fmt % fmt_args
+
+    if is_jsonp:
+        from .jsonpointer import iter_jsonpointer_parts
+
+        # '/some/json/path' --> '', 'some', 'json/path'
+        _, fmt_args["dep"], _ = name.split("/", maxsplit=2)
+        kw = {"jsonpath": name}
+    else:
+        kw = {}
+    name = str_fmt % fmt_args
 
     return _Modifier(name, _repr, func, *args[1:], **kw)
 
@@ -315,7 +344,9 @@ def _modifier_withset(
     return _modifier(name=name, **kw)
 
 
-def keyword(name: str, keyword: str = None, accessor: Accessor = None) -> _Modifier:
+def keyword(
+    name: str, keyword: str = None, accessor: Accessor = None, no_jsonp=None
+) -> _Modifier:
     """
     Annotate a :term:`needs` that (optionally) maps `inputs` name --> *keyword* argument name.
 
@@ -336,6 +367,9 @@ def keyword(name: str, keyword: str = None, accessor: Accessor = None) -> _Modif
     :param accessor:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
+    :param no_jsonp:
+        A name containing slashes(``/``) is assumed as :term:`json pointer path`
+        unless this is true.
 
     :return:
         a :class:`_Modifier` instance, even if no `keyword` is given OR
@@ -369,10 +403,12 @@ def keyword(name: str, keyword: str = None, accessor: Accessor = None) -> _Modif
         .. graphtik::
     """
     # Must pass a truthy `keyword` bc cstor cannot not know its keyword.
-    return _modifier(name, keyword=keyword or name, accessor=accessor)
+    return _modifier(name, keyword=keyword or name, accessor=accessor, no_jsonp=None)
 
 
-def optional(name: str, keyword: str = None, accessor: Accessor = None) -> _Modifier:
+def optional(
+    name: str, keyword: str = None, accessor: Accessor = None, no_jsonp=None
+) -> _Modifier:
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
 
@@ -389,6 +425,9 @@ def optional(name: str, keyword: str = None, accessor: Accessor = None) -> _Modi
     :param accessor:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
+    :param no_jsonp:
+        A name containing slashes(``/``) is assumed as :term:`json pointer path`
+        unless this is true.
 
     **Example:**
 
@@ -431,30 +470,98 @@ def optional(name: str, keyword: str = None, accessor: Accessor = None) -> _Modi
     """
     # Must pass a truthy `keyword` as cstor-matrix requires.
     return _modifier(
-        name, keyword=keyword or name, optional=_Optionals.keyword, accessor=accessor
+        name,
+        keyword=keyword or name,
+        optional=_Optionals.keyword,
+        accessor=accessor,
+        no_jsonp=None,
     )
 
 
-def accessor(name: str, accessor: Accessor = None) -> _Modifier:
+def accessor(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
     """
     Annotate a `dependency` with :term:`accessor` functions to read/write `solution`.
 
     :param accessor:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
+    :param no_jsonp:
+        A name containing slashes(``/``) is assumed as :term:`json pointer path`
+        unless this is true.
 
-    Use other modifier factories for combinations with `optional`, `keyword`, etc.
+    - Probably not very usefull -- see the :func:`jsonp` modifier for an integrated
+      use case.
+    - To combine it with `optional`, `keyword`, etc use the rest modifier factories
+      and pass an argument value to their `accessor` parameter.
     """
-    return _modifier(name, accessor=accessor)
+    return _modifier(name, accessor=accessor, no_jsonp=None)
 
 
-def vararg(name: str, accessor: Accessor = None) -> _Modifier:
+def jsonp(name: str, no_jsonp=None) -> _Modifier:
+    """
+    Annotate a regular dependency starting with slash(``/``) as :term:`json pointer path`.
+
+    :param no_jsonp:
+        A name containing slashes(``/``) is assumed as :term:`json pointer path`
+        unless this is true.
+
+    .. Note::
+        This modifier is usefull only to **prevent treating a dependency with slashes
+        as json-pointer expression**.
+        To combine it with `optional`, `keyword`, etc use the rest modifier factories
+        with a dependency starting with a slash(``/``).
+
+    **Example:**
+
+    Let's use :class:`.JsonPointerAccessor` along with the default :term:`conveyor operation`
+    to copy values around in the solution:
+
+        >>> from graphtik import operation, compose, jsonp
+
+        >>> copy_values = operation(
+        ...     name="copy values in solution: a+b-->A+BB",
+        ...     needs=[jsonp("/inputs/a"), jsonp("/inputs/b")],
+        ...     provides=[jsonp("/RESULTS/A"), jsonp("/RESULTS/BB")]
+        ... )()
+
+        >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS")
+        >>> results
+        {'/RESULTS/A'($): 1, '/RESULTS/B'($): 2}
+
+    Notice that the results are not yet "nested", because this modifer works with
+    :term:`accessor` functions acting on a real :class:`.Solution`, and this requires
+    the operation to be wrapped in a pipeline (see below).
+
+    Note also that it we see the "representation' of the key as ``'/RESULTS/A'($)``
+    but the actual string value is just the "root":
+
+        >>> str(next(iter(results)))
+        RESULTS
+
+    Now watch how the paths access deep into solution when the operation is run
+    in a pipeline:
+
+        >>
+        >>> pipe = compose("copy pipe", copy_values)
+        >>> results
+        {"RESULTS": {"A": 1, "BB": 2}}
+
+
+    .. graphtik::
+    """
+    return _modifier(name, no_jsonp=no_jsonp)
+
+
+def vararg(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
     """
     Annotate a :term:`varargish` `needs` to  be fed as function's ``*args``.
 
     :param accessor:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
+    :param no_jsonp:
+        A name containing slashes(``/``) is assumed as :term:`json pointer path`
+        unless this is true.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -493,16 +600,19 @@ def vararg(name: str, accessor: Accessor = None) -> _Modifier:
         {'a': 5, 'sum': 5}
 
     """
-    return _modifier(name, optional=_Optionals.vararg, accessor=accessor)
+    return _modifier(name, optional=_Optionals.vararg, accessor=accessor, no_jsonp=None)
 
 
-def varargs(name: str, accessor: Accessor = None) -> _Modifier:
+def varargs(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
     """
     An :term:`varargish`  :func:`.vararg`, naming a *iterable* value in the inputs.
 
     :param accessor:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
+    :param no_jsonp:
+        A name containing slashes(``/``) is assumed as :term:`json pointer path`
+        unless this is true.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -561,7 +671,9 @@ def varargs(name: str, accessor: Accessor = None) -> _Modifier:
 
     .. varargs-mistake-end
     """
-    return _modifier(name, optional=_Optionals.varargs, accessor=accessor)
+    return _modifier(
+        name, optional=_Optionals.varargs, accessor=accessor, no_jsonp=None
+    )
 
 
 def sfx(name, optional: bool = None) -> _Modifier:
@@ -648,6 +760,7 @@ def sfxed(
     keyword: str = None,
     optional: bool = None,
     accessor: Accessor = None,
+    no_jsonp=None,
 ) -> _Modifier:
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
@@ -660,6 +773,9 @@ def sfxed(
     :param accessor:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
+    :param no_jsonp:
+        A name containing slashes(``/``) is assumed as :term:`json pointer path`
+        unless this is true.
 
     Like :func:`.sfx` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
@@ -749,11 +865,12 @@ def sfxed(
         sideffected=dependency,
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
+        no_jsonp=None,
     )
 
 
 def sfxed_vararg(
-    dependency: str, sfx0: str, *sfx_list: str, accessor: Accessor = None
+    dependency: str, sfx0: str, *sfx_list: str, accessor: Accessor = None, no_jsonp=None
 ) -> _Modifier:
     """Like :func:`sideffected` + :func:`vararg`. """
     return _modifier(
@@ -762,11 +879,12 @@ def sfxed_vararg(
         sideffected=dependency,
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
+        no_jsonp=None,
     )
 
 
 def sfxed_varargs(
-    dependency: str, sfx0: str, *sfx_list: str, accessor: Accessor = None
+    dependency: str, sfx0: str, *sfx_list: str, accessor: Accessor = None, no_jsonp=None
 ) -> _Modifier:
     """Like :func:`sideffected` + :func:`varargs`. """
     return _modifier(
@@ -775,6 +893,7 @@ def sfxed_varargs(
         sideffected=dependency,
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
+        no_jsonp=None,
     )
 
 
@@ -815,6 +934,11 @@ def is_varargs(dep) -> bool:
 def is_varargish(dep) -> bool:
     """Check if an :term:`optionals` dependency is :term:`varargish`."""
     return dep.optional in (_Optionals.vararg, _Optionals.vararg)
+
+
+def is_jsonp(dep) -> bool:
+    """Check if the dependency is :term:`json pointer path`."""
+    return getattr(dep, "jsonp", None)
 
 
 def is_sfx(dep) -> Optional[str]:
