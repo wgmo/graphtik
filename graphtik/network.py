@@ -61,7 +61,7 @@ def yield_ops(nodes):
 
 def yield_node_names(nodes):
     """Yield either ``op.name`` or ``str(node)``."""
-    return (str(getattr(n, "name", n)) for n in nodes)
+    return (getattr(n, "name", n) for n in nodes)
 
 
 def _optionalized(graph, data):
