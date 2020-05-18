@@ -82,7 +82,7 @@ When asking a subset of the graph's `outputs`, Graphtik does 2 things:
 - it :term:`prune`\s any :term:`operation`\s that are not on the path from
   given :term:`inputs` to the requested `outputs` (e.g. the ``abspow1`` operation, above,
   is not executed);
-- it :term:`evicts <evictions>` any intermediate data from :term:`solution` as soon as
+- it :term:`evicts <eviction>` any intermediate data from :term:`solution` as soon as
   they are not needed.
 
 You may see (2) in action by including the sequence of :term:`execution steps`

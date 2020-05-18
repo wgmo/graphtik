@@ -136,7 +136,7 @@ is_skip_evictions = partial(_getter, _skip_evictions)
 """see :func:`set_skip_evictions()`"""
 set_skip_evictions = partial(_tristate_set, _skip_evictions)
 """
-When true, disable globally :term:`evictions`, to keep all intermediate solution values, ...
+When true, disable globally :term:`eviction`\\s, to keep all intermediate solution values, ...
 
 regardless of asked outputs.
 

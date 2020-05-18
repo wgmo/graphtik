@@ -127,7 +127,7 @@ Architecture
 
         It feeds operations with `inputs`, collects their `outputs`,
         records the *status* of executed or `canceled operation`\s,
-        tracks any `overwrite`\s, and applies any `evictions`, as orchestrated
+        tracks any `overwrite`\s, and applies any `eviction`\s, as orchestrated
         by the `plan`.
 
         A new :class:`.Solution` instance is created either internally
@@ -193,9 +193,10 @@ Architecture
         They are built by :meth:`.Network._build_execution_steps()` based on
         the subgraph `dag`.
 
-        The only *instruction* step is for performing `evictions`.
+        The only *instruction* step other than an operation is for performing
+        an `eviction`.
 
-    evictions
+    eviction
         A memory footprint optimization where intermediate `inputs` & `outputs`
         are erased from `solution` as soon as they are not needed further down the `dag`.
 
@@ -228,7 +229,7 @@ Architecture
 
         When no specific outputs requested from a *pipeline*, :meth:`.Pipeline.compute()`
         returns all intermediate `inputs` along with the *outputs*, that is,
-        no `evictions` happens.
+        no `eviction`\s happens.
 
         An *operation* may return `partial outputs`.
 

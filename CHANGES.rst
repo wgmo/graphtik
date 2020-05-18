@@ -580,7 +580,7 @@ v5.0.0 (31 Dec 2019, @ankostis): Method-->Parallel, all configs now per op flags
   - ``marshal_parallel_tasks --> tasks_marshalled``
   - ``endure_operations --> operations_endured``
 
-+ FIX(net, plan,.TC): global skip :term:`evictions` flag were not fully obeyed
++ FIX(net, plan,.TC): global skip :term:`eviction`\\s flag were not fully obeyed
   (was untested).
 
 + FIX(OP): revamped zipping of function `outputs` with expected `provides`,

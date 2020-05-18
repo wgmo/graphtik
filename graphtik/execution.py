@@ -383,7 +383,7 @@ class ExecutionPlan(
         any given intermediate inputs.
     .. attribute:: asked_outs
 
-        When true, :term:`evictions` may kick in (unless disabled by :term:`configurations`),
+        When true, :term:`eviction`\\s may kick in (unless disabled by :term:`configurations`),
         otherwise, *evictions* (along with prefect-evictions check) are skipped.
     """
 
