@@ -21,10 +21,16 @@ from typing import (
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
 
-from .base import Items, astuple, jetsam
+from .base import Items, Operation, PlotArgs, Plottable, astuple, jetsam
 from .config import is_debug, is_skip_evictions
-from .modifiers import dep_renamed, get_keyword, is_optional, is_sfx, optional
-from .base import Operation, PlotArgs, Plottable, RenArgs
+from .modifiers import (
+    _modifier_withset,
+    dep_renamed,
+    get_keyword,
+    is_optional,
+    is_sfx,
+    optional,
+)
 
 NodePredicate = Callable[[Any, Mapping], bool]
 
@@ -72,7 +78,13 @@ def _optionalized(graph, data):
         if all_optionals
         else data  # sideffect
         if is_sfx(data)
-        else str(data)  # un-optionalize
+        else _modifier_withset(
+            data,
+            # un-optionalize
+            optional=None,
+            # not relevant for a pipeline
+            keyword=False,
+        )
     )
 
 
