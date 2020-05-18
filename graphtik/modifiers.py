@@ -114,7 +114,7 @@ class _Modifier(str):
     - the *factory* functions like :func:`.keyword`, :func:`optional` etc,
     - the *predicates* like :func:`is_optional()`, :func:`is_pure_sfx()` etc,
     - the *conversion* functions like :func:`dep_renamed()`, :func:`dep_stripped()` etc,
-    - and only *rarely* (and with care) call its :meth:`_withset()` method or
+    - and only *rarely* (and with care) call its :meth:`_modifier_withset()` method or
       :func:`_modifier()` factor functions.
 
     :param kw:
@@ -241,31 +241,6 @@ class _Modifier(str):
             self.sfx_list,
         )
 
-    def _withset(
-        self,
-        name=...,
-        keyword=...,
-        optional: _Optionals = ...,
-        accessor=...,
-        sideffected=...,
-        sfx_list=...,
-    ) -> Union["_Modifier", str]:
-        """
-        Make a new modifier with changes -- handle with care.
-
-        :return:
-             Delegates to :func:`_modifier`, so returns a plain string if no args left.
-        """
-        kw = {
-            k: getattr(self, k) if v is ... else v
-            for k, v in locals().items()
-            if k not in ("self", "name")
-        }
-        if name is ...:
-            name = self.sideffected or str(self)
-
-        return _modifier(name=name, **kw)
-
 
 def _modifier(
     name,
@@ -274,12 +249,17 @@ def _modifier(
     accessor=None,
     sideffected=None,
     sfx_list=(),
+    **kw,
 ) -> Union[str, _Modifier]:
     """
     A :class:`_Modifier` factory that may return a plain str when no other args given.
 
     It decides the final `name` and `_repr` for the new modifier by matching
     the given inputs with the :data:`_modifier_cstor_matrix`.
+
+    :param kw:
+        Not used here, any given kKVs are assigned as :class:`_Modifier` attributes,
+        for client code to extend its own modifiers.
     """
     args = (name, keyword, optional, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
@@ -297,7 +277,42 @@ def _modifier(
     name = str_fmt % fmt_args
     _repr = repr_fmt % fmt_args
 
-    return _Modifier(name, _repr, func, *args[1:])
+    return _Modifier(name, _repr, func, *args[1:], **kw)
+
+
+def _modifier_withset(
+    dep,
+    name=...,
+    keyword=...,
+    optional: _Optionals = ...,
+    accessor=...,
+    sideffected=...,
+    sfx_list=...,
+    **kw,
+) -> Union["_Modifier", str]:
+    """
+    Make a new modifier with changes -- handle with care.
+
+    :return:
+        Delegates to :func:`_modifier`, so returns a plain string if no args left.
+    """
+    if isinstance(dep, _Modifier):
+        kw = {
+            **vars(dep),
+            **{k: v for k, v in locals().items() if v is not ...},
+            **kw,
+        }
+        kw = {
+            k: v
+            for k, v in kw.items()
+            if k not in ("dep", "name", "kw", "_repr", "_func")
+        }
+        if name is ...:
+            name = dep.sideffected or str(dep)
+    else:
+        name = dep
+
+    return _modifier(name=name, **kw)
 
 
 def keyword(name: str, keyword: str = None, accessor: Accessor = None) -> _Modifier:
@@ -861,9 +876,9 @@ def dep_renamed(dep, ren) -> Union[_Modifier, str]:
     if isinstance(dep, _Modifier):
         if is_sfx(dep):
             new_name = renamer(dep.sideffected)
-            dep = dep._withset(name=new_name, sideffected=new_name)
+            dep = _modifier_withset(dep, name=new_name, sideffected=new_name)
         else:
-            dep = dep._withset(name=renamer(str(dep)))
+            dep = _modifier_withset(dep, name=renamer(str(dep)))
     else:  # plain string
         dep = renamer(dep)
 
@@ -875,7 +890,9 @@ def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
     Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
     """
     return (
-        (dep._withset(sfx_list=(s,)) for s in dep.sfx_list) if is_sfxed(dep) else (dep,)
+        (_modifier_withset(dep, sfx_list=(s,)) for s in dep.sfx_list)
+        if is_sfxed(dep)
+        else (dep,)
     )
 
 
@@ -886,5 +903,7 @@ def dep_stripped(dep) -> Union[str, _Modifier]:
     conveying all other properties of the original modifier to the stripped dependency.
     """
     if is_sfxed(dep):
-        dep = dep._withset(name=dep.sideffected, sideffected=None, sfx_list=())
+        dep = _modifier_withset(
+            dep, name=dep.sideffected, sideffected=None, sfx_list=()
+        )
     return dep
