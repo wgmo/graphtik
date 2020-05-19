@@ -206,6 +206,11 @@ class Network(Plottable):
         )
         return f"Network(x{len(self.graph.nodes)} nodes, x{len(ops)} ops: {''.join(steps)})"
 
+    @property
+    def ops(self) -> List[Operation]:
+        """A new list with all :term:`operation`\\s contained in the :term:`plan`."""
+        return list(yield_ops(self.dag))
+
     def find_ops(self, predicate) -> List[Operation]:
         """
         Scan operation nodes and fetch those satisfying `predicate`.
