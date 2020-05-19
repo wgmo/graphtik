@@ -540,7 +540,7 @@ def varargs(name: str, accessor: Accessor = None) -> _Modifier:
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
             +++FunctionalOperation(name='enlist', needs=['a', 'b'(+)], provides=['sum'], fn='enlist')
-            (tip: enabled debug log for stack traces)
+            (tip: set GRAPHTIK_DEBUG envvar log for immediate raising stack trace)
 
     .. varargs-mistake-start
     .. Attention::
@@ -557,7 +557,7 @@ def varargs(name: str, accessor: Accessor = None) -> _Modifier:
                                    needs=['a', 'b'(+)],
                                    provides=['sum'],
                                    fn='enlist')
-            (tip: enabled debug log for stack traces)
+            (tip: set GRAPHTIK_DEBUG envvar log for immediate raising stack trace)
 
     .. varargs-mistake-end
     """

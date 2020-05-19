@@ -589,7 +589,9 @@ class FunctionalOperation(Operation):
         inputs = dict(named_inputs) if is_debug() else list(named_inputs)
         errors.append(f"+++inputs: {inputs}")
         errors.append(f"+++{self}")
-        errors.append("(tip: enabled debug log for stack traces)")
+        errors.append(
+            "(tip: set GRAPHTIK_DEBUG envvar log for immediate raising stack trace)"
+        )
 
         msg = textwrap.indent("\n".join(errors), " " * 4)
         raise MultiValueError(f"Failed preparing needs: \n{msg}", *exceptions)
