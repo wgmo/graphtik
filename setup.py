@@ -27,6 +27,9 @@ with open("README.rst") as f:
         .replace("|release|", git_ver)
         .replace("|today|", dt.datetime.now().isoformat())
     )
+    long_description = re.sub(
+        r":(?:ref|class|rst:dir):`([^`]+?)(?: <[^>]+>)?`", r"*\1*", long_description
+    )
 
 # Grab the version using convention described by flask
 # https://github.com/pallets/flask/blob/master/setup.py#L10
