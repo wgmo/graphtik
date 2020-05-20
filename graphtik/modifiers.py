@@ -29,7 +29,7 @@ utilize a combination of these **diacritics**:
 .. diacritics-end
 """
 import enum
-import functools
+from functools import lru_cache, partial
 from typing import Any, Callable, Iterable, NamedTuple, Optional, Tuple, Union
 
 # fmt: off
@@ -105,15 +105,12 @@ class Accessor(NamedTuple):
         return self
 
 
-@functools.lru_cache()
+@lru_cache()
 def JsonpAccessor():
     """Get/Set paths found on modifier's "extra' attribute `jsonpath` """
     from .jsonpointer import iter_jsonpointer_parts, resolve_path, set_jsonpointer
 
-    return Accessor(
-        get=lambda sol, dep: resolve_path(sol, dep.jsonpath),
-        set=lambda sol, dep, val: set_jsonpointer(sol, dep.jsonpath, val),
-    )
+    return Accessor(get=resolve_path, set=partial(set_jsonpointer, relaxed=True))
 
 
 class _Modifier(str):
@@ -276,10 +273,12 @@ def _modifier(
         Not used here, any given kKVs are assigned as :class:`_Modifier` attributes,
         for client code to extend its own modifiers.
     """
-    is_jsonp = "/" in name and not no_jsonp
-    if is_jsonp and not accessor:
-        accessor = JsonpAccessor()
+    if "/" in name and not no_jsonp:
         kw["jsonp"] = True
+        # Don't override user's accessor.
+        #
+        if not accessor:
+            accessor = JsonpAccessor()
 
     args = (name, keyword, optional, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
@@ -295,15 +294,6 @@ def _modifier(
         "acs": "$" if accessor else "",
     }
     _repr = repr_fmt % fmt_args
-
-    if is_jsonp:
-        from .jsonpointer import iter_jsonpointer_parts
-
-        # '/some/json/path' --> '', 'some', 'json/path'
-        _, fmt_args["dep"], _ = name.split("/", maxsplit=2)
-        kw = {"jsonpath": name}
-    else:
-        kw = {}
     name = str_fmt % fmt_args
 
     return _Modifier(name, _repr, func, *args[1:], **kw)
@@ -368,8 +358,8 @@ def keyword(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param no_jsonp:
-        A name containing slashes(``/``) is assumed as :term:`json pointer path`
-        unless this is true.
+        An annotated dependency with a name containing slashes(``/``) it is assumed
+        as :term:`json pointer path` unless this is true.
 
     :return:
         a :class:`_Modifier` instance, even if no `keyword` is given OR
@@ -426,8 +416,8 @@ def optional(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param no_jsonp:
-        A name containing slashes(``/``) is assumed as :term:`json pointer path`
-        unless this is true.
+        An annotated dependency with a name containing slashes(``/``) it is assumed
+        as :term:`json pointer path` unless this is true.
 
     **Example:**
 
@@ -486,8 +476,8 @@ def accessor(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param no_jsonp:
-        A name containing slashes(``/``) is assumed as :term:`json pointer path`
-        unless this is true.
+        An annotated dependency with a name containing slashes(``/``) it is assumed
+        as :term:`json pointer path` unless this is true.
 
     - Probably not very usefull -- see the :func:`jsonp` modifier for an integrated
       use case.
@@ -502,50 +492,47 @@ def jsonp(name: str, no_jsonp=None) -> _Modifier:
     Annotate a regular dependency starting with slash(``/``) as :term:`json pointer path`.
 
     :param no_jsonp:
-        A name containing slashes(``/``) is assumed as :term:`json pointer path`
-        unless this is true.
-
-    .. Note::
-        This modifier is usefull only to **prevent treating a dependency with slashes
-        as json-pointer expression**.
-        To combine it with `optional`, `keyword`, etc use the rest modifier factories
-        with a dependency starting with a slash(``/``).
+        An annotated dependency with a name containing slashes(``/``) it is assumed
+        as :term:`json pointer path` unless this is true.
 
     **Example:**
 
-    Let's use :class:`.JsonPointerAccessor` along with the default :term:`conveyor operation`
-    to copy values around in the solution:
+    Let's use *json pointer dependencies* along with the default :term:`conveyor operation`
+    to build an operation copying values around in the solution:
 
         >>> from graphtik import operation, compose, jsonp
 
         >>> copy_values = operation(
-        ...     name="copy values in solution: a+b-->A+BB",
-        ...     needs=[jsonp("/inputs/a"), jsonp("/inputs/b")],
-        ...     provides=[jsonp("/RESULTS/A"), jsonp("/RESULTS/BB")]
+        ...     name="copy a+b-->A+BB",
+        ...     needs=[jsonp("inputs/a"), jsonp("inputs/b")],
+        ...     provides=[jsonp("RESULTS/A"), jsonp("RESULTS/BB")]
         ... )()
 
-        >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS")
+        >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
         >>> results
-        {'/RESULTS/A'($): 1, '/RESULTS/B'($): 2}
+        {'RESULTS/A'($): 1, 'RESULTS/BB'($): 2}
 
     Notice that the results are not yet "nested", because this modifer works with
-    :term:`accessor` functions acting on a real :class:`.Solution`, and this requires
-    the operation to be wrapped in a pipeline (see below).
+    :term:`accessor` which are fully functional when acting on a real :class:`.Solution`,
+    and this requires the operation to be wrapped in a pipeline (see below).
 
-    Note also that it we see the "representation' of the key as ``'/RESULTS/A'($)``
-    but the actual string value is just the "root":
+    Note also that it we see the "representation' of the key as ``'RESULTS/A'($)``
+    but the actual string value simpler:
 
         >>> str(next(iter(results)))
-        RESULTS
+        'RESULTS/A'
 
-    Now watch how the paths access deep into solution when the operation is run
-    in a pipeline:
+    The results were not nested, because this modifer works with :term:`accessor` functions,
+    that act only on a real :class:`.Solution`, given to the operation only when wrapped
+    in a pipeline (as done below).
 
-        >>
+    Now watch how these paths access deep into solution when the same operation
+    is wrapped in a pipeline:
+
         >>> pipe = compose("copy pipe", copy_values)
-        >>> results
-        {"RESULTS": {"A": 1, "BB": 2}}
-
+        >>> sol = pipe.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS")
+        >>> sol
+        {'RESULTS': {'A': 1, 'BB': 2}}
 
     .. graphtik::
     """
@@ -560,8 +547,8 @@ def vararg(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param no_jsonp:
-        A name containing slashes(``/``) is assumed as :term:`json pointer path`
-        unless this is true.
+        An annotated dependency with a name containing slashes(``/``) it is assumed
+        as :term:`json pointer path` unless this is true.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -611,8 +598,8 @@ def varargs(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param no_jsonp:
-        A name containing slashes(``/``) is assumed as :term:`json pointer path`
-        unless this is true.
+        An annotated dependency with a name containing slashes(``/``) it is assumed
+        as :term:`json pointer path` unless this is true.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -774,8 +761,8 @@ def sfxed(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param no_jsonp:
-        A name containing slashes(``/``) is assumed as :term:`json pointer path`
-        unless this is true.
+        An annotated dependency with a name containing slashes(``/``) it is assumed
+        as :term:`json pointer path` unless this is true.
 
     Like :func:`.sfx` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`

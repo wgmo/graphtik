@@ -5,11 +5,13 @@
 """
 import logging
 from collections import abc, defaultdict
+from functools import partial
 from itertools import count
 from typing import (
     Any,
     Callable,
     Collection,
+    Iterable,
     List,
     Mapping,
     NamedTuple,
@@ -19,15 +21,19 @@ from typing import (
 )
 
 import networkx as nx
+from boltons.iterutils import pairwise
 from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Operation, PlotArgs, Plottable, astuple, jetsam
 from .config import is_debug, is_skip_evictions
+from .jsonpointer import iter_jsonpointer_parts_relaxed
 from .modifiers import (
     _modifier_withset,
     dep_renamed,
     get_keyword,
+    is_jsonp,
     is_optional,
+    is_pure_sfx,
     is_sfx,
     optional,
 )
@@ -55,12 +61,12 @@ class _EvictInstruction(str):
         return f"EvictInstruction('{self}')"
 
 
-def _yield_datanodes(nodes):
+def yield_datanodes(nodes) -> List[str]:
     """May scan dag nodes."""
     return (n for n in nodes if isinstance(n, str))
 
 
-def yield_ops(nodes):
+def yield_ops(nodes) -> List[Operation]:
     """May scan (preferably)  ``plan.steps`` or dag nodes."""
     return (n for n in nodes if isinstance(n, Operation))
 
@@ -99,6 +105,85 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
     return needs, provides
 
 
+def root_doc(dag, doc: str) -> str:
+    """
+    Return the most superdoc, or the same `doc` is not in a chin, or
+    raise if node unknonwn.
+    """
+    for src, dst, subdoc in dag.in_edges(doc, data="subdoc"):
+        if subdoc:
+            doc = src
+    return doc
+
+
+EdgeTraversal = Tuple[str, int]
+
+
+def _yield_also_chained_docs(
+    dig_dag: List[EdgeTraversal], dag, doc: str, stop_set=(),
+) -> Iterable[str]:
+    """
+    Dig the `doc` and its sub/super docs, not recursing in those already in `stop_set`.
+
+    :param dig_dag:
+        a sequence of 2-tuples like ``("in_edges", 0)``, with the name of
+        a networkx method and which edge-node to pick, 0:= src, 1:= dst
+    :param stop_set:
+        Stop traversing (and don't return)  `doc` if already contained in
+        this set.
+
+    :return:
+        the given `doc`, and any other docs discovered with `dig_dag`
+        linked with a "subdoc" attribute on their edge,
+        except those sub-trees with a root node already in `stop_set`.
+    """
+    if doc not in stop_set:
+        yield doc
+        for meth, idx in dig_dag:
+            for *edge, subdoc in getattr(dag, meth)(doc, data="subdoc"):
+                child = edge[idx]
+                if subdoc:
+                    yield from _yield_also_chained_docs(
+                        ((meth, idx),), dag, child, stop_set
+                    )
+
+
+def _yield_chained_docs(
+    dig_dag: Union[EdgeTraversal, List[EdgeTraversal]],
+    dag,
+    docs: Iterable[str],
+    stop_set=(),
+) -> Iterable[str]:
+    """
+    Like :func:`_yield_also_chained_docs()` but digging for many docs at once.
+
+    :return:
+        the given `docs`, and any other nodes discovered with `dig_dag`
+        linked with a "subdoc" attribute on their edge,
+        except those sub-trees with a root node already in `stop_set`.
+    """
+    return (
+        dd for d in docs for dd in _yield_also_chained_docs(dig_dag, dag, d, stop_set)
+    )
+
+
+#: Calls :func:`_yield_also_chained_docs()` for subdocs.
+yield_also_subdocs = partial(_yield_also_chained_docs, (("out_edges", 1),))
+#: Calls :func:`_yield_also_chained_docs()` for superdocs.
+yield_also_superdocs = partial(_yield_also_chained_docs, (("in_edges", 0),))
+#: Calls :func:`_yield_also_chained_docs()` for both subdocs & superdocs.
+yield_also_chaindocs = partial(
+    _yield_also_chained_docs, (("out_edges", 1), ("in_edges", 0))
+)
+
+#: Calls :func:`_yield_chained_docs()` for subdocs.
+yield_subdocs = partial(_yield_chained_docs, (("out_edges", 1),))
+#: Calls :func:`_yield_chained_docs()` for superdocs.
+yield_superdocs = partial(_yield_chained_docs, (("in_edges", 0),))
+#: Calls :func:`_yield_chained_docs()` for both subdocs & superdocs.
+yield_chaindocs = partial(_yield_chained_docs, (("out_edges", 1), ("in_edges", 0)))
+
+
 def unsatisfied_operations(dag, inputs: Collection) -> List:
     """
     Traverse topologically sorted dag to collect un-satisfied operations.
@@ -121,8 +206,10 @@ def unsatisfied_operations(dag, inputs: Collection) -> List:
         a list of unsatisfied operations to prune
 
     """
-    # To collect data that will be produced.
-    ok_data = set(inputs)
+    # Collect data that will be produced.
+    ok_data = set()
+    # Input parents assumed to contain all subdocs.
+    ok_data.update(yield_chaindocs(dag, inputs, ok_data))
     # To collect the map of operations --> satisfied-needs.
     op_satisfaction = defaultdict(set)
     # To collect the operations to drop.
@@ -139,9 +226,8 @@ def unsatisfied_operations(dag, inputs: Collection) -> List:
                 # we care about all needs, including broken ones.
                 real_needs = set(n for n in node.needs if not is_optional(n))
                 if real_needs.issubset(op_satisfaction[node]):
-                    # We have a satisfied operation; mark its output-data
-                    # as ok.
-                    ok_data.update(dag.adj[node])
+                    # Op is satisfied; mark its outputs as ok.
+                    ok_data.update(yield_chaindocs(dag, dag.adj[node], ok_data))
                 else:
                     # Prune operations with partial inputs.
                     unsatisfied.append(node)
@@ -243,11 +329,37 @@ class Network(Plottable):
         :param operation:
             operation instance to append
         """
+        subdoc_attrs = {"subdoc": True}
+        # Using a separate set (and not ``graph.edges`` view)
+        # to avoid concurrent access error.
+        seen_doc_edges = set()
+
+        def unseen_subdoc_edges(doc_edges):
+            """:param doc_edges: e.g. ``[(root, root/n1), (root/n1, root/n1/n11)]``"""
+            ## Start in reverse, from leaf edge, and stop
+            #  ASAP a known edge is met, assuming path to root
+            #  has already been inserted into graph.
+            #
+            for src, dst in reversed(doc_edges):
+                if (src, dst) in seen_doc_edges:
+                    break
+
+                seen_doc_edges.add((src, dst))
+                yield (src, dst, subdoc_attrs)
+
+        def append_subdoc_chain(doc_parts):
+            doc_chain = list(doc_parts)
+            doc_chain = ["/".join(doc_chain[: i + 1]) for i in range(len(doc_chain))]
+            graph.add_edges_from(unseen_subdoc_edges(pairwise(doc_chain)))
+
         ## Needs
         #
         needs = []
         needs_edges = []
         for n in getattr(operation, "op_needs", operation.needs):
+            if is_jsonp(n):
+                append_subdoc_chain(iter_jsonpointer_parts_relaxed(n))
+
             nkw, ekw = {}, {}
             if is_optional(n):
                 ekw["optional"] = True
@@ -270,6 +382,9 @@ class Network(Plottable):
         ## Provides
         #
         for n in getattr(operation, "op_provides", operation.provides):
+            if is_jsonp(n):
+                append_subdoc_chain(iter_jsonpointer_parts_relaxed(n))
+
             kw = {}
             if is_sfx(n):
                 kw["sideffect"] = True
@@ -382,22 +497,29 @@ class Network(Plottable):
         if inputs:
             for n in inputs:
                 # Coalesce to a list, to avoid concurrent modification.
-                broken_dag.remove_edges_from(list(broken_dag.in_edges(n)))
+                broken_dag.remove_edges_from(
+                    list(
+                        (src, dst)
+                        for src, dst, subdoc in broken_dag.in_edges(n, data="subdoc")
+                        if not subdoc
+                    )
+                )
 
         # Drop stray input values and operations (if any).
         if outputs is not None:
             # If caller requested specific outputs, we can prune any
             # unrelated nodes further up the dag.
-            # TODO: speedup prune-by-out with traversing code
-            ending_in_outputs = set(outputs)
-            for output_name in outputs:
-                ending_in_outputs.update(nx.ancestors(dag, output_name))
+            ending_in_outputs = set()
+            for out in yield_chaindocs(dag, outputs, ending_in_outputs):
+                # TODO: speedup prune-by-outs with traversing code
+                ending_in_outputs.update(nx.ancestors(dag, out))
+                ending_in_outputs.add(out)
             broken_dag = broken_dag.subgraph(ending_in_outputs)
             if log.isEnabledFor(logging.INFO) and len(
                 list(yield_ops(ending_in_outputs))
             ) != len(self.ops):
                 log.info(
-                    "... dropping irrelevant ops%s.",
+                    "... dropping output-irrelevant ops%s.",
                     [
                         op.name
                         for op in dag
@@ -483,22 +605,23 @@ class Network(Plottable):
                 # Broken links are irrelevant bc they are predecessors of data (provides),
                 # but here we scan for predecessors of the operation (needs).
                 #
-                for need in pruned_dag.pred[node]:
-                    # Do not evict asked outputs or sideffects.
-                    if need in outputs:
+                for need in pruned_dag.predecessors(node):
+                    subdocs = set(yield_also_chaindocs(pruned_dag, need))
+
+                    # Do not evict if any doc in :term:`doc chain` is asked as output.
+                    if subdocs & set(outputs):
                         continue
 
                     # A needed-data of this operation may be evicted if
                     # no future Operations needs it.
                     #
                     for future_node in ordered_nodes[i + 1 :]:
-                        if (
-                            isinstance(future_node, Operation)
-                            and need in pruned_dag.pred[future_node]
+                        if isinstance(future_node, Operation) and subdocs & set(
+                            pruned_dag.pred[future_node]
                         ):
                             break
                     else:
-                        add_step_once(_EvictInstruction(need))
+                        add_step_once(_EvictInstruction(root_doc(pruned_dag, need)))
 
                 # Add EVICT (2) for unused operation's provides.
                 #
@@ -507,12 +630,12 @@ class Network(Plottable):
                 # It MUST use the broken dag, not to evict data
                 # that will be pinned(?), but to populate overwrites with them.
                 #
-                # .. image:: doc/source/images/unpruned_useless_provides.svg
+                # .. image:: docs/source/images/unpruned_useless_provides.svg
                 #
                 for provide in node.provides:
-                    # Do not evict asked outputs or sideffects.
-                    if provide not in pruned_dag.nodes:
-                        add_step_once(_EvictInstruction(provide))
+                    provide_chain = set(yield_also_chaindocs(pruned_dag, provide))
+                    if not provide_chain & pruned_dag.nodes:
+                        add_step_once(_EvictInstruction(root_doc(pruned_dag, provide)))
 
             else:
                 assert isinstance(

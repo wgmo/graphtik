@@ -24,6 +24,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from graphtik import (
+    MultiValueError,
     NO_RESULT,
     NO_RESULT_BUT_SFX,
     NULL_OP,
@@ -1077,18 +1078,41 @@ def test_solution_accessor_simple():
     assert sol == {"a": 1, "b": 2, "A": 1, "BB": 2}
 
 
+def test_jsonp_disabled():
+    no_jsonp = operation(
+        name="copy a+b-->A+BB",
+        needs=["inputs/a", "inputs/b"],
+        provides=[jsonp("RESULTS/A", False), "RESULTS/BB"],
+    )()
+    with pytest.raises(MultiValueError):
+        no_jsonp.compute({"inputs": {"a": 1, "b": 2}})
+
+    no_jsonp = operation(
+        name="copy a+b-->A+BB",
+        needs=["inputs/a", "inputs/b"],
+        provides=[jsonp("RESULTS/A", True), jsonp("RESULTS/BB", no_jsonp=True)],
+    )()
+    with pytest.raises(MultiValueError):
+        no_jsonp.compute({"inputs": {"a": 1, "b": 2}})
+
+
 def test_jsonp_and_conveyor_fn():
     copy_values = operation(
-        name="copy values in solution: a+b-->A+BB",
-        needs=[jsonp("/inputs/a"), jsonp("/inputs/b")],
-        provides=[jsonp("/RESULTS/A"), jsonp("/RESULTS/BB")],
+        name="copy a+b-->A+BB",
+        needs=[jsonp("inputs/a"), jsonp("inputs/b", no_jsonp=False)],
+        provides=[jsonp("RESULTS/A"), jsonp("RESULTS/BB", False)],
     )()
 
     results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
-    assert results == {"RESULTS": {"A": 1, "BB": 2}}
+    assert results == {"RESULTS/A": 1, "RESULTS/BB": 2}
+    assert repr(results) == "{'RESULTS/A'($): 1, 'RESULTS/BB'($): 2}"
 
     pipe = compose("t", copy_values)
+    sol = pipe.compute({"inputs": {"a": 1, "b": 2}})
+    assert sol == {"inputs": {"a": 1, "b": 2}, "RESULTS": {"A": 1, "BB": 2}}
     sol = pipe.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS")
+    assert sol == {"RESULTS": {"A": 1, "BB": 2}}
+    sol = pipe.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS/A")
     assert sol == {"RESULTS": {"A": 1, "BB": 2}}
 
 

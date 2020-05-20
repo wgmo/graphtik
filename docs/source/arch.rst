@@ -412,14 +412,30 @@ Architecture
 
         See :class:`.Accessor` defining class and the :func:`.jsonp` concrete factory.
 
+    subdoc
+    superdoc
+    doc chain
+    nested dependencies
+        A **subdoc** is a `dependency` value nested further into another one
+        (the **superdoc**),
+        accessed with a `json pointer path` expression with respect to the `solution`,
+        like: ``parent/child``
+
+        Note that if a nested `output <outputs>` is asked, then all **docs-in-chain**
+        are kept i.e. all *superdocs* till the **root dependency** ("trunk") plus
+        all its *subdocs* (sub-tree) .
+
+        Respectively, `eviction`\s  apply only for the *root doc* in the chain,
+        assuming all docs in the chain are not needed anymore.
+
     json pointer path
     jsonp
-        A `modifier` on a dependency starting with a slash(``/``) is `accessing <accessor>`
-        the `solution` as a `json pointer <https://tools.ietf.org/html/rfc6901>`_
-        like ``/dep/inner/attr_or_item_or/1/based``.
+        A `modifier` containing slashes(``/``) `accessing <accessor>` `subdoc` values
+        with `json pointer <https://tools.ietf.org/html/rfc6901>`_ expressions,
+        like ``root/parent/child/1/item``.
 
-        The first step is the name of a `dependency` in the `graph` which becomes
-        the root document of the *jsonp* expression following.
+        The first step (e.g. ``root``) is the name of a `dependency` in the `solution`
+        which becomes the root document for the *jsonp* expression following.
 
     reschedule
     rescheduling

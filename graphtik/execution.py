@@ -40,6 +40,7 @@ from .modifiers import dep_singularized, dep_stripped, get_accessor, is_sfx
 from .network import (
     _EvictInstruction,
     unsatisfied_operations,
+    yield_chaindocs,
     yield_node_names,
     yield_ops,
 )
@@ -777,7 +778,11 @@ class ExecutionPlan(
             # Validate eviction was perfect
             #
             if evict:
-                expected_provides = set(dep_stripped(n) for n in self.provides)
+                expected_provides = set()
+                expected_provides.update(
+                    yield_chaindocs(self.dag, self.provides, expected_provides,)
+                )
+                expected_provides = set(dep_stripped(n) for n in expected_provides)
                 # It is a proper subset when not all outputs calculated.
                 assert set(solution).issubset(expected_provides), (
                     f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
