@@ -1050,10 +1050,6 @@ def test_narrow_and_optionality(reverse):
 
 
 def test_solution_accessor_simple():
-    def f(*a):
-        breakpoint()
-        return a
-
     acc = (getitem, setitem)
 
     copy_values = compose(
