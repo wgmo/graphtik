@@ -232,15 +232,17 @@ def resolve_path(doc, path, default=_scream, root=None):
     return doc
 
 
-def set_jsonpointer(doc, jsonpointer, value, object_factory=dict):
+def set_jsonpointer(doc, jsonpointer, value, object_factory=dict, relaxed=False):
     """
     Resolve a ``jsonpointer`` within the referenced ``doc``.
 
     :param doc: the referrant document
     :param str jsonpointer: a jsonpointer to the node to modify
+    :param relaxed: when true, json-paths may not start with slash(/)
     :raises: ValueError (if jsonpointer empty, missing, invalid-contet)
     """
-    parts = list(iter_jsonpointer_parts(jsonpointer))
+    splitter = iter_jsonpointer_parts_relaxed if relaxed else iter_jsonpointer_parts
+    parts = list(splitter(jsonpointer))
 
     # Will scream if used on 1st iteration.
     #
