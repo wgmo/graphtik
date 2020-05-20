@@ -509,7 +509,7 @@ class Network(Plottable):
                 #
                 for provide in node.provides:
                     # Do not evict asked outputs or sideffects.
-                    if provide not in outputs and provide not in pruned_dag.nodes:
+                    if provide not in pruned_dag.nodes:
                         add_step_once(_EvictInstruction(provide))
 
             else:
