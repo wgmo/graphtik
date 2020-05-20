@@ -30,6 +30,27 @@ running and plotting graphs of functions (a.k.a pipelines).
     <https://github.com/yahoo/graphkit/issues/>`_ with Python 3.6+ features,
     but has diverged significantly with enhancements ever since.
 
+.. features
+
+Features
+--------
+- Can assemble existing functions without modifications in `pipeline`\s.
+- Support functions with `optional <optionals>` input args and/or `varargs <varargish>`.
+- Support functions with `partial outputs`; keep working even if certain `endured` operations fail.
+- Support `alias` of function `provides` to avoid the need for trivial conveyor operations.
+- Default `conveyor operation` to easily pass (possibly *nested*) dependencies around.
+- Refer to `nested dependencies` with `json pointer path` expressions in solution.
+- `Merge <operation merging>` or `nest <operation nesting>` sub-pipelines.
+- Denote and schedule `sideffects` on `dependency` values, to update them repeatedly
+  (e.g. to add columns into :class:`pandas.DataFrame`\s).
+- Deterministic pre-decided `execution plan`.
+- Early `eviction` of intermediate results from `solution`, to optimize memory footprint.
+- Solution tracks all intermediate `overwritten <overwrite>` values for the same dependency.
+- Parallel execution (but underdeveloped).
+- Elaborate plotting with configurable `plot theme`\s.
+- Integration with Sphinx sites with the new :rst:dir:`graphtik` directive.
+- Authored with :ref:`debugging <debugging>` in mind.
+
 
 Quick start
 -----------

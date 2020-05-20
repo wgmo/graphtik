@@ -49,6 +49,15 @@ but has diverged significantly with enhancements ever since.
 
    </details>
 
+
+Features
+--------
+.. default-role:: term
+.. include:: ../../README.rst
+   :start-after:  .. features
+   :end-before:  Quick start
+.. default-role:: obj
+
 .. _quick-start:
 
 Quick start
