@@ -574,8 +574,8 @@ class FunctionalOperation(Operation):
         from .config import is_debug
 
         errors = [
-            f"Need({n}) failed due to: {type(nex).__name__}({nex})"
-            for n, nex in enumerate(exceptions, 1)
+            f"{i}. Need({n!r}) failed due to: {type(nex).__name__}({nex})"
+            for i, (n, nex) in enumerate(exceptions, 1)
         ]
         ner = len(exceptions) + 1
 
