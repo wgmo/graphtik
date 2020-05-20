@@ -393,6 +393,7 @@ intersphinx_mapping = {
     "boltons": ("https://boltons.readthedocs.io/en/latest/", None),
     "dill": ("https://dill.readthedocs.io/en/latest/", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
 }
 
 
