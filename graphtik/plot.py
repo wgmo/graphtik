@@ -391,6 +391,7 @@ class Theme:
     ## VARIABLES
 
     fill_color = "wheat"
+    subdoc_color = "#8B4513"  # SaddleBrown
     pruned_color = "#d3d3d3"  # LightGrey
     canceled_color = "#a9a9a9"  # DarkGray
     failed_color = "LightCoral"
@@ -638,7 +639,7 @@ class Theme:
 
     kw_edge = {"tailport": "s", "headport": "n"}
     kw_edge_tail_op = {}
-    kw_edge_head_op = {"arrowtail": "dot", "dir": "both"}
+    kw_edge_head_op = {"arrowtail": "inv", "dir": "back"}
     kw_edge_optional = {"style": ["dashed"]}
     kw_edge_sideffect = {"color": "blue"}
     #: Added conditionally if `alias_of` found in edge-attrs.
@@ -654,6 +655,14 @@ class Theme:
         "fontname": "italic",
         "label": make_template("<&gt;{{ nx_attrs['keyword'] | eee }}>"),
     }
+    kw_edge_subdoc = {
+        "color": Ref("subdoc_color"),
+        "arrowtail": "odot",
+        "dir": "back",
+        "tailport": "se",
+        "headport": "nw",
+    }
+
     kw_edge_pruned = {"color": Ref("pruned_color")}
     kw_edge_rescheduled = {"style": ["dashed"]}
     kw_edge_endured = {"style": ["dashed"]}
@@ -1308,6 +1317,8 @@ class Plotter:
             styles.add("kw_edge_alias")
         if edge_attrs.get("keyword"):
             styles.add("kw_edge_mapping_keyword")
+        if edge_attrs.get("subdoc"):
+            styles.add("kw_edge_subdoc")
 
         if getattr(src, "rescheduled", None):
             styles.add("kw_edge_rescheduled")
@@ -1490,7 +1501,7 @@ class Plotter:
             label="Graphtik Legend %(ver)s";
 
             Dependencies   [shape=plaintext fontsize=16 fontname="bold italic"];
-            Dependencies -> needs [dir=both arrowtail=dot
+            Dependencies -> needs [dir=back arrowtail=inv
                                 tooltip="Compulsory dependency from src `needs` data --> dst Operation."
                                 URL="%(arch_url)s#term-needs"];
             needs [color=invis];
@@ -1508,8 +1519,13 @@ class Plotter:
             broken      [color=invis
                         tooltip="Target data was not `provided` by source operation due to failure / partial-outs."
                         URL="%(arch_url)s#term-partial outputs"];
-            broken   -> sequence        [color="%(steps_color)s" penwidth=4 style=dotted
+            broken   -> subdoc [color="%(subdoc_color)s" arrowtail=odot dir=back]
+            subdoc      [color=invis
+                        tooltip="Parent --> child document, accessed with `json pointer` dependencies."
+                        URL="%(arch_url)s#term-jsonp"];
+            subdoc  -> sequence [color="%(steps_color)s" penwidth=4 style=dotted
                                         arrowhead=vee label=1 fontcolor="%(steps_color)s"];
+
             sequence    [color=invis penwidth=4 label="execution\nsequence"
                         tooltip="Sequence of execution steps."
                         URL="%(arch_url)s#term-execution-steps"];

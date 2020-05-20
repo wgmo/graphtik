@@ -12,7 +12,7 @@
 <g id="clust1" class="cluster">
 <title>cluster_legend</title>
 <polygon fill="none" stroke="black" points="8,-8 8,-732.48 379,-732.48 379,-8 8,-8"/>
-<text text-anchor="middle" x="193.5" y="-717.28" font-family="Times,serif" font-size="14.00">Graphtik Legend 8.3.1</text>
+<text text-anchor="middle" x="193.5" y="-717.28" font-family="Times,serif" font-size="14.00">Graphtik Legend 8.4.0</text>
 </g>
 <!-- Dependencies -->
 <g id="node1" class="node">
@@ -29,9 +29,8 @@
 <g id="edge1" class="edge">
 <title>Dependencies&#45;&gt;needs</title>
 <g id="a_edge1"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-needs" xlink:title="Compulsory dependency from src `needs` data &#45;&#45;&gt; dst Operation.">
-<path fill="none" stroke="black" d="M300.02,-657.3C300.3,-650.44 300.6,-642.96 300.89,-635.97"/>
-<ellipse fill="black" stroke="black" cx="299.86" cy="-661.32" rx="4" ry="4"/>
-<polygon fill="black" stroke="black" points="304.4,-635.68 301.31,-625.55 297.41,-635.4 304.4,-635.68"/>
+<path fill="none" stroke="black" d="M300.11,-655.11C300.51,-645.21 300.95,-634.31 301.31,-625.55"/>
+<polygon fill="black" stroke="black" points="296.2,-665.18 300.1,-655.33 303.19,-665.46 296.2,-665.18"/>
 </a>
 </g>
 </g>
@@ -96,32 +95,47 @@
 <path fill="none" stroke="red" stroke-dasharray="5,2" d="M306,-349.49C306,-340.26 306,-328.67 306,-318.23"/>
 <polygon fill="red" stroke="red" points="309.5,-317.92 306,-307.92 302.5,-317.92 309.5,-317.92"/>
 </g>
-<!-- sequence -->
+<!-- subdoc -->
 <g id="node7" class="node">
-<title>sequence</title>
-<g id="a_node7"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-execution-steps" xlink:title="Sequence of execution steps.">
-<ellipse fill="none" stroke="transparent" stroke-width="4" cx="306" cy="-188.87" rx="60.62" ry="26.74"/>
-<text text-anchor="middle" x="306" y="-192.67" font-family="Times,serif" font-size="14.00">execution</text>
-<text text-anchor="middle" x="306" y="-177.67" font-family="Times,serif" font-size="14.00">sequence</text>
+<title>subdoc</title>
+<g id="a_node7"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-jsonp" xlink:title="Parent &#45;&#45;&gt; child document, accessed with `json pointer` dependencies.">
+<ellipse fill="none" stroke="transparent" cx="306" cy="-211.74" rx="43.59" ry="18"/>
+<text text-anchor="middle" x="306" y="-208.04" font-family="Times,serif" font-size="14.00">subdoc</text>
 </a>
 </g>
 </g>
-<!-- broken&#45;&gt;sequence -->
+<!-- broken&#45;&gt;subdoc -->
 <g id="edge6" class="edge">
-<title>broken&#45;&gt;sequence</title>
-<path fill="none" stroke="#00bbbb" stroke-width="4" stroke-dasharray="1,5" d="M306,-271.52C306,-259.02 306,-241.66 306,-226.16"/>
-<polygon fill="#00bbbb" stroke="#00bbbb" stroke-width="4" points="306,-215.81 310.5,-225.81 307.5,-220.81 307.5,-225.81 306,-225.81 304.5,-225.81 304.5,-220.81 301.5,-225.81 306,-215.81 306,-215.81"/>
-<text text-anchor="middle" x="311" y="-237.54" font-family="Times,serif" font-size="14.00" fill="#00bbbb">1</text>
+<title>broken&#45;&gt;subdoc</title>
+<path fill="none" stroke="#8b4513" d="M306,-263.46C306,-252.44 306,-239.82 306,-229.92"/>
+<ellipse fill="none" stroke="#8b4513" cx="306" cy="-267.49" rx="4" ry="4"/>
+</g>
+<!-- sequence -->
+<g id="node8" class="node">
+<title>sequence</title>
+<g id="a_node8"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-execution-steps" xlink:title="Sequence of execution steps.">
+<ellipse fill="none" stroke="transparent" stroke-width="4" cx="306" cy="-115.87" rx="60.62" ry="26.74"/>
+<text text-anchor="middle" x="306" y="-119.67" font-family="Times,serif" font-size="14.00">execution</text>
+<text text-anchor="middle" x="306" y="-104.67" font-family="Times,serif" font-size="14.00">sequence</text>
+</a>
+</g>
+</g>
+<!-- subdoc&#45;&gt;sequence -->
+<g id="edge7" class="edge">
+<title>subdoc&#45;&gt;sequence</title>
+<path fill="none" stroke="#00bbbb" stroke-width="4" stroke-dasharray="1,5" d="M306,-193.52C306,-182.22 306,-167.01 306,-153.12"/>
+<polygon fill="#00bbbb" stroke="#00bbbb" stroke-width="4" points="306,-142.84 310.5,-152.84 307.5,-147.84 307.5,-152.84 306,-152.84 304.5,-152.84 304.5,-147.84 301.5,-152.84 306,-142.84 306,-142.84"/>
+<text text-anchor="middle" x="311" y="-164.54" font-family="Times,serif" font-size="14.00" fill="#00bbbb">1</text>
 </g>
 <!-- DataLabel -->
-<g id="node8" class="node">
+<g id="node9" class="node">
 <title>DataLabel</title>
 <text text-anchor="middle" x="180" y="-679.68" font-family="bold italic" font-size="16.00">Data</text>
 </g>
 <!-- data -->
-<g id="node9" class="node">
+<g id="node10" class="node">
 <title>data</title>
-<g id="a_node9"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-graph" xlink:title="Any data not given or asked.">
+<g id="a_node10"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-graph" xlink:title="Any data not given or asked.">
 <polygon fill="none" stroke="black" points="206,-625.48 152,-625.48 152,-589.48 206,-589.48 206,-625.48"/>
 <text text-anchor="middle" x="179" y="-603.78" font-family="Times,serif" font-size="14.00">data</text>
 </a>
@@ -129,9 +143,9 @@
 </g>
 <!-- DataLabel&#45;&gt;data -->
 <!-- input -->
-<g id="node10" class="node">
+<g id="node11" class="node">
 <title>input</title>
-<g id="a_node10"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-inputs" xlink:title="Solution value given into the computation.">
+<g id="a_node11"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-inputs" xlink:title="Solution value given into the computation.">
 <polygon fill="none" stroke="black" points="131.74,-525.92 175,-513.48 218.26,-525.92 218.22,-546.04 131.78,-546.04 131.74,-525.92"/>
 <text text-anchor="middle" x="175" y="-527.78" font-family="Times,serif" font-size="14.00">input</text>
 </a>
@@ -139,9 +153,9 @@
 </g>
 <!-- data&#45;&gt;input -->
 <!-- output -->
-<g id="node11" class="node">
+<g id="node12" class="node">
 <title>output</title>
-<g id="a_node11"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-outputs" xlink:title="Solution value asked from the computation.">
+<g id="a_node12"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-outputs" xlink:title="Solution value asked from the computation.">
 <polygon fill="none" stroke="black" points="223.33,-455.17 172,-467.61 120.67,-455.17 120.72,-435.05 223.28,-435.05 223.33,-455.17"/>
 <text text-anchor="middle" x="172" y="-445.91" font-family="Times,serif" font-size="14.00">output</text>
 </a>
@@ -149,9 +163,9 @@
 </g>
 <!-- input&#45;&gt;output -->
 <!-- inp_out -->
-<g id="node12" class="node">
+<g id="node13" class="node">
 <title>inp_out</title>
-<g id="a_node12"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-dependency" xlink:title="Data both given and asked.">
+<g id="a_node13"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-dependency" xlink:title="Data both given and asked.">
 <polygon fill="none" stroke="black" points="229.57,-367.74 201.79,-385.74 146.21,-385.74 118.43,-367.74 146.21,-349.74 201.79,-349.74 229.57,-367.74"/>
 <text text-anchor="middle" x="174" y="-364.04" font-family="Times,serif" font-size="14.00">inp+out</text>
 </a>
@@ -159,9 +173,9 @@
 </g>
 <!-- output&#45;&gt;inp_out -->
 <!-- sfx -->
-<g id="node14" class="node">
+<g id="node15" class="node">
 <title>sfx</title>
-<g id="a_node14"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-sideffects" xlink:title="Fictive data not consumed/produced by operation functions.">
+<g id="a_node15"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-sideffects" xlink:title="Fictive data not consumed/produced by operation functions.">
 <polygon fill="none" stroke="blue" points="216,-307.74 138,-307.74 138,-271.74 216,-271.74 216,-307.74"/>
 <text text-anchor="middle" x="177" y="-286.04" font-family="Times,serif" font-size="14.00" fill="blue">sideffect</text>
 </a>
@@ -169,29 +183,29 @@
 </g>
 <!-- inp_out&#45;&gt;sfx -->
 <!-- evicted -->
-<g id="node13" class="node">
+<g id="node14" class="node">
 <title>evicted</title>
-<g id="a_node13"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-evictions" xlink:title="Instruction step to erase data from solution, to save memory.">
-<polygon fill="none" stroke="#006666" stroke-width="3" stroke-dasharray="5,2" points="211,-206.87 143,-206.87 143,-170.87 211,-170.87 211,-206.87"/>
-<text text-anchor="middle" x="177" y="-185.17" font-family="Times,serif" font-size="14.00" fill="#006666">evicted</text>
+<g id="a_node14"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-evictions" xlink:title="Instruction step to erase data from solution, to save memory.">
+<polygon fill="none" stroke="#006666" stroke-width="3" stroke-dasharray="5,2" points="211,-229.74 143,-229.74 143,-193.74 211,-193.74 211,-229.74"/>
+<text text-anchor="middle" x="177" y="-208.04" font-family="Times,serif" font-size="14.00" fill="#006666">evicted</text>
 </a>
 </g>
 </g>
 <!-- sol -->
-<g id="node15" class="node">
+<g id="node16" class="node">
 <title>sol</title>
-<g id="a_node15"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-solution" xlink:title="Data contained in the solution.">
-<polygon fill="wheat" stroke="black" points="222.5,-125 131.5,-125 131.5,-89 222.5,-89 222.5,-125"/>
-<text text-anchor="middle" x="177" y="-103.3" font-family="Times,serif" font-size="14.00">with value</text>
+<g id="a_node16"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-solution" xlink:title="Data contained in the solution.">
+<polygon fill="wheat" stroke="black" points="222.5,-133.87 131.5,-133.87 131.5,-97.87 222.5,-97.87 222.5,-133.87"/>
+<text text-anchor="middle" x="177" y="-112.17" font-family="Times,serif" font-size="14.00">with value</text>
 </a>
 </g>
 </g>
 <!-- evicted&#45;&gt;sol -->
 <!-- sfx&#45;&gt;evicted -->
 <!-- overwrite -->
-<g id="node16" class="node">
+<g id="node17" class="node">
 <title>overwrite</title>
-<g id="a_node16"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-overwrite" xlink:title="More than 1 values exist in solution with this name.">
+<g id="a_node17"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-overwrite" xlink:title="More than 1 values exist in solution with this name.">
 <polygon fill="SkyBlue" stroke="black" points="220,-52 134,-52 134,-16 220,-16 220,-52"/>
 <text text-anchor="middle" x="177" y="-30.3" font-family="Times,serif" font-size="14.00">overwrite</text>
 </a>
@@ -199,14 +213,14 @@
 </g>
 <!-- sol&#45;&gt;overwrite -->
 <!-- Operations -->
-<g id="node17" class="node">
+<g id="node18" class="node">
 <title>Operations</title>
 <text text-anchor="middle" x="74" y="-679.68" font-family="bold italic" font-size="16.00">Operations</text>
 </g>
 <!-- operation -->
-<g id="node18" class="node">
+<g id="node19" class="node">
 <title>operation</title>
-<g id="a_node18"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-operation" xlink:title="A function with needs &amp; provides.">
+<g id="a_node19"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-operation" xlink:title="A function with needs &amp; provides.">
 <polyline fill="none" stroke="black" points="35,-606.48 110,-606.48 "/>
 <text text-anchor="start" x="38" y="-613.28" font-family="Times,serif" font-size="14.00">operation</text>
 <text text-anchor="start" x="43" y="-594.28" font-family="Times,serif" font-style="italic" font-size="14.00">function</text>
@@ -216,9 +230,9 @@
 </g>
 <!-- Operations&#45;&gt;operation -->
 <!-- pruned -->
-<g id="node19" class="node">
+<g id="node20" class="node">
 <title>pruned</title>
-<g id="a_node19"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-prune" xlink:title="Operation excluded from plan.">
+<g id="a_node20"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-prune" xlink:title="Operation excluded from plan.">
 <text text-anchor="start" x="44" y="-527.28" font-family="Times,serif" font-size="14.00" fill="#d3d3d3">pruned</text>
 <path fill="none" stroke="#d3d3d3" d="M47.33,-518.98C47.33,-518.98 92.67,-518.98 92.67,-518.98 96.83,-518.98 101,-523.15 101,-527.31 101,-527.31 101,-535.65 101,-535.65 101,-539.81 96.83,-543.98 92.67,-543.98 92.67,-543.98 47.33,-543.98 47.33,-543.98 43.17,-543.98 39,-539.81 39,-535.65 39,-535.65 39,-527.31 39,-527.31 39,-523.15 43.17,-518.98 47.33,-518.98"/>
 </a>
@@ -226,9 +240,9 @@
 </g>
 <!-- operation&#45;&gt;pruned -->
 <!-- executed -->
-<g id="node20" class="node">
+<g id="node21" class="node">
 <title>executed</title>
-<g id="a_node20"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-solution" xlink:title="Operation executed successfully.">
+<g id="a_node21"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-solution" xlink:title="Operation executed successfully.">
 <path fill="wheat" stroke="transparent" d="M35.83,-437.11C35.83,-437.11 94.17,-437.11 94.17,-437.11 98.33,-437.11 102.5,-441.28 102.5,-445.44 102.5,-445.44 102.5,-453.78 102.5,-453.78 102.5,-457.94 98.33,-462.11 94.17,-462.11 94.17,-462.11 35.83,-462.11 35.83,-462.11 31.67,-462.11 27.5,-457.94 27.5,-453.78 27.5,-453.78 27.5,-445.44 27.5,-445.44 27.5,-441.28 31.67,-437.11 35.83,-437.11"/>
 <text text-anchor="start" x="33" y="-445.41" font-family="Times,serif" font-size="14.00">executed</text>
 <path fill="none" stroke="black" d="M35.83,-437.11C35.83,-437.11 94.17,-437.11 94.17,-437.11 98.33,-437.11 102.5,-441.28 102.5,-445.44 102.5,-445.44 102.5,-453.78 102.5,-453.78 102.5,-457.94 98.33,-462.11 94.17,-462.11 94.17,-462.11 35.83,-462.11 35.83,-462.11 31.67,-462.11 27.5,-457.94 27.5,-453.78 27.5,-453.78 27.5,-445.44 27.5,-445.44 27.5,-441.28 31.67,-437.11 35.83,-437.11"/>
@@ -237,9 +251,9 @@
 </g>
 <!-- pruned&#45;&gt;executed -->
 <!-- failed -->
-<g id="node21" class="node">
+<g id="node22" class="node">
 <title>failed</title>
-<g id="a_node21"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-endurance" xlink:title="Failed operation &#45; downstream ops will cancel.">
+<g id="a_node22"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-endurance" xlink:title="Failed operation &#45; downstream ops will cancel.">
 <path fill="LightCoral" stroke="transparent" d="M49.33,-355.24C49.33,-355.24 82.67,-355.24 82.67,-355.24 86.83,-355.24 91,-359.41 91,-363.57 91,-363.57 91,-371.91 91,-371.91 91,-376.07 86.83,-380.24 82.67,-380.24 82.67,-380.24 49.33,-380.24 49.33,-380.24 45.17,-380.24 41,-376.07 41,-371.91 41,-371.91 41,-363.57 41,-363.57 41,-359.41 45.17,-355.24 49.33,-355.24"/>
 <text text-anchor="start" x="46" y="-363.54" font-family="Times,serif" font-size="14.00">failed</text>
 <path fill="none" stroke="black" d="M49.33,-355.24C49.33,-355.24 82.67,-355.24 82.67,-355.24 86.83,-355.24 91,-359.41 91,-363.57 91,-363.57 91,-371.91 91,-371.91 91,-376.07 86.83,-380.24 82.67,-380.24 82.67,-380.24 49.33,-380.24 49.33,-380.24 45.17,-380.24 41,-376.07 41,-371.91 41,-371.91 41,-363.57 41,-363.57 41,-359.41 45.17,-355.24 49.33,-355.24"/>
@@ -248,9 +262,9 @@
 </g>
 <!-- executed&#45;&gt;failed -->
 <!-- rescheduled -->
-<g id="node22" class="node">
+<g id="node23" class="node">
 <title>rescheduled</title>
-<g id="a_node22"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-reschedulling" xlink:title="Operation may fail or provide partial outputs so `net` must reschedule.">
+<g id="a_node23"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-reschedulling" xlink:title="Operation may fail or provide partial outputs so `net` must reschedule.">
 <text text-anchor="start" x="38" y="-293.54" font-family="Times,serif" font-size="14.00">endured</text>
 <text text-anchor="start" x="24" y="-278.54" font-family="Times,serif" font-size="14.00">rescheduled</text>
 <path fill="none" stroke="black" stroke-width="4" d="M30,-268.74C30,-268.74 106,-268.74 106,-268.74 112,-268.74 118,-274.74 118,-280.74 118,-280.74 118,-298.74 118,-298.74 118,-304.74 112,-310.74 106,-310.74 106,-310.74 30,-310.74 30,-310.74 24,-310.74 18,-304.74 18,-298.74 18,-298.74 18,-280.74 18,-280.74 18,-274.74 24,-268.74 30,-268.74"/>
@@ -259,12 +273,12 @@
 </g>
 <!-- failed&#45;&gt;rescheduled -->
 <!-- canceled -->
-<g id="node23" class="node">
+<g id="node24" class="node">
 <title>canceled</title>
-<g id="a_node23"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-reschedule" xlink:title="Canceled operation due to failures or partial outputs upstream.">
-<path fill="Grey" stroke="transparent" d="M39.83,-176.37C39.83,-176.37 96.17,-176.37 96.17,-176.37 100.33,-176.37 104.5,-180.54 104.5,-184.7 104.5,-184.7 104.5,-193.04 104.5,-193.04 104.5,-197.2 100.33,-201.37 96.17,-201.37 96.17,-201.37 39.83,-201.37 39.83,-201.37 35.67,-201.37 31.5,-197.2 31.5,-193.04 31.5,-193.04 31.5,-184.7 31.5,-184.7 31.5,-180.54 35.67,-176.37 39.83,-176.37"/>
-<text text-anchor="start" x="37" y="-184.67" font-family="Times,serif" font-size="14.00">canceled</text>
-<path fill="none" stroke="black" d="M39.83,-176.37C39.83,-176.37 96.17,-176.37 96.17,-176.37 100.33,-176.37 104.5,-180.54 104.5,-184.7 104.5,-184.7 104.5,-193.04 104.5,-193.04 104.5,-197.2 100.33,-201.37 96.17,-201.37 96.17,-201.37 39.83,-201.37 39.83,-201.37 35.67,-201.37 31.5,-197.2 31.5,-193.04 31.5,-193.04 31.5,-184.7 31.5,-184.7 31.5,-180.54 35.67,-176.37 39.83,-176.37"/>
+<g id="a_node24"><a xlink:href="https://graphtik.readthedocs.io/en/latest/arch.html#term-reschedule" xlink:title="Canceled operation due to failures or partial outputs upstream.">
+<path fill="Grey" stroke="transparent" d="M39.83,-199.24C39.83,-199.24 96.17,-199.24 96.17,-199.24 100.33,-199.24 104.5,-203.41 104.5,-207.57 104.5,-207.57 104.5,-215.91 104.5,-215.91 104.5,-220.07 100.33,-224.24 96.17,-224.24 96.17,-224.24 39.83,-224.24 39.83,-224.24 35.67,-224.24 31.5,-220.07 31.5,-215.91 31.5,-215.91 31.5,-207.57 31.5,-207.57 31.5,-203.41 35.67,-199.24 39.83,-199.24"/>
+<text text-anchor="start" x="37" y="-207.54" font-family="Times,serif" font-size="14.00">canceled</text>
+<path fill="none" stroke="black" d="M39.83,-199.24C39.83,-199.24 96.17,-199.24 96.17,-199.24 100.33,-199.24 104.5,-203.41 104.5,-207.57 104.5,-207.57 104.5,-215.91 104.5,-215.91 104.5,-220.07 100.33,-224.24 96.17,-224.24 96.17,-224.24 39.83,-224.24 39.83,-224.24 35.67,-224.24 31.5,-220.07 31.5,-215.91 31.5,-215.91 31.5,-207.57 31.5,-207.57 31.5,-203.41 35.67,-199.24 39.83,-199.24"/>
 </a>
 </g>
 </g>
