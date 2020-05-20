@@ -272,6 +272,10 @@ class Solution(ChainMap, Plottable):
         if ex:
             raise ex
 
+    @property
+    def graph(self):
+        return self.dag
+
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         """delegate to plan, with solution"""
         name = f"solution-x{len(self.plan.net.graph.nodes)}-nodes"
@@ -386,6 +390,10 @@ class ExecutionPlan(
         When true, :term:`eviction`\\s may kick in (unless disabled by :term:`configurations`),
         otherwise, *evictions* (along with prefect-evictions check) are skipped.
     """
+
+    @property
+    def graph(self):
+        return self.dag
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         plot_args = plot_args.clone_or_merge_graph(self.net.graph)

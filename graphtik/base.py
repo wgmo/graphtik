@@ -20,6 +20,7 @@ from typing import (
     Any,
     Callable,
     Collection,
+    List,
     Mapping,
     NamedTuple,
     Optional,
@@ -488,13 +489,16 @@ class PlotArgs(NamedTuple):
 ## Defined here, to avoid subclasses importing `plot` module.
 class Plottable(abc.ABC):
     """
-    Classes wishing to plot their graphs should inherit this and ...
+    :term:`plottable` capabilities and graph props for all major classes of the project.
 
+    Classes wishing to plot their graphs should inherit this and
     implement property ``plot`` to return a "partial" callable that somehow
     ends up calling  :func:`.plot.render_pydot()` with the `graph` or any other
     args bound appropriately.
     The purpose is to avoid copying this function & documentation here around.
     """
+
+    graph: "networkx.Graph"
 
     def plot(
         self,
@@ -784,6 +788,40 @@ class Plottable(abc.ABC):
           :meth:`_replace()`,
           not to override user args.
         """
+
+    @property
+    def ops(self) -> List["Operation"]:
+        """A new list with all :term:`operation`\\s contained in the :term:`network`."""
+        from .network import yield_ops
+
+        return list(yield_ops(self.graph))
+
+    @property
+    def data(self) -> List[str]:
+        """A new list with all :term:`operation`\\s contained in the :term:`network`."""
+        from .network import yield_datanodes
+
+        return list(yield_datanodes(self.graph))
+
+    def find_ops(self, predicate) -> List["Operation"]:
+        """
+        Scan operation nodes and fetch those satisfying `predicate`.
+
+        :param predicate:
+            the :term:`node predicate` is a 2-argument callable(op, node-data)
+            that should return true for nodes to include.
+        """
+        return [
+            n
+            for n, d in self.graph.nodes.data(True)
+            if isinstance(n, Operation) and predicate(n, d)
+        ]
+
+    def find_op_by_name(self, name) -> Union["Operation", None]:
+        """Fetch the 1st operation named with the given `name`."""
+        for n in self.ops:
+            if n.name == name:
+                return n
 
 
 class RenArgs(NamedTuple):

@@ -194,13 +194,6 @@ class Pipeline(Operation):
             items.append(f"x{len(ops)} ops: {steps}")
         return f"{clsname}({', '.join(items)})"
 
-    @property
-    def ops(self) -> List[Operation]:
-        """A new list with all :term:`operation`\\s contained in the :term:`network`."""
-        from .network import yield_ops
-
-        return list(yield_ops(self.net.graph))
-
     def withset(
         self,
         outputs: Items = UNSET,
@@ -290,6 +283,10 @@ class Pipeline(Operation):
             node_props=node_props,
             renamer=renamer,
         )
+
+    @property
+    def graph(self):
+        return self.net.graph
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         """Delegate to network. """
