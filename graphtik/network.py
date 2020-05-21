@@ -520,7 +520,8 @@ class Network(Plottable):
                 # TODO: speedup prune-by-outs with traversing code
                 ending_in_outputs.update(nx.ancestors(dag, out))
                 ending_in_outputs.add(out)
-            broken_dag = broken_dag.subgraph(ending_in_outputs)
+            # Clone it, to modify it, or BUG@@ much later (e.g in eviction planing).
+            broken_dag = broken_dag.subgraph(ending_in_outputs).copy()
             if log.isEnabledFor(logging.INFO) and len(
                 list(yield_ops(ending_in_outputs))
             ) != len(self.ops):
