@@ -1096,7 +1096,7 @@ def test_jsonp_disabled():
         no_jsonp.compute({"inputs": {"a": 1, "b": 2}})
 
 
-def test_jsonp_and_conveyor_fn():
+def test_jsonp_and_conveyor_fn_simple():
     copy_values = operation(
         name="copy a+b-->A+BB",
         needs=[jsonp("inputs/a"), jsonp("inputs/b", no_jsonp=False)],
@@ -1114,6 +1114,24 @@ def test_jsonp_and_conveyor_fn():
     assert sol == {"RESULTS": {"A": 1, "BB": 2}}
     sol = pipe.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS/A")
     assert sol == {"RESULTS": {"A": 1, "BB": 2}}
+
+
+def test_jsonp_and_conveyor_fn_complex():
+    pipe = compose(
+        "t",
+        operation(
+            name="op1",
+            needs=[jsonp("i/a"), jsonp("i/a")],  # dupe jsonp needs
+            provides=[jsonp("r/a"), jsonp("a", True)],
+        )(),
+        operation(
+            lambda x: 2 * x, name="op2", needs=[jsonp("r/a")], provides=[jsonp("r/AA")],
+        ),
+    )
+    sol = pipe.compute({"i": {"a": 1}})
+    assert sol == {"i": {"a": 1}, "r": {"AA": 2}, "a": 1}
+    sol = pipe.compute({"i": {"a": 1}}, outputs="r/AA")
+    assert sol == {"r": {"AA": 2}}
 
 
 # Function without return value.

@@ -598,7 +598,7 @@ class Network(Plottable):
             else:
                 steps.add(_EvictInstruction(dep))
 
-        outputs = set(outputs)  # to do set operations
+        outputs = set(yield_chaindocs(pruned_dag, outputs))
         steps = iset()
 
         ## Add Operation and Eviction steps.
