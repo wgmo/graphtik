@@ -404,8 +404,11 @@ class Pipeline(Operation):
             if not predicate:
                 predicate = self.predicate
 
-            # Build the execution plan.
-            log.debug("=== Compiling pipeline(%s)...", self.name)
+            log.debug("=== Compiling %s...", self)
+            # # Discover nested inputs given.
+            # plan = net.compile(
+            #     self._nested_inputs_given(named_inputs), outputs, predicate
+            # )
             plan = net.compile(named_inputs.keys(), outputs, predicate)
 
             # Restore `abort` flag for next run.
