@@ -1,8 +1,10 @@
 # Copyright 2020-2020, Kostis Anagnostopoulos;
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """mostly :mod:`networkx` routines tests"""
+
 import networkx as nx
 import pytest
+from networkx.readwrite.edgelist import parse_edgelist
 
 from graphtik.network import (
     yield_also_chaindocs,
@@ -16,21 +18,22 @@ from graphtik.network import (
 
 @pytest.fixture
 def g():
-    subdoc_attr = {"subdoc": True}
-    g = nx.DiGraph()
-    g.add_edges_from(
-        [
-            ("root", "d1", subdoc_attr),
-            ("d1", "d11", subdoc_attr),
-            ("d1", "d12", subdoc_attr),
-            ("root", "d2", subdoc_attr),
-            ("d2", "d21", subdoc_attr),
-            ("d21", "d211", subdoc_attr),
-            # Irrelevant nodes
-            ("root", "foo"),
-            ("d1", "bar"),
-            ("d11", "baz"),
-        ]
+    g = parse_edgelist(
+        """
+        root    d1                      1
+                d1      d11             1
+                d1      d12             1
+        root    d2                      1
+                d2      d21             1
+                        d21     d211    1
+
+        # Irrelevant nodes
+        root    foo
+                d1      bar
+                        d11     baz
+    """.splitlines(),
+        create_using=nx.DiGraph,
+        data=[("subdoc", bool)],
     )
     return g
 
