@@ -393,7 +393,9 @@ class Network(Plottable):
             for output_name in outputs:
                 ending_in_outputs.update(nx.ancestors(dag, output_name))
             broken_dag = broken_dag.subgraph(ending_in_outputs)
-            if log.isEnabledFor(logging.INFO) and len(broken_dag) != len(dag):
+            if log.isEnabledFor(logging.INFO) and len(
+                list(yield_ops(ending_in_outputs))
+            ) != len(self.ops):
                 log.info(
                     "... dropping irrelevant ops%s.",
                     [
