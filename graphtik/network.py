@@ -635,6 +635,12 @@ class Network(Plottable):
                     if not subdoc
                 )
                 if not need_users & future_nodes:
+                    log.debug(
+                        "... evict-1 rule for not-to-be-used need-chain%s after #%i topo-sorted %s .",
+                        need_chain,
+                        i,
+                        node,
+                    )
                     add_eviction(root_doc(pruned_dag, need))
 
             ## EVICT(2) for operation's pruned provides.
@@ -643,6 +649,12 @@ class Network(Plottable):
             for provide in node.provides:
                 provide_chain = set(yield_also_chaindocs(pruned_dag, provide))
                 if not provide_chain & pruned_dag.nodes:
+                    log.debug(
+                        "... evict-2 rule for pruned provide-chain%s after #%i topo-sorted %s.",
+                        provide_chain,
+                        i,
+                        node,
+                    )
                     add_eviction(root_doc(pruned_dag, provide))
 
         return list(steps)
