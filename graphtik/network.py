@@ -603,11 +603,11 @@ class Network(Plottable):
 
         ## Add Operation and Eviction steps.
         #
-        for i, node in enumerate(ordered_nodes):
-            if not isinstance(node, Operation):
+        for i, op in enumerate(ordered_nodes):
+            if not isinstance(op, Operation):
                 continue
 
-            steps.add(node)
+            steps.add(op)
 
             future_nodes = set(ordered_nodes[i + 1 :])
 
@@ -616,7 +616,7 @@ class Network(Plottable):
             #  Broken links are irrelevant bc they are predecessors of data (provides),
             #  but here we scan for predecessors of the operation (needs).
             #
-            for need in pruned_dag.predecessors(node):
+            for need in pruned_dag.predecessors(op):
                 need_chain = set(yield_also_chaindocs(pruned_dag, need))
 
                 ## Don't evict if any `need` in doc-chain has been asked
@@ -639,21 +639,21 @@ class Network(Plottable):
                         "... evict-1 rule for not-to-be-used need-chain%s after #%i topo-sorted %s .",
                         need_chain,
                         i,
-                        node,
+                        op,
                     )
                     add_eviction(root_doc(pruned_dag, need))
 
             ## EVICT(2) for operation's pruned provides.
             #  .. image:: docs/source/images/unpruned_useless_provides.svg
             #
-            for provide in node.provides:
+            for provide in op.provides:
                 provide_chain = set(yield_also_chaindocs(pruned_dag, provide))
                 if not provide_chain & pruned_dag.nodes:
                     log.debug(
                         "... evict-2 rule for pruned provide-chain%s after #%i topo-sorted %s.",
                         provide_chain,
                         i,
-                        node,
+                        op,
                     )
                     add_eviction(root_doc(pruned_dag, provide))
 
