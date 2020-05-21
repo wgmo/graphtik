@@ -604,49 +604,46 @@ class Network(Plottable):
         ## Add Operation and Eviction steps.
         #
         for i, node in enumerate(ordered_nodes):
-            if isinstance(node, Operation):
-                steps.add(node)
+            if not isinstance(node, Operation):
+                continue
 
-                future_nodes = set(ordered_nodes[i + 1 :])
+            steps.add(node)
 
-                ## EVICT(1) operation's needs not to be used in the future.
+            future_nodes = set(ordered_nodes[i + 1 :])
+
+            ## EVICT(1) operation's needs not to be used in the future.
+            #
+            #  Broken links are irrelevant bc they are predecessors of data (provides),
+            #  but here we scan for predecessors of the operation (needs).
+            #
+            for need in pruned_dag.predecessors(node):
+                need_chain = set(yield_also_chaindocs(pruned_dag, need))
+
+                ## Don't evict if any `need` in doc-chain has been asked
+                #  as output.
                 #
-                #  Broken links are irrelevant bc they are predecessors of data (provides),
-                #  but here we scan for predecessors of the operation (needs).
+                if need_chain & outputs:
+                    continue
+
+                ## Don't evict if any `need` in doc-chain will be used
+                #  in the future.
                 #
-                for need in pruned_dag.predecessors(node):
-                    need_chain = set(yield_also_chaindocs(pruned_dag, need))
+                need_users = set(
+                    dst
+                    for n in need_chain
+                    for _, dst, subdoc in pruned_dag.out_edges(n, data="subdoc")
+                    if not subdoc
+                )
+                if not need_users & future_nodes:
+                    add_eviction(root_doc(pruned_dag, need))
 
-                    ## Don't evict if any `need` in doc-chain has been asked
-                    #  as output.
-                    #
-                    if need_chain & outputs:
-                        continue
-
-                    ## Don't evict if any `need` in doc-chain will be used
-                    #  in the future.
-                    #
-                    need_users = set(
-                        dst
-                        for n in need_chain
-                        for _, dst, subdoc in pruned_dag.out_edges(n, data="subdoc")
-                        if not subdoc
-                    )
-                    if not need_users & future_nodes:
-                        add_eviction(root_doc(pruned_dag, need))
-
-                ## EVICT(2) for operation's pruned provides.
-                #  .. image:: docs/source/images/unpruned_useless_provides.svg
-                #
-                for provide in node.provides:
-                    provide_chain = set(yield_also_chaindocs(pruned_dag, provide))
-                    if not provide_chain & pruned_dag.nodes:
-                        add_eviction(root_doc(pruned_dag, provide))
-
-            else:
-                assert isinstance(
-                    node, str
-                ), f"Unrecognized network graph node {node}: {type(node).__name__!r}"
+            ## EVICT(2) for operation's pruned provides.
+            #  .. image:: docs/source/images/unpruned_useless_provides.svg
+            #
+            for provide in node.provides:
+                provide_chain = set(yield_also_chaindocs(pruned_dag, provide))
+                if not provide_chain & pruned_dag.nodes:
+                    add_eviction(root_doc(pruned_dag, provide))
 
         return list(steps)
 
