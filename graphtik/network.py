@@ -643,10 +643,11 @@ class Network(Plottable):
                     )
                     add_eviction(root_doc(pruned_dag, need))
 
-            ## EVICT(2) for operation's pruned provides.
+            ## EVICT(2) for operation's pruned provides,
+            #  by searching nodes in net missing from plan.
             #  .. image:: docs/source/images/unpruned_useless_provides.svg
             #
-            for provide in op.provides:
+            for provide in self.graph.successors(op):
                 provide_chain = set(yield_also_chaindocs(pruned_dag, provide))
                 if not provide_chain & pruned_dag.nodes:
                     log.debug(
