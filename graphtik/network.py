@@ -108,7 +108,7 @@ def collect_requirements(graph) -> Tuple[iset, iset]:
 def root_doc(dag, doc: str) -> str:
     """
     Return the most superdoc, or the same `doc` is not in a chin, or
-    raise if node unknonwn.
+    raise if node unknown.
     """
     for src, dst, subdoc in dag.in_edges(doc, data="subdoc"):
         if subdoc:
@@ -397,7 +397,13 @@ class Network(Plottable):
             graph.add_edge(operation, n, **kw)
 
     def _topo_sort_nodes(self, dag) -> List:
-        """Topo-sort dag respecting operation-insertion order to break ties."""
+        """
+        Topo-sort dag by execution order, then by operation-insertion order
+        to break ties.
+
+        This means (probably!?) that the first inserted win the `needs`, but
+        the last one win the `provides` (and the final solution).
+        """
         node_keys = dict(zip(dag.nodes, count()))
         return nx.lexicographical_topological_sort(dag, key=node_keys.get)
 
@@ -573,76 +579,76 @@ class Network(Plottable):
         the computation is running.
         An evict-instruction is inserted whenever a *need* is not used
         by any other *operation* further down the DAG.
+
+        Note that for :term:`doc chain`\\s, it is evicted either the whole chain
+        (from root), or nothing at all.
         """
-
-        steps = []
-
-        def add_step_once(step):
-            # For functions with repeated needs, like ['a', 'a'].
-            if steps and step == steps[-1] and type(step) == type(steps[-1]):
-                log.warning("Skipped dupe step %s in position %i.", step, len(steps))
-            else:
-                steps.append(step)
-
-        ## Create an execution order such that each layer's needs are provided,
-        #  respecting operation-insertion order to break ties;  which means that
-        #  the first inserted operations win the `needs`, but
-        #  the last ones win the `provides` (and the final solution).
+        ## Sort by execution order, then by operation-insertion, to break ties.
         ordered_nodes = iset(self._topo_sort_nodes(pruned_dag))
 
-        # Add Operations evaluation steps, and instructions to evict data.
+        if not outputs or is_skip_evictions():
+            # When no specific outputs asked, NO EVICTIONS,
+            # so just add the Operations.
+            return list(yield_ops(ordered_nodes))
+
+        def add_eviction(dep):
+            # For functions with repeated needs, like ['a', 'a'].
+            if dep in steps:
+                log.warning("Skipped dupe step %s in position %i.", dep, len(steps))
+            else:
+                steps.add(_EvictInstruction(dep))
+
+        outputs = set(outputs)  # to do set operations
+        steps = iset()
+
+        ## Add Operation and Eviction steps.
+        #
         for i, node in enumerate(ordered_nodes):
-
             if isinstance(node, Operation):
-                steps.append(node)
+                steps.add(node)
 
-                # NO EVICTIONS when no specific outputs asked.
-                if not outputs or is_skip_evictions():
-                    continue
+                future_nodes = set(ordered_nodes[i + 1 :])
 
-                # Add EVICT (1) for operation's needs.
+                ## EVICT(1) operation's needs not to be used in the future.
                 #
-                # Broken links are irrelevant bc they are predecessors of data (provides),
-                # but here we scan for predecessors of the operation (needs).
+                #  Broken links are irrelevant bc they are predecessors of data (provides),
+                #  but here we scan for predecessors of the operation (needs).
                 #
                 for need in pruned_dag.predecessors(node):
-                    subdocs = set(yield_also_chaindocs(pruned_dag, need))
+                    need_chain = set(yield_also_chaindocs(pruned_dag, need))
 
-                    # Do not evict if any doc in :term:`doc chain` is asked as output.
-                    if subdocs & set(outputs):
+                    ## Don't evict if any `need` in doc-chain has been asked
+                    #  as output.
+                    #
+                    if need_chain & outputs:
                         continue
 
-                    # A needed-data of this operation may be evicted if
-                    # no future Operations needs it.
+                    ## Don't evict if any `need` in doc-chain will be used
+                    #  in the future.
                     #
-                    for future_node in ordered_nodes[i + 1 :]:
-                        if isinstance(future_node, Operation) and subdocs & set(
-                            pruned_dag.pred[future_node]
-                        ):
-                            break
-                    else:
-                        add_step_once(_EvictInstruction(root_doc(pruned_dag, need)))
+                    need_users = set(
+                        dst
+                        for n in need_chain
+                        for _, dst, subdoc in pruned_dag.out_edges(n, data="subdoc")
+                        if not subdoc
+                    )
+                    if not need_users & future_nodes:
+                        add_eviction(root_doc(pruned_dag, need))
 
-                # Add EVICT (2) for unused operation's provides.
-                #
-                # A provided-data is evicted if no future operation needs it
-                # (and is not an asked output).
-                # It MUST use the broken dag, not to evict data
-                # that will be pinned(?), but to populate overwrites with them.
-                #
-                # .. image:: docs/source/images/unpruned_useless_provides.svg
+                ## EVICT(2) for operation's pruned provides.
+                #  .. image:: docs/source/images/unpruned_useless_provides.svg
                 #
                 for provide in node.provides:
                     provide_chain = set(yield_also_chaindocs(pruned_dag, provide))
                     if not provide_chain & pruned_dag.nodes:
-                        add_step_once(_EvictInstruction(root_doc(pruned_dag, provide)))
+                        add_eviction(root_doc(pruned_dag, provide))
 
             else:
                 assert isinstance(
                     node, str
                 ), f"Unrecognized network graph node {node}: {type(node).__name__!r}"
 
-        return steps
+        return list(steps)
 
     def compile(
         self, inputs: Items = None, outputs: Items = None, predicate=None
