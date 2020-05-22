@@ -127,7 +127,7 @@ def test_iter_jsonpointer_massive(inp, exp):
         (" some /  /", [" some ", "  ", ""]),
     ],
 )
-def test_iter_jsonpointer_relaxed_massive(inp, exp):
+def test_iter_jsonpointer_parts_relaxed_massive(inp, exp):
     if isinstance(exp, Exception):
         with pytest.raises(type(exp), match=str(exp)):
             list(iter_jsonpointer_parts_relaxed(inp))

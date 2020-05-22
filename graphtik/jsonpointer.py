@@ -15,6 +15,7 @@ Copied from pypi/pandalone.
     >>> __name__ = "graphtik.jsonpointer"
 """
 from collections.abc import Sequence
+import operator
 
 import numpy as np
 import pandas as pd
@@ -204,17 +205,19 @@ def resolve_path(doc, path, default=_scream, root=None):
 
     :author: Julian Berman, ankostis
     """
+    if not root:
+        root = doc
 
-    def resolve_root(d, p):
+    def resolve_root_or_fail(d, p):
         if not p:
             return root or doc
         raise ValueError()
 
     part_resolvers = [
         lambda d, p: d[int(p)],
-        lambda d, p: d[p],
-        lambda d, p: getattr(d, p),
-        resolve_root,
+        operator.getitem,
+        getattr,
+        resolve_root_or_fail,
     ]
     for part in iter_jsonpointer_parts_relaxed(path):
         start_i = 0 if isinstance(doc, Sequence) and not isinstance(doc, str) else 1
