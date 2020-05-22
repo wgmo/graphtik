@@ -14,32 +14,39 @@ Copied from pypi/pandalone.
     >>> from graphtik.jsonpointer import *
     >>> __name__ = "graphtik.jsonpointer"
 """
-from collections.abc import Sequence
 import operator
+from collections.abc import Sequence
+from functools import partial
+from typing import Iterable, Mapping, Sequence, Union
 
 import numpy as np
 import pandas as pd
 
 
-def escape_jsonpointer_part(part):
+def escape_jsonpointer_part(part: str) -> str:
+    """convert path-part according to the json-pointer standard"""
     return part.replace("~", "~0").replace("/", "~1")
 
 
-def unescape_jsonpointer_part(part):
+def unescape_jsonpointer_part(part: str) -> str:
+    """convert path-part according to the json-pointer standard"""
     return part.replace("~1", "/").replace("~0", "~")
 
 
-def iter_jsonpointer_parts(jsonpath):
+# TODO: DROP iter_jsonpointer_parts
+def iter_jsonpointer_parts(path: str) -> Iterable[str]:
     """
-    Generates the ``jsonpath`` parts according to jsonpointer spec.
+    Generates the `path` parts according to jsonpointer spec.
 
-    :param str jsonpath:  a jsonpath to resolve within document
-    :return:              The parts of the path as generator), without
-                          converting any step to int, and None if None.
+    :param path:
+        a path to resolve within document
+    :return:
+        The parts of the path as generator), without
+        converting any step to int, and None if None.
 
     :author: Julian Berman, ankostis
 
-    Examples::
+    **Examples:**
 
         >>> list(iter_jsonpointer_parts('/a/b'))
         ['a', 'b']
@@ -69,28 +76,22 @@ def iter_jsonpointer_parts(jsonpath):
         #ValueError: Jsonpointer-path(a) must NOT ends with '/'!
 
     """
-
-    #     if jsonpath.endswith('/'):
-    #         msg = "Jsonpointer-path({}) must NOT finish with '/'!"
-    #         raise ValueError(msg.format(jsonpath))
-    parts = jsonpath.split("/")
+    parts = path.split("/")
     if parts.pop(0) != "":
-        msg = "Jsonpointer-path({}) must start with '/'!"
-        raise ValueError(msg.format(jsonpath))
+        raise ValueError(f"Jsonpointer-path({path}) must start with '/'!")
 
-    for part in parts:
-        part = unescape_jsonpointer_part(part)
-
-        yield part
+    return (unescape_jsonpointer_part(part) for part in parts)
 
 
-def iter_jsonpointer_parts_relaxed(jsonpointer):
+# TODO: rename iter_jsonpointer_parts_relaxed() --> iter_path()
+def iter_jsonpointer_parts_relaxed(jsonpointer: str) -> Iterable[str]:
     """
     Like :func:`iter_jsonpointer_parts()` but accepting also non-absolute paths.
 
-    The 1st step of absolute-paths is always ''.
+    :return:
+        The 1st step of absolute-paths is always ''.
 
-    Examples::
+    **Examples:**
 
         >>> list(iter_jsonpointer_parts_relaxed('a'))
         ['a']
@@ -111,24 +112,29 @@ def iter_jsonpointer_parts_relaxed(jsonpointer):
         ['']
 
     """
-    for part in jsonpointer.split("/"):
-        yield unescape_jsonpointer_part(part)
+    return (unescape_jsonpointer_part(part) for part in jsonpointer.split("/"))
 
 
-_scream = ...
-
-
-def resolve_jsonpointer(doc, jsonpointer, default=_scream):
+# TODO: DROP resolve_jsonpointer(), keep only `resolve_path()`.
+def resolve_jsonpointer(doc, path: Union[str, Sequence], default=...):
     """
-    Resolve a ``jsonpointer`` within the referenced ``doc``.
+    Resolve a json-pointer `path` within the referenced `doc`.
 
-    :param doc:         the referrant document
-    :param str path:    a jsonpointer to resolve within document
-    :param default:     A value to return if path does not resolve; by default, it raises.
-    :return:            the resolved doc-item or raises :class:`ValueError`
-    :raises:            ValueError (if cannot resolve path and no `default`)
+    :param doc:
+        the referrant document
+    :param path:
+        a jsonpointer to resolve within `doc` document
+    :param default:
+        the value to return if `path` does not resolve; by default, it raises.
 
-    Examples:
+    :return:
+        the resolved doc-item
+    :raises ResolveError:
+        if `path` cannot resolve and no `default` given
+    :raises ValueError:
+        if path not an absolute path (does not start with a slash(`/``)).
+
+    **Examples:**
 
         >>> dt = {
         ...     'pi':3.14,
@@ -138,19 +144,21 @@ def resolve_jsonpointer(doc, jsonpointer, default=_scream):
         ...         'sr': pd.Series({'abc':'def'}),
         ...     }
         ... }
-        >>> resolve_jsonpointer(dt, '/pi', default=_scream)
+        >>> resolve_jsonpointer(dt, '/pi', default=...)
         3.14
 
         >>> resolve_jsonpointer(dt, '/pi/BAD')
         Traceback (most recent call last):
-        KeyError: "Unresolvable JSON pointer('/pi/BAD')@(BAD)"
+        graphtik.jsonpointer.ResolveError: '/pi/BAD' @ BAD
 
         >>> resolve_jsonpointer(dt, '/pi/BAD', 'Hi!')
         'Hi!'
 
     :author: Julian Berman, ankostis
     """
-    for part in iter_jsonpointer_parts(jsonpointer):
+    parts = iter_jsonpointer_parts(path)  # if isinstance(path, str) else path
+
+    for part in parts:
         if isinstance(doc, Sequence) and not isinstance(doc, str):
             # Array indexes should be turned into integers
             try:
@@ -160,28 +168,81 @@ def resolve_jsonpointer(doc, jsonpointer, default=_scream):
         try:
             doc = doc[part]
         except (TypeError, LookupError):
-            if default is _scream:
-                raise KeyError(
-                    "Unresolvable JSON pointer(%r)@(%s)" % (jsonpointer, part)
-                )
+            if default is ...:
+                raise ResolveError(path, part)
             else:
                 return default
 
     return doc
 
 
-def resolve_path(doc, path, default=_scream, root=None):
+class ResolveError(KeyError):
     """
-    Like :func:`resolve_jsonpointer` also for relative-paths & attribute-branches.
+    A :class:`KeyError` raised when a json-pointer path does not :func:`resolve <.resolve_path>`.
+    """
 
-    :param doc:      the referrant document
-    :param str path: An absolute or relative path to resolve within document.
-    :param default:  A value to return if path does not resolve.
-    :param root:     Document for absolute paths, assumed `doc` if missing.
-    :return:         the resolved doc-item or raises :class:`ValueError`
-    :raises:     ValueError (if cannot resolve path and no `default`)
+    # __init__(path, step)
 
-    Examples:
+    def __str__(self):
+        return f"{self.key!r} @ {self.step}"
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.key!r} @ {self})"
+
+    @property
+    def key(self):
+        """the json-pointer path that failed to resolve"""
+        return self.args[0]
+
+    @property
+    def step(self):
+        """the step where the resolution stopped"""
+        return self.args[1]
+
+
+class _AbsoluteError(Exception):
+    pass
+
+
+def resolve_path(
+    doc: Union[Sequence, Mapping],
+    path: Union[str, Iterable[str]],
+    default=...,
+    root=...,
+    index_attributes=None,
+):
+    """
+    Resolve a json-pointer `path` within the referenced `doc`.
+
+    :param doc:
+        the current document to start searching `path`
+        (which may be different than `root`)
+    :param path:
+        An absolute or relative json-pointer expression to resolve within `doc` document
+        (or just the unescaped steps).
+
+        .. Attention::
+            Relative paths DO NOT support the json-pointer extension
+            https://tools.ietf.org/id/draft-handrews-relative-json-pointer-00.html
+
+    :param default:
+        the value to return if `path` does not resolve; by default, it raises.
+    :param root:
+        From where to start resolving absolute paths or double-slashes(``//``).
+        If ``None``, only relative paths allowed; by default,
+        the given `doc` is assumed as root (so absolute paths are also accepted).
+    :param index_attributes:
+        If true, a last ditch effort is made for each part, whether it matches
+        the name of an attribute of the parent item.
+
+    :return:
+        the resolved doc-item
+    :raises ResolveError:
+        if `path` cannot resolve and no `default` given
+    :raises ValueError:
+        if `path` was an absolute path a  ``None`` `root` had been given.
+
+    **Examples:**
 
         >>> dt = {
         ...     'pi':3.14,
@@ -191,7 +252,7 @@ def resolve_path(doc, path, default=_scream, root=None):
         ...         'sr': pd.Series({'abc':'def'}),
         ...     }
         ... }
-        >>> resolve_path(dt, '/pi', default=_scream)
+        >>> resolve_path(dt, '/pi', default=...)
         3.14
 
         >>> resolve_path(dt, 'df/V')
@@ -205,31 +266,50 @@ def resolve_path(doc, path, default=_scream, root=None):
 
     :author: Julian Berman, ankostis
     """
-    if not root:
-        root = doc
 
     def resolve_root_or_fail(d, p):
-        if not p:
-            return root or doc
+        """the last resolver"""
+        if p == "":
+            if root is None:
+                raise _AbsoluteError(
+                    f"Absolute json-pointer `path` is not allowed, got: {path!r}"
+                )
+            return root
         raise ValueError()
 
     part_resolvers = [
         lambda d, p: d[int(p)],
         operator.getitem,
-        getattr,
-        resolve_root_or_fail,
     ]
+    if index_attributes:
+        part_resolvers.append(getattr)
+
+    if root is ...:
+        root = doc
+
     for part in iter_jsonpointer_parts_relaxed(path):
+        if part == "":
+            if root is None:
+                raise _AbsoluteError(
+                    f"Absolute json-pointer `path` is not allowed, got: {path!r}"
+                )
+            doc = root
+            continue
+
+        # For sequences, try first by index.
         start_i = 0 if isinstance(doc, Sequence) and not isinstance(doc, str) else 1
         for resolver in part_resolvers[start_i:]:
             try:
                 doc = resolver(doc, part)
                 break
+            except _AbsoluteError as ex:
+                raise ValueError(str(ex)) from None
             except (ValueError, TypeError, LookupError, AttributeError):
                 pass
         else:
-            if default is _scream:
-                raise KeyError("Unresolvable path(%r)@(%s)" % (path, part))
+            if default is ...:
+                raise ResolveError(path, part)
+
             return default
 
     return doc

@@ -8,10 +8,12 @@ Copied from pypi/pandalone.
 import pytest
 
 from graphtik.jsonpointer import (
+    ResolveError,
     escape_jsonpointer_part,
     iter_jsonpointer_parts,
     iter_jsonpointer_parts_relaxed,
     resolve_jsonpointer,
+    resolve_path,
     set_jsonpointer,
     unescape_jsonpointer_part,
 )
@@ -135,17 +137,13 @@ def test_iter_jsonpointer_parts_relaxed_massive(inp, exp):
         assert list(iter_jsonpointer_parts_relaxed(inp)) == exp
 
 
-def test_resolve_jsonpointer_existing():
+@pytest.mark.parametrize(
+    "inp, exp", [("/foo", 1), ("/bar/0", 11), ("/bar/1/a", 222), ("/bar/1/a", 222),],
+)
+def test_resolve_simple(inp, exp):
     doc = {"foo": 1, "bar": [11, {"a": 222}]}
-
-    path = "/foo"
-    assert resolve_jsonpointer(doc, path) == 1
-
-    path = "/bar/0"
-    assert resolve_jsonpointer(doc, path) == 11
-
-    path = "/bar/1/a"
-    assert resolve_jsonpointer(doc, path) == 222
+    assert resolve_jsonpointer(doc, inp) == exp
+    assert resolve_path(doc, inp) == exp
 
 
 def test_resolve_jsonpointer_sequence():
@@ -153,50 +151,61 @@ def test_resolve_jsonpointer_sequence():
 
     path = "/0"
     assert resolve_jsonpointer(doc, path) == 1
+    assert resolve_path(doc, path) == 1
 
     path = "/1"
     assert resolve_jsonpointer(doc, path) == [22, 33]
+    assert resolve_path(doc, path) == [22, 33]
 
     path = "/1/0"
     assert resolve_jsonpointer(doc, path) == 22
+    assert resolve_path(doc, path) == 22
     path = "/1/1"
     assert resolve_jsonpointer(doc, path) == 33
+    assert resolve_path(doc, path) == 33
 
 
 def test_resolve_jsonpointer_missing_screams():
     doc = {}
 
     path = "/foo"
-    with pytest.raises(KeyError):
+    with pytest.raises(ResolveError):
         resolve_jsonpointer(doc, path)
+    with pytest.raises(ResolveError):
+        resolve_path(doc, path)
 
 
 def test_resolve_jsonpointer_empty_path():
     doc = {}
     path = ""
     assert resolve_jsonpointer(doc, path) == doc
+    assert resolve_path(doc, path) == doc
 
     doc = {"foo": 1}
     assert resolve_jsonpointer(doc, path) == doc
+    assert resolve_path(doc, path) == doc
 
 
-def test_resolve_jsonpointer_examples_from_spec():
-    def _doc():
-        return {
-            r"foo": ["bar", r"baz"],
-            r"": 0,
-            r"a/b": 1,
-            r"c%d": 2,
-            r"e^f": 3,
-            r"g|h": 4,
-            r"i\\j": 5,
-            r"k\"l": 6,
-            r" ": 7,
-            r"m~n": 8,
-        }
+@pytest.fixture
+def std_doc():
+    """From https://tools.ietf.org/html/rfc6901#section-5 """
+    return {
+        r"foo": ["bar", r"baz"],
+        r"": 0,
+        r"a/b": 1,
+        r"c%d": 2,
+        r"e^f": 3,
+        r"g|h": 4,
+        r"i\\j": 5,
+        r"k\"l": 6,
+        r" ": 7,
+        r"m~n": 8,
+    }
 
-    cases = [
-        (r"", _doc()),
+
+@pytest.fixture(
+    params=[
+        (r"", ...),
         (r"/foo", ["bar", "baz"]),
         (r"/foo/0", "bar"),
         (r"/", 0),
@@ -209,9 +218,62 @@ def test_resolve_jsonpointer_examples_from_spec():
         (r"/ ", 7),
         (r"/m~0n", 8),
     ]
-    for path, exp in cases:
-        doc = _doc()
-        assert resolve_jsonpointer(doc, path) == exp
+)
+def std_case(std_doc, request):
+    """From https://tools.ietf.org/html/rfc6901#section-5 """
+    path, exp = request.param
+    if exp is ...:
+        exp = std_doc
+    return path, exp
+
+
+def test_resolve_examples_from_spec(std_doc, std_case):
+    path, exp = std_case
+    assert resolve_jsonpointer(std_doc, path) == exp
+
+    # resolve_path() resolves "/" to root (not "" key)
+    if path == "/":
+        exp = std_doc
+    assert resolve_path(std_doc, path) == exp
+
+
+def test_resolve_root_path_only():
+    doc = {}
+    path = "/"
+    with pytest.raises(ResolveError):
+        resolve_jsonpointer(doc, path)
+    # BUT resolve_path() doe snot RAISE!
+    assert resolve_path(doc, path) == doc
+
+    doc = {"foo": 1}
+    with pytest.raises(ResolveError):
+        resolve_jsonpointer(doc, path)
+    # BUT resolve_path() does not RAISE!
+    assert resolve_path(doc, path) == doc
+
+    doc = {"": 1}
+    assert resolve_jsonpointer(doc, path) == doc[""]
+    # BUT resolve_path() return root!
+    assert resolve_path(doc, path) == doc
+
+
+@pytest.mark.parametrize(
+    "inp, exp",
+    [
+        ("/", ...),
+        ("//", ...),
+        ("///", ...),
+        ("/bar//", ...),
+        ("/bar/1/", ...),
+        ("/foo//", ...),
+        ("/bar/1//foo", 1),
+        ("/bar/1//foo/", ...),
+        ("/foo//bar/1/a", 222),
+    ],
+)
+def test_resolve_path_re_root(inp, exp):
+    doc = {"foo": 1, "bar": [11, {"a": 222}]}
+    assert resolve_path(doc, inp) == doc if exp is ... else exp
 
 
 def test_set_jsonpointer_empty_doc():
@@ -226,20 +288,6 @@ def test_set_jsonpointer_empty_doc():
     value = "value"
     set_jsonpointer(doc, path, value)
     assert resolve_jsonpointer(doc, path) == value
-
-
-def test_resolve_jsonpointer_root_path_only():
-    doc = {}
-    path = "/"
-    with pytest.raises(KeyError):
-        assert resolve_jsonpointer(doc, path) == doc
-
-    doc = {"foo": 1}
-    with pytest.raises(KeyError):
-        assert resolve_jsonpointer(doc, path) == doc
-
-    doc = {"": 1}
-    assert resolve_jsonpointer(doc, path) == doc[""]
 
 
 def test_set_jsonpointer_replace_value():
