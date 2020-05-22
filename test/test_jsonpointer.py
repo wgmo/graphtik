@@ -131,6 +131,8 @@ def test_iter_jsonpointer_relaxed_massive(inp, exp):
     if isinstance(exp, Exception):
         with pytest.raises(type(exp), match=str(exp)):
             list(iter_jsonpointer_parts_relaxed(inp))
+    else:
+        assert list(iter_jsonpointer_parts_relaxed(inp)) == exp
 
 
 def test_resolve_jsonpointer_existing():
