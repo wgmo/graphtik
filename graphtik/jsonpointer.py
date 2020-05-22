@@ -16,8 +16,8 @@ Copied from pypi/pandalone.
 """
 from collections import abc as cabc
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def escape_jsonpointer_part(part):
@@ -142,7 +142,7 @@ def resolve_jsonpointer(doc, jsonpointer, default=_scream):
 
         >>> resolve_jsonpointer(dt, '/pi/BAD')
         Traceback (most recent call last):
-        ValueError: Unresolvable JSON pointer('/pi/BAD')@(BAD)
+        KeyError: "Unresolvable JSON pointer('/pi/BAD')@(BAD)"
 
         >>> resolve_jsonpointer(dt, '/pi/BAD', 'Hi!')
         'Hi!'
@@ -160,7 +160,7 @@ def resolve_jsonpointer(doc, jsonpointer, default=_scream):
             doc = doc[part]
         except (TypeError, LookupError):
             if default is _scream:
-                raise ValueError(
+                raise KeyError(
                     "Unresolvable JSON pointer(%r)@(%s)" % (jsonpointer, part)
                 )
             else:
@@ -226,7 +226,7 @@ def resolve_path(doc, path, default=_scream, root=None):
                 pass
         else:
             if default is _scream:
-                raise ValueError("Unresolvable path(%r)@(%s)" % (path, part))
+                raise KeyError("Unresolvable path(%r)@(%s)" % (path, part))
             return default
 
     return doc
@@ -235,6 +235,8 @@ def resolve_path(doc, path, default=_scream, root=None):
 def set_jsonpointer(doc, jsonpointer, value, object_factory=dict, relaxed=False):
     """
     Resolve a ``jsonpointer`` within the referenced ``doc``.
+
+    # FIXME: jsonp_set must also support attributes
 
     :param doc: the referrant document
     :param str jsonpointer: a jsonpointer to the node to modify
@@ -259,13 +261,13 @@ def set_jsonpointer(doc, jsonpointer, value, object_factory=dict, relaxed=False)
                 try:
                     part = int(part)
                 except ValueError:
-                    raise ValueError(
+                    raise TypeError(
                         "Expected numeric index(%s) for sequence at (%r)[%i]"
                         % (part, jsonpointer, i)
                     )
                 else:
                     if part > doclen:
-                        raise ValueError(
+                        raise IndexError(
                             "Index(%s) out of bounds(%i) of (%r)[%i]"
                             % (part, doclen, jsonpointer, i)
                         )

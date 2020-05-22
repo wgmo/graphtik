@@ -165,7 +165,7 @@ def test_resolve_jsonpointer_missing_screams():
     doc = {}
 
     path = "/foo"
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         resolve_jsonpointer(doc, path)
 
 
@@ -229,11 +229,11 @@ def test_set_jsonpointer_empty_doc():
 def test_resolve_jsonpointer_root_path_only():
     doc = {}
     path = "/"
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         assert resolve_jsonpointer(doc, path) == doc
 
     doc = {"foo": 1}
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         assert resolve_jsonpointer(doc, path) == doc
 
     doc = {"": 1}
@@ -342,7 +342,7 @@ def test_set_jsonpointer_sequence_out_of_bounds():
     doc = [0, 1]
     path = "/3"
     value = "value"
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         set_jsonpointer(doc, path, value)
 
 
@@ -350,5 +350,5 @@ def test_set_jsonpointer_sequence_with_str_screams():
     doc = [0, 1]
     path = "/str"
     value = "value"
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         set_jsonpointer(doc, path, value)
