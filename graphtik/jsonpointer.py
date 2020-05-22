@@ -14,7 +14,7 @@ Copied from pypi/pandalone.
     >>> from graphtik.jsonpointer import *
     >>> __name__ = "graphtik.jsonpointer"
 """
-from collections import abc as cabc
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
@@ -150,7 +150,7 @@ def resolve_jsonpointer(doc, jsonpointer, default=_scream):
     :author: Julian Berman, ankostis
     """
     for part in iter_jsonpointer_parts(jsonpointer):
-        if isinstance(doc, cabc.Sequence):
+        if isinstance(doc, Sequence) and not isinstance(doc, str):
             # Array indexes should be turned into integers
             try:
                 part = int(part)
@@ -217,7 +217,7 @@ def resolve_path(doc, path, default=_scream, root=None):
         resolve_root,
     ]
     for part in iter_jsonpointer_parts_relaxed(path):
-        start_i = 0 if isinstance(doc, cabc.Sequence) else 1
+        start_i = 0 if isinstance(doc, Sequence) and not isinstance(doc, str) else 1
         for resolver in part_resolvers[start_i:]:
             try:
                 doc = resolver(doc, part)
@@ -251,7 +251,7 @@ def set_jsonpointer(doc, jsonpointer, value, object_factory=dict, relaxed=False)
     pdoc = None
     ppart = None
     for i, part in enumerate(parts):
-        if isinstance(doc, cabc.Sequence) and not isinstance(doc, str):
+        if isinstance(doc, Sequence) and not isinstance(doc, str):
             # Array indexes should be turned into integers
             #
             doclen = len(doc)
