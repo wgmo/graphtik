@@ -29,7 +29,8 @@ utilize a combination of these **diacritics**:
 .. diacritics-end
 """
 import enum
-from functools import lru_cache, partial
+from functools import lru_cache
+import operator
 from typing import Any, Callable, Iterable, NamedTuple, Optional, Tuple, Union
 
 # fmt: off
@@ -90,17 +91,26 @@ class _Optionals(enum.Enum):
 class Accessor(NamedTuple):
     """Getter/setter functions to extract/populate solution values. """
 
+    #: the containment checker, like:: ``contains(sol, dep) -> bool``
+    #: prefer  :func:`acc_contains()` on any dep (plain strings included).
+    contains: Callable[["Solution", str], Any]
     #: the getter, like:: ``get(sol, dep) -> value``
-    get: Callable[["Solution", str], Any]
-    #: the setter, like: ``set(sol, dep, val)``
-    set: Callable[["Solution", str, Any], None]
+    #: prefer  :func:`acc_getitem()` on any dep (plain strings included).
+    getitem: Callable[["Solution", str], Any]
+    #: the setter, like: ``set(sol, dep, val)``,
+    #: prefer  :func:`acc_setitem()` on any dep (plain strings included).
+    setitem: Callable[["Solution", str, Any], None]
+    #: the deleter, like: ``delete(sol, dep)``
+    #: prefer  :func:`acc_delitem()` on any dep (plain strings included).
+    delitem: Callable[["Solution", str], None]
 
     def validate(self):
         """Call me early to fail asap (if it must); returns self instance. """
-
-        if not callable(self.get) or not callable(self.set):
+        oks = [callable(i) for i in self]
+        if not all(oks):
+            errs = dict(pair for pair, ok in zip(self._asdict().items(), oks) if not ok)
             raise TypeError(
-                f"`get/set` must be callable, were: {self.get!r}, {self.set!r}"
+                f"Accessor's {list(errs)} must be callable, were: {list(errs.values())}"
             )
         return self
 
@@ -111,8 +121,10 @@ def JsonpAccessor():
     from . import jsonpointer as jsp
 
     return Accessor(
-        get=jsp.resolve_path,
-        set=jsp.set_path_value,
+        contains=jsp.contains_path,
+        getitem=jsp.resolve_path,
+        setitem=jsp.set_path_value,
+        delitem=jsp.pop_path,
     )
 
 
@@ -184,14 +196,9 @@ class _Modifier(str):
                 f"Invalid _Optional enum {optional!r}\n  locals={locals()}"
             )
         if accessor:
-            try:
-                if not isinstance(accessor, Accessor):
-                    accessor = Accessor(*(not isinstance(accessor, str) and accessor))
-                accessor.validate()
-            except Exception as ex:
-                raise ValueError(
-                    f"Invalid Accessor {accessor!r}: {ex}\n  locals={locals()}"
-                ) from ex
+            if not isinstance(accessor, Accessor):
+                accessor = Accessor(*(not isinstance(accessor, str) and accessor))
+            accessor.validate()
         if sideffected and is_sfx(sideffected):
             raise ValueError(
                 f"`sideffected` cannot be sideffect, got {sideffected!r}"
@@ -953,12 +960,53 @@ def is_sfxed(dep) -> bool:
 
 def get_accessor(dep) -> bool:
     """
-    Check if dependency has an :term:`accessor`.
+    Check if dependency has an :term:`accessor`, and get it (if funcs below are unfit)
 
     :return:
         the :attr:`accessor`
     """
     return getattr(dep, "accessor", None)
+
+
+def acc_contains(solution, dep) -> bool:
+    """
+    Like ``dep in solution`` but for any installed :term:`accessor` on `dep`
+
+    :return:
+        true if `dep` contained
+    """
+    acc = getattr(dep, "accessor", None)
+    return (acc.contains if acc else operator.contains)(solution, dep)
+
+
+def acc_getitem(solution, dep) -> Any:
+    """
+    Like ``solution[dep]`` but for any installed :term:`accessor` on `dep`
+
+    :return:
+        the indexed value
+    """
+    acc = getattr(dep, "accessor", None)
+    return (acc.getitem if acc else operator.getitem)(solution, dep)
+
+
+def acc_setitem(solution, dep, val) -> None:
+    """
+    Like ``solution[dep] = val`` but for any installed :term:`accessor` on `dep`
+    """
+    acc = getattr(dep, "accessor", None)
+    return (acc.setitem if acc else operator.setitem)(solution, dep, val)
+
+
+def acc_delitem(solution, dep) -> None:
+    """
+    Like ``del solution[dep]`` but for any installed :term:`accessor` on `dep`
+
+    :return:
+        the indexed value
+    """
+    acc = getattr(dep, "accessor", None)
+    return (acc.delitem if acc else operator.delitem)(solution, dep)
 
 
 def dependency(dep) -> str:

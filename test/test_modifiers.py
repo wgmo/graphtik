@@ -1,7 +1,8 @@
 # Copyright 2020, Kostis Anagnostopoulos.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
+from operator import contains, delitem, getitem, setitem
+
 import pytest
-from operator import getitem, setitem
 
 from graphtik.modifiers import (
     Accessor,
@@ -19,8 +20,7 @@ from graphtik.modifiers import (
     varargs,
 )
 
-
-acc = Accessor(getitem, setitem)
+acc = Accessor(contains, getitem, setitem, delitem)
 
 
 def test_serialize_modifier(ser_method):
@@ -126,14 +126,18 @@ def test_modifs_repr(mod, exp, ser_method):
     [
         (
             lambda: accessor("b", acc),
-            "accessor('b', accessor=Accessor(get=<built-in function getitem>, set=<built-in function setitem>))",
+            "accessor('b', accessor=Accessor(contains=<built-in function contains>,"
+            " getitem=<built-in function getitem>, setitem=<built-in function setitem>,"
+            " delitem=<built-in function delitem>))",
         ),
         (lambda: keyword("b", None), "keyword('b')"),
         (lambda: keyword("b", ""), "keyword('b')"),
         (lambda: keyword("b", "bb"), "keyword('b', 'bb')"),
         (
             lambda: keyword("b", "bb", acc),
-            "keyword('b', 'bb', accessor=Accessor(get=<built-in function getitem>, set=<built-in function setitem>))",
+            "keyword('b', 'bb', accessor=Accessor(contains=<built-in function contains>,"
+            " getitem=<built-in function getitem>, setitem=<built-in function setitem>,"
+            " delitem=<built-in function delitem>))",
         ),
         (lambda: optional("b"), "optional('b')"),
         (lambda: optional("b", "bb"), "optional('b', 'bb')"),
@@ -148,6 +152,10 @@ def test_modifs_repr(mod, exp, ser_method):
             "sfxed('f', 'ff', keyword='F', optional=1)",
         ),
         (lambda: sfxed("f", "ff", optional=1), "sfxed('f', 'ff', optional=1)"),
+        (
+            lambda: sfxed("/a/b", "ff", optional=1),
+            "sfxed('/a/b', 'ff', optional=1, accessor=Accessor(contains=<function contains_path at ",
+        ),
         (lambda: sfxed_vararg("f", "a"), "sfxed_vararg('f', 'a')"),
         (lambda: sfxed_varargs("f", "a", "b"), "sfxed_varargs('f', 'a', 'b')"),
     ],
@@ -155,8 +163,8 @@ def test_modifs_repr(mod, exp, ser_method):
 def test_modifs_cmd(mod, exp, ser_method):
     got = mod().cmd
     print(got)
-    assert str(got) == exp
-    assert str(ser_method(got)) == exp
+    assert str(got).startswith(exp)
+    assert str(ser_method(got)).startswith(exp)
 
 
 def test_recreation():

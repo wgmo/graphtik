@@ -36,7 +36,14 @@ from .config import (
     is_reschedule_operations,
     is_skip_evictions,
 )
-from .modifiers import dep_singularized, dep_stripped, get_accessor, is_sfx
+from .modifiers import (
+    acc_delitem,
+    acc_setitem,
+    dep_singularized,
+    dep_stripped,
+    get_accessor,
+    is_sfx,
+)
 from .network import (
     _EvictInstruction,
     unsatisfied_operations,
@@ -152,11 +159,7 @@ class Solution(ChainMap, Plottable):
         op_layer = self._layers[op]
         if any(1 for o in outputs if get_accessor(o)):
             for k, val in outputs.items():
-                acc = get_accessor(k)
-                if acc:
-                    acc.set(op_layer, k, val)
-                else:
-                    op_layer[k] = val
+                acc_setitem(op_layer, k, val)
         else:
             op_layer.update(outputs)
 

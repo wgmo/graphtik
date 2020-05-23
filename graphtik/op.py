@@ -41,10 +41,11 @@ from .base import (
     jetsam,
 )
 from .modifiers import (
+    acc_contains,
+    acc_getitem,
     dep_renamed,
     dep_singularized,
     dep_stripped,
-    get_accessor,
     get_keyword,
     is_optional,
     is_pure_sfx,
@@ -603,10 +604,7 @@ class FunctionalOperation(Operation):
         for n in self._fn_needs:
             assert not is_sfx(n), locals()
             try:
-                acc = get_accessor(n)
-                if acc:
-                    inp_value = acc.get(named_inputs, n)
-                elif n not in named_inputs:
+                if not acc_contains(named_inputs, n):
                     if not is_optional(n) or is_sfx(n):
                         # It means `inputs` < compulsory `needs`.
                         # Compilation should have ensured all compulsories existed,
@@ -615,7 +613,7 @@ class FunctionalOperation(Operation):
                         missing.append(n)
                     continue
                 else:
-                    inp_value = named_inputs[n]
+                    inp_value = acc_getitem(named_inputs, n)
 
                 if get_keyword(n):
                     kwargs[n.keyword] = inp_value

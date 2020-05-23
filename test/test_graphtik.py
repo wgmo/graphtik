@@ -14,7 +14,7 @@ from itertools import cycle
 from multiprocessing import Pool, cpu_count
 from multiprocessing import dummy as mp_dummy
 from multiprocessing import get_context
-from operator import add, floordiv, getitem, mul, setitem, sub
+from operator import add, contains, delitem, floordiv, getitem, mul, setitem, sub
 from pprint import pprint
 from textwrap import dedent
 from time import sleep
@@ -24,10 +24,10 @@ from unittest.mock import MagicMock
 import pytest
 
 from graphtik import (
-    MultiValueError,
     NO_RESULT,
     NO_RESULT_BUT_SFX,
     NULL_OP,
+    MultiValueError,
     accessor,
     compose,
     jsonp,
@@ -1063,7 +1063,7 @@ def test_narrow_and_optionality(reverse):
 
 
 def test_solution_accessor_simple():
-    acc = (getitem, setitem)
+    acc = (contains, getitem, setitem, delitem)
 
     copy_values = compose(
         "copy values in solution: a+b-->A+BB",
