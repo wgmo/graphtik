@@ -196,11 +196,7 @@ def resolve_path(
             doc = root
             continue
 
-        # For sequences, try first by index.
-        start_i = (
-            0 if isinstance(doc, cabc.Sequence) and not isinstance(doc, str) else 1
-        )
-        for indexer in part_indexers[start_i:]:
+        for indexer in part_indexers:
             try:
                 doc = indexer(doc, part)
                 break
@@ -346,8 +342,6 @@ def set_path_value(
             doc = root
             continue
 
-        is_str = isinstance(doc, str)
-        start_i = 0 if isinstance(doc, Sequence) and not is_str else 1
         if i == last_part:
             fact = lambda: value
             overwrite = True
@@ -355,7 +349,7 @@ def set_path_value(
             fact = container_factory
             overwrite = False
 
-        for scouter in part_scouters[start_i:]:
+        for scouter in part_scouters:
             try:
                 doc = scouter(doc, part, fact, overwrite)
                 break
