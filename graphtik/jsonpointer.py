@@ -221,7 +221,9 @@ def resolve_path(
 
 
 def is_collection(item):
-    return not isinstance(item, str) and isinstance(item, cabc.Collection)
+    return isinstance(item, cabc.Collection) and not isinstance(
+        item, (str, cabc.ByteString)
+    )
 
 
 def list_scouter(doc, part, container_factory, overwrite):
