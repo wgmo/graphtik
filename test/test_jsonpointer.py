@@ -11,6 +11,7 @@ from graphtik.jsonpointer import (
     ResolveError,
     escape_jsonpointer_part,
     iter_path,
+    pop_path,
     resolve_path,
     set_path_value,
     unescape_jsonpointer_part,
@@ -366,3 +367,57 @@ def test_set_path_sequence_with_str_screams():
     value = "value"
     with pytest.raises(ValueError):
         set_path_value(doc, path, value)
+
+
+def test_pop_path_examples_from_spec(std_doc, std_case):
+    path, exp = std_case
+    orig = dict(std_doc)
+
+    assert pop_path(std_doc, path) == exp
+
+    if exp == std_doc:
+        # '/' pops nothing :-(
+        assert std_doc == exp
+    else:
+        exp_doc = {k: v for k, v in orig.items() if v != exp}
+        assert std_doc == exp_doc
+
+
+@pytest.mark.parametrize(
+    "inp, pop_item, culled_doc",
+    [
+        # Empties
+        (({}, "/"), {}, {}),
+        (({}, ""), {}, {}),
+        (({}, "/a", "A"), "A", {}),
+        (({}, ""), {}, {}),
+        # ResolveErrors
+        (({}, "/a"), ResolveError, 0),
+        (({"a": 1}, "/b"), ResolveError, 0),
+        (({"a": 1}, "b"), ResolveError, 0),
+        (({"a": 1}, "/a/b"), ResolveError, 0),
+        (({"a": 1}, "a/b"), ResolveError, 0),
+        ## Ok but strange!
+        (({"a": 1}, "a/"), {"a": 1}, {"a": 1}),  # `/`` pops nothing :-(
+        (({"a": 1}, "a/1"), ResolveError, 0),
+        ## Ok
+        (({"a": 1}, "a"), 1, {}),
+        (({"a": 1}, "/a"), 1, {}),
+        (({"a": {"b": 1}}, "/a"), {"b": 1}, {}),
+        (({"a": {"b": 1}}, "/a/b"), 1, {"a": {}}),
+        (({"a": {"b": 1, "c": 2}}, "/a/b"), 1, {"a": {"c": 2}}),
+        (({1: 2}, "/1"), 2, {}),
+        ## Lists
+        (([1, 2], "/1"), 2, [1]),
+        (([{1: 22}, 2], "/0"), {1: 22}, [2]),
+        (([{1: 22}, 2], "/0/1"), 22, [{}, 2]),
+    ],
+)
+def test_pop_path_cases(inp, pop_item, culled_doc):
+    if isinstance(pop_item, type) and issubclass(pop_item, Exception):
+        with pytest.raises(pop_item):
+            pop_path(*inp)
+    else:
+        doc, *_ = inp
+        assert pop_path(*inp) == pop_item
+        assert doc == culled_doc

@@ -18,13 +18,14 @@ import logging
 import operator
 from collections import abc as cabc
 from functools import partial
-from typing import Iterable, Mapping, Sequence, Union
+from typing import Any, Collection, Iterable, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
 
 
 log = logging.getLogger(__name__)
+UNSET = ...  # Change this in case of troubles...
 
 
 def escape_jsonpointer_part(part: str) -> str:
@@ -76,38 +77,38 @@ def iter_path(jsonpointer: str) -> Iterable[str]:
 
 class ResolveError(KeyError):
     """
-    A :class:`KeyError` raised when a json-pointer path does not :func:`resolve <.resolve_path>`.
+    A :class:`KeyError` raised when a json-pointer does not :func:`resolve <.resolve_path>`.
     """
 
     # __init__(path, step, i)
 
     def __str__(self):
-        return f"{self.path!r} @ (#{self.index}) {self.step}"
-
-    def __repr__(self):
-        return f"{type(self).__name__}({self})"
+        return (
+            f"Failed resolving step (#{self.index}){self.part} of json pointer path {self.path!r}."
+            "\n  Check debug logs."
+        )
 
     @property
     def path(self):
-        """the json-pointer path that failed to resolve"""
+        """the json-pointer that failed to resolve"""
         return self.args[0]
 
     @property
-    def step(self):
-        """the step where the resolution broke"""
+    def part(self):
+        """the part where the resolution broke"""
         return self.args[1]
 
     @property
     def index(self) -> int:
-        """the step position where the resolution broke"""
+        """the part's position where the resolution broke"""
         return self.args[2]
 
 
 def resolve_path(
     doc: Union[Sequence, Mapping],
     path: Union[str, Iterable[str]],
-    default=...,
-    root=...,
+    default=UNSET,
+    root=UNSET,
     descend_objects=None,
 ):
     """
@@ -163,7 +164,7 @@ def resolve_path(
         ...         'sr': pd.Series({'abc':'def'}),
         ...     }
         ... }
-        >>> resolve_path(dt, '/pi', default=...)
+        >>> resolve_path(dt, '/pi')
         3.14
 
         >>> resolve_path(dt, 'df/V')
@@ -171,6 +172,13 @@ def resolve_path(
         1    1.0
         2    1.0
         Name: V, dtype: float64
+
+        >>> resolve_path(dt, '/pi/BAD')
+        Traceback (most recent call last):
+        ...
+        graphtik.jsonpointer.ResolveError: Failed resolving step (#2)BAD of json pointer path '/pi/BAD'.
+          Check debug logs.
+
 
         >>> resolve_path(dt, '/pi/BAD', 'Hi!')
         'Hi!'
@@ -191,7 +199,7 @@ def resolve_path(
         if part == "":
             if root is None:
                 raise ValueError(
-                    f"Absolute step #{i} of json-pointer path {path!r} without `root`!"
+                    f"Absolute step #{i} of json-pointer {path!r} without `root`!"
                 )
             doc = root
             continue
@@ -202,11 +210,12 @@ def resolve_path(
                 break
             except Exception as ex:
                 log.debug(
-                    "indexer %s failed on step (#%i)%s of json-pointer path %r, due to: %s ",
+                    "indexer %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s ",
                     indexer,
                     i,
                     part,
                     path,
+                    doc,
                     ex,
                     exc_info=ex,
                 )
@@ -218,6 +227,19 @@ def resolve_path(
             return default
 
     return doc
+
+
+def contains_path(
+    doc: Union[Sequence, Mapping],
+    path: Union[str, Iterable[str]],
+    root=UNSET,
+    descend_objects=None,
+) -> bool:
+    """Test if `doc` has a value for json-pointer path by calling :func:`.resolve_path()`. """
+    try:
+        return resolve_path(doc, path, root=root, descend_objects=descend_objects)
+    except ResolveError:
+        return False
 
 
 def is_collection(item):
@@ -269,7 +291,7 @@ def collection_scouter(doc, part, container_factory, overwrite):
 
 
 def object_scouter(doc, part, value, container_factory, overwrite):
-    """Get attribute `part` from `doc` object, or create a new one from `container_factory`."""
+    """Get attribute `part` in `doc` object, or create a new one from `container_factory`."""
     if not overwrite:
         try:
             child = getattr(doc, part)
@@ -289,7 +311,7 @@ def set_path_value(
     path: Union[str, Iterable[str]],
     value,
     container_factory=dict,
-    root=...,
+    root=UNSET,
     descend_objects=None,
 ):
     """
@@ -321,7 +343,9 @@ def set_path_value(
         If true, a last ditch effort is made for each part, whether it matches
         the name of an attribute of the parent item.
 
-    :raises: ValueError (if jsonpointer empty, missing, invalid-contet)
+    :raises: ValueError (if jsonpointer empty, missing, invalid-content)
+
+    See :func:`resolve_path()` for departures from the json-pointer standard
     """
 
     part_scouters = [
@@ -339,7 +363,7 @@ def set_path_value(
         if part == "":
             if root is None:
                 raise ValueError(
-                    f"Absolute step #{i} of json-pointer path {path!r} without `root`!"
+                    f"Absolute step #{i} of json-pointer {path!r} without `root`!"
                 )
             doc = root
             continue
@@ -360,17 +384,146 @@ def set_path_value(
             #     doc = scouter(doc, part, fact, overwrite)
             except Exception as ex:
                 log.debug(
-                    "scouter %s failed on step (#%i)%s of json-pointer path %r, due to: %s",
+                    "scouter %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s",
                     scouter,
                     i,
                     part,
                     path,
+                    doc,
                     ex,
                     exc_info=ex,
                 )
                 pass
         else:
             raise ValueError(
-                f"Failed setting step (#{i}){part} of json pointer path {path!r}"
+                f"Failed setting step (#{i}){part} of json pointer path {path!r}!"
                 "\n  Check debug logs."
             )
+
+
+def list_popper(doc: Sequence, part, do_pop):
+    """Call :func:`collection_popper()` with integer `part`."""
+    return collection_popper(doc, int(part), do_pop)
+
+
+def collection_popper(doc: Collection, part, do_pop):
+    """Resolve `part` in `doc`, or pop it with `default`if `do_pop`."""
+    return doc.pop(part) if do_pop else doc[part]
+
+
+def object_popper(doc: Collection, part, do_pop):
+    """Resolve `part` in `doc` attributes, or ``delattr`` it, returning its value or `default`."""
+    item = getattr(doc, part)
+    if do_pop:
+        delattr(doc, part)
+    return item
+
+
+def pop_path(
+    doc: Union[Sequence, Mapping],
+    path: Union[str, Iterable[str]],
+    default=UNSET,
+    root=UNSET,
+    descend_objects=None,
+):
+    """
+    Delete and return the item referenced by json-pointer `path` from the nested `doc` .
+
+    :param doc:
+        the current document to start searching `path`
+        (which may be different than `root`)
+    :param path:
+        An absolute or relative json-pointer expression to resolve within `doc` document
+        (or just the unescaped steps).
+
+        .. Attention::
+            Relative paths DO NOT support the json-pointer extension
+            https://tools.ietf.org/id/draft-handrews-relative-json-pointer-00.html
+
+    :param default:
+        the value to return if `path` does not resolve; by default, it raises.
+    :param root:
+        From where to start resolving absolute paths or double-slashes(``//``), or
+        final slashes.
+        If ``None``, only relative paths allowed; by default,
+        the given `doc` is assumed as root (so absolute paths are also accepted).
+    :param descend_objects:
+        If true, a last ditch effort is made for each part, whether it matches
+        the name of an attribute of the parent item.
+
+    :return:
+        the deleted item in `doc`, or `default` if given and `path`  didn't exist
+    :raises ResolveError:
+        if `path` cannot resolve and no `default` given
+    :raises ValueError:
+        if `path` was an absolute path a  ``None`` `root` had been given.
+
+    See :func:`resolve_path()` for departures from the json-pointer standard
+
+    **Examples:**
+
+        >>> dt = {
+        ...     'pi':3.14,
+        ...     'foo':'bar',
+        ...     'df': pd.DataFrame(np.ones((3,2)), columns=list('VN')),
+        ...     'sub': {
+        ...         'sr': pd.Series({'abc':'def'}),
+        ...     }
+        ... }
+        >>> resolve_path(dt, '/pi', default=UNSET)
+        3.14
+
+        >>> resolve_path(dt, 'df/V')
+        0    1.0
+        1    1.0
+        2    1.0
+        Name: V, dtype: float64
+
+        >>> resolve_path(dt, '/pi/BAD', 'Hi!')
+        'Hi!'
+
+    :author: Julian Berman, ankostis
+    """
+    part_poppers = [
+        list_popper,
+        collection_popper,
+        *((object_popper,) if descend_objects else ()),
+    ]
+
+    if root is ...:
+        root = doc
+
+    parts = list(iter_path(path) if isinstance(path, str) else path)
+    last_part = len(parts) - 1
+    for i, part in enumerate(parts):
+        if part == "":
+            if root is None:
+                raise ValueError(
+                    f"Absolute step #{i} of json-pointer {path!r} without `root`!"
+                )
+            doc = root
+            continue
+
+        for popper in part_poppers:
+            try:
+                doc = popper(doc, part, i == last_part)
+                break
+            except Exception as ex:
+                log.debug(
+                    "popper %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s ",
+                    popper,
+                    i,
+                    part,
+                    path,
+                    doc,
+                    ex,
+                    exc_info=ex,
+                )
+                pass
+        else:
+            if default is ...:
+                raise ResolveError(path, part, i)
+
+            return default
+
+    return doc
