@@ -26,7 +26,7 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Operation, PlotArgs, Plottable, astuple, jetsam
 from .config import is_debug, is_skip_evictions
-from .jsonpointer import iter_jsonpointer_parts_relaxed
+from .jsonpointer import iter_path
 from .modifiers import (
     _modifier_withset,
     dep_renamed,
@@ -358,7 +358,7 @@ class Network(Plottable):
         needs_edges = []
         for n in getattr(operation, "op_needs", operation.needs):
             if is_jsonp(n):
-                append_subdoc_chain(iter_jsonpointer_parts_relaxed(n))
+                append_subdoc_chain(iter_path(n))
 
             nkw, ekw = {}, {}
             if is_optional(n):
@@ -383,7 +383,7 @@ class Network(Plottable):
         #
         for n in getattr(operation, "op_provides", operation.provides):
             if is_jsonp(n):
-                append_subdoc_chain(iter_jsonpointer_parts_relaxed(n))
+                append_subdoc_chain(iter_path(n))
 
             kw = {}
             if is_sfx(n):

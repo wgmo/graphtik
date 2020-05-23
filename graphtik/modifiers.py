@@ -108,9 +108,12 @@ class Accessor(NamedTuple):
 @lru_cache()
 def JsonpAccessor():
     """Get/Set paths found on modifier's "extra' attribute `jsonpath` """
-    from .jsonpointer import iter_jsonpointer_parts, resolve_path, set_jsonpointer
+    from . import jsonpointer as jsp
 
-    return Accessor(get=resolve_path, set=partial(set_jsonpointer, relaxed=True))
+    return Accessor(
+        get=jsp.resolve_path,
+        set=jsp.set_path_value,
+    )
 
 
 class _Modifier(str):
