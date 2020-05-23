@@ -1572,29 +1572,29 @@ def test_optional_per_function_with_same_output(exemethod):
 
 
 def test_evicted_optional():
-    # Test that _EvictInstructions included for optionals do not raise
+    # Test that evictions included for optionals do not raise
     # exceptions when the corresponding input is not provided.
 
     # Function to add two values plus an optional third value.
     def addplusplus(a, b, c=0):
         return a + b + c
 
-    # Here, a _EvictInstruction will be inserted for the optional need 'c'.
+    # Here, an eviction-dependency will be inserted for the optional need 'c'.
     sum_op1 = operation(
         name="sum_op1", needs=["a", "b", optional("c")], provides="sum1"
     )(addplusplus)
     sum_op2 = operation(name="sum_op2", needs=["sum1", "sum1"], provides="sum2")(add)
     net = compose("test_net", sum_op1, sum_op2)
 
-    # _EvictInstructions are used only when a subset of outputs are requested.
+    # Evictions happen only when a subset of outputs are requested.
     results = net.compute({"a": 4, "b": 3}, ["sum2"])
     assert "sum2" in results
 
 
 def test_evict_instructions_vary_with_inputs():
-    # Check #21: _EvictInstructions positions vary when inputs change.
+    # Check #21: eviction-steps positions vary when inputs change.
     def count_evictions(steps):
-        return sum(isinstance(n, network._EvictInstruction) for n in steps)
+        return sum(isinstance(n, str) for n in steps)
 
     pipeline = compose(
         "pipeline",

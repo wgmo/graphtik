@@ -46,21 +46,6 @@ NodePredicate = Callable[[Any, Mapping], bool]
 log = logging.getLogger(__name__)
 
 
-class _EvictInstruction(str):
-    """
-    A step in the ExecutionPlan to evict a computed value from the `solution`.
-
-    It's a step in :attr:`ExecutionPlan.steps` for the data-node `str` that
-    frees its data-value from `solution` after it is no longer needed,
-    to reduce memory footprint while computing the graph.
-    """
-
-    __slots__ = ()  # avoid __dict__ on instances
-
-    def __repr__(self):
-        return f"EvictInstruction('{self}')"
-
-
 def yield_datanodes(nodes) -> List[str]:
     """May scan dag nodes."""
     return (n for n in nodes if isinstance(n, str))
@@ -597,7 +582,7 @@ class Network(Plottable):
             if dep in steps:
                 log.warning("Skipped dupe step %s in position %i.", dep, len(steps))
             else:
-                steps.add(_EvictInstruction(dep))
+                steps.add(dep)
 
         outputs = set(yield_chaindocs(pruned_dag, outputs))
         steps = iset()

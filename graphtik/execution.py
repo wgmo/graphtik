@@ -45,7 +45,6 @@ from .modifiers import (
     is_sfx,
 )
 from .network import (
-    _EvictInstruction,
     unsatisfied_operations,
     yield_chaindocs,
     yield_node_names,
@@ -605,7 +604,7 @@ class ExecutionPlan(
                 ):
                     if node not in solution.canceled:
                         upnext.append(node)
-                elif isinstance(node, _EvictInstruction):
+                elif isinstance(node, str):
                     # Only evict if all successors for the data node
                     # have been executed.
                     if (
@@ -638,7 +637,7 @@ class ExecutionPlan(
                 #  TODO: evictions for parallel are wasting loops.
                 #
                 for node in self.steps:
-                    if isinstance(node, _EvictInstruction) and node in solution:
+                    if isinstance(node, str) and node in solution:
                         del solution[node]
                 break
 
@@ -673,7 +672,7 @@ class ExecutionPlan(
                 task = _OpTask(step, solution, solution.solid)
                 self._handle_task(task, step, solution)
 
-            elif isinstance(step, _EvictInstruction):
+            elif isinstance(step, str):
                 # Cache value may be missing if it is optional.
                 if step in solution:
                     log.debug(

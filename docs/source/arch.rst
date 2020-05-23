@@ -200,8 +200,8 @@ Architecture
         A memory footprint optimization where intermediate `inputs` & `outputs`
         are erased from `solution` as soon as they are not needed further down the `dag`.
 
-        *Evictions* are pre-calculated during `compilation`, where :class:`._EvictInstruction`
-        `steps` are inserted in the `execution plan`.
+        *Evictions* are pre-calculated during `compilation`, denoted with the
+        `dependency` inserted in the `steps` of the `execution plan`.
 
     overwrite
         Values in the `solution` that have been written by more than one `operation`\s,
