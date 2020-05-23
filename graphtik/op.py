@@ -245,21 +245,21 @@ class FunctionalOperation(Operation):
 
     Differences between various dependency operation attributes:
 
-    +--------------------------+-----+-----+-----+-------+
-    |   dependency attribute   |dupes|sfx  |alias| SFXED |
-    +==========+===============+=====+=====+=====+=======+
-    |          |  **needs**    ||yes|||yes||     |SINGLAR|
-    +          +---------------+-----+-----+     +-------+
-    | *needs*  | **op_needs**  ||no| ||yes||     |SINGLAR|
-    +          +---------------+-----+-----+     +-------+
-    |          |  *_fn_needs*  ||yes|||no| |     | STRIP |
-    +----------+---------------+-----+-----+-----+-------+
-    |          | **provides**  ||yes|||yes|||no| |SINGLAR|
-    +          +---------------+-----+-----+-----+-------+
-    |*provides*|**op_provides**||no| ||yes|||yes||SINGLAR|
-    +          +---------------+-----+-----+-----+-------+
-    |          |*_fn_provides* ||yes|||no| ||no| | STRIP |
-    +----------+---------------+-----+-----+-----+-------+
+    +--------------------------+-----+-----+-----+--------+
+    |   dependency attribute   |dupes|sfx  |alias|  SFXED |
+    +==========+===============+=====+=====+=====+========+
+    |          |  **needs**    ||yes|||yes||     |SINGULAR|
+    +          +---------------+-----+-----+     +--------+
+    | *needs*  | **op_needs**  ||no| ||yes||     |SINGULAR|
+    +          +---------------+-----+-----+     +--------+
+    |          |  *_fn_needs*  ||yes|||no| |     |STRIPPED|
+    +----------+---------------+-----+-----+-----+--------+
+    |          | **provides**  ||yes|||yes|||no| |SINGULAR|
+    +          +---------------+-----+-----+-----+--------+
+    |*provides*|**op_provides**||no| ||yes|||yes||SINGULAR|
+    +          +---------------+-----+-----+-----+--------+
+    |          |*_fn_provides* ||yes|||no| ||no| |STRIPPED|
+    +----------+---------------+-----+-----+-----+--------+
 
     .. |yes| replace:: :green:`✓`
     .. |no| replace:: :red:`✗`
