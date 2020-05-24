@@ -31,7 +31,16 @@ utilize a combination of these **diacritics**:
 import enum
 from functools import lru_cache
 import operator
-from typing import Any, Callable, Iterable, NamedTuple, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Iterable,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Union,
+)
 
 # fmt: off
 #: Arguments-presence patterns for :class:`_Modifier` constructor.
@@ -89,19 +98,21 @@ class _Optionals(enum.Enum):
 
 
 class Accessor(NamedTuple):
-    """Getter/setter functions to extract/populate solution values. """
+    """
+    Getter/setter functions to extract/populate solution values.
 
-    #: the containment checker, like:: ``contains(sol, dep) -> bool``
-    #: prefer  :func:`acc_contains()` on any dep (plain strings included).
+    .. Note::
+        Don't use its attributes directly, prefer instead the functions returned
+        from :func:`.acc_contains()` etc on any dep (plain strings included).
+    """
+
+    #: the containment checker, like: ``dep in sol``;
     contains: Callable[["Solution", str], Any]
-    #: the getter, like:: ``get(sol, dep) -> value``
-    #: prefer  :func:`acc_getitem()` on any dep (plain strings included).
+    #: the getter, like: ``getitem(sol, dep) -> value``
     getitem: Callable[["Solution", str], Any]
-    #: the setter, like: ``set(sol, dep, val)``,
-    #: prefer  :func:`acc_setitem()` on any dep (plain strings included).
+    #: the setter, like: ``setitem(sol, dep, val)``,
     setitem: Callable[["Solution", str, Any], None]
-    #: the deleter, like: ``delete(sol, dep)``
-    #: prefer  :func:`acc_delitem()` on any dep (plain strings included).
+    #: the deleter, like: ``delitem(sol, dep)``
     delitem: Callable[["Solution", str], None]
 
     def validate(self):
@@ -980,45 +991,36 @@ def get_accessor(dep) -> bool:
     return getattr(dep, "accessor", None)
 
 
-def acc_contains(solution, dep) -> bool:
+def acc_contains(dep) -> Callable[[Collection, str], Any]:
     """
-    Like ``dep in solution`` but for any installed :term:`accessor` on `dep`
-
-    :return:
-        true if `dep` contained
+    A fn like :func:`operator.contains` for any `dep` (with-or-without :term:`accessor`)
     """
     acc = getattr(dep, "accessor", None)
-    return (acc.contains if acc else operator.contains)(solution, dep)
+    return acc.contains if acc else operator.contains
 
 
-def acc_getitem(solution, dep) -> Any:
+def acc_getitem(dep) -> Callable[[Collection, str], Any]:
     """
-    Like ``solution[dep]`` but for any installed :term:`accessor` on `dep`
-
-    :return:
-        the indexed value
+    A fn like :func:`operator.getitem` for any `dep` (with-or-without :term:`accessor`)
     """
     acc = getattr(dep, "accessor", None)
-    return (acc.getitem if acc else operator.getitem)(solution, dep)
+    return acc.getitem if acc else operator.getitem
 
 
-def acc_setitem(solution, dep, val) -> None:
+def acc_setitem(dep) -> Callable[[Collection, str, Any], None]:
     """
-    Like ``solution[dep] = val`` but for any installed :term:`accessor` on `dep`
-    """
-    acc = getattr(dep, "accessor", None)
-    return (acc.setitem if acc else operator.setitem)(solution, dep, val)
-
-
-def acc_delitem(solution, dep) -> None:
-    """
-    Like ``del solution[dep]`` but for any installed :term:`accessor` on `dep`
-
-    :return:
-        the indexed value
+    A fn like :func:`operator.setitem` for any `dep` (with-or-without :term:`accessor`)
     """
     acc = getattr(dep, "accessor", None)
-    return (acc.delitem if acc else operator.delitem)(solution, dep)
+    return acc.setitem if acc else operator.setitem
+
+
+def acc_delitem(dep) -> Callable[[Collection, str], None]:
+    """
+    A fn like :func:`operator.delitem` for any `dep` (with-or-without :term:`accessor`)
+    """
+    acc = getattr(dep, "accessor", None)
+    return acc.delitem if acc else operator.delitem
 
 
 def dependency(dep) -> str:

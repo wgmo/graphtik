@@ -160,29 +160,32 @@ class Solution(ChainMap, Plottable):
         op_layer = self._layers[op]
         if any(1 for o in outputs if get_accessor(o)):
             for k, val in outputs.items():
-                acc_setitem(op_layer, k, val)
+                acc_setitem(k)(op_layer, k, val)
         else:
             op_layer.update(outputs)
 
     def __contains__(self, key):
-        return any(acc_contains(m, key) for m in self.maps)
+        acc = acc_contains(key)
+        return any(acc(m, key) for m in self.maps)
 
     def __getitem__(self, key):
+        acc = acc_getitem(key)
         for mapping in self.maps:
             try:
-                return acc_getitem(mapping, key)
+                return acc(mapping, key)
             except KeyError:
                 pass
         return self.__missing__(key)
 
     def __delitem__(self, key):
-        matches = (m for m in self.maps if acc_contains(m, key))
-        found = False
-        for m in matches:
-            found = True
-            acc_delitem(m, key)
-        if not found:
+        acc = acc_contains(key)
+        matches = [m for m in self.maps if acc(m, key)]
+        if not matches:
             raise KeyError(key)
+
+        acc = acc_delitem(key)
+        for m in matches:
+            acc(m, key)
 
     def operation_executed(self, op, outputs):
         """
