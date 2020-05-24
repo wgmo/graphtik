@@ -551,7 +551,7 @@ class Network(Plottable):
         return pruned_dag, tuple(inputs), tuple(outputs)
 
     def _build_execution_steps(
-        self, pruned_dag, inputs: Collection, outputs: Optional[Collection]
+        self, pruned_dag, inputs: Collection, outputs: Collection
     ) -> List:
         """
         Create the list of operation-nodes & *instructions* evaluating all
@@ -564,11 +564,11 @@ class Network(Plottable):
         :param outputs:
             outp-names to decide whether to add (and which) evict-instructions
 
-        Instances of :class:`_EvictInstructions` are inserted in `steps` between
-        operation nodes to reduce the memory footprint of solutions while
-        the computation is running.
-        An evict-instruction is inserted whenever a *need* is not used
-        by any other *operation* further down the DAG.
+        Dependencies (str instances or :term:`modifier`-annotated) are inserted
+        in `steps` between operation nodes to :term:`evict <eviction>` respective value
+        andreduce the memory footprint of solutions while the computation is running.
+        An evict-instruction is inserted whenever a *need* / *provide* of an executed op
+        is not used by any other *operation* further down the DAG.
 
         Note that for :term:`doc chain`\\s, it is evicted either the whole chain
         (from root), or nothing at all.
@@ -626,7 +626,7 @@ class Network(Plottable):
                 )
                 if not need_users & future_nodes:
                     log.debug(
-                        "... evict-1 rule for not-to-be-used need-chain%s after #%i topo-sorted %s .",
+                        "... adding evict-1 for not-to-be-used NEED-chain%s of topo-sorted #%i %s .",
                         need_chain,
                         i,
                         op,
@@ -638,11 +638,10 @@ class Network(Plottable):
             #  .. image:: docs/source/images/unpruned_useless_provides.svg
             #
             for provide in self.graph.successors(op):
-                provide_chain = set(yield_also_chaindocs(pruned_dag, provide))
-                if not provide_chain & pruned_dag.nodes:
+                if provide not in pruned_dag:  # speedy test, to avoid scanning chain.
                     log.debug(
-                        "... evict-2 rule for pruned provide-chain%s after #%i topo-sorted %s.",
-                        provide_chain,
+                        "... adding evict-2 for pruned-PROVIDE(%r) of topo-sorted #%i %s.",
+                        provide,
                         i,
                         op,
                     )
