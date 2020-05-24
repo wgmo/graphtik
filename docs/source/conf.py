@@ -84,6 +84,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",
     "sphinx.ext.extlinks",
+    "sphinx.ext.graphviz",
     "sphinx.ext.intersphinx",
     # "sphinx.ext.doctest",  # doctests maintained by pytest
     "graphtik.sphinxext",
