@@ -1113,7 +1113,7 @@ def test_jsonp_and_conveyor_fn_simple():
     sol = pipe.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS")
     assert sol == {"RESULTS": {"A": 1, "BB": 2}}
     sol = pipe.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS/A")
-    assert sol == {"RESULTS": {"A": 1, "BB": 2}}
+    assert sol == {"RESULTS": {"A": 1}}
 
 
 def test_jsonp_and_conveyor_fn_complex():
@@ -1125,11 +1125,18 @@ def test_jsonp_and_conveyor_fn_complex():
             provides=[jsonp("r/a"), jsonp("a", True)],
         )(),
         operation(
-            lambda x: 2 * x, name="op2", needs=[jsonp("r/a")], provides=[jsonp("r/AA")],
+            lambda x: (x, 2 * x),
+            name="op2",
+            needs=[jsonp("r/a")],
+            provides=[jsonp("r/A"), jsonp("r/AA")],
         ),
     )
     sol = pipe.compute({"i": {"a": 1}})
-    assert sol == {"i": {"a": 1}, "r": {"AA": 2}, "a": 1}
+    assert sol == {"i": {"a": 1}, "r": {"A": 1, "AA": 2}, "a": 1}
+    sol = pipe.compute({"i": {"a": 1}}, outputs="r")
+    assert sol == {"r": {"A": 1, "AA": 2}}
+    sol = pipe.compute({"i": {"a": 1}}, outputs=["r/A", "r/AA"])
+    assert sol == {"r": {"A": 1, "AA": 2}}
     sol = pipe.compute({"i": {"a": 1}}, outputs="r/AA")
     assert sol == {"r": {"AA": 2}}
 

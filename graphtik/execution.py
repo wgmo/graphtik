@@ -37,7 +37,9 @@ from .config import (
     is_skip_evictions,
 )
 from .modifiers import (
+    acc_contains,
     acc_delitem,
+    acc_getitem,
     acc_setitem,
     dep_singularized,
     dep_stripped,
@@ -162,6 +164,26 @@ class Solution(ChainMap, Plottable):
         else:
             op_layer.update(outputs)
 
+    def __contains__(self, key):
+        return any(acc_contains(m, key) for m in self.maps)
+
+    def __getitem__(self, key):
+        for mapping in self.maps:
+            try:
+                return acc_getitem(mapping, key)
+            except KeyError:
+                pass
+        return self.__missing__(key)
+
+    def __delitem__(self, key):
+        matches = (m for m in self.maps if acc_contains(m, key))
+        found = False
+        for m in matches:
+            found = True
+            acc_delitem(m, key)
+        if not found:
+            raise KeyError(key)
+
     def operation_executed(self, op, outputs):
         """
         Invoked once per operation, with its results.
@@ -220,10 +242,6 @@ class Solution(ChainMap, Plottable):
         """
         self.executed[op] = ex
         self._reschedule(self.dag, op, op)
-
-    def __delitem__(self, key):
-        for d in self.maps:
-            d.pop(key, None)
 
     def is_failed(self, op):
         return isinstance(self.executed.get(op), Exception)
