@@ -519,12 +519,24 @@ def jsonp(name: str, no_jsonp=None) -> _Modifier:
         ... )()
 
         >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
+        Traceback (most recent call last):
+        graphtik.base.MultiValueError: Failed preparing needs:
+            1. Missing compulsory needs['inputs/a'($), 'inputs/b'($)]!
+            +++inputs: ['inputs']
+            +++FunctionalOperation(name='copy a+b-->A+BB',
+                                   needs=['inputs/a'($), 'inputs/b'($)],
+                                   provides=['RESULTS/A'($), 'RESULTS/BB'($)],
+                                   fn='identity_fn')
+            (tip: set GRAPHTIK_DEBUG envvar log for immediate raising stack trace)
+
+        >>> results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
         >>> results
         {'RESULTS/A'($): 1, 'RESULTS/BB'($): 2}
 
-    Notice that the results are not yet "nested", because this modifer works with
-    :term:`accessor` which are fully functional when acting on a real :class:`.Solution`,
-    and this requires the operation to be wrapped in a pipeline (see below).
+    Notice that :term:`nested dependencies` did not yet worked, because *jsonp* modifiers
+    work internally with :term:`accessor`\\s, and :class:`.FunctionalOperation` is unaware
+    of them -- it's the :class:`.Solution` class that supports *accessors**, and
+    this requires the operation to be wrapped in a pipeline (see below).
 
     Note also that it we see the "representation' of the key as ``'RESULTS/A'($)``
     but the actual string value simpler:

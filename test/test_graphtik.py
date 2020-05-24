@@ -1103,7 +1103,11 @@ def test_jsonp_and_conveyor_fn_simple():
         provides=[jsonp("RESULTS/A"), jsonp("RESULTS/BB", False)],
     )()
 
-    results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
+    ## Ops are unaware of subdocs, Solution does.
+    #
+    with pytest.raises(MultiValueError, match="Missing compulsory needs"):
+        copy_values.compute({"inputs": {"a": 1, "b": 2}})
+    results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
     assert results == {"RESULTS/A": 1, "RESULTS/BB": 2}
     assert repr(results) == "{'RESULTS/A'($): 1, 'RESULTS/BB'($): 2}"
 
