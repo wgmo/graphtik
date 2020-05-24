@@ -8,12 +8,10 @@ __title__ = "graphtik"
 __summary__ = __doc__.splitlines()[0]
 __license__ = "Apache-2.0"
 __uri__ = "https://github.com/pygraphkit/graphtik"
-__author__ = "hnguyen, ankostis"
+__author__ = "hnguyen, ankostis"  # chronologically ordered
 
 
 from .base import AbortedException, IncompleteExecutionError, MultiValueError
-from .op import NO_RESULT, NO_RESULT_BUT_SFX, operation
-from .pipeline import NULL_OP, compose
 from .modifiers import (
     accessor,
     jsonp,
@@ -26,6 +24,8 @@ from .modifiers import (
     vararg,
     varargs,
 )
+from .op import NO_RESULT, NO_RESULT_BUT_SFX, operation
+from .pipeline import NULL_OP, compose
 
 ## SEE ALSO: `.plot.active_plotter_plugged()`, `.plot.set_active_plotter()` &
 #  `.plot.get_active_plotter()` configs, not imported, unless plot is needed..
