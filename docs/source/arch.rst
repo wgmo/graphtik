@@ -422,11 +422,30 @@ Architecture
         like: ``parent/child``
 
         Note that if a nested `output <outputs>` is asked, then all **docs-in-chain**
-        are kept i.e. all *superdocs* till the **root dependency** ("trunk") plus
-        all its *subdocs* (sub-tree) .
+        are kept i.e. all *superdocs* till the **root dependency** (the "superdocs") plus
+        all its *subdocs* (the "subdocs");  as depicted below for a hypothetical
+        dependency ``/stats/b/b1``:
 
-        Respectively, `eviction`\s  apply only for the *root doc* in the chain,
-        assuming all docs in the chain are not needed anymore.
+        .. graphviz::
+
+            digraph {
+                rankdir=LR;
+
+                stats -> a -> {a1, a2}  [color=grey]
+                stats -> b -> b1 -> {b11, b12, b13}
+                b13 -> b131
+                stats -> c -> {c1, c2}  [color=grey]
+                b1 [fontname=bold penwidth=3]
+                a [color=grey fontcolor=grey]
+                a1 [color=grey fontcolor=grey label="..."]
+                a2 [color=grey fontcolor=grey label="..."]
+                c [color=grey fontcolor=grey]
+                c1 [color=grey fontcolor=grey label="..."]
+                c2 [color=grey fontcolor=grey label="..."]
+            }
+
+        For instance, if the root has been asked as output, no subdoc can be
+        subsequently `evicted <eviction>`.
 
     json pointer path
     jsonp
