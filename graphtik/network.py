@@ -121,7 +121,11 @@ def _yield_also_chained_docs(
         the given `doc`, and any other docs discovered with `dig_dag`
         linked with a "subdoc" attribute on their edge,
         except those sub-trees with a root node already in `stop_set`.
+        If `doc` is not in `dag`, returns empty.
     """
+    if doc not in dag:
+        return
+
     if doc not in stop_set:
         yield doc
         for meth, idx in dig_dag:

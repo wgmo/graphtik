@@ -52,10 +52,10 @@ def chain_fn(request):
     return request.param
 
 
-def test_yield_chained_docs_unknown(g, chain_fn):
-    assert list(chain_fn(g, "BAD")) == ["BAD"]
-    assert list(chain_fn(g, "BAD", ())) == ["BAD"]
-    assert list(chain_fn(g, "BAD", ("BAD",))) == []
+@pytest.mark.parametrize("bad", ["BAD", "/root/BAD", "root/d1/BAD" "root/d1/d11/BAD"])
+def test_yield_chained_docs_unknown(g, chain_fn, bad):
+    assert list(chain_fn(g, bad)) == []
+    assert list(chain_fn(g, bad, ())) == []
 
 
 @pytest.mark.parametrize("node", "foo bar baz".split())
