@@ -72,7 +72,11 @@ def iter_path(jsonpointer: str) -> Iterable[str]:
         ['']
 
     """
-    return (unescape_jsonpointer_part(part) for part in jsonpointer.split("/"))
+    # Optimization: modifier caches splitted parts in its "jsonp" attribute.
+    parts = getattr(jsonpointer, "jsonp", None)
+    if not parts:
+        parts = (unescape_jsonpointer_part(part) for part in jsonpointer.split("/"))
+    return parts
 
 
 class ResolveError(KeyError):

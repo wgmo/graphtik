@@ -36,6 +36,7 @@ from typing import (
     Callable,
     Collection,
     Iterable,
+    List,
     NamedTuple,
     Optional,
     Tuple,
@@ -295,7 +296,9 @@ def _modifier(
         for client code to extend its own modifiers.
     """
     if "/" in name and not no_jsonp:
-        kw["jsonp"] = True
+        from .jsonpointer import iter_path
+
+        kw["jsonp"] = list(iter_path(name))
         # Don't override user's accessor.
         #
         if not accessor:
@@ -956,8 +959,8 @@ def is_varargish(dep) -> bool:
     return dep.optional in (_Optionals.vararg, _Optionals.vararg)
 
 
-def is_jsonp(dep) -> bool:
-    """Check if the dependency is :term:`json pointer path`."""
+def get_jsonp(dep) -> Union[List[str], None]:
+    """Check if the dependency is :term:`json pointer path` and return steps."""
     return getattr(dep, "jsonp", None)
 
 

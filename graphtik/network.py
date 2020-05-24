@@ -31,7 +31,7 @@ from .modifiers import (
     _modifier_withset,
     dep_renamed,
     get_keyword,
-    is_jsonp,
+    get_jsonp,
     is_optional,
     is_pure_sfx,
     is_sfx,
@@ -346,8 +346,9 @@ class Network(Plottable):
         needs = []
         needs_edges = []
         for n in getattr(operation, "op_needs", operation.needs):
-            if is_jsonp(n):
-                append_subdoc_chain(iter_path(n))
+            json_path = get_jsonp(n)
+            if json_path:
+                append_subdoc_chain(json_path)
 
             nkw, ekw = {}, {}
             if is_optional(n):
@@ -371,8 +372,9 @@ class Network(Plottable):
         ## Provides
         #
         for n in getattr(operation, "op_provides", operation.provides):
-            if is_jsonp(n):
-                append_subdoc_chain(iter_path(n))
+            json_path = get_jsonp(n)
+            if json_path:
+                append_subdoc_chain(json_path)
 
             kw = {}
             if is_sfx(n):
