@@ -211,8 +211,8 @@ def unsatisfied_operations(dag, inputs: Collection) -> List:
                 # Prune operations that ended up providing no output.
                 unsatisfied.append(node)
             else:
-                # It's ok not to dig into edge-data("optional") here,
-                # we care about all needs, including broken ones.
+                # Not digging dag(!), because when rescheduling
+                # op-needs != in-edges with non-"optional" attrs!
                 real_needs = set(n for n in node.needs if not is_optional(n))
                 if real_needs.issubset(op_satisfaction[node]):
                     # Op is satisfied; mark its outputs as ok.
