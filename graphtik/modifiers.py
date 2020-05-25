@@ -417,7 +417,9 @@ def keyword(
         .. graphtik::
     """
     # Must pass a truthy `keyword` bc cstor cannot not know its keyword.
-    return _modifier(name, keyword=keyword or name, accessor=accessor, no_jsonp=None)
+    return _modifier(
+        name, keyword=keyword or name, accessor=accessor, no_jsonp=no_jsonp
+    )
 
 
 def optional(
@@ -488,7 +490,7 @@ def optional(
         keyword=keyword or name,
         optional=_Optionals.keyword,
         accessor=accessor,
-        no_jsonp=None,
+        no_jsonp=no_jsonp,
     )
 
 
@@ -508,7 +510,7 @@ def accessor(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
     - To combine it with `optional`, `keyword`, etc use the rest modifier factories
       and pass an argument value to their `accessor` parameter.
     """
-    return _modifier(name, accessor=accessor, no_jsonp=None)
+    return _modifier(name, accessor=accessor, no_jsonp=no_jsonp)
 
 
 def jsonp(name: str, no_jsonp=None) -> _Modifier:
@@ -624,7 +626,9 @@ def vararg(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
         {'a': 5, 'sum': 5}
 
     """
-    return _modifier(name, optional=_Optionals.vararg, accessor=accessor, no_jsonp=None)
+    return _modifier(
+        name, optional=_Optionals.vararg, accessor=accessor, no_jsonp=no_jsonp
+    )
 
 
 def varargs(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
@@ -696,7 +700,7 @@ def varargs(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
     .. varargs-mistake-end
     """
     return _modifier(
-        name, optional=_Optionals.varargs, accessor=accessor, no_jsonp=None
+        name, optional=_Optionals.varargs, accessor=accessor, no_jsonp=no_jsonp
     )
 
 
@@ -889,7 +893,7 @@ def sfxed(
         sideffected=dependency,
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
-        no_jsonp=None,
+        no_jsonp=no_jsonp,
     )
 
 
@@ -903,7 +907,7 @@ def sfxed_vararg(
         sideffected=dependency,
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
-        no_jsonp=None,
+        no_jsonp=no_jsonp,
     )
 
 
@@ -917,7 +921,7 @@ def sfxed_varargs(
         sideffected=dependency,
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
-        no_jsonp=None,
+        no_jsonp=no_jsonp,
     )
 
 
