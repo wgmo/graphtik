@@ -28,7 +28,7 @@ from .base import Items, Operation, PlotArgs, Plottable, astuple, jetsam
 from .config import is_debug, is_skip_evictions
 from .jsonpointer import iter_path
 from .modifiers import (
-    _modifier_withset,
+    modifier_withset,
     dep_renamed,
     get_keyword,
     get_jsonp,
@@ -69,7 +69,7 @@ def _optionalized(graph, data):
         if all_optionals
         else data  # sideffect
         if is_sfx(data)
-        else _modifier_withset(
+        else modifier_withset(
             data,
             # un-optionalize
             optional=None,

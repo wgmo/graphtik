@@ -150,7 +150,7 @@ class _Modifier(str):
     - the *factory* functions like :func:`.keyword`, :func:`optional` etc,
     - the *predicates* like :func:`is_optional()`, :func:`is_pure_sfx()` etc,
     - the *conversion* functions like :func:`dep_renamed()`, :func:`dep_stripped()` etc,
-    - and only *rarely* (and with care) call its :meth:`_modifier_withset()` method or
+    - and only *rarely* (and with care) call its :meth:`modifier_withset()` method or
       :func:`_modifier()` factor functions.
 
     :param kw:
@@ -323,7 +323,7 @@ def _modifier(
     return _Modifier(name, _repr, func, *args[1:], **kw)
 
 
-def _modifier_withset(
+def modifier_withset(
     dep,
     name=...,
     keyword=...,
@@ -1060,9 +1060,9 @@ def dep_renamed(dep, ren) -> Union[_Modifier, str]:
     if isinstance(dep, _Modifier):
         if is_sfx(dep):
             new_name = renamer(dep.sideffected)
-            dep = _modifier_withset(dep, name=new_name, sideffected=new_name)
+            dep = modifier_withset(dep, name=new_name, sideffected=new_name)
         else:
-            dep = _modifier_withset(dep, name=renamer(str(dep)))
+            dep = modifier_withset(dep, name=renamer(str(dep)))
     else:  # plain string
         dep = renamer(dep)
 
@@ -1074,7 +1074,7 @@ def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
     Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
     """
     return (
-        (_modifier_withset(dep, sfx_list=(s,)) for s in dep.sfx_list)
+        (modifier_withset(dep, sfx_list=(s,)) for s in dep.sfx_list)
         if is_sfxed(dep)
         else (dep,)
     )
@@ -1087,7 +1087,5 @@ def dep_stripped(dep) -> Union[str, _Modifier]:
     conveying all other properties of the original modifier to the stripped dependency.
     """
     if is_sfxed(dep):
-        dep = _modifier_withset(
-            dep, name=dep.sideffected, sideffected=None, sfx_list=()
-        )
+        dep = modifier_withset(dep, name=dep.sideffected, sideffected=None, sfx_list=())
     return dep
