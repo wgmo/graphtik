@@ -4,6 +4,7 @@ from operator import contains, delitem, getitem, setitem
 
 import pytest
 
+from graphtik.jsonpointer import iter_path
 from graphtik.modifiers import (
     Accessor,
     accessor,
@@ -240,14 +241,19 @@ def test_sideffected_bad(call, exp):
         (lambda: sfxed_varargs("f", "a"), "sfxed('p.f'(+), 'a')"),
     ],
 )
-def test_modifs_rename_fn(mod, exp):
+def test_modifs_rename_fn(mod, exp, ser_method):
     renamer = lambda n: f"p.{n}"
-    got = repr(dep_renamed(mod(), renamer))
-    print(got)
-    assert got == exp
-    if hasattr(got, "sideffected"):
+    dep = mod()
+    got = dep_renamed(dep, renamer)
+    assert repr(got) == exp
+    assert repr(ser_method(got)) == exp
+
+    if getattr(dep, "sideffected", None):
         # Check not just(!) `_repr` has changed.
-        assert got.sideffected == renamer(mod.sideffected)
+        assert got.sideffected != dep.sideffected
+
+    if hasattr(dep, "jsonp"):
+        assert got.jsonp == list(iter_path(str(dep_stripped(got))))
 
 
 @pytest.mark.parametrize(

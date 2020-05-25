@@ -342,7 +342,13 @@ def modifier_withset(
     if isinstance(dep, _Modifier):
         kw = {
             **vars(dep),
-            **{k: v for k, v in locals().items() if v is not ...},
+            **{
+                k: v
+                for k, v in locals().items()
+                if v is not ...
+                # Filter out CACHED path-parts, to regenerate.
+                and k != "jsonp"
+            },
             **kw,
         }
         kw = {
