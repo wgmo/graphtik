@@ -36,6 +36,7 @@ from typing import (
 )
 
 import jinja2
+from jinja2.filters import do_truncate
 import networkx as nx
 import pydot
 from boltons.iterutils import default_enter, default_exit, get_path, remap
@@ -299,6 +300,21 @@ def _format_exception(ex):
         return f"{type(ex).__name__}: {ex}"
 
 
+@jinja2.environmentfilter
+def _reversing_truncate(
+    env, s, length=255, killwords=False, end="...", leeway=None, reverse=None
+) -> str:
+    """
+    Like :class:`jinja2.filters.do_truncate` but from the end (keeping the suffix).
+    """
+    if not reverse:
+        return do_truncate(env, s, length, killwords, end, leeway)
+
+    s = s[::-1]
+    ret = do_truncate(env, s, length, killwords, end, leeway)
+    return ret[::-1]
+
+
 def _make_jinja2_environment() -> jinja2.Environment:
     env = jinja2.Environment()
 
@@ -313,6 +329,7 @@ def _make_jinja2_environment() -> jinja2.Environment:
     )
     env.filters["hrefer"] = _drop_gt_lt
     env.filters["ex"] = _format_exception
+    env.filters["truncate"] = _reversing_truncate
 
     return env
 
@@ -390,6 +407,8 @@ class Theme:
     ##########
     ## VARIABLES
 
+    #: args for jinja2 patched `truncate` filter, above.
+    truncate_args = ((23, True), {"reverse": True})
     fill_color = "wheat"
     subdoc_color = "#8B4513"  # SaddleBrown
     pruned_color = "#d3d3d3"  # LightGrey
@@ -434,7 +453,11 @@ class Theme:
 
     #: Reduce margins, since sideffects take a lot of space
     #: (default margin: x=0.11, y=0.055O)
-    kw_data = {"shape": "rect", "margin": "0.04,0.02"}
+    kw_data = {
+        "shape": "rect",
+        "margin": "0.04,0.02",
+        "label": make_template("{{ nx_item | truncate }}"),
+    }
     kw_data_inp = {}
     kw_data_out = {}
     kw_data_inp_only = {"shape": "invhouse"}
@@ -562,6 +585,8 @@ class Theme:
         "op_name": lambda pa: pa.nx_item.name,
         "fn_name": lambda pa: pa.nx_item
         and func_name(pa.nx_item.fn, mod=1, fqdn=1, human=1),
+        "op_truncate": Ref("truncate_args"),
+        "fn_truncate": Ref("truncate_args"),
         "op_tooltip": make_op_tooltip,
         "fn_tooltip": make_fn_tooltip,
         "op_url": Ref("op_url", default=None),
@@ -589,7 +614,7 @@ class Theme:
                   } | xmlattr }}
                 >
                     {%- if fontcolor -%}<FONT COLOR="{{ fontcolor }}">{%- endif -%}
-                    {{- '<B>OP:</B> <I>%s</I>' % op_name |ee if op_name -}}
+                    {{- '<B>OP:</B> <I>%s</I>' % op_name | truncate(*op_truncate[0], **op_truncate[1]) | ee if op_name -}}
                     {%- if fontcolor -%}</FONT>{%- endif -%}
                 </TD>
                 <TD BORDER="1" SIDES="b">
@@ -622,7 +647,7 @@ class Theme:
                     {%- if fontcolor -%}
                     <FONT COLOR="{{ fontcolor }}">
                     {%- endif -%}
-                    <B>FN:</B> {{ fn_name | eee }}
+                    <B>FN:</B> {{ fn_name | truncate(*fn_truncate[0], **fn_truncate[1]) | eee }}
                     {%- if fontcolor -%}
                     </FONT>
                     {%- endif -%}

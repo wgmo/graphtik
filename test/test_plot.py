@@ -86,6 +86,8 @@ def test_op_label_template_full():
         color="red",
         fontcolor="blue",
         fillcolor="wheat",
+        op_truncate=plot.Theme.truncate_args,
+        fn_truncate=plot.Theme.truncate_args,
         op_url="http://op_url.com<label>",
         op_tooltip='<op " \t tooltip>',
         op_link_target="_self",
@@ -123,7 +125,7 @@ def test_op_label_template_full():
     for k, v in [
         (k, v)
         for k, v in kw.items()
-        if "tooltip" not in k and "url" not in k and "badge" not in k
+        if not any(i in k for i in "truncate tooltip url badge".split())
     ]:
         assert v in got, (k, v)
 
@@ -144,7 +146,13 @@ def test_op_label_template_empty():
 
 
 def test_op_label_template_fn_empty():
-    got = plot._render_template(plot.Theme.op_template, op_name="op", fn_name="fn")
+    got = plot._render_template(
+        plot.Theme.op_template,
+        op_name="op",
+        fn_name="fn",
+        op_truncate=plot.Theme.truncate_args,
+        fn_truncate=plot.Theme.truncate_args,
+    )
     print(got)
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
@@ -539,8 +547,8 @@ def test_node_dot_str0(dot_str_pipeline):
         digraph graph_ {
         fontname=italic;
         label=<graph>;
-        <edge> [margin="0.04,0.02", shape=invhouse];
-        <digraph&#58; strict> [margin="0.04,0.02", shape=invhouse];
+        <edge> [label=edge, margin="0.04,0.02", shape=invhouse];
+        <digraph&#58; strict> [label="digraph: strict", margin="0.04,0.02", shape=invhouse];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET="_top"
@@ -551,7 +559,7 @@ def test_node_dot_str0(dot_str_pipeline):
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
-        <&lt;graph&gt;> [margin="0.04,0.02", shape=house];
+        <&lt;graph&gt;> [label=<graph>, margin="0.04,0.02", shape=house];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
@@ -592,9 +600,9 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         splines=ortho;
         subgraph "cluster_after pruning" {
         label=<after pruning>;
-        <edge> [fillcolor=wheat, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
-        <digraph&#58; strict> [fillcolor=wheat, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 2"];
-        <&lt;graph&gt;> [fillcolor=SkyBlue, margin="0.04,0.02", shape=house, style=filled, tooltip="(None)"];
+        <edge> [fillcolor=wheat, label=edge, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
+        <digraph&#58; strict> [fillcolor=wheat, label="digraph: strict", margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 2"];
+        <&lt;graph&gt;> [fillcolor=SkyBlue, label=<graph>, margin="0.04,0.02", shape=house, style=filled, tooltip="(None)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FunctionalOperation(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
