@@ -143,7 +143,15 @@ class Solution(ChainMap, Plottable):
         :param op:
             for logging
         """
-        canceled = unsatisfied_operations(dag, self)
+        canceled = unsatisfied_operations(
+            dag,
+            [
+                i
+                for i in self
+                # don't send canceled SFXs as Inputs.
+                if not is_sfx(i) or self.get(i, True)
+            ],
+        )
         # Minus executed, bc partial-out op might not have any provides left.
         newly_canceled = iset(canceled) - self.canceled - self.executed
         self.canceled.update(newly_canceled)
