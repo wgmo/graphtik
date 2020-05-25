@@ -173,7 +173,7 @@ yield_superdocs = partial(_yield_chained_docs, (("in_edges", 0),))
 yield_chaindocs = partial(_yield_chained_docs, (("out_edges", 1), ("in_edges", 0)))
 
 
-def unsatisfied_operations(dag, inputs: Collection) -> List:
+def unsatisfied_operations(dag, inputs: Iterable) -> List:
     """
     Traverse topologically sorted dag to collect un-satisfied operations.
 
@@ -211,9 +211,11 @@ def unsatisfied_operations(dag, inputs: Collection) -> List:
                 # Prune operations that ended up providing no output.
                 unsatisfied.append(node)
             else:
-                # Not digging dag(!), because when rescheduling
-                # op-needs != in-edges with non-"optional" attrs!
-                real_needs = set(n for n in node.needs if not is_optional(n))
+                real_needs = set(
+                    n for n, _, opt in dag.in_edges(node, data="optional") if not opt
+                )
+                # ## Sanity check that op's needs are never broken
+                # assert real_needs == set(n for n in node.needs if not is_optional(n))
                 if real_needs.issubset(op_satisfaction[node]):
                     # Op is satisfied; mark its outputs as ok.
                     ok_data.update(yield_chaindocs(dag, dag.adj[node], ok_data))
