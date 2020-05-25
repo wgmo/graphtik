@@ -236,7 +236,7 @@ class Solution(ChainMap, Plottable):
 
             if outs_to_break:
                 dag = self.dag
-                dag.remove_edges_from(tuple(dag.out_edges(outs_to_break)))
+                dag.remove_edges_from((op, out) for out in outs_to_break)
                 self._reschedule(dag, "rescheduled", op)
                 # list used by `check_if_incomplete()`
                 self.executed[op] = outs_to_break
