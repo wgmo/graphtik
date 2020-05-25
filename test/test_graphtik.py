@@ -1073,7 +1073,6 @@ def test_solution_accessor_simple():
             provides=[accessor("A", acc), accessor("BB", acc)],
         ),
     )
-    copy_values.plot("t.pdf")
     sol = copy_values.compute({"a": 1, "b": 2})
     assert sol == {"a": 1, "b": 2, "A": 1, "BB": 2}
 
