@@ -830,7 +830,17 @@ class RenArgs(NamedTuple):
     """
 
     #: what is currently being renamed,
-    #: one of the string: ``(op | needs | provides | aliases)``
+    #: one of the string::
+    #:
+    #:     op
+    #:     need.jsonpart
+    #:     need
+    #:     provide.jsonpart
+    #:     provide
+    #:     alias.jsonpart
+    #:     alias
+    #:
+    #: Any :term:`jsonp` parts are renamed prior to the full path (as ordered above).
     typ: str
     #: the operation currently being processed
     op: "Operation"
@@ -891,60 +901,77 @@ class Operation(Plottable, abc.ABC):
             - if a `renamer` dict contained a non-string value,
         """
 
+        def with_errors_logged(fn, ren_args: RenArgs) -> str:
+            """Wrap `fn` to log its errors without touching ex, for debug aid."""
+            ok = False
+            try:
+                ret = fn(ren_args)
+                ok = True
+                return ret
+            finally:
+                if not ok:
+                    log.warning("Failed to rename %s", ren_args)
+
         def rename_driver(ren_args: RenArgs) -> str:
             """Handle dicts, callables and non-string names as true/false."""
             from .modifiers import dep_renamed
 
-            ok = False
-            try:
-                new_name = old_name = ren_args.name
-                if isinstance(renamer, cabc.Mapping):
-                    dst = renamer.get(old_name)
-                    if callable(dst) or (dst and isinstance(dst, str)):
-                        new_name = dep_renamed(old_name, dst)
-                elif callable(renamer):
-                    dst = renamer(ren_args)
-                    if dst and isinstance(dst, str):
-                        new_name = dst
-                    # A falsy means don't touch the node.
-                else:
-                    raise AssertionError(
-                        f"Invalid `renamer` {renamer!r} should have been caught earlier."
-                    )
+            new_name = old_name = ren_args.name
+            if isinstance(renamer, cabc.Mapping):
+                dst = renamer.get(old_name)
+                if callable(dst) or (dst and isinstance(dst, str)):
+                    new_name = dep_renamed(old_name, dst)
+            elif callable(renamer):
+                dst = renamer(ren_args)
+                if dst and isinstance(dst, str):
+                    new_name = dst
+                # A falsy means don't touch the node.
+            else:
+                raise AssertionError(
+                    f"Invalid `renamer` {renamer!r} should have been caught earlier."
+                )
 
-                if not new_name or not isinstance(new_name, str):
-                    raise ValueError(
-                        f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
-                    )
+            if not new_name or not isinstance(new_name, str):
+                raise ValueError(
+                    f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
+                )
 
-                ok = True
-                return new_name
-            finally:
-                if not ok:
-                    # Debug aid without touching ex.
-                    log.warning("Failed to rename %s", ren_args)
+            return new_name
+
+        def rename_subdocs(ren_args):
+            parts = getattr(ren_args.name, ".jsonpart", None)
+            if parts:  # might be ``False`` if `no_jsonp`.
+                path = "/".join(
+                    rename_driver(ren_args._replace(ren_args.typ + ".part"))
+                    for p in parts
+                )
+                ren_args = ren_args._replace(name=path)
+            return rename_driver(ren_args)
 
         ren_args = RenArgs(None, self, None)
 
-        kw["name"] = rename_driver(
-            ren_args._replace(typ="op", name=kw.get("name", self.name))
+        kw["name"] = with_errors_logged(
+            rename_driver, ren_args._replace(typ="op", name=kw.get("name", self.name))
         )
-        ren_args = ren_args._replace(typ="needs")
+        ren_args = ren_args._replace(typ="need")
         kw["needs"] = [
-            rename_driver(ren_args._replace(name=n))
+            with_errors_logged(rename_subdocs, ren_args._replace(name=n))
             for n in kw.get("needs", self.needs)
         ]
-        ren_args = ren_args._replace(typ="provides")
+        ren_args = ren_args._replace(typ="provide")
         # Store renamed `provides` as map, used for `aliases` below.
         renamed_provides = {
-            n: rename_driver(ren_args._replace(name=n))
+            n: with_errors_logged(rename_subdocs, ren_args._replace(name=n))
             for n in kw.get("provides", self.provides)
         }
         kw["provides"] = list(renamed_provides.values())
         if hasattr(self, "aliases"):
-            ren_args = ren_args._replace(typ="aliases")
+            ren_args = ren_args._replace(typ="alias")
             kw["aliases"] = [
-                (renamed_provides[k], rename_driver(ren_args._replace(name=v)),)
+                (
+                    renamed_provides[k],
+                    with_errors_logged(rename_subdocs, ren_args._replace(name=v)),
+                )
                 for k, v in kw.get("aliases", self.aliases)  # pylint: disable=no-member
             ]
 
