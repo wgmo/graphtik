@@ -1062,6 +1062,109 @@ def test_narrow_and_optionality(reverse):
         pipeline.compute({"bb": 11})
 
 
+@pytest.fixture
+def quarantine_pipeline(exemethod):
+    @operation(
+        rescheduled=1, needs="quarantine", provides=["space", "time"], returns_dict=True
+    )
+    def get_out_or_stay_home(quarantine):
+        if quarantine:
+            return {"time": "1h"}
+        else:
+            return {"space": "around the block"}
+
+    @operation(needs="space", provides=["fun", "body"])
+    def exercise(where):
+        return "refreshed", "strong feet"
+
+    @operation(needs="time", provides=["fun", "brain"])
+    def read_book(for_how_long):
+        return "relaxed", "popular physics"
+
+    pipeline = compose(
+        "covid19", get_out_or_stay_home, exercise, read_book, parallel=exemethod
+    )
+    return pipeline
+
+
+def test_rescheduled_quarantine_doctest(quarantine_pipeline):
+    pipeline = quarantine_pipeline
+    sol = pipeline(quarantine=True)
+    assert sol == {
+        "quarantine": True,
+        "time": "1h",
+        "fun": "relaxed",
+        "brain": "popular physics",
+    }
+    sol = pipeline(quarantine=False)
+    assert sol == {
+        "quarantine": False,
+        "space": "around the block",
+        "fun": "refreshed",
+        "body": "strong feet",
+    }
+
+
+def test_rescheduled_quarantine_with_overwrites(quarantine_pipeline):
+    pipeline = compose(
+        "quarantine with firneds",
+        operation(lambda: "friendly garden", name="friends", provides="space"),
+        quarantine_pipeline,
+    )
+    fun_overwrites = ["relaxed", "refreshed"]
+    space_overwrites = ["around the block", "friendly garden"]
+
+    ## 1st Friendly garden
+    #
+    sol = pipeline(quarantine=True)
+    assert sol == {
+        "quarantine": True,
+        "space": "friendly garden",
+        "time": "1h",
+        "fun": "relaxed",
+        "body": "strong feet",
+        "brain": "popular physics",
+    }
+    assert sol.overwrites == {"fun": fun_overwrites}
+    sol = pipeline(quarantine=False)
+    # same as original pipe.
+    assert sol == {
+        "quarantine": False,
+        "space": "around the block",
+        "fun": "refreshed",
+        "body": "strong feet",
+    }
+    assert sol.overwrites == {"space": space_overwrites}
+
+    ## Friends 2nd, as a fallback
+    #
+    pipeline = compose(
+        "quarantine with firneds",
+        quarantine_pipeline,
+        operation(lambda: "friendly garden", name="friends", provides="space"),
+    )
+
+    sol = pipeline(quarantine=True)
+    assert sol == {
+        "quarantine": True,
+        "time": "1h",
+        "fun": "refreshed",
+        "brain": "popular physics",
+        "space": "friendly garden",
+        "body": "strong feet",
+    }
+    assert sol.overwrites == {"fun": fun_overwrites[::-1]}
+    sol = pipeline(quarantine=False)
+    # friendly garden prevails.
+    assert sol == {
+        "quarantine": False,
+        "space": "friendly garden",
+        "fun": "refreshed",
+        "body": "strong feet",
+    }
+    assert sol.overwrites == {"space": space_overwrites[::-1]}
+
+
 def test_solution_accessor_simple():
     acc = (contains, getitem, setitem, delitem)
 
