@@ -204,11 +204,12 @@ to define a trivial *identity function* matching the `needs` & `provides` each t
 
     >>> from graphtik import keyword, optional, vararg
     >>> op = operation(
+    ...     None,
     ...     name="a",
     ...     needs=[optional("opt"), vararg("vararg"), "pos", keyword("kw")],
     ...     # positional vararg, keyword, optional
     ...     provides=["pos", "vararg", "kw", "opt"],
-    ... )()
+    ... )
     >>> op(opt=5, vararg=6, pos=7, kw=8)
     {'pos': 7, 'vararg': 6, 'kw': 5, 'opt': 8}
 

@@ -527,10 +527,11 @@ def jsonp(name: str, no_jsonp=None) -> _Modifier:
         >>> from graphtik import operation, compose, jsonp
 
         >>> copy_values = operation(
+        ...     fn=None,  # ask for the "conveyor op"
         ...     name="copy a+b-->A+BB",
         ...     needs=[jsonp("inputs/a"), jsonp("inputs/b")],
         ...     provides=[jsonp("RESULTS/A"), jsonp("RESULTS/BB")]
-        ... )()
+        ... )
 
         >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
         Traceback (most recent call last):

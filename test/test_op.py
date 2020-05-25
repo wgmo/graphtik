@@ -639,10 +639,10 @@ def test_pipe_rename():
 def test_conveyor_identity_fn():
     op = operation(name="copy values", needs="a")()
     assert not op.fn
-    op = operation(needs="a", provides="A")()
+    op = operation(None, needs="a", provides="A")
     assert not op.fn
 
-    op = operation(name="a", needs="a", provides="A")()
+    op = operation(None, name="a", needs="a", provides="A")
     assert op.fn
     assert op(a=5) == {"A": 5}
 
@@ -653,11 +653,12 @@ def test_conveyor_identity_fn():
     assert op(a=55, b=66) == {"A": 55, "B": 66}
 
     op = operation(
+        fn=None,
         name="a",
         needs=[optional("a"), vararg("b"), "c"],
         # positional, vararg, keyword, optional
         provides=["C", "B", "A"],
-    )()
+    )
     assert op(c=7, a=5, b=6) == {"A": 5, "B": 6, "C": 7}
 
     # TODO: when `varargs` work for Outputs.

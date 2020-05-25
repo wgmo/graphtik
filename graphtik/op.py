@@ -855,28 +855,33 @@ class FunctionalOperation(Operation):
 
 
 def operation(
-    fn: Callable = None,
-    name=None,
-    needs: Items = None,
-    provides: Items = None,
-    aliases: Mapping = None,
+    fn: Callable = UNSET,
+    name=UNSET,
+    needs: Items = UNSET,
+    provides: Items = UNSET,
+    aliases: Mapping = UNSET,
     *,
-    rescheduled=None,
-    endured=None,
-    parallel=None,
-    marshalled=None,
-    returns_dict=None,
-    node_props: Mapping = None,
+    rescheduled=UNSET,
+    endured=UNSET,
+    parallel=UNSET,
+    marshalled=UNSET,
+    returns_dict=UNSET,
+    node_props: Mapping = UNSET,
 ):
     r"""
-    An :term:`operation` factory that can function as a decorator.
+    An :term:`operation` factory that works like a "fancy decorator".
 
     :param fn:
-        The callable underlying this operation.
-        If given, it builds the operation right away (along with any other arguments).
+        The callable underlying this operation:
 
-        If not given, it returns a "fancy decorator" that still supports all arguments
-        here AND the ``withset()`` method.
+          - if not given, it returns the the :meth:`withset()` method as the decorator,
+            so it still supports all arguments, apart from `fn`.
+
+          - if given, it builds the operation right away
+            (along with any other arguments);
+
+          - if given, but is ``None``, it will assign the ::term:`default identity function`
+            right before it is computed.
 
         .. hint::
             This is a twisted way for `"fancy decorators"
@@ -964,7 +969,7 @@ def operation(
 
     **Example:**
 
-    This is an example of its use, based on the "builder pattern":
+    If no `fn` given, it returns the ``withset`` method, to act as a decorator:
 
         >>> from graphtik import operation, varargs
 
@@ -972,33 +977,38 @@ def operation(
         >>> op
         <function FunctionalOperation.withset at ...
 
-    That's a "fancy decorator".
-
-        >>> op = op.withset(needs=['a', 'b'])
+    But if `fn` is set to `None`
+        >>> op = op(needs=['a', 'b'])
         >>> op
         FunctionalOperation(name=None, needs=['a', 'b'], fn=None)
 
-    If you call an operation with `fn` un-initialized, it will scream:
+    If you call an operation without `fn` and no `name`, it will scream:
 
         >>> op.compute({"a":1, "b": 2})
         Traceback (most recent call last):
         ValueError: Operation must have a callable `fn` and a non-empty `name`:
           FunctionalOperation(name=None, needs=['a', 'b'], fn=None)
 
-    You may keep calling ``withset()`` until a valid operation instance is returned,
-    and compute it:
+    But if you give just a `name` with ``None`` as `fn` it will build an :term:`conveyor operation`
+    for some `needs` & `provides`:
+
+        >>> op = operation(None, name="copy", needs=["foo", "bar"], provides=["FOO", "BAZ"])
+        >>> op.compute({"foo":1, "bar": 2})
+        {'FOO': 1, 'BAZ': 2}
+
+    You may keep calling ``withset()`` on an operation, to build modified clones:
 
         >>> op = op.withset(needs=['a', 'b'],
         ...                 provides='SUM', fn=lambda a, b: a + b)
         >>> op
-        FunctionalOperation(name='<lambda>', needs=['a', 'b'], provides=['SUM'], fn='<lambda>')
+        FunctionalOperation(name='copy', needs=['a', 'b'], provides=['SUM'], fn='<lambda>')
         >>> op.compute({"a":1, "b": 2})
         {'SUM': 3}
 
         >>> op.withset(fn=lambda a, b: a * b).compute({'a': 2, 'b': 5})
         {'SUM': 10}
     """
-    kw = {k: v for k, v in locals().items() if v is not None and k != "self"}
+    kw = {k: v for k, v in locals().items() if v is not UNSET and k != "self"}
     op = FunctionalOperation(**kw)
 
     if "fn" in kw:
