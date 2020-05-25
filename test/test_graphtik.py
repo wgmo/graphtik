@@ -1183,15 +1183,15 @@ def test_solution_accessor_simple():
 def test_jsonp_disabled():
     no_jsonp = operation(
         name="copy a+b-->A+BB",
-        needs=["inputs/a", "inputs/b"],
-        provides=[jsonp("RESULTS/A", False), "RESULTS/BB"],
+        needs=[jsonp("inputs/a", 1), jsonp("inputs/b", 1)],
+        provides=["RESULTS/A", jsonp("RESULTS/BB", 1)],
     )()
     with pytest.raises(MultiValueError):
         no_jsonp.compute({"inputs": {"a": 1, "b": 2}})
 
     no_jsonp = operation(
         name="copy a+b-->A+BB",
-        needs=["inputs/a", "inputs/b"],
+        needs=[jsonp("inputs/a", 1), jsonp("inputs/b", 1)],
         provides=[jsonp("RESULTS/A", True), jsonp("RESULTS/BB", no_jsonp=True)],
     )()
     with pytest.raises(MultiValueError):
@@ -1201,8 +1201,8 @@ def test_jsonp_disabled():
 def test_jsonp_and_conveyor_fn_simple():
     copy_values = operation(
         name="copy a+b-->A+BB",
-        needs=[jsonp("inputs/a"), jsonp("inputs/b", no_jsonp=False)],
-        provides=[jsonp("RESULTS/A"), jsonp("RESULTS/BB", False)],
+        needs=["inputs/a", jsonp("inputs/b", False)],
+        provides=["RESULTS/A", "RESULTS/BB"],
     )()
 
     ## Ops are unaware of subdocs, Solution does.
@@ -1227,14 +1227,11 @@ def test_jsonp_and_conveyor_fn_complex():
         "t",
         operation(
             name="op1",
-            needs=[jsonp("i/a"), jsonp("i/a")],  # dupe jsonp needs
-            provides=[jsonp("r/a"), jsonp("a", True)],
+            needs=["i/a", "i/a"],  # dupe jsonp needs
+            provides=["r/a", jsonp("a", True)],
         )(),
         operation(
-            lambda x: (x, 2 * x),
-            name="op2",
-            needs=[jsonp("r/a")],
-            provides=[jsonp("r/A"), jsonp("r/AA")],
+            lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"],
         ),
     )
     sol = pipe.compute({"i": {"a": 1}})

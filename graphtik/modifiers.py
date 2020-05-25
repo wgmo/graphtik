@@ -515,7 +515,7 @@ def accessor(name: str, accessor: Accessor = None, no_jsonp=None) -> _Modifier:
 
 def jsonp(name: str, no_jsonp=None) -> _Modifier:
     """
-    Annotate a regular dependency starting with slash(``/``) as :term:`json pointer path`.
+    Block a dependency starting with slash(``/``) to be  taken as :term:`json pointer path`.
 
     :param no_jsonp:
         An annotated dependency with a name containing slashes(``/``) it is assumed
@@ -531,8 +531,8 @@ def jsonp(name: str, no_jsonp=None) -> _Modifier:
         >>> copy_values = operation(
         ...     fn=None,  # ask for the "conveyor op"
         ...     name="copy a+b-->A+BB",
-        ...     needs=[jsonp("inputs/a"), jsonp("inputs/b")],
-        ...     provides=[jsonp("RESULTS/A"), jsonp("RESULTS/BB")]
+        ...     needs=["inputs/a", "inputs/b"],
+        ...     provides=["RESULTS/A", "RESULTS/BB"]
         ... )
 
         >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})

@@ -51,6 +51,7 @@ from .modifiers import (
     is_sfxed,
     is_vararg,
     is_varargs,
+    modifier_withset,
     optional,
 )
 
@@ -118,6 +119,16 @@ def as_renames(i, argname):
     return i
 
 
+def jsonp_ize(deps):
+    """Auto-convert deps with slashes as :term:`jsonp` (unless ``no_jsonp``). """
+    if deps:
+        deps = tuple(
+            modifier_withset(dep) if "/" in dep and type(dep) is str else dep
+            for dep in deps
+        )
+    return deps
+
+
 def reparse_operation_data(
     name, needs, provides, aliases=()
 ) -> Tuple[
@@ -180,7 +191,7 @@ def reparse_operation_data(
                 "\n  Simply add any extra `sideffects` in the `provides`."
             )
 
-    return name, needs, provides, aliases
+    return name, jsonp_ize(needs), jsonp_ize(provides), jsonp_ize(aliases)
 
 
 def _spread_sideffects(

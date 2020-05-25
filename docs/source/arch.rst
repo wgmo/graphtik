@@ -419,7 +419,7 @@ Architecture
         A **subdoc** is a `dependency` value nested further into another one
         (the **superdoc**),
         accessed with a `json pointer path` expression with respect to the `solution`,
-        like: ``parent/child``
+        denoted with slashes like: ``root/parent/child/leaf``
 
         Note that if a nested `output <outputs>` is asked, then all **docs-in-chain**
         are kept i.e. all *superdocs* till the **root dependency** (the "superdocs") plus
