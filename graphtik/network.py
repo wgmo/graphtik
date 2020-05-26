@@ -586,14 +586,19 @@ class Network(Plottable):
             return list(yield_ops(ordered_nodes))
 
         def add_eviction(dep):
-            # For functions with repeated needs, like ['a', 'a'].
-            if dep in steps:
-                log.warning("Skipped dupe step %s in position %i.", dep, len(steps))
-            else:
-                steps.add(dep)
+            if steps:
+                if steps[-1] == dep:
+                    # Functions with redandant SFXEDs like ['a', sfxed('a', ...)]??
+                    log.warning("Skipped dupe step %r @ #%i.", dep, len(steps))
+                    return
+                if log.isEnabledFor(logging.DEBUG) and dep in steps:
+                    # Happens by rule-2 if multiple Ops produce
+                    # the same pruned out.
+                    log.debug("Re-evicting %r @ #%i.", dep, len(steps))
+            steps.append(dep)
 
         outputs = set(yield_chaindocs(pruned_dag, outputs))
-        steps = iset()
+        steps = []
 
         ## Add Operation and Eviction steps.
         #
@@ -601,7 +606,7 @@ class Network(Plottable):
             if not isinstance(op, Operation):
                 continue
 
-            steps.add(op)
+            steps.append(op)
 
             future_nodes = set(ordered_nodes[i + 1 :])
 
