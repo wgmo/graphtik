@@ -221,9 +221,10 @@ def resolve_path(
                     path,
                     doc,
                     ex,
-                    exc_info=ex,
+                    # Don't log int(part) stack-traces.
+                    exc_info=type(ex) is not ValueError
+                    or not str(ex).startswith("invalid literal for int()"),
                 )
-                pass
         else:
             if default is ...:
                 raise ResolveError(path, part, i)
@@ -395,9 +396,10 @@ def set_path_value(
                     path,
                     doc,
                     ex,
-                    exc_info=ex,
+                    # Don't log int(part) stack-traces.
+                    exc_info=type(ex) is not ValueError
+                    or not str(ex).startswith("invalid literal for int()"),
                 )
-                pass
         else:
             raise ValueError(
                 f"Failed setting step (#{i}){part} of json pointer path {path!r}!"
@@ -521,9 +523,10 @@ def pop_path(
                     path,
                     doc,
                     ex,
-                    exc_info=ex,
+                    # Don't log int(part) stack-traces.
+                    exc_info=type(ex) is not ValueError
+                    or not str(ex).startswith("invalid literal for int()"),
                 )
-                pass
         else:
             if default is ...:
                 raise ResolveError(path, part, i)
