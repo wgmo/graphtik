@@ -5,7 +5,7 @@ import logging
 import random
 import time
 from collections import ChainMap, abc, defaultdict, namedtuple
-from contextvars import ContextVar
+from contextvars import ContextVar, copy_context
 from functools import partial
 from itertools import chain
 from typing import Any, Collection, List, Mapping, Optional, Tuple, Union
@@ -353,8 +353,6 @@ class _OpTask:
             log.debug("+++ (%s) Executing %s...", self.solid, self)
             token = task_context.set(self)
             try:
-                ## Not really needed ...
-                # self.result = copy_context().run(self.op.compute, self.sol)
                 self.result = self.op.compute(self.sol)
             finally:
                 task_context.reset(token)
@@ -389,7 +387,7 @@ def _do_task(task):
         import dill
 
         task = dill.loads(task)
-        result = task()
+        result = copy_context().run(task)
         result = dill.dumps(result)
     else:
         result = task()
