@@ -38,7 +38,7 @@ from graphtik import (
     sfxed,
     vararg,
 )
-from graphtik.base import AbortedException, IncompleteExecutionError, Operation
+from graphtik.base import AbortedException, IncompleteExecutionError, RenArgs, Operation
 from graphtik.config import (
     abort_run,
     debug_enabled,
@@ -51,7 +51,7 @@ from graphtik.config import (
     tasks_marshalled,
 )
 from graphtik.execution import Solution, _OpTask, task_context
-from graphtik.modifiers import dep_renamed
+from graphtik.modifiers import dep_renamed, is_sfxed, modifier_withset
 from graphtik.pipeline import Pipeline
 
 log = logging.getLogger(__name__)
@@ -504,7 +504,7 @@ def test_network_combine():
     )
 
 
-def test_network_merge_in_doctests():
+def test_network_nest_in_doctests():
     days_count = 3
 
     weekday = compose(
@@ -519,7 +519,7 @@ def test_network_merge_in_doctests():
             lambda t: (t[:-1], t[-1:]),
             name="work!",
             needs="tasks",
-            provides=["tasks done", "todos"],
+            provides=["tasks_done", "todos"],
         ),
         operation(str, name="sleep"),
         weekday,
@@ -534,7 +534,7 @@ def test_network_merge_in_doctests():
     assert len(week.ops) == 6
 
     def nester(ren_args):
-        if ren_args.name not in ("backlog", "tasks done", "todos"):
+        if ren_args.name not in ("backlog", "tasks_done", "todos"):
             return True
 
     week = compose("week", *weekdays, nest=nester)
@@ -543,7 +543,7 @@ def test_network_merge_in_doctests():
     assert sol == {
         "backlog": "a lot!",
         "day 0.tasks": "a lot!",
-        "tasks done": "a lot",
+        "tasks_done": "a lot",
         "todos": "!",
         "day 1.tasks": "a lot!",
         "day 2.tasks": "a lot!",
@@ -1106,20 +1106,18 @@ def test_rescheduled_quarantine_doctest(quarantine_pipeline):
 
 
 def test_rescheduled_quarantine_with_overwrites(quarantine_pipeline):
-    pipeline = compose(
-        "quarantine with firneds",
-        operation(lambda: "friendly garden", name="friends", provides="space"),
-        quarantine_pipeline,
-    )
+    friendly_garden = operation(lambda: "garden", name="friends", provides="space")
+
+    pipeline = compose("quarantine with friends", friendly_garden, quarantine_pipeline)
     fun_overwrites = ["relaxed", "refreshed"]
-    space_overwrites = ["around the block", "friendly garden"]
+    space_overwrites = ["around the block", "garden"]
 
     ## 1st Friendly garden
     #
     sol = pipeline(quarantine=True)
     assert sol == {
         "quarantine": True,
-        "space": "friendly garden",
+        "space": "garden",
         "time": "1h",
         "fun": "relaxed",
         "body": "strong feet",
@@ -1138,11 +1136,7 @@ def test_rescheduled_quarantine_with_overwrites(quarantine_pipeline):
 
     ## Friends 2nd, as a fallback
     #
-    pipeline = compose(
-        "quarantine with firneds",
-        quarantine_pipeline,
-        operation(lambda: "friendly garden", name="friends", provides="space"),
-    )
+    pipeline = compose("quarantine with friends", quarantine_pipeline, friendly_garden)
 
     sol = pipeline(quarantine=True)
     assert sol == {
@@ -1150,15 +1144,15 @@ def test_rescheduled_quarantine_with_overwrites(quarantine_pipeline):
         "time": "1h",
         "fun": "refreshed",
         "brain": "popular physics",
-        "space": "friendly garden",
+        "space": "garden",
         "body": "strong feet",
     }
     assert sol.overwrites == {"fun": fun_overwrites[::-1]}
     sol = pipeline(quarantine=False)
-    # friendly garden prevails.
+    # garden prevails.
     assert sol == {
         "quarantine": False,
-        "space": "friendly garden",
+        "space": "garden",
         "fun": "refreshed",
         "body": "strong feet",
     }
@@ -1242,6 +1236,128 @@ def test_jsonp_and_conveyor_fn_complex():
     assert sol == {"r": {"A": 1, "AA": 2}}
     sol = pipe.compute({"i": {"a": 1}}, outputs="r/AA")
     assert sol == {"r": {"AA": 2}}
+
+
+def test_network_nest_subdocs(quarantine_pipeline):
+    days = ["Monday", "Tuesday", "Wednesday"]
+    todos = sfxed("backlog", "todos")
+
+    @operation(
+        name="wake up", needs="backlog", provides=["tasks", todos], rescheduled=True
+    )
+    def pick_tasks(backlog):
+        if not backlog:
+            return NO_RESULT
+        # Pick from backlog 1/3 of len-of-chars of my operation's (day) name.
+        n_tasks = int(len(task_context.get().op.name) / 3)
+        my_tasks, todos = backlog[:n_tasks], backlog[n_tasks:]
+        return my_tasks, todos
+
+    do_tasks = operation(None, name="work!", needs="tasks", provides="tasks_done")
+
+    weekday = compose("weekday", pick_tasks, do_tasks)
+    weekdays = [weekday.withset(name=d) for d in days]
+
+    def nester(ra: RenArgs):
+        dep = ra.name
+        if ra.typ == "op":
+            return True
+        if ra.typ.endswith(".jsonpart"):
+            return False
+        if dep == "tasks":
+            return True
+        # if is_sfxed(dep):
+        #     return modifier_withset(
+        #         dep, sfx_list=[f"{ra.parent.name}.{s}" for s in dep.sfx_list]
+        #     )
+        if dep == "tasks_done":
+            return dep_renamed(dep, lambda n: f"{n}/{ra.parent.name}")
+        return False
+
+    week = compose("week", *weekdays, nest=nester)
+    week.plot("t.pdf")
+    assert str(week) == re.sub(
+        r"[\n ]{2,}",  # collapse all space-chars into a single space
+        " ",
+        """
+        Pipeline('week', needs=['backlog', 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks'],
+        provides=['Monday.tasks', sfxed('backlog', 'todos'),
+                  'tasks_done/Monday'($), 'Tuesday.tasks', 'tasks_done/Tuesday'($),
+                  'Wednesday.tasks', 'tasks_done/Wednesday'($)],
+        x6 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
+        Wednesday.wake up, Wednesday.work!)
+        """.strip(),
+    )
+
+    ## Add collector after nesting
+
+    @operation(
+        name="collect tasks",
+        needs=[todos, *(vararg(f"tasks_done/{d}") for d in days)],
+        provides=["work_done", "todos"],
+    )
+    def collector(backlog, *tasks_done):
+        return tasks_done, backlog
+
+    week = compose("week", week, collector)
+    assert str(week) == re.sub(
+        r"[\n ]{2,}",  # collapse all space-chars into a single space
+        " ",
+        """
+        Pipeline('week',
+            needs=['backlog',
+                'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks',
+                sfxed('backlog', 'todos'),
+                'tasks_done/Monday'($?), 'tasks_done/Tuesday'($?), 'tasks_done/Wednesday'($?)],
+            provides=['Monday.tasks',
+                sfxed('backlog', 'todos'), 'tasks_done/Monday'($),
+                'Tuesday.tasks', 'tasks_done/Tuesday'($),
+                'Wednesday.tasks', 'tasks_done/Wednesday'($),
+                'work_done', 'todos'],
+            x7 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
+                    Wednesday.wake up, Wednesday.work!, collect tasks)
+        """.strip(),
+    )
+
+    # +3 from week's capacity: 4 + 5 + 5
+
+    sol = week(backlog=range(17))  #
+    assert sol == {
+        "backlog": range(14, 17),
+        "Monday.tasks": range(0, 4),
+        "tasks_done": {"Wednesday": range(9, 14)},
+        "Tuesday.tasks": range(4, 9),
+        "Wednesday.tasks": range(9, 14),
+        "work_done": (range(0, 4), range(4, 9), range(9, 14)),
+        "todos": range(14, 17),
+    }
+
+    assert sol.overwrites == {
+        "tasks_done": [
+            {"Wednesday": range(9, 14)},
+            {"Tuesday": range(4, 9)},
+            {"Monday": range(0, 4)},
+        ],
+        "backlog": [range(14, 17), range(9, 17), range(4, 17), range(0, 17)],
+    }
+
+    ## -1 tasks for Wednesday to enact
+
+    sol = week(backlog=range(9))
+    assert sol == {
+        "backlog": range(9, 9),
+        "Monday.tasks": range(0, 4),
+        "tasks_done": {"Tuesday": range(4, 9)},
+        "Tuesday.tasks": range(4, 9),
+        sfxed("backlog", "todos"): False,
+        "work_done": (range(0, 4), range(4, 9)),
+        "todos": range(9, 9),
+    }
+
+    assert sol.overwrites == {
+        "tasks_done": [{"Tuesday": range(4, 9)}, {"Monday": range(0, 4)}],
+        "backlog": [range(9, 9), range(4, 9), range(0, 9)],
+    }
 
 
 # Function without return value.
