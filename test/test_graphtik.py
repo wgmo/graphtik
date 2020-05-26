@@ -1359,6 +1359,15 @@ def test_network_nest_subdocs(quarantine_pipeline):
         "backlog": [range(9, 9), range(4, 9), range(0, 9)],
     }
 
+    sol = week.compute({"backlog": range(9)}, outputs="tasks_done/Monday")
+    assert sol == {"tasks_done": {"Monday": range(0, 4)}}
+    assert sol.overwrites == {}
+    sol = week.compute({"backlog": range(9)}, outputs="tasks_done")
+    assert sol == {"tasks_done": {"Tuesday": range(4, 9)}}
+    assert sol.overwrites == {
+        "tasks_done": [{"Tuesday": range(4, 9)}, {"Monday": range(0, 4)}]
+    }
+
 
 # Function without return value.
 def _box_extend(box, *args):
