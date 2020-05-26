@@ -26,7 +26,6 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Operation, PlotArgs, Plottable, astuple, jetsam
 from .config import is_debug, is_skip_evictions
-from .jsonpointer import iter_path
 from .modifiers import (
     modifier_withset,
     dep_renamed,

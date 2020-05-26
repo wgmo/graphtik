@@ -296,9 +296,9 @@ def _modifier(
         for client code to extend its own modifiers.
     """
     if "/" in name and not no_jsonp:
-        from .jsonpointer import iter_path
+        from .jsonpointer import jsonp_path
 
-        kw["jsonp"] = list(iter_path(name))
+        kw["jsonp"] = jsonp_path(name)
         # Don't override user's accessor.
         #
         if not accessor:

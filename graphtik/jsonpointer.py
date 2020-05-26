@@ -18,7 +18,7 @@ import logging
 import operator
 from collections import abc as cabc
 from functools import partial
-from typing import Any, Collection, Iterable, Mapping, Optional, Sequence, Union
+from typing import Any, Collection, Iterable, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -38,7 +38,7 @@ def unescape_jsonpointer_part(part: str) -> str:
     return part.replace("~1", "/").replace("~0", "~")
 
 
-def iter_path(jsonpointer: str) -> Iterable[str]:
+def jsonp_path(jsonpointer: str) -> List[str]:
     """
     Generates the `path` parts according to jsonpointer spec.
 
@@ -53,29 +53,29 @@ def iter_path(jsonpointer: str) -> Iterable[str]:
 
     **Examples:**
 
-        >>> list(iter_path('a'))
+        >>> jsonp_path('a')
         ['a']
-        >>> list(iter_path('a/'))
-        ['a', '']
-        >>> list(iter_path('a/b'))
+        >>> jsonp_path('a/')
+        ['']
+        >>> jsonp_path('a/b')
         ['a', 'b']
 
-        >>> list(iter_path('/a'))
+        >>> jsonp_path('/a')
         ['', 'a']
-        >>> list(iter_path('/a/'))
-        ['', 'a', '']
+        >>> jsonp_path('/')
+        ['']
 
-        >>> list(iter_path('/'))
-        ['', '']
-
-        >>> list(iter_path(''))
+        >>> jsonp_path('')
         ['']
 
     """
     # Optimization: modifier caches splitted parts in its "jsonp" attribute.
     parts = getattr(jsonpointer, "jsonp", None)
     if not parts:
-        parts = (unescape_jsonpointer_part(part) for part in jsonpointer.split("/"))
+        parts = [unescape_jsonpointer_part(part) for part in jsonpointer.split("/")]
+        if parts[1:].count(""):
+            last_idx = len(parts) - 1 - parts[::-1].index("")
+            parts = parts[last_idx:]
     return parts
 
 
@@ -198,7 +198,7 @@ def resolve_path(
     if root is ...:
         root = doc
 
-    parts = iter_path(path) if isinstance(path, str) else path
+    parts = jsonp_path(path) if isinstance(path, str) else path
     for i, part in enumerate(parts):
         if part == "":
             if root is None:
@@ -362,7 +362,7 @@ def set_path_value(
     if root is ...:
         root = doc
 
-    parts = list(iter_path(path) if isinstance(path, str) else path)
+    parts = jsonp_path(path) if isinstance(path, str) else list(path)
     last_part = len(parts) - 1
     for i, part in enumerate(parts):
         if part == "":
@@ -499,7 +499,7 @@ def pop_path(
     if root is ...:
         root = doc
 
-    parts = list(iter_path(path) if isinstance(path, str) else path)
+    parts = jsonp_path(path) if isinstance(path, str) else list(path)
     last_part = len(parts) - 1
     for i, part in enumerate(parts):
         if part == "":

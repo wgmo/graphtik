@@ -4,7 +4,7 @@ from operator import contains, delitem, getitem, setitem
 
 import pytest
 
-from graphtik.jsonpointer import iter_path
+from graphtik.jsonpointer import jsonp_path
 from graphtik.modifiers import (
     Accessor,
     accessor,
@@ -253,7 +253,7 @@ def test_modifs_rename_fn(mod, exp, ser_method):
         assert got.sideffected != dep.sideffected
 
     if hasattr(dep, "jsonp"):
-        assert got.jsonp == list(iter_path(str(dep_stripped(got))))
+        assert got.jsonp == jsonp_path(str(dep_stripped(got)))
 
 
 @pytest.mark.parametrize(

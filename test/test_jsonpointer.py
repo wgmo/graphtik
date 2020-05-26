@@ -10,7 +10,7 @@ import pytest
 from graphtik.jsonpointer import (
     ResolveError,
     escape_jsonpointer_part,
-    iter_path,
+    jsonp_path,
     pop_path,
     resolve_path,
     set_path_value,
@@ -30,35 +30,35 @@ def test_jsonpointer_escape_parts():
     assert un_esc(part) == part
 
 
-def test_iter_path_empty():
-    assert list(iter_path("")) == [""]
+def test_jsonp_path_empty():
+    assert jsonp_path("") == [""]
 
 
-def test_iter_path_root():
-    assert list(iter_path("/")) == ["", ""]
+def test_jsonp_path_root():
+    assert jsonp_path("/") == [""]
 
 
-def test_iter_path_regular():
-    assert list(iter_path("/a")) == ["", "a"]
+def test_jsonp_path_regular():
+    assert jsonp_path("/a") == ["", "a"]
 
-    assert list(iter_path("/a/b")) == ["", "a", "b"]
-
-
-def test_iter_path_folder():
-    assert list(iter_path("/a/")) == ["", "a", ""]
+    assert jsonp_path("/a/b") == ["", "a", "b"]
 
 
-def test_iter_path_None():
+def test_jsonp_path_folder():
+    assert jsonp_path("/a/") == [""]
+
+
+def test_jsonp_path_None():
     with pytest.raises(AttributeError):
-        list(iter_path(None))
+        jsonp_path(None)
 
 
-def test_iter_path_with_spaces():
-    assert list(iter_path("/ some ")) == ["", " some "]
-    assert list(iter_path("/ some /  ")) == ["", " some ", "  "]
+def test_jsonp_path_with_spaces():
+    assert jsonp_path("/ some ") == ["", " some "]
+    assert jsonp_path("/ some /  ") == ["", " some ", "  "]
 
-    assert list(iter_path(" some ")) == [" some "]
-    assert list(iter_path(" some /  ")) == [" some ", "  "]
+    assert jsonp_path(" some ") == [" some "]
+    assert jsonp_path(" some /  ") == [" some ", "  "]
 
 
 @pytest.mark.parametrize(
@@ -80,46 +80,44 @@ def test_iter_path_with_spaces():
         ("a", ValueError()),
     ],
 )
-def test_iter_path_massive(inp, exp):
+def test_jsonp_path_massive(inp, exp):
     if isinstance(exp, Exception):
         with pytest.raises(type(exp), match=str(exp)):
-            list(iter_path(inp))
+            jsonp_path(inp)
     else:
-        assert list(iter_path(inp)) == exp
+        assert jsonp_path(inp) == exp
 
 
 @pytest.mark.parametrize(
     "inp, exp",
     [
         ("/a", ["", "a"]),
-        ("/a/", ["", "a", ""]),
+        ("/a/", [""]),
         ("/a/b", ["", "a", "b"]),
-        ("/a/b/", ["", "a", "b", ""]),
-        ("/a//b", ["", "a", "", "b"]),
-        ("/", ["", ""]),
+        ("/a/b/", [""]),
+        ("/a//b", ["", "b"]),
+        ("/", [""]),
         ("", [""]),
         ("/ some ", ["", " some "]),
-        ("/ some /", ["", " some ", ""]),
+        ("/ some /", [""]),
         ("/ some /  ", ["", " some ", "  "]),
         (None, AttributeError()),
         ("a", ["a"]),
-        ("a/", ["a", ""]),
+        ("a/", [""]),
         ("a/b", ["a", "b"]),
-        ("a/b/", ["a", "b", ""]),
+        ("a/b/", [""]),
         ("a/../b/.", ["a", "..", "b", "."]),
         ("a/../b/.", ["a", "..", "b", "."]),
         (" some ", [" some "]),
-        (" some /", [" some ", ""]),
         (" some /  ", [" some ", "  "]),
-        (" some /  /", [" some ", "  ", ""]),
     ],
 )
-def test_iter_path_massive(inp, exp):
+def test_jsonp_path_massive(inp, exp):
     if isinstance(exp, Exception):
         with pytest.raises(type(exp), match=str(exp)):
-            list(iter_path(inp))
+            jsonp_path(inp)
     else:
-        assert list(iter_path(inp)) == exp
+        assert jsonp_path(inp) == exp
 
 
 @pytest.mark.parametrize(
