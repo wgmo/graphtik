@@ -265,7 +265,20 @@ def list_scouter(doc, part, container_factory, overwrite):
         return item
 
     part = int(part)  # Let it bubble, to try next (as key-item).
-    if not overwrite:
+    if overwrite and log.isEnabledFor(logging.WARNING):
+        try:
+            child = doc[part]
+        except LookupError:
+            # Out of bounds, but ok for now, will break also on assignment, below.
+            pass
+        else:
+            log.warning(
+                "Json-pointer part %r in a %i-len subdoc will overwrite %r!",
+                part,
+                len(doc),
+                doc[part],
+            )
+    elif not overwrite:
         try:
             child = doc[part]
             if is_collection(child):
@@ -281,7 +294,14 @@ def list_scouter(doc, part, container_factory, overwrite):
 
 def collection_scouter(doc, part, container_factory, overwrite):
     """Get item `part` from `doc` collection, or create a new ome from `container_factory`."""
-    if not overwrite:
+    if overwrite and log.isEnabledFor(logging.WARNING) and part in doc:
+        log.warning(
+            "Json-pointer part %r in a %i-len subdoc will overwrite %r!",
+            part,
+            len(doc),
+            doc[part],
+        )
+    elif not overwrite:
         try:
             child = doc[part]
             if is_collection(child):
@@ -297,7 +317,14 @@ def collection_scouter(doc, part, container_factory, overwrite):
 
 def object_scouter(doc, part, value, container_factory, overwrite):
     """Get attribute `part` in `doc` object, or create a new one from `container_factory`."""
-    if not overwrite:
+    if overwrite and log.isEnabledFor(logging.WARNING) and hasattr(doc, part):
+        log.warning(
+            "Json-pointer part %r in a %i-len subdoc will overwrite %r!",
+            part,
+            len(doc),
+            getattr(doc, part),
+        )
+    elif not overwrite:
         try:
             child = getattr(doc, part)
             if is_collection(child):
