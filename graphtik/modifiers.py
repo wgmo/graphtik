@@ -556,10 +556,11 @@ def jsonp(name: str, no_jsonp=None) -> _Modifier:
         >>> results
         {'RESULTS/A'($): 1, 'RESULTS/BB'($): 2}
 
-    Notice that :term:`nested dependencies` did not yet worked, because *jsonp* modifiers
-    work internally with :term:`accessor`\\s, and :class:`.FunctionalOperation` is unaware
-    of them -- it's the :class:`.Solution` class that supports *accessors**, and
-    this requires the operation to be wrapped in a pipeline (see below).
+    Notice that the :term:`hierarchical dependencies <subdoc>` did not yet worked,
+    because *jsonp* modifiers work internally with :term:`accessor`\\s, and
+    :class:`.FunctionalOperation` is unaware of them -- it's the :class:`.Solution`
+    class that supports *accessors**, and this requires the operation to be wrapped
+    in a pipeline (see below).
 
     Note also that it we see the "representation' of the key as ``'RESULTS/A'($)``
     but the actual string value simpler:

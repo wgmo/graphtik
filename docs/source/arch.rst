@@ -415,7 +415,7 @@ Architecture
     subdoc
     superdoc
     doc chain
-    nested dependencies
+    hierarchical data
         A **subdoc** is a `dependency` value nested further into another one
         (the **superdoc**),
         accessed with a `json pointer path` expression with respect to the `solution`,
