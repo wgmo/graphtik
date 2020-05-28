@@ -61,6 +61,20 @@ def test_jsonp_path_with_spaces():
     assert jsonp_path(" some /  ") == [" some ", "  "]
 
 
+def test_jsonp_path_cached():
+    class C(str):
+        pass
+
+    p = C("a/b")
+    assert jsonp_path(p) == ["a", "b"]
+    p.jsonp = False
+    assert jsonp_path(p) == [p]
+    assert p.jsonp == False
+    p.jsonp = None
+    assert jsonp_path(p) == ["a", "b"]
+    assert p.jsonp == None
+
+
 @pytest.mark.parametrize(
     "inp, exp",
     [
