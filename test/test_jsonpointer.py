@@ -49,7 +49,7 @@ def test_jsonp_path_folder():
 
 
 def test_jsonp_path_None():
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError):
         jsonp_path(None)
 
 
@@ -115,7 +115,7 @@ def test_jsonp_path_massive(inp, exp):
         ("/ some ", ["", " some "]),
         ("/ some /", [""]),
         ("/ some /  ", ["", " some ", "  "]),
-        (None, AttributeError()),
+        (None, TypeError()),
         ("a", ["a"]),
         ("a/", [""]),
         ("a/b", ["a", "b"]),

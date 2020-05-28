@@ -16,6 +16,7 @@ Copied from pypi/pandalone.
 """
 import logging
 import operator
+import re
 from collections import abc as cabc
 from functools import partial
 from typing import Any, Collection, Iterable, List, Mapping, Optional, Sequence, Union
@@ -49,6 +50,12 @@ def jsonp_path(jsonpointer: str) -> List[str]:
         converting any step to int, and None if None.
         (the 1st step of absolute-paths is always ``''``)
 
+    In order to support relative & absolute paths along with a sensible
+    :func:`.set_path_value()`, it departs from the standard in these aspects:
+
+    - A double slash or a slash at the end of the path restarts from the root.
+
+
     :author: Julian Berman, ankostis
 
     **Examples:**
@@ -74,7 +81,10 @@ def jsonp_path(jsonpointer: str) -> List[str]:
     if parts is False:
         parts = [jsonpointer]
     elif parts is None:
-        parts = [unescape_jsonpointer_part(part) for part in jsonpointer.split("/")]
+        parts = [
+            unescape_jsonpointer_part(part)
+            for part in re.sub(".+(?:/$|/{2})", "/", jsonpointer).split("/")
+        ]
         if parts[1:].count(""):
             last_idx = len(parts) - 1 - parts[::-1].index("")
             parts = parts[last_idx:]
@@ -149,8 +159,8 @@ def resolve_path(
     :raises ValueError:
         if `path` was an absolute path a  ``None`` `root` had been given.
 
-    In order to couple it with a sensible :func:`.set_path_value()`, it departs
-    from the standard in these aspects:
+    In order to support relative & absolute paths along with a sensible
+    :func:`.set_path_value()`, it departs from the standard in these aspects:
 
     - Supports also relative paths (but not the official extension).
     - For arrays, it tries 1st as an integer, and then falls back to normal indexing
