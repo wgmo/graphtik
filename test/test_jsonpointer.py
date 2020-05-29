@@ -6,6 +6,7 @@ Test utilities for :term:`json pointer path` modifier.
 Copied from pypi/pandalone.
 """
 import pytest
+from random import shuffle
 
 from graphtik.jsonpointer import (
     ResolveError,
@@ -15,6 +16,7 @@ from graphtik.jsonpointer import (
     resolve_path,
     set_path_value,
     unescape_jsonpointer_part,
+    update_paths,
 )
 
 
@@ -433,3 +435,68 @@ def test_pop_path_cases(inp, pop_item, culled_doc):
         doc, *_ = inp
         assert pop_path(*inp) == pop_item
         assert doc == culled_doc
+
+
+def test_update_paths_ok():
+    path_values = [
+        ("_", 0),
+        ("a/bb", 11),
+        # ("a/cc", 12),  # Overwritten
+        ("a/cc/eee", 122),
+        ("a/cc/ddd/ffff", 1211),
+        # ("b", 2),  # Overwritten
+        ("b/CC", 21),
+        ("d/DD", 31),
+        ("e", 0),
+        ("F/GG/HHH", 0),
+    ]
+    exp = {
+        "_": 0,
+        "a": {"bb": 11, "cc": {"ddd": {"ffff": 1211}, "eee": 122}},
+        "b": {"CC": 21},
+        "d": {"DD": 31},
+        "e": 0,
+        "F": {"GG": {"HHH": 0}},
+    }
+    ## The last 4 elements have unique prefixes,
+    #  and can gradually remove them fro both inp & exp.
+    #
+    for i in range(1, 5):
+        doc = {}
+        pv = path_values[:-i]
+        shuffle(pv)
+        update_paths(doc, pv)
+        assert doc == dict(list(exp.items())[:-i])
+
+
+def test_update_paths_overwrites():
+    path_values = [
+        ("_", 0),
+        ("a/bb", 11),
+        ("a/cc", 12),  # Overwritten
+        ("a/cc/eee", 122),
+        ("a/cc/ddd/ffff", 1211),
+        ("b", 2),  # Overwritten
+        ("b/CC", 21),
+        ("d/DD", 31),
+        ("e", 0),
+        ("F/GG/HHH", 0),
+    ]
+    exp = {
+        "_": 0,
+        "a": {"bb": 11, "cc": {"ddd": {"ffff": 1211}, "eee": 122}},
+        "b": {"CC": 21},
+        "d": {"DD": 31},
+        "e": 0,
+        "F": {"GG": {"HHH": 0}},
+    }
+    ## The last 4 elements have unique prefixes,
+    #  and can gradually remove them fro both inp & exp.
+    #
+    for i in range(1, 4):
+        doc = {}
+        pv = path_values[:-i]
+        # shuffle(pv)
+        update_paths(doc, pv)
+        print(doc)
+        assert doc == dict(list(exp.items())[:-i])
