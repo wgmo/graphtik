@@ -583,6 +583,34 @@ def test_op_rename():
     )
 
 
+def test_op_rename_parts():
+    op = operation(
+        str,
+        name="op1",
+        needs=[sfx("a/b"), "/a/b"],
+        provides=["b/c", sfxed("d/e/f", "k/l")],
+        aliases=[("b/c", "/b/t")],
+    )
+
+    def renamer(na):
+        if na.name and na.typ.endswith(".jsonpart"):
+            return f"PP.{na.name}"
+
+    ren = op.withset(renamer=renamer)
+    got = str(ren)
+    print(got)
+    assert got == re.sub(
+        r"[\n ]+",  # collapse all space-chars into a single space
+        " ",
+        """
+        FunctionalOperation(name='op1',
+            needs=[sfx('a/b'), '/PP.a/PP.b'($)],
+            provides=['PP.b/PP.c'($), sfxed('PP.d/PP.e/PP.f'($), 'k/l')],
+            aliases=[('PP.b/PP.c'($), '/PP.b/PP.t'($))], fn='str')
+        """.strip(),
+    )
+
+
 def test_pipe_rename():
     pipe = compose(
         "t",

@@ -900,6 +900,7 @@ class Operation(Plottable, abc.ABC):
             - if a `renamer` was neither dict nor callable
             - if a `renamer` dict contained a non-string value,
         """
+        from .modifiers import dep_renamed
 
         def with_errors_logged(fn, ren_args: RenArgs) -> str:
             """Wrap `fn` to log its errors without touching ex, for debug aid."""
@@ -914,7 +915,6 @@ class Operation(Plottable, abc.ABC):
 
         def rename_driver(ren_args: RenArgs) -> str:
             """Handle dicts, callables and non-string names as true/false."""
-            from .modifiers import dep_renamed
 
             new_name = old_name = ren_args.name
             if isinstance(renamer, cabc.Mapping):
@@ -931,7 +931,7 @@ class Operation(Plottable, abc.ABC):
                     f"Invalid `renamer` {renamer!r} should have been caught earlier."
                 )
 
-            if not new_name or not isinstance(new_name, str):
+            if (not new_name and old_name) or not isinstance(new_name, str):
                 raise ValueError(
                     f"Must rename {old_name!r} into a non-empty string, got {new_name!r}!"
                 )
@@ -939,13 +939,15 @@ class Operation(Plottable, abc.ABC):
             return new_name
 
         def rename_subdocs(ren_args):
-            parts = getattr(ren_args.name, ".jsonpart", None)
-            if parts:  # might be ``False`` if `no_jsonp`.
+            parts = getattr(ren_args.name, "jsonp", None)
+            if parts:  # assuming deps here have been jsonpized earlier.
                 path = "/".join(
-                    rename_driver(ren_args._replace(ren_args.typ + ".part"))
+                    rename_driver(
+                        ren_args._replace(typ=ren_args.typ + ".jsonpart", name=p)
+                    )
                     for p in parts
                 )
-                ren_args = ren_args._replace(name=path)
+                ren_args = ren_args._replace(name=dep_renamed(ren_args.name, path))
             return rename_driver(ren_args)
 
         ren_args = RenArgs(None, self, None)
