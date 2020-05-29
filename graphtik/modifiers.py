@@ -295,7 +295,8 @@ def _modifier(
         Not used here, any given kKVs are assigned as :class:`_Modifier` attributes,
         for client code to extend its own modifiers.
     """
-    if "/" in name and not no_jsonp:
+    # Prevent sfx-jsonp.
+    if "/" in name and not no_jsonp and (sideffected is None or sfx_list):
         from .jsonpointer import jsonp_path
 
         kw["jsonp"] = jsonp_path(name)
