@@ -119,13 +119,14 @@ def as_renames(i, argname):
     return i
 
 
-def jsonp_ize(deps):
+def jsonp_ize(dep):
+    return modifier_withset(dep) if "/" in dep and type(dep) is str else dep
+
+
+def jsonp_ize_all(deps):
     """Auto-convert deps with slashes as :term:`jsonp` (unless ``no_jsonp``). """
     if deps:
-        deps = tuple(
-            modifier_withset(dep) if "/" in dep and type(dep) is str else dep
-            for dep in deps
-        )
+        deps = tuple(jsonp_ize(dep) for dep in deps)
     return deps
 
 
@@ -173,6 +174,7 @@ def reparse_operation_data(
                 f"The `aliases` [{bad}] clash with existing provides in {list(provides)}!"
             )
 
+        aliases = [(jsonp_ize(src), jsonp_ize(dst)) for src, dst in aliases]
         alias_src = iset(src for src, _dst in aliases)
         if not alias_src <= set(provides):
             bad_alias_sources = alias_src - provides
@@ -191,7 +193,7 @@ def reparse_operation_data(
                 "\n  Simply add any extra `sideffects` in the `provides`."
             )
 
-    return name, jsonp_ize(needs), jsonp_ize(provides), jsonp_ize(aliases)
+    return name, jsonp_ize_all(needs), jsonp_ize_all(provides), aliases
 
 
 def _spread_sideffects(
