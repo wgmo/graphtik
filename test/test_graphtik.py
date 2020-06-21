@@ -710,9 +710,7 @@ def test_pruning_avoid_cycles():
     assert pipe(a=1) == {"a": 1, "b": 1, "c": 3, "d": 12}
     assert pipe(b=1) == {"b": 1, "a": 2, "c": 3, "d": 12}
     assert pipe.compute({"c": 1}, "d") == {"d": 4}
-    # FIXME: too aggressive isolates-dropping prunes it!
-    with pytest.raises(ValueError, match="Unsolvable"):
-        assert pipe.compute({"c": 1}, "c") == {"c": 1}
+    assert pipe.compute({"c": 1}, "c") == {"c": 1}
 
 
 def test_deps_pruning_vs_narrowing(samplenet):
@@ -1442,7 +1440,7 @@ def test_sideffect_no_real_data(pipeline_sideffect1: Pipeline):
     with pytest.raises(ValueError, match="Unsolvable graph"):
         assert graph.compute(inp)
 
-    with pytest.raises(ValueError, match="Unsolvable graph"):
+    with pytest.raises(ValueError, match="Unreachable outputs"):
         graph.compute(inp, ["box", sfx("b")])
 
     with pytest.raises(ValueError, match="Unsolvable graph"):
@@ -1457,9 +1455,8 @@ def test_sideffect_no_real_data(pipeline_sideffect1: Pipeline):
     sol = graph.compute({"box": [0], sfx("a"): True})
     assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3], sfx("a"): True}
     #
-    # bad, not asked the out-sideffect
-    with pytest.raises(ValueError, match="Unsolvable graph"):
-        graph.compute({"box": [0], sfx("a"): True}, "box")
+    # Although no out-sideffect asked (like regular data).
+    assert graph.compute({"box": [0], sfx("a"): True}, "box") == {"box": [0]}
     #
     # ok, asked the 1st out-sideffect
     sol = graph.compute({"box": [0], sfx("a"): True}, ["box", sfx("b")])

@@ -533,8 +533,13 @@ class Network(Plottable):
             log.info("... dropping unsatisfied ops%s.", [op.name for op in unsatisfied])
         # Clone it, to modify it.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
-        # Clean unlinked data-nodes.
-        pruned_dag.remove_nodes_from(list(nx.isolates(pruned_dag)))
+        ## Clean unlinked data-nodes (except those both given & asked).
+        #
+        unlinked_data = set(nx.isolates(pruned_dag))
+        if outputs is not None:
+            # FIXME: must cast to simple set due to mahmoud/boltons#252 (boltons < v20.1)
+            unlinked_data -= set(satisfied_inputs & outputs)
+        pruned_dag.remove_nodes_from(unlinked_data)
 
         inputs = iset(
             _optionalized(pruned_dag, n) for n in satisfied_inputs if n in pruned_dag
