@@ -744,9 +744,8 @@ def test_pruning_raises_for_bad_output(samplenet):
 
     # Request two outputs we can compute and one we can't compute.  Assert
     # that this raises a ValueError.
-    with pytest.raises(ValueError) as exinfo:
+    with pytest.raises(ValueError, match="sum4"):
         samplenet.compute({"a": 1, "b": 2, "c": 3, "d": 4}, ["sum1", "sum3", "sum4"])
-    assert exinfo.match("sum4")
 
 
 def test_impossible_outputs():
@@ -755,13 +754,11 @@ def test_impossible_outputs():
         operation(name="op1", needs=["a"], provides="aa")(identity),
         operation(name="op2", needs=["aa", "bb"], provides="aabb")(identity),
     )
-    with pytest.raises(ValueError) as exinfo:
+    with pytest.raises(ValueError, match="Unreachable outputs"):
         pipeline.compute({"a": 1,}, ["aabb"])
-    assert exinfo.match("Unreachable outputs")
 
-    with pytest.raises(ValueError) as exinfo:
+    with pytest.raises(ValueError, match="Unreachable outputs"):
         pipeline.compute({"a": 1,}, ["aa", "aabb"])
-    assert exinfo.match("Unreachable outputs")
 
 
 def test_pruning_not_overrides_given_intermediate(exemethod):
