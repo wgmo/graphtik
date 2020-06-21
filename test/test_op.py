@@ -112,18 +112,18 @@ def test_builder_pattern():
         ((None, None, None), (None, (), ())),
         ## Check name
         (("_", "a", ("A",)), ("_", ("a",), ("A",))),
-        (((), ("a",), None), ((), ("a",), ())),
-        ((("a",), "a", "b"), (("a",), ("a",), ("b",))),
-        ((("a",), None, None), (("a",), (), ())),
+        (("", ("a",), None), ("", ("a",), ())),
+        (("a", "a", "b"), ("a", ("a",), ("b",))),
+        (("a", None, None), ("a", (), ())),
         ## Check needs
-        (((), (), None), ((), (), ())),
-        (((), [], None), ((), [], ())),
+        (("", (), None), ("", (), ())),
+        (("", [], None), ("", [], ())),
         (("", object(), None), ValueError("Cannot tuple-ize needs")),
         (("", [None], None), TypeError("All `needs` must be str")),
         (("", [()], None), TypeError("All `needs` must be str")),
         ## Check provides
-        (((), "a", ()), ((), ("a",), ())),
-        (((), "a", []), ((), ("a",), [])),
+        (("", "a", ()), ("", ("a",), ())),
+        (("", "a", []), ("", ("a",), [])),
         (("", "a", object()), ValueError("Cannot tuple-ize provides")),
         (("", "a", (None,)), TypeError("All `provides` must be str")),
         (("", "a", [()]), TypeError("All `provides` must be str")),
@@ -539,7 +539,9 @@ def test_pipeline_conveys_attr_to_ops(attr, value):
     kw = {attr: value}
     _opsattrs(compose("1", operation(str), **kw).net.graph, attr, value)
     _opsattrs(
-        compose("2", operation(str, name=1), operation(str, name=2), **kw).net.graph,
+        compose(
+            "2", operation(str, name="1"), operation(str, name="2"), **kw
+        ).net.graph,
         attr,
         value,
     )

@@ -146,8 +146,8 @@ def reparse_operation_data(
     """
     # if name is not None and not name or not isinstance(name, cabc.Hashable):
     #     raise TypeError(f"Operation `name` must be a truthy hashable, got: {name}")
-    if not isinstance(name, cabc.Hashable):
-        raise TypeError(f"Operation `name` must be hashable, got: {name}")
+    if name is not None and not isinstance(name, str):
+        raise TypeError(f"Non-str `name` given: {name}")
 
     # Allow single string-value for needs parameter
     needs = astuple(needs, "needs", allowed_types=cabc.Collection)
