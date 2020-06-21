@@ -688,6 +688,33 @@ def test_output_based_pruning(samplenet):
     assert results["sum3"] == add(c, add(c, d))
 
 
+def test_pruning_avoid_cycles():
+    @operation(needs="a", provides="b")
+    def f1(x):
+        return x
+
+    @operation(needs="b", provides="a")
+    def f2(x):
+        return 2 * x
+
+    @operation(needs="b", provides="c")
+    def f3(x):
+        return 3 * x
+
+    @operation(needs="c", provides="d")
+    def f4(x):
+        return 4 * x
+
+    pipe = compose("", f1, f2, f3, f4)
+
+    assert pipe(a=1) == {"a": 1, "b": 1, "c": 3, "d": 12}
+    assert pipe(b=1) == {"b": 1, "a": 2, "c": 3, "d": 12}
+    assert pipe.compute({"c": 1}, "d") == {"d": 4}
+    # FIXME: too aggressive isolates-dropping prunes it!
+    with pytest.raises(ValueError, match="Unsolvable"):
+        assert pipe.compute({"c": 1}, "c") == {"c": 1}
+
+
 def test_deps_pruning_vs_narrowing(samplenet):
     # Tests to make sure we don't need to pass graph inputs if they're not
     # needed to compute the requested outputs or of we're provided with

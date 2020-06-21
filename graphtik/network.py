@@ -505,12 +505,13 @@ class Network(Plottable):
 
         # Drop stray input values and operations (if any).
         if outputs is not None:
-            # If caller requested specific outputs, we can prune any
-            # unrelated nodes further up the dag.
+            ## If caller requested specific outputs, we can prune any
+            #  unrelated nodes further up the dag.
+            #
             ending_in_outputs = set()
             for out in yield_chaindocs(dag, outputs, ending_in_outputs):
                 # TODO: speedup prune-by-outs with traversing code
-                ending_in_outputs.update(nx.ancestors(dag, out))
+                ending_in_outputs.update(nx.ancestors(broken_dag, out))
                 ending_in_outputs.add(out)
             # Clone it, to modify it, or BUG@@ much later (e.g in eviction planing).
             broken_dag = broken_dag.subgraph(ending_in_outputs).copy()
