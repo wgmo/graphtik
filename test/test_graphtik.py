@@ -1275,7 +1275,6 @@ def test_network_nest_subdocs(quarantine_pipeline):
         return False
 
     week = compose("week", *weekdays, nest=nester)
-    week.plot("t.pdf")
     assert str(week) == re.sub(
         r"[\n ]{2,}",  # collapse all space-chars into a single space
         " ",
