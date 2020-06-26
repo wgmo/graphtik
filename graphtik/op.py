@@ -802,6 +802,7 @@ class FunctionalOperation(Operation):
     def compute(self, named_inputs=None, outputs: Items = None) -> dict:
         try:
             if self.fn is None or not self.name:
+                ## Could not check earlier due to builder pattern.
                 raise ValueError(
                     f"Operation must have a callable `fn` and a non-empty `name`:\n  {self}"
                 )

@@ -97,6 +97,15 @@ def build_network(
                 op_kw["renamer"] = parent_wrapper
             op = op.withset(**op_kw)
 
+        ## Last minute checks
+        #  (or Plot will fail later).
+        #
+        if hasattr(op, "fn"):
+            if op.fn is None or op.name is None:
+                ## Could not check earlier due to builder pattern.
+                raise ValueError(
+                    f"Incomplete FnOperation missing `fn` and/or `name`: {op}"
+                )
         return op
 
     merge_set = iset()  # Preseve given node order.
