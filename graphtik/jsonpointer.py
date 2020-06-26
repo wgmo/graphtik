@@ -505,7 +505,6 @@ def update_paths(
     )
 
 
-
 def list_popper(doc: Sequence, part, do_pop):
     """Call :func:`collection_popper()` with integer `part`."""
     return collection_popper(doc, int(part), do_pop)

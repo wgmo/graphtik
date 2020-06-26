@@ -164,7 +164,8 @@ class _Modifier(str):
 
     #: pre-calculated representation
     _repr: str
-    #: needed to reconstruct cstor code in :attr:`cmd`
+    #: The name of a modifier function here, needed to reconstruct
+    #: cstor code in :attr:`cmd`
     _func: str
     #: Map my name in `needs` into this kw-argument of the function.
     #: :func:`get_keyword()` returns it.

@@ -80,8 +80,6 @@ def build_network(
         ## Convey any node-props specified in the pipeline here
         #  to all sub-operations.
         #
-        from .op import FunctionalOperation
-
         if kw:
             op_kw = kw.copy()
 
