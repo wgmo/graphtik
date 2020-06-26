@@ -300,8 +300,8 @@ def _modifier(
         Not used here, any given kKVs are assigned as :class:`_Modifier` attributes,
         for client code to extend its own modifiers.
     """
-    if jsonp:
-        kw["jsonp"] = jsonp  # WARN: must be a collection for jsonp-accessors!
+    if jsonp is not None:
+        kw["jsonp"] = jsonp  # WARN: must be False or a collection for jsonp-accessors!
     # Prevent sfx-jsonp.
     elif "/" in name and jsonp is None and (sideffected is None or sfx_list):
         from .jsonpointer import jsonp_path
@@ -309,12 +309,22 @@ def _modifier(
         kw["jsonp"] = jsonp_path(name)
     # Don't override user's accessor.
     #
-    if "jsonp" in kw and not accessor:
+    if not accessor and kw.get("jsonp"):
         accessor = JsonpAccessor()
 
     args = (name, keyword, optional, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
     if not formats:
+        if kw.get("jsonp") is not None:
+            # Just jsonp given.
+            assert not accessor and (optional, accessor, sideffected, sfx_list) == (
+                None,
+                None,
+                None,
+                (),
+            ), locals()
+            return _Modifier(name, name, f"jsonp", *args[1:], jsonp=jsonp)
+
         # Make a plain string instead.
         return str(name)
 

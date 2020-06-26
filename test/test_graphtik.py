@@ -1197,27 +1197,30 @@ def test_solution_accessor_simple():
 
 
 def test_jsonp_disabled():
-    no_jsonp = operation(
+    no_jsonp_res = operation(
+        fn=None,
         name="copy a+b-->A+BB",
-        needs=[jsonp("inputs/a", 1), jsonp("inputs/b", 1)],
-        provides=["RESULTS/A", jsonp("RESULTS/BB", 1)],
-    )()
-    with pytest.raises(MultiValueError):
-        no_jsonp.compute({"inputs": {"a": 1, "b": 2}})
+        needs=[jsonp("inputs/a"), jsonp("inputs/b")],
+        provides=["RESULTS/A", jsonp("RESULTS/BB", False)],
+    )
+    assert "provides=['RESULTS/A'($), RESULTS/BB" in str(no_jsonp_res)
+    res = compose("", no_jsonp_res).compute({"inputs": {"a": 1, "b": 2}})
+    assert res == {"inputs": {"a": 1, "b": 2}, "RESULTS": {"A": 1}, "RESULTS/BB": 2}
 
-    no_jsonp = operation(
+    no_jsonp_inp = operation(
         name="copy a+b-->A+BB",
-        needs=[jsonp("inputs/a", 1), jsonp("inputs/b", 1)],
-        provides=[jsonp("RESULTS/A", True), jsonp("RESULTS/BB", jsonp=False)],
+        needs=["inputs/a", jsonp("inputs/b", False)],
+        provides=["RESULTS/A", "RESULTS/BB"],
     )()
-    with pytest.raises(MultiValueError):
-        no_jsonp.compute({"inputs": {"a": 1, "b": 2}})
+    assert "needs=['inputs/a'($), inputs/b]" in str(no_jsonp_inp)
+    res = compose("", no_jsonp_inp).compute({"inputs": {"a": 1}, "inputs/b": 2})
+    assert res == {"inputs": {"a": 1}, "inputs/b": 2, "RESULTS": {"A": 1, "BB": 2}}
 
 
 def test_jsonp_and_conveyor_fn_simple():
     copy_values = operation(
         name="copy a+b-->A+BB",
-        needs=["inputs/a", jsonp("inputs/b", False)],
+        needs=["inputs/a", "inputs/b"],
         provides=["RESULTS/A", "RESULTS/BB"],
     )()
 
