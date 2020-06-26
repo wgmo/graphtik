@@ -90,6 +90,7 @@ extensions = [
     "graphtik.sphinxext",
 ]
 
+graphviz_output_format = "svg"
 
 # Need functional doctests for graphtik-directive to work ok.
 doctest_default_flags = (
