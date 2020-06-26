@@ -51,7 +51,7 @@ from .modifiers import (
     is_sfxed,
     is_vararg,
     is_varargs,
-    modifier_withset,
+    jsonp,
     optional,
 )
 
@@ -120,7 +120,7 @@ def as_renames(i, argname):
 
 
 def jsonp_ize(dep):
-    return modifier_withset(dep) if "/" in dep and type(dep) is str else dep
+    return jsonp(dep) if "/" in dep and type(dep) is str else dep
 
 
 def jsonp_ize_all(deps):
