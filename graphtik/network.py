@@ -31,6 +31,7 @@ from .modifiers import (
     dep_renamed,
     get_keyword,
     get_jsonp,
+    jsonp,
     is_optional,
     is_pure_sfx,
     is_sfx,
@@ -339,7 +340,9 @@ class Network(Plottable):
 
         def append_subdoc_chain(doc_parts):
             doc_chain = list(doc_parts)
-            doc_chain = ["/".join(doc_chain[: i + 1]) for i in range(len(doc_chain))]
+            doc_chain = [
+                jsonp("/".join(doc_chain[: i + 1])) for i in range(len(doc_chain))
+            ]
             # FIXME: subdocs ignore double-slashes or final slash!
             doc_chain = [p for p in doc_chain if p]
             graph.add_edges_from(unseen_subdoc_edges(pairwise(doc_chain)))
