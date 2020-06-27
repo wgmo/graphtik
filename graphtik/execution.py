@@ -166,13 +166,29 @@ class Solution(ChainMap, Plottable):
                 op.name,
             )
 
-    def _update_op_outs(self, op, outputs):
-        """A separate method to allow subclasses with custom accessor logic. """
+    def _update_op_outs(self, op, outputs: Mapping):
+        """
+        Mass update values on the :term:`solution layer` for the given `op`.
+
+        Observes any :term:`accessor`\\s in the k
+        A separate method to allow subclasses with custom accessor logic.
+        """
         op_layer = self._layers[op]
-        if any(1 for o in outputs if get_accessor(o)):
-            for k, val in outputs.items():
-                acc_setitem(k)(op_layer, k, val)
-        else:
+        accessors = [get_accessor(o) for o in outputs]
+        if any(accessors):
+            ## Group out-values by their `update` accessor (or None).
+            update_groups = defaultdict(list)
+            for ac, kv in zip(accessors, outputs.items()):
+                update_groups[ac and ac.update].append(kv)
+
+            ## Values without :attr:`Accessor.update` are to be set one-by-one,
+            #  further below.
+            outputs = update_groups.pop(None, None)
+
+            for upd, pairs in update_groups.items():
+                upd(op_layer, pairs)
+
+        if outputs:
             op_layer.update(outputs)
 
     def __contains__(self, key):

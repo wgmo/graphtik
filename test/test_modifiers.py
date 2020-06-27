@@ -141,7 +141,7 @@ def test_modifs_repr(mod, exp, ser_method):
             lambda: accessor("b", acc),
             "accessor('b', accessor=Accessor(contains=<built-in function contains>,"
             " getitem=<built-in function getitem>, setitem=<built-in function setitem>,"
-            " delitem=<built-in function delitem>))",
+            " delitem=<built-in function delitem>, update=None))",
         ),
         (lambda: keyword("b", None), "keyword('b')"),
         (lambda: keyword("b", ""), "keyword('b')"),
@@ -150,7 +150,7 @@ def test_modifs_repr(mod, exp, ser_method):
             lambda: keyword("b", "bb", acc),
             "keyword('b', 'bb', accessor=Accessor(contains=<built-in function contains>,"
             " getitem=<built-in function getitem>, setitem=<built-in function setitem>,"
-            " delitem=<built-in function delitem>))",
+            " delitem=<built-in function delitem>, update=None))",
         ),
         (lambda: optional("b"), "optional('b')"),
         (lambda: optional("b", "bb"), "optional('b', 'bb')"),

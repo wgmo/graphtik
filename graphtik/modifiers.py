@@ -100,7 +100,7 @@ class _Optionals(enum.Enum):
 
 class Accessor(NamedTuple):
     """
-    Getter/setter functions to extract/populate solution values.
+    Getter/setter functions to extract/populate values from a :term:`solution layer`.
 
     .. Note::
         Don't use its attributes directly, prefer instead the functions returned
@@ -108,17 +108,20 @@ class Accessor(NamedTuple):
     """
 
     #: the containment checker, like: ``dep in sol``;
-    contains: Callable[["Solution", str], Any]
+    contains: Callable[[dict, str], Any]
     #: the getter, like: ``getitem(sol, dep) -> value``
-    getitem: Callable[["Solution", str], Any]
+    getitem: Callable[[dict, str], Any]
     #: the setter, like: ``setitem(sol, dep, val)``,
-    setitem: Callable[["Solution", str, Any], None]
+    setitem: Callable[[dict, str, Any], None]
     #: the deleter, like: ``delitem(sol, dep)``
-    delitem: Callable[["Solution", str], None]
+    delitem: Callable[[dict, str], None]
+    #: mass updater, like: ``update(sol, item_values)``,
+    update: Callable[[dict, str, Any], None] = None
 
     def validate(self):
         """Call me early to fail asap (if it must); returns self instance. """
         oks = [callable(i) for i in self]
+        oks[-1] |= self[-1] is None  # `update` can be None
         if not all(oks):
             errs = dict(pair for pair, ok in zip(self._asdict().items(), oks) if not ok)
             raise TypeError(
@@ -137,6 +140,7 @@ def JsonpAccessor():
         getitem=jsp.resolve_path,
         setitem=jsp.set_path_value,
         delitem=jsp.pop_path,
+        update=jsp.update_paths,
     )
 
 

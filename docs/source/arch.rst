@@ -123,6 +123,7 @@ Architecture
         across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     solution
+    solution layer
         A map of `dependency`-named values fed to/from the `pipeline` during `execution`.
 
         It feeds operations with `inputs`, collects their `outputs`,
@@ -134,8 +135,9 @@ Architecture
         by :meth:`.Pipeline.compute()` and populated with user-inputs, or must be
         created externally with those values and fed into the said method.
 
-        The class inherits :class:`collections.ChainMap`, to keep a separate dictionary
-        for each operation executed (+1 for user-inputs).
+        The class inherits :class:`collections.ChainMap`, to keep the results of
+        each operation executed in a separate dictionary **layer**
+        (+1 for user-inputs).
 
         The results of the last operation executed "win" in the *outputs* produced,
         and the base (least precedence) is the user-inputs given when the execution

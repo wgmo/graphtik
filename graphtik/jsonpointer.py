@@ -490,7 +490,7 @@ def _update_paths(
 
 def update_paths(
     doc,
-    paths_vals: Collection[Tuple[List[str], Any]],
+    paths_vals: Collection[Tuple[str, Any]],
     container_factory=dict,
     root=UNSET,
     descend_objects=None,
