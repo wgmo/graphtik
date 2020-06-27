@@ -438,11 +438,11 @@ class FunctionalOperation(Operation):
             items.append(f"x{len(self.node_props)}props")
 
         resched = (
-            "?" if first_solid(self.rescheduled, is_reschedule_operations()) else ""
+            "?" if first_solid(is_reschedule_operations(), self.rescheduled) else ""
         )
-        endured = "!" if first_solid(self.endured, is_endure_operations()) else ""
-        parallel = "|" if first_solid(self.parallel, is_parallel_tasks()) else ""
-        marshalled = "&" if first_solid(self.marshalled, is_marshal_tasks()) else ""
+        endured = "!" if first_solid(is_endure_operations(), self.endured) else ""
+        parallel = "|" if first_solid(is_parallel_tasks(), self.parallel) else ""
+        marshalled = "&" if first_solid(is_marshal_tasks(), self.marshalled) else ""
 
         return f"FunctionalOperation{endured}{resched}{parallel}{marshalled}({', '.join(items)})"
 

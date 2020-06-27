@@ -1235,13 +1235,13 @@ class Plotter:
 
             ## Op-kind
             #
-            if first_solid(nx_node.rescheduled, is_reschedule_operations()):
+            if first_solid(is_reschedule_operations(), nx_node.rescheduled):
                 label_styles.add("kw_op_rescheduled")
-            if first_solid(nx_node.endured, is_endure_operations()):
+            if first_solid(is_endure_operations(), nx_node.endured):
                 label_styles.add("kw_op_endured")
-            if first_solid(nx_node.parallel, is_parallel_tasks()):
+            if first_solid(is_parallel_tasks(), nx_node.parallel):
                 label_styles.add("kw_op_parallel")
-            if first_solid(nx_node.marshalled, is_marshal_tasks()):
+            if first_solid(is_marshal_tasks(), nx_node.marshalled):
                 label_styles.add("kw_op_marshalled")
             if nx_node.returns_dict:
                 label_styles.add("kw_op_returns_dict")
