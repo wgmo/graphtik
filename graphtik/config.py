@@ -23,8 +23,6 @@ from functools import partial
 from multiprocessing import Value
 from typing import Optional
 
-from boltons.iterutils import first
-
 _debug_env_var = os.environ.get("GRAPHTIK_DEBUG")
 _debug: ContextVar[Optional[bool]] = ContextVar(
     "debug",
