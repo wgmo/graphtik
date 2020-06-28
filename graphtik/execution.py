@@ -31,6 +31,7 @@ from .config import (
     is_abort,
     is_debug,
     is_endure_operations,
+    is_layered_solution,
     is_marshal_tasks,
     is_parallel_tasks,
     is_reschedule_operations,
@@ -44,6 +45,7 @@ from .modifiers import (
     dep_singularized,
     dep_stripped,
     get_accessor,
+    get_jsonp,
     is_sfx,
 )
 from .network import (
@@ -71,14 +73,24 @@ class Solution(ChainMap, Plottable):
     for each operation executed, +1 for the user inputs.
     """
 
-    def __init__(self, plan, input_values: dict):
-        #: An ordered mapping of plan-operations to their results
+    def __init__(self, plan, input_values: dict, layered_solution=None):
+        layered_solution = first_solid(is_layered_solution(), layered_solution)
+        if layered_solution is None:
+            layered_solution = not any(get_jsonp(d) for d in plan.net.data)
+
+        #: :term:`layer` map of operations to their results
         #: (initially empty dicts).
         #: The result dictionaries pre-populate this (self) chainmap,
-        #: with the 1st map (wins all reads) the last operation,
+        #: with the 1st map (wins all reads) the last operation executed,
         #: the last one the `input_values` dict.
-        self._layers = {op: {} for op in yield_ops(reversed(plan.steps))}
-        super().__init__(*self._layers.values(), input_values)
+        #:
+        #: If network contains :term:`jsonp` dependencies, by default
+        #: layers are disabled, and this is None.
+        self._layers: Optional[Mapping] = {
+            op: {} for op in yield_ops(reversed(plan.steps))
+        } if layered_solution else None
+        maps = self._layers.values() if self._layers else ()
+        super().__init__(*maps, input_values)
 
         #: the plan that produced this solution
         self.plan = plan
@@ -173,7 +185,7 @@ class Solution(ChainMap, Plottable):
         Observes any :term:`accessor`\\s in the k
         A separate method to allow subclasses with custom accessor logic.
         """
-        op_layer = self._layers[op]
+        op_layer = self._layers[op] if self._layers else self.maps[-1]
         accessors = [get_accessor(o) for o in outputs]
         if any(accessors):
             ## Group out-values by their `update` accessor (or None).
@@ -737,7 +749,13 @@ class ExecutionPlan(
                 raise AssertionError(f"Unrecognized instruction.{step}")
 
     def execute(
-        self, named_inputs, outputs=None, *, name="", solution_class=None
+        self,
+        named_inputs,
+        outputs=None,
+        *,
+        name="",
+        solution_class=None,
+        layered_solution=None,
     ) -> Solution:
         """
         :param named_inputs:
@@ -752,6 +770,16 @@ class ExecutionPlan(
             name of the pipeline used for logging
         :param solution_class:
             a custom solution factory to use
+        :param layered_solution:
+            whether to store operation results into separate :term:`solution layer`
+
+            Unless overridden by a True/False in :func:`.set_layered_solution`
+            of :term:`configurations`, it accepts the following values:
+
+            - When True(False), always keep(don't keep) results in a separate layer for each operation,
+              regardless of any *jsonp* dependencies.
+            - If ``None``, layers are used only if there are NO :term:`jsonp` dependencies
+              in the network.
 
         :return:
             The :term:`solution` which contains the results of each operation executed
@@ -799,6 +827,7 @@ class ExecutionPlan(
                 {k: v for k, v in named_inputs.items() if k in dag.nodes}
                 if evict
                 else named_inputs,
+                layered_solution=layered_solution,
             )
 
             log.debug(

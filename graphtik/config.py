@@ -32,6 +32,9 @@ _abort: ContextVar[Optional[bool]] = ContextVar(
     "abort", default=Value(ctypes.c_bool, lock=False)
 )
 _skip_evictions: ContextVar[Optional[bool]] = ContextVar("skip_evictions", default=None)
+_layered_solution: ContextVar[Optional[bool]] = ContextVar(
+    "layered_solution", default=None
+)
 _execution_pool: ContextVar[Optional["Pool"]] = ContextVar(
     "execution_pool", default=None
 )
@@ -138,6 +141,31 @@ set_skip_evictions = partial(_tristate_set, _skip_evictions)
 When true, disable globally :term:`eviction`\\s, to keep all intermediate solution values, ...
 
 regardless of asked outputs.
+
+:return:
+    a "reset" token (see :meth:`.ContextVar.set`)
+"""
+
+
+solution_layered = partial(_tristate_armed, _layered_solution)
+"""
+Like :func:`set_layered_solution()` as a context-manager, resetting back to old value.
+
+.. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
+"""
+is_layered_solution = partial(_getter, _layered_solution)
+"""see :func:`set_layered_solution()`"""
+set_layered_solution = partial(_tristate_set, _layered_solution)
+"""
+whether to store operation results into separate :term:`solution layer`
+
+:param enable:
+    - if None (default), results are layered only if there are NO :term:`jsonp` dependencies
+      in the network.
+    - When True(False), always keep(don't keep) results in a separate layer for each operation,
+      regardless of any *jsonp* dependencies.
+
+    It overrides any param given when executing a pipeline or a plan.
 
 :return:
     a "reset" token (see :meth:`.ContextVar.set`)

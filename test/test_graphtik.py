@@ -48,6 +48,7 @@ from graphtik.config import (
     is_marshal_tasks,
     operations_endured,
     operations_reschedullled,
+    solution_layered,
     tasks_marshalled,
 )
 from graphtik.execution import Solution, _OpTask, task_context
@@ -1241,7 +1242,29 @@ def test_jsonp_and_conveyor_fn_simple():
     assert sol == {"RESULTS": {"A": 1}}
 
 
-def test_jsonp_and_conveyor_fn_complex():
+@pytest.fixture(params=[(True, None), (True, False), (False, True)])
+def solution_layered_true(request):
+    with_config, compute_param = request.param
+
+    if with_config:
+        with solution_layered(True):
+            yield compute_param
+    else:
+        yield compute_param
+
+
+@pytest.fixture(params=[(True, None), (True, False), (False, None), (False, False)])
+def solution_layered_false(request):
+    with_config, compute_param = request.param
+
+    if with_config:
+        with solution_layered(False):
+            yield compute_param
+    else:
+        yield compute_param
+
+
+def test_jsonp_and_conveyor_fn_complex_LAYERED(solution_layered_true):
     pipe = compose(
         "t",
         operation(
@@ -1253,17 +1276,45 @@ def test_jsonp_and_conveyor_fn_complex():
             lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"],
         ),
     )
-    sol = pipe.compute({"i": {"a": 1}})
+    inp = {"i": {"a": 1}}
+    sol = pipe.compute(inp, layered_solution=solution_layered_true)
     assert sol == {"i": {"a": 1}, "r": {"A": 1, "AA": 2}, "a": 1}
-    sol = pipe.compute({"i": {"a": 1}}, outputs="r")
+    sol = pipe.compute(inp, outputs="r", layered_solution=solution_layered_true)
     assert sol == {"r": {"A": 1, "AA": 2}}
-    sol = pipe.compute({"i": {"a": 1}}, outputs=["r/A", "r/AA"])
+    sol = pipe.compute(
+        inp, outputs=["r/A", "r/AA"], layered_solution=solution_layered_true
+    )
     assert sol == {"r": {"A": 1, "AA": 2}}
-    sol = pipe.compute({"i": {"a": 1}}, outputs="r/AA")
+    sol = pipe.compute(inp, outputs="r/AA", layered_solution=solution_layered_true)
     assert sol == {"r": {"AA": 2}}
 
 
-def test_network_nest_subdocs(quarantine_pipeline):
+def test_jsonp_and_conveyor_fn_complex_NOT_LAYERED(solution_layered_false):
+    pipe = compose(
+        "t",
+        operation(
+            name="op1",
+            needs=["i/a", "i/a"],  # dupe jsonp needs
+            provides=["r/a", jsonp("a")],
+        )(),
+        operation(
+            lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"],
+        ),
+    )
+    inp = {"i": {"a": 1}}
+    sol = pipe.compute(inp, layered_solution=solution_layered_false)
+    assert sol == {**inp, "r": {"a": 1, "A": 1, "AA": 2}, "a": 1}
+    sol = pipe.compute(inp, outputs="r", layered_solution=solution_layered_false)
+    assert sol == {"r": {"a": 1, "A": 1, "AA": 2}}
+    sol = pipe.compute(
+        inp, outputs=["r/A", "r/AA"], layered_solution=solution_layered_false
+    )
+    assert sol == {"r": {"a": 1, "A": 1, "AA": 2}}  ## FIXME: should have evicted r/a!
+    sol = pipe.compute(inp, outputs="r/AA", layered_solution=solution_layered_false)
+    assert sol == {"r": {"a": 1, "AA": 2}}  ## FIXME: should have evicted r/a!
+
+
+def test_network_nest_subdocs_LAYERED(quarantine_pipeline, solution_layered_true):
     days = ["Monday", "Tuesday", "Wednesday"]
     todos = sfxed("backlog", "todos")
 
@@ -1345,7 +1396,7 @@ def test_network_nest_subdocs(quarantine_pipeline):
 
     # +3 from week's capacity: 4 + 5 + 5
 
-    sol = week(backlog=range(17))  #
+    sol = week.compute({"backlog": range(17)}, layered_solution=solution_layered_true)
     assert sol == {
         "backlog": range(14, 17),
         "Monday.tasks": range(0, 4),
@@ -1367,7 +1418,7 @@ def test_network_nest_subdocs(quarantine_pipeline):
 
     ## -1 tasks for Wednesday to enact
 
-    sol = week(backlog=range(9))
+    sol = week.compute({"backlog": range(9)}, layered_solution=solution_layered_true)
     assert sol == {
         "backlog": range(9, 9),
         "Monday.tasks": range(0, 4),
@@ -1383,14 +1434,152 @@ def test_network_nest_subdocs(quarantine_pipeline):
         "backlog": [range(9, 9), range(4, 9), range(0, 9)],
     }
 
-    sol = week.compute({"backlog": range(9)}, outputs="tasks_done/Monday")
+    sol = week.compute(
+        {"backlog": range(9)},
+        outputs="tasks_done/Monday",
+        layered_solution=solution_layered_true,
+    )
     assert sol == {"tasks_done": {"Monday": range(0, 4)}}
     assert sol.overwrites == {}
-    sol = week.compute({"backlog": range(9)}, outputs="tasks_done")
+    sol = week.compute(
+        {"backlog": range(9)},
+        outputs="tasks_done",
+        layered_solution=solution_layered_true,
+    )
     assert sol == {"tasks_done": {"Tuesday": range(4, 9)}}
     assert sol.overwrites == {
         "tasks_done": [{"Tuesday": range(4, 9)}, {"Monday": range(0, 4)}]
     }
+
+
+def test_network_nest_subdocs_NOT_LAYERED(quarantine_pipeline, solution_layered_false):
+    days = ["Monday", "Tuesday", "Wednesday"]
+    todos = sfxed("backlog", "todos")
+
+    @operation(
+        name="wake up", needs="backlog", provides=["tasks", todos], rescheduled=True
+    )
+    def pick_tasks(backlog):
+        if not backlog:
+            return NO_RESULT
+        # Pick from backlog 1/3 of len-of-chars of my operation's (day) name.
+        n_tasks = int(len(task_context.get().op.name) / 3)
+        my_tasks, todos = backlog[:n_tasks], backlog[n_tasks:]
+        return my_tasks, todos
+
+    do_tasks = operation(None, name="work!", needs="tasks", provides="tasks_done")
+
+    weekday = compose("weekday", pick_tasks, do_tasks)
+    weekdays = [weekday.withset(name=d) for d in days]
+
+    def nester(ra: RenArgs):
+        dep = ra.name
+        if ra.typ == "op":
+            return True
+        if ra.typ.endswith(".jsonpart"):
+            return False
+        if dep == "tasks":
+            return True
+        # if is_sfxed(dep):
+        #     return modifier_withset(
+        #         dep, sfx_list=[f"{ra.parent.name}.{s}" for s in dep.sfx_list]
+        #     )
+        if dep == "tasks_done":
+            return dep_renamed(dep, lambda n: f"{n}/{ra.parent.name}")
+        return False
+
+    week = compose("week", *weekdays, nest=nester)
+    assert str(week) == re.sub(
+        r"[\n ]{2,}",  # collapse all space-chars into a single space
+        " ",
+        """
+        Pipeline('week', needs=['backlog', 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks'],
+        provides=['Monday.tasks', sfxed('backlog', 'todos'),
+                  'tasks_done/Monday'($), 'Tuesday.tasks', 'tasks_done/Tuesday'($),
+                  'Wednesday.tasks', 'tasks_done/Wednesday'($)],
+        x6 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
+        Wednesday.wake up, Wednesday.work!)
+        """.strip(),
+    )
+
+    ## Add collector after nesting
+
+    @operation(
+        name="collect tasks",
+        needs=[todos, *(vararg(f"tasks_done/{d}") for d in days)],
+        provides=["work_done", "todos"],
+    )
+    def collector(backlog, *tasks_done):
+        return tasks_done, backlog
+
+    week = compose("week", week, collector)
+    assert str(week) == re.sub(
+        r"[\n ]{2,}",  # collapse all space-chars into a single space
+        " ",
+        """
+        Pipeline('week',
+            needs=['backlog',
+                'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks',
+                sfxed('backlog', 'todos'),
+                'tasks_done/Monday'($?), 'tasks_done/Tuesday'($?), 'tasks_done/Wednesday'($?)],
+            provides=['Monday.tasks',
+                sfxed('backlog', 'todos'), 'tasks_done/Monday'($),
+                'Tuesday.tasks', 'tasks_done/Tuesday'($),
+                'Wednesday.tasks', 'tasks_done/Wednesday'($),
+                'work_done', 'todos'],
+            x7 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
+                    Wednesday.wake up, Wednesday.work!, collect tasks)
+        """.strip(),
+    )
+
+    # +3 from week's capacity: 4 + 5 + 5
+
+    sol = week.compute({"backlog": range(17)}, layered_solution=solution_layered_false)
+    assert sol == {
+        "backlog": range(14, 17),
+        "Monday.tasks": range(0, 4),
+        "tasks_done": {
+            "Monday": range(0, 4),
+            "Tuesday": range(4, 9),
+            "Wednesday": range(9, 14),
+        },
+        "Tuesday.tasks": range(4, 9),
+        "Wednesday.tasks": range(9, 14),
+        "work_done": (range(0, 4), range(4, 9), range(9, 14)),
+        "todos": range(14, 17),
+    }
+
+    assert sol.overwrites == {}
+
+    ## -1 tasks for Wednesday to enact
+
+    sol = week.compute({"backlog": range(9)}, layered_solution=solution_layered_false)
+    assert sol == {
+        "backlog": range(9, 9),
+        "Monday.tasks": range(0, 4),
+        "tasks_done": {"Monday": range(0, 4), "Tuesday": range(4, 9),},
+        "Tuesday.tasks": range(4, 9),
+        sfxed("backlog", "todos"): False,
+        "work_done": (range(0, 4), range(4, 9)),
+        "todos": range(9, 9),
+    }
+
+    assert sol.overwrites == {}
+
+    sol = week.compute(
+        {"backlog": range(9)},
+        outputs="tasks_done/Monday",
+        layered_solution=solution_layered_false,
+    )
+    assert sol == {"tasks_done": {"Monday": range(0, 4)}}
+    assert sol.overwrites == {}
+    sol = week.compute(
+        {"backlog": range(9)},
+        outputs="tasks_done",
+        layered_solution=solution_layered_false,
+    )
+    assert sol == {"tasks_done": {"Monday": range(0, 4), "Tuesday": range(4, 9)}}
+    assert sol.overwrites == {}
 
 
 # Function without return value.

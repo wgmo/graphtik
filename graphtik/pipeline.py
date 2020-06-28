@@ -358,6 +358,7 @@ class Pipeline(Operation):
         outputs: Items = UNSET,
         predicate: "NodePredicate" = None,
         solution_class: "Type[Solution]" = None,
+        layered_solution=None,
     ) -> "Solution":
         """
         Compile a plan & :term:`execute` the graph, sequentially or parallel.
@@ -376,6 +377,17 @@ class Pipeline(Operation):
             filter-out nodes before compiling
         :param solution_class:
             a custom solution factory to use
+        :param layered_solution:
+            whether to store operation results into separate :term:`solution layer`\\s
+
+            Unless overridden by a True/False in :func:`.set_layered_solution`
+            of :term:`configurations`, it accepts the following values:
+
+            - When True(False), always keep(don't keep) results in a separate layer for each operation,
+              regardless of any *jsonp* dependencies.
+            - If ``None``, layers are used only if there are NO :term:`jsonp` dependencies
+              in the network.
+
 
         :return:
             The :term:`solution` which contains the results of each operation executed
@@ -422,7 +434,11 @@ class Pipeline(Operation):
             reset_abort()
 
             solution = plan.execute(
-                named_inputs, outputs, name=self.name, solution_class=solution_class
+                named_inputs,
+                outputs,
+                name=self.name,
+                solution_class=solution_class,
+                layered_solution=layered_solution,
             )
 
             return solution
