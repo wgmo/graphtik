@@ -27,7 +27,7 @@ Architecture
 
         ... populates these low-level data-structures:
 
-        - `network graph` (COMPOSE time)
+        - `network` (COMPOSE time)
         - `execution dag` (COMPILE time)
         - `execution steps` (COMPILE time)
         - `solution` (EXECUTE time)
@@ -108,11 +108,18 @@ Architecture
 
         Plans may abort their execution by setting the `abort run` global flag.
 
-    net
     network
-        the :class:`.Network` contains a `graph` of `operation`\s and can
-        `compile` (and cache) `execution plan`\s, or `prune` a cloned *network* for
-        given `inputs`/`outputs`/`node predicate`.
+    graph
+        A :attr:`.Network.graph` of `operation`\s linked by their `dependencies <dependency>` implementing a `pipeline`.
+
+        During `composition`, the nodes of the graph are connected by repeated calls
+        of :meth:`.Network._append_operation()` within ``Network`` constructor.
+
+        During `compilation` the *graph* is `prune`\d based on the given `inputs`,
+        `outputs` & `node predicate` to extract the `dag`, and it is ordered,
+        to derive the `execution steps`, stored in a new `plan`, which is then
+        cached on the ``Network`` class.
+
 
     plan
     execution plan
@@ -123,7 +130,6 @@ Architecture
         across runs with (`inputs`, `outputs`, `predicate`) as key.
 
     solution
-    solution layer
         A map of `dependency`-named values fed to/from the `pipeline` during `execution`.
 
         It feeds operations with `inputs`, collects their `outputs`,
@@ -136,7 +142,7 @@ Architecture
         created externally with those values and fed into the said method.
 
         The class inherits :class:`collections.ChainMap`, to keep the results of
-        each operation executed in a separate dictionary **layer**
+        each operation executed in a separate `solution layer` dictionary
         (+1 for user-inputs).
 
         The results of the last operation executed "win" in the *outputs* produced,
@@ -145,18 +151,29 @@ Architecture
 
         Certain values may be extracted/populated with `accessor`\s.
 
-    graph
-    network graph
-        A graph of `operation`\s linked by their `dependencies <dependency>` forming a `pipeline`.
+    layer
+    solution layer
+        By default, the `solution` class keeps the `outputs` of each executed `operation`
+        (and given `inputs`) in separate dictionaries (*layers*).
 
-        The :attr:`.Network.graph` (currently a DAG) contains all :class:`.FunctionalOperation`
-        and data-nodes (string or `modifier`) of a `pipeline`.
+        This layering is disabled if a `jsonp` `dependency` exists in the `network`,
+        assuming that :func:`.set_layered_solution` `configurations` has not been
+        called with a ``True/False``, nor has the respective parameter been given
+        to methods :meth:`~.FunctionalOperation.compute()`/:meth:`~.ExecutionPlan.execute()`.
 
-        They are layed out and connected by repeated calls of
-        :meth:`.Network._append_operation()` by Network constructor during `composition`.
+        .. hint::
 
-        This graph is then `prune`\d to extract the `dag`, and the `execution steps`
-        are calculated, all ingredients for a new :class:`.ExecutionPlan`.
+            Combining `hierarchical data` with *per-operation layers* in solution
+            leads to duplications of container nodes in the data tree.
+            To retrieve the complete solution, merging of `overwritten <overwrite>`
+            nodes across the layers would then be needed.
+
+    overwrite
+        `solution` values written by more than one `operation`\s in the respective `layer`,
+        accessed by :attr:`.Solution.overwrites` attribute
+        (assuming that *layers* have not been disabled e.g. due to `hierarchical data`).
+
+        Note that `sideffected` `outputs` always produce an *overwrite*.
 
     prune
     pruning
@@ -205,11 +222,6 @@ Architecture
         *Evictions* are pre-calculated during `compilation`, denoted with the
         `dependency` inserted in the `steps` of the `execution plan`.
 
-    overwrite
-        Values in the `solution` that have been written by more than one `operation`\s,
-        accessed by :attr:`.Solution.overwrites`.
-        Note that a `sideffected` `dependency` produce usually an *overwrite*.
-
     inputs
         The named input values that are fed into an `operation` (or `pipeline`)
         through :meth:`.Operation.compute()` method according to its `needs`.
@@ -236,8 +248,11 @@ Architecture
         An *operation* may return `partial outputs`.
 
     pipeline
-        The :class:`.Pipeline` class holding a `network` of `operation`\s
-        and `dependencies <dependency>`.
+        The :class:`.Pipeline` `compose`\s and `compute`\s a `network`  of `operation`\s  against given `inputs` & `outputs`.
+
+        This class is also an *operation*, so it specifies `needs` & `provides`
+        but these are not *fixed*, in the sense that :meth:`.Pipeline.compute()`
+        can potentially consume and provide different subsets of inputs/outputs.
 
     operation
         Either the abstract notion of an action with specified `needs` and `provides`,
