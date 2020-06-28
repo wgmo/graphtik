@@ -235,8 +235,7 @@ Finally we may run the week's schedule and get the outcome
 .. seealso::
     Consult these test-cases from the full sources of the project:
 
-    - :file:`test/test_graphtik.py:test_network_simple_merge()`
-    - :file:`test/test_graphtik.py:test_network_deep_merge()`
+    - :file:`test/test_combine.py`
 
 
 Advanced pipelines

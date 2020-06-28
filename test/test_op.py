@@ -566,6 +566,13 @@ def test_serialize_op(op_fact, ser_method):
     assert ser_method(op) == op
 
 
+def test_serialize_pipeline(samplenet, ser_method):
+    def eq(pipe1, pipe2):
+        return pipe1.name == pipe2.name and pipe1.ops == pipe2.ops
+
+    assert eq(ser_method(samplenet), samplenet)
+
+
 def test_op_rename():
     op = operation(
         str, name="op1", needs=sfx("a"), provides=["a", sfx("b")], aliases=[("a", "b")],

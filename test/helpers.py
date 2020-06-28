@@ -1,5 +1,6 @@
 import pickle
 import re
+from collections import namedtuple
 from itertools import chain, cycle
 from pathlib import Path
 from typing import Union
@@ -9,6 +10,16 @@ import pytest
 
 ###################################################
 # Copied from <sphinx.git>/tests/test_build_html.py
+
+_slow = pytest.mark.slow
+_proc = pytest.mark.proc
+_thread = pytest.mark.thread
+_parallel = pytest.mark.parallel
+_marshal = pytest.mark.marshal
+
+
+_ExeParams = namedtuple("_ExeParams", "parallel, proc, marshal")
+_exe_params = _ExeParams(None, None, None)
 
 
 def flat_dict(d):
@@ -98,3 +109,13 @@ def dilled(i):
 
 def pickled(i):
     return pickle.loads(pickle.dumps(i))
+
+
+def addall(*a, **kw):
+    "Same as a + b + ...."
+    return sum(a) + sum(kw.values())
+
+
+def abspow(a, p):
+    c = abs(a) ** p
+    return c
