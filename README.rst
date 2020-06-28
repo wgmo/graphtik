@@ -35,6 +35,7 @@ a graph of functions (a.k.a pipeline) on hierarchical data.
 Features
 --------
 - Can assemble existing functions without modifications into `pipeline`\s.
+- `dependency` resolution can bypass calculation cycles based on data given and asked.
 - Support functions with `optional <optionals>` input args and/or `varargs <varargish>`.
 - Support functions with `partial outputs`; keep working even if certain `endured` operations fail.
 - Support `alias` of function `provides` to avoid the need for trivial conveyor operations.
