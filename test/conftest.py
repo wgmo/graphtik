@@ -1,3 +1,4 @@
+import logging
 import os
 from collections import namedtuple
 from multiprocessing import Pool
@@ -29,6 +30,34 @@ pytest_plugins = "sphinx.testing.fixtures"
 # TODO: is this needed along with norecursedirs?
 # See https://stackoverflow.com/questions/33508060/create-and-import-helper-functions-in-tests-without-creating-packages-in-test-di
 collect_ignore = ["helpers.py"]
+
+########
+## From https://stackoverflow.com/a/57002853/548792
+##
+def pytest_addoption(parser):
+    """Add a command line option to disable logger."""
+    parser.addoption(
+        "--logger-disabled",
+        action="append",
+        default=[],
+        help="disable specific loggers",
+    )
+
+
+def pytest_configure(config):
+    """Disable the loggers from CLI and silence sphinx markers warns."""
+    for name in config.getoption("--logger-disabled", default=[]):
+        logger = logging.getLogger(name)
+        logger.propagate = False
+
+    config.addinivalue_line("markers", "sphinx: parametrized sphinx test-launches")
+    config.addinivalue_line(
+        "markers", "test_params: for parametrized sphinx test-launches"
+    )
+
+
+##
+########
 
 
 @pytest.fixture
