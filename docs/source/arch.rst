@@ -86,7 +86,8 @@ Architecture
         (or the user defines the renames).
 
         :seealso: :ref:`operation-nesting`, :func:`.compose`, :class:`.RenArgs`,
-            :func:`.nest_any_node()`, :func:`.dep_renamed()`, :attr:`.PlotArgs.clusters`
+            :func:`.nest_any_node()`, :func:`.dep_renamed()`, :attr:`.PlotArgs.clusters`,
+            :ref:`hierarchical-data` (example).
 
     compile
     compilation
@@ -383,6 +384,8 @@ Architecture
 
         In printouts, it is denoted either with ``*`` or ``+`` `diacritic`.
 
+        See also the elaborate example in :ref:`hierarchical-data` section.
+
     sideffects
         A `modifier` denoting a fictive `dependency` linking `operation`\s into virtual flows,
         without real data exchanges.
@@ -422,6 +425,8 @@ Architecture
 
         It is annotated with :func:`.sfxed`;  it may have all `diacritic`\s
         in printouts.
+
+        See also the elaborate example in :ref:`hierarchical-data` section.
 
     accessor
         Getter/setter functions to extract/populate `solution` values given as a `modifier` parameter
@@ -463,6 +468,8 @@ Architecture
 
         For instance, if the root has been asked as output, no subdoc can be
         subsequently `evicted <eviction>`.
+
+        :seealso: ::ref:`hierarchical-data` (example)
 
     json pointer path
     jsonp

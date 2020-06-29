@@ -163,7 +163,7 @@ Now let's do some "work":
     :graphvar: weekday
 
 Notice that the pipeline to override was added last, at the bottom; that's because
-the operations *added earlier in the call (further to the left) overrider any
+the operations *added earlier in the call (further to the left) override any
 identically-named operations added later*.
 
 Notice also that the overridden "sleep" operation hasn't got any actual role
@@ -315,7 +315,6 @@ In case the actually produce `outputs` depend on some condition in the `inputs`,
 the `solution` has to :term:`reschedule` the plan amidst execution, and consider the
 actual `provides` delivered:
 
-
     >>> @operation(rescheduled=1,
     ...            needs="quarantine",
     ...            provides=["space", "time"],
@@ -360,3 +359,151 @@ what has been canceled using this:
 
 In case you wish to cancel the output of a single-result operation,
 return the special value :data:`graphtik.NO_RESULT`.
+
+
+.. _hierarchical-data:
+
+Hierarchical data and further tricks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Working with :term:`hierarchical data` relies upon dependencies expressed as
+:term:`json pointer path`\s against solution data-tree
+Let's retrofit the "weekly tasks" example from :ref:`operation-nesting` section,
+above.
+
+In the previous example, we had left out the collection of the tasks
+and the TODOs -- this time we're going to:
+
+1. properly distribute & backlog the tasks to be done across the days using
+   :term:`sideffected` dependencies to modify the original stack of tasks in-place,
+   while the workflow is running,
+2. exemplify further the use of :term:`operation nesting` & renaming, and
+3. access the wrapping operation and :mod:`.execution` machinery
+   from within the function by using :data:`.task_context`, and finally
+4. store the input backlog, the work done, and the TODOs from the tasks in
+   this data-tree::
+
+       +--backlog
+       +--Monday.tasks
+       +--Wednesday.tasks
+       +--Tuesday.tasks
+       +--daily_tasks/
+          +--Monday
+          +--Tuesday
+          +--Wednesday
+       +--weekly_tasks
+       +--todos
+
+First, let's build the single day's workflow, without any nesting:
+
+    >>> from graphtik import NO_RESULT, sfxed
+    >>> from graphtik.base import RenArgs  # type hints for autocompletion.
+    >>> from graphtik.execution import task_context
+    >>> from graphtik.modifiers import dep_renamed
+
+    >>> todos = sfxed("backlog", "todos")
+    >>> @operation(name="wake up",
+    ...            needs="backlog",
+    ...            provides=["tasks", todos],
+    ...            rescheduled=True
+    ... )
+    ... def pick_tasks(backlog):
+    ...     if not backlog:
+    ...         return NO_RESULT
+    ...     # Pick from backlog 1/3 of len-of-chars of my day-name.
+    ...     n_tasks = int(len(task_context.get().op.name) / 3)
+    ...     my_tasks, todos = backlog[:n_tasks], backlog[n_tasks:]
+    ...     return my_tasks, todos
+
+The actual work is emulated with a :term:`conveyor operation`:
+
+    >>> do_tasks = operation(fn=None, name="work!", needs="tasks", provides="daily_tasks")
+
+    >>> weekday = compose("weekday", pick_tasks, do_tasks)
+
+Notice that the "backlog" :term:`sideffected` result of the "wakeup" operation
+is also listed in its *needs*;  through this trick, each daily tasks can remove
+the tasks it completed from the initial backlog of tasks, for the next day to pick up.
+The "todos" sfx is just a name to denote the kind of modification performed
+on the "backlog"
+
+Note also that the tasks passed from "wake up" --> "work!" operations are not hierarchical,
+but kept "private" in each day by nesting them with a dot(``.``):
+
+.. graphtik::
+
+Now let's clone the daily-task x3 and *nest* it, to make a 3-day workflow:
+
+    >>> days = ["Monday", "Tuesday", "Wednesday"]
+    >>> weekdays = [weekday.withset(name=d) for d in days]
+    >>> def nester(ra: RenArgs):
+    ...     dep = ra.name
+    ...     if ra.typ == "op":
+    ...         return True  # Nest by.dot.
+    ...     if ra.typ.endswith(".jsonpart"):
+    ...         return False  # Don't touch the json-pointer parts.
+    ...     if dep == "tasks":
+    ...         return True  # Nest by.dot
+    ...     if dep == "daily_tasks":
+    ...         # Nest as subdoc.
+    ...         return dep_renamed(dep, lambda n: f"{n}/{ra.parent.name}")
+    ...     return False
+
+    >>> week = compose("week", *weekdays, nest=nester)
+
+And this is now the pipeline for a 3 day-week.
+Notice the ``tasks-done/{day}`` subdoc nodes at the bottom of the diagram:
+
+.. graphtik::
+
+Finally combine all weekly-work using a "collector" operation:
+
+    >>> from graphtik import vararg
+    >>> @operation(
+    ...     name="collect tasks",
+    ...     needs=[todos, *(vararg(f"daily_tasks/{d}") for d in days)],
+    ...     provides=["weekly_tasks", "todos"],
+    ... )
+    ... def collector(backlog, *daily_tasks):
+    ...     return daily_tasks or (), backlog or ()
+    ...
+    >>> week = compose("week", week, collector)
+
+This is the final week pipeline:
+
+.. graphtik::
+
+We can now feed the week pipeline with a "workload" of 17 imaginary tasks.
+We know from each "wake up" operation that *Monday*, *Tuesday* & *Wednesday* will pick
+4, 5 & 5 tasks respectively, leaving 3 tasks as "todo":
+
+    >>> sol = week.compute({"backlog": range(17)})
+    >>> sol
+    {'backlog': range(14, 17),
+     'Monday.tasks': range(0, 4),
+     'daily_tasks': {'Monday': range(0, 4),
+                    'Tuesday': range(4, 9),
+                    'Wednesday': range(9, 14)},
+     'Tuesday.tasks': range(4, 9),
+     'Wednesday.tasks': range(9, 14),
+     'weekly_tasks': (range(0, 4), range(4, 9), range(9, 14)),
+     'todos': range(14, 17)}
+
+.. graphtik::
+
+Or we can reduce the workload, and see that *Wednesday* is left without any work
+to do:
+
+    >>> sol = week.compute(
+    ...     named_inputs={"backlog": range(9)},
+    ...     outputs=["daily_tasks", "weekly_tasks", "todos"])
+
+.. graphtik::
+
+Hover over the data nodes to see the results.  Specifically check the "daily_tasks"
+which is a nested dictionary:
+
+    >>> sol
+    {'daily_tasks': {'Monday': range(0, 4),
+                    'Tuesday': range(4, 9)},
+     'weekly_tasks': (range(0, 4), range(4, 9)),
+     'todos': ()}

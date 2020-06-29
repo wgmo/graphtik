@@ -771,6 +771,9 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
             (tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)
 
     .. varargs-mistake-end
+
+    .. seealso::
+        The elaborate example in :ref:`hierarchical-data` section.
     """
     return _modifier(name, optional=_Optionals.varargs, accessor=accessor, jsonp=jsonp)
 
@@ -963,7 +966,8 @@ def sfxed(
     cycles`, the wrapping operations *need* and *provide* different sideffected instances,
     breaking the cycles.
 
-
+    .. seealso::
+        The elaborate example in :ref:`hierarchical-data` section.
     """
     return _modifier(
         dependency,

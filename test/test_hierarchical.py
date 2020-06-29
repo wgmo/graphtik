@@ -162,7 +162,7 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
         my_tasks, todos = backlog[:n_tasks], backlog[n_tasks:]
         return my_tasks, todos
 
-    do_tasks = operation(None, name="work!", needs="tasks", provides="tasks_done")
+    do_tasks = operation(None, name="work!", needs="tasks", provides="daily_tasks")
 
     weekday = compose("weekday", pick_tasks, do_tasks)
     weekdays = [weekday.withset(name=d) for d in days]
@@ -179,7 +179,7 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
         #     return modifier_withset(
         #         dep, sfx_list=[f"{ra.parent.name}.{s}" for s in dep.sfx_list]
         #     )
-        if dep == "tasks_done":
+        if dep == "daily_tasks":
             return dep_renamed(dep, lambda n: f"{n}/{ra.parent.name}")
         return False
 
@@ -190,8 +190,8 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
         """
         Pipeline('week', needs=['backlog', 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks'],
         provides=['Monday.tasks', sfxed('backlog', 'todos'),
-                  'tasks_done/Monday'($), 'Tuesday.tasks', 'tasks_done/Tuesday'($),
-                  'Wednesday.tasks', 'tasks_done/Wednesday'($)],
+                  'daily_tasks/Monday'($), 'Tuesday.tasks', 'daily_tasks/Tuesday'($),
+                  'Wednesday.tasks', 'daily_tasks/Wednesday'($)],
         x6 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
         Wednesday.wake up, Wednesday.work!)
         """.strip(),
@@ -201,11 +201,11 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
 
     @operation(
         name="collect tasks",
-        needs=[todos, *(vararg(f"tasks_done/{d}") for d in days)],
-        provides=["work_done", "todos"],
+        needs=[todos, *(vararg(f"daily_tasks/{d}") for d in days)],
+        provides=["weekly_tasks", "todos"],
     )
-    def collector(backlog, *tasks_done):
-        return tasks_done, backlog
+    def collector(backlog, *daily_tasks):
+        return daily_tasks or (), backlog or ()
 
     week = compose("week", week, collector)
     assert str(week) == re.sub(
@@ -216,12 +216,12 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
             needs=['backlog',
                 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks',
                 sfxed('backlog', 'todos'),
-                'tasks_done/Monday'($?), 'tasks_done/Tuesday'($?), 'tasks_done/Wednesday'($?)],
+                'daily_tasks/Monday'($?), 'daily_tasks/Tuesday'($?), 'daily_tasks/Wednesday'($?)],
             provides=['Monday.tasks',
-                sfxed('backlog', 'todos'), 'tasks_done/Monday'($),
-                'Tuesday.tasks', 'tasks_done/Tuesday'($),
-                'Wednesday.tasks', 'tasks_done/Wednesday'($),
-                'work_done', 'todos'],
+                sfxed('backlog', 'todos'), 'daily_tasks/Monday'($),
+                'Tuesday.tasks', 'daily_tasks/Tuesday'($),
+                'Wednesday.tasks', 'daily_tasks/Wednesday'($),
+                'weekly_tasks', 'todos'],
             x7 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
                     Wednesday.wake up, Wednesday.work!, collect tasks)
         """.strip(),
@@ -233,15 +233,15 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
     assert sol == {
         "backlog": range(14, 17),
         "Monday.tasks": range(0, 4),
-        "tasks_done": {"Wednesday": range(9, 14)},
+        "daily_tasks": {"Wednesday": range(9, 14)},
         "Tuesday.tasks": range(4, 9),
         "Wednesday.tasks": range(9, 14),
-        "work_done": (range(0, 4), range(4, 9), range(9, 14)),
+        "weekly_tasks": (range(0, 4), range(4, 9), range(9, 14)),
         "todos": range(14, 17),
     }
 
     assert sol.overwrites == {
-        "tasks_done": [
+        "daily_tasks": [
             {"Wednesday": range(9, 14)},
             {"Tuesday": range(4, 9)},
             {"Monday": range(0, 4)},
@@ -255,33 +255,58 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
     assert sol == {
         "backlog": range(9, 9),
         "Monday.tasks": range(0, 4),
-        "tasks_done": {"Tuesday": range(4, 9)},
+        "daily_tasks": {"Tuesday": range(4, 9)},
         "Tuesday.tasks": range(4, 9),
         sfxed("backlog", "todos"): False,
-        "work_done": (range(0, 4), range(4, 9)),
-        "todos": range(9, 9),
+        "weekly_tasks": (range(0, 4), range(4, 9)),
+        "todos": (),
     }
 
     assert sol.overwrites == {
-        "tasks_done": [{"Tuesday": range(4, 9)}, {"Monday": range(0, 4)}],
+        "daily_tasks": [{"Tuesday": range(4, 9)}, {"Monday": range(0, 4)}],
         "backlog": [range(9, 9), range(4, 9), range(0, 9)],
     }
 
     sol = week.compute(
         {"backlog": range(9)},
-        outputs="tasks_done/Monday",
+        outputs=["backlog", "daily_tasks", "weekly_tasks", "todos"],
+        layered_solution=solution_layered_false,
+    )
+    assert sol == {
+        "backlog": range(9, 9),
+        "daily_tasks": {"Tuesday": range(4, 9)},
+        "weekly_tasks": (range(0, 4), range(4, 9)),
+        "todos": (),
+    }
+
+    ## Were failing due to eager eviction of "backlog".
+    #
+    sol = week.compute(
+        {"backlog": range(9)},
+        outputs=["daily_tasks", "weekly_tasks", "todos"],
+        layered_solution=solution_layered_false,
+    )
+    assert sol == {
+        "daily_tasks": {"Tuesday": range(4, 9)},
+        "weekly_tasks": (range(0, 4), range(4, 9)),
+        "todos": (),
+    }
+
+    sol = week.compute(
+        {"backlog": range(9)},
+        outputs="daily_tasks/Monday",
         layered_solution=solution_layered_true,
     )
-    assert sol == {"tasks_done": {"Monday": range(0, 4)}}
+    assert sol == {"daily_tasks": {"Monday": range(0, 4)}}
     assert sol.overwrites == {}
     sol = week.compute(
         {"backlog": range(9)},
-        outputs="tasks_done",
+        outputs="daily_tasks",
         layered_solution=solution_layered_true,
     )
-    assert sol == {"tasks_done": {"Tuesday": range(4, 9)}}
+    assert sol == {"daily_tasks": {"Tuesday": range(4, 9)}}
     assert sol.overwrites == {
-        "tasks_done": [{"Tuesday": range(4, 9)}, {"Monday": range(0, 4)}]
+        "daily_tasks": [{"Tuesday": range(4, 9)}, {"Monday": range(0, 4)}]
     }
 
 
@@ -300,7 +325,7 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
         my_tasks, todos = backlog[:n_tasks], backlog[n_tasks:]
         return my_tasks, todos
 
-    do_tasks = operation(None, name="work!", needs="tasks", provides="tasks_done")
+    do_tasks = operation(None, name="work!", needs="tasks", provides="daily_tasks")
 
     weekday = compose("weekday", pick_tasks, do_tasks)
     weekdays = [weekday.withset(name=d) for d in days]
@@ -317,7 +342,7 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
         #     return modifier_withset(
         #         dep, sfx_list=[f"{ra.parent.name}.{s}" for s in dep.sfx_list]
         #     )
-        if dep == "tasks_done":
+        if dep == "daily_tasks":
             return dep_renamed(dep, lambda n: f"{n}/{ra.parent.name}")
         return False
 
@@ -328,8 +353,8 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
         """
         Pipeline('week', needs=['backlog', 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks'],
         provides=['Monday.tasks', sfxed('backlog', 'todos'),
-                  'tasks_done/Monday'($), 'Tuesday.tasks', 'tasks_done/Tuesday'($),
-                  'Wednesday.tasks', 'tasks_done/Wednesday'($)],
+                  'daily_tasks/Monday'($), 'Tuesday.tasks', 'daily_tasks/Tuesday'($),
+                  'Wednesday.tasks', 'daily_tasks/Wednesday'($)],
         x6 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
         Wednesday.wake up, Wednesday.work!)
         """.strip(),
@@ -339,11 +364,11 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
 
     @operation(
         name="collect tasks",
-        needs=[todos, *(vararg(f"tasks_done/{d}") for d in days)],
-        provides=["work_done", "todos"],
+        needs=[todos, *(vararg(f"daily_tasks/{d}") for d in days)],
+        provides=["weekly_tasks", "todos"],
     )
-    def collector(backlog, *tasks_done):
-        return tasks_done, backlog
+    def collector(backlog, *daily_tasks):
+        return daily_tasks or (), backlog or ()
 
     week = compose("week", week, collector)
     assert str(week) == re.sub(
@@ -354,12 +379,12 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
             needs=['backlog',
                 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks',
                 sfxed('backlog', 'todos'),
-                'tasks_done/Monday'($?), 'tasks_done/Tuesday'($?), 'tasks_done/Wednesday'($?)],
+                'daily_tasks/Monday'($?), 'daily_tasks/Tuesday'($?), 'daily_tasks/Wednesday'($?)],
             provides=['Monday.tasks',
-                sfxed('backlog', 'todos'), 'tasks_done/Monday'($),
-                'Tuesday.tasks', 'tasks_done/Tuesday'($),
-                'Wednesday.tasks', 'tasks_done/Wednesday'($),
-                'work_done', 'todos'],
+                sfxed('backlog', 'todos'), 'daily_tasks/Monday'($),
+                'Tuesday.tasks', 'daily_tasks/Tuesday'($),
+                'Wednesday.tasks', 'daily_tasks/Wednesday'($),
+                'weekly_tasks', 'todos'],
             x7 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
                     Wednesday.wake up, Wednesday.work!, collect tasks)
         """.strip(),
@@ -371,14 +396,14 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
     assert sol == {
         "backlog": range(14, 17),
         "Monday.tasks": range(0, 4),
-        "tasks_done": {
+        "daily_tasks": {
             "Monday": range(0, 4),
             "Tuesday": range(4, 9),
             "Wednesday": range(9, 14),
         },
         "Tuesday.tasks": range(4, 9),
         "Wednesday.tasks": range(9, 14),
-        "work_done": (range(0, 4), range(4, 9), range(9, 14)),
+        "weekly_tasks": (range(0, 4), range(4, 9), range(9, 14)),
         "todos": range(14, 17),
     }
 
@@ -390,26 +415,50 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
     assert sol == {
         "backlog": range(9, 9),
         "Monday.tasks": range(0, 4),
-        "tasks_done": {"Monday": range(0, 4), "Tuesday": range(4, 9),},
+        "daily_tasks": {"Monday": range(0, 4), "Tuesday": range(4, 9),},
         "Tuesday.tasks": range(4, 9),
         sfxed("backlog", "todos"): False,
-        "work_done": (range(0, 4), range(4, 9)),
-        "todos": range(9, 9),
+        "weekly_tasks": (range(0, 4), range(4, 9)),
+        "todos": (),
+    }
+    assert sol.overwrites == {}
+
+    sol = week.compute(
+        {"backlog": range(9)},
+        outputs=["backlog", "daily_tasks", "weekly_tasks", "todos"],
+        layered_solution=solution_layered_false,
+    )
+    assert sol == {
+        "backlog": range(9, 9),
+        "daily_tasks": {"Monday": range(0, 4), "Tuesday": range(4, 9)},
+        "weekly_tasks": (range(0, 4), range(4, 9)),
+        "todos": (),
     }
 
-    assert sol.overwrites == {}
+    ## Were failing due to eager eviction of "backlog".
+    #
+    sol = week.compute(
+        {"backlog": range(9)},
+        outputs=["daily_tasks", "weekly_tasks", "todos"],
+        layered_solution=solution_layered_false,
+    )
+    assert sol == {
+        "daily_tasks": {"Monday": range(0, 4), "Tuesday": range(4, 9)},
+        "weekly_tasks": (range(0, 4), range(4, 9)),
+        "todos": (),
+    }
 
     sol = week.compute(
         {"backlog": range(9)},
-        outputs="tasks_done/Monday",
+        outputs="daily_tasks/Monday",
         layered_solution=solution_layered_false,
     )
-    assert sol == {"tasks_done": {"Monday": range(0, 4)}}
+    assert sol == {"daily_tasks": {"Monday": range(0, 4)}}
     assert sol.overwrites == {}
     sol = week.compute(
         {"backlog": range(9)},
-        outputs="tasks_done",
+        outputs="daily_tasks",
         layered_solution=solution_layered_false,
     )
-    assert sol == {"tasks_done": {"Monday": range(0, 4), "Tuesday": range(4, 9)}}
+    assert sol == {"daily_tasks": {"Monday": range(0, 4), "Tuesday": range(4, 9)}}
     assert sol.overwrites == {}

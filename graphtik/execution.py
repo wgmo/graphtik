@@ -399,6 +399,9 @@ class _OpTask:
 
 #: Populated with the :class:`_OpTask` for the currently executing operation.
 #: It does not work for :term:`parallel execution`.
+#:
+#: .. seealso::
+#:     The elaborate example in :ref:`hierarchical-data` section
 task_context: ContextVar[_OpTask] = ContextVar("task_context")
 
 
