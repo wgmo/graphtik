@@ -24,7 +24,7 @@ utilize a combination of these **diacritics**:
     ?   : :func:`.optional`
     *   : :func:`.vararg`
     +   : :func:`.varargs`
-    $   : :term:`accessor`
+    $   : :term:`accessor` (mostly for :term:`jsonp`)
 
 .. diacritics-end
 """
@@ -105,6 +105,8 @@ class Accessor(NamedTuple):
     .. Note::
         Don't use its attributes directly, prefer instead the functions returned
         from :func:`.acc_contains()` etc on any dep (plain strings included).
+
+    TODO: drop accessors, push functionality into :term:`jsonp` alone.
     """
 
     #: the containment checker, like: ``dep in sol``;

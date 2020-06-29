@@ -265,7 +265,7 @@ Architecture
         respectively.
 
     dependency
-        The name of a `solution` value an `operation` `needs` or `provides`.
+        The (possibly `hierarchical <subdoc>`) name of a `solution` value an `operation` `needs` or `provides`.
 
         - *Dependencies* are declared during `composition`, when building
           :class:`.FunctionalOperation` instances.
@@ -348,7 +348,7 @@ Architecture
 
         For instance, a `needs` may be annotated as :func:`.keyword` and/or `optionals`
         function arguments, `provides` and *needs* can be annotated as "ghost" `sideffects`
-        or assigned an `accessor`.
+        or assigned an `accessor` to work with `hierarchical data`.
 
         .. include:: ../../graphtik/modifiers.py
             :start-after: .. diacritics-start
