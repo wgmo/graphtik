@@ -16,65 +16,9 @@ Graphtik Changelog
   TODOs
   %%%%%
 
-
-  Merge back to GraphKIT
-  ======================
-  Aborted.
-
-  - [-] start-node/end-node to group inputs/outputs
-  - [-] DROP sideffects
-  - [+] Drop _Jetsam
-  - [+] Simpler jetsam
-  - [+] support *args 1-1 mapping in the jetsam() signature
-  - [+] FIX(sideffects): DIFFER from regular DATA...
-  - [+] FIX shared `executed` (no Solution class)
-  - [+] typo(test): overridden-->overriDDen
-  - [ ] `graphop` in docs
-
   Tasks
   =====
-  - [+] jetsam tasks
-  - [+] narrowed() --> withset()
-  - [+] reset abort on new `pipeline.compute()`
-  - [+] raise if rescheduled/endured ops
-  - [+] define sideffects on target "sideffected" needs
-  - [+] Operations behave like a regular decorator when fn given in 1st call.
-        Merge FuncOp+OpBuilder.
-  - [+] modifiers inherit a single class (to allow combinations)
-  - [+] Optional sideffected
-  - [+] Delegate FuncOp.__call__() --> compute().
-  - [+] Rename NetOp -> pipelines;
-    cannot unify compose() -> Pipeline class due to `nest` arg.
-
-  - [+] Function access executing Operation & Plan from its context.
-      - [ ] Unify OpTask & FuncOp
-      - [ ] function self-toggles `returns-dict` amidst execution.
-
-  - [V] FIX: FnOp.op_needs & FnOp.op_provides not respected during pruning.
-  - v9.0.0.dev0: 17 May
-  - [V] FIX jsonp evictions with +delete_path().
-  - [V] store parts on modifier.
-  - [V] FnOp recognize jsonpointers even for plain strings.
-  - [V] More subdoc tests (e.g. Aliases, SDFexed)
-
-  - v9.0.0.dev1: 21 Jun
-    [V} FIXED JSONPs to work!
-  - [V] BUG: subdoc splitting // results in cycle nodes!
-  - [v] BUG: Handle root, double-slash, ginal-slash in jsonps
-    FIXME: only root handled.
-  - [V] BUG: ChainMap(sol) badly interacts with SubDocs - `overwrites` subdoc parents!
-    FIXED with NON-LAYERS.
-  - [V] Plot: match compute inputs & outputs with nested deps
-  - [V] jsonpointer mass-dict-update
-  - [V] DOC: tutorial section  "Week tasks" about JSONPs.
-  - [V] FIX: SFXED evicted unjustly!
-  - v9.0.0.dev2: 30 Jun
-  - [V] REFACT:
-    - [V] rename `modifiers.py` --> `modifier.py`
-    - [V] network.py --> planning.py
-    - [V] rename `op.py:FunctionalOperation` --> `fnop.py:FnOp`
-
-  - [ ] DROIP accessors
+  - [ ] DROP accessors
   - [ ] DROP/ENH: Solution updates GivenInputs only, layers jsonp-refer to its values
   - [ ] FEAT: break cycles with dijkstra; weights
   - [ ] FEAT: Config DEBUG flags:
@@ -88,16 +32,6 @@ Graphtik Changelog
 
   - plot:
 
-    - [+] plot red partial outs/failures
-    - [+] plot graphs with Graphviz sphinx-extension
-    - [+] HTML-table op-nodes to allow decorations
-    - [+] plottable Operations
-    - [+] Op-node badges
-    - [+] fix(sphinxext): deprecated sphinx.add_object()
-
-    - [+] sphinxext: derive filename early, to allow xrefs and links early
-    - [+] Click on SVG to open it in a new window
-    - [+] Merged operation clusters
     - [ ] Badges on Data
     - [ ] update legend (or generate it dynamically)
     - [ ] sphinxext: extend standard `doctest` module (instead of sphinx-builder)
@@ -105,9 +39,6 @@ Graphtik Changelog
 
   - doc:
 
-    - [+] explain rescheduled & endured in tutorial.
-    - [+] aliases in tutorial & terms
-    - [+] add a list of Features in quick-start section
     - [ ] Merge tutorial (operations + composition)
 
   - DROPPED
