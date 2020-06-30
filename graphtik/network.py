@@ -29,6 +29,7 @@ from .config import is_debug, is_skip_evictions
 from .modifiers import (
     modifier_withset,
     dep_renamed,
+    dep_stripped,
     get_keyword,
     get_jsonp,
     jsonp,
@@ -171,6 +172,36 @@ yield_subdocs = partial(_yield_chained_docs, (("out_edges", 1),))
 yield_superdocs = partial(_yield_chained_docs, (("in_edges", 0),))
 #: Calls :func:`_yield_chained_docs()` for both subdocs & superdocs.
 yield_chaindocs = partial(_yield_chained_docs, (("out_edges", 1), ("in_edges", 0)))
+
+
+def clone_graph_with_stripped_sfxed(graph):
+    """Clone `graph` including ALSO stripped :term:`sideffected` deps, with original attrs. """
+
+    def with_stripped_node(node):
+        stripped = dep_stripped(node)
+
+        return (node,) if stripped is node else (node, stripped)
+
+    def with_stripped_edge(n1, n2):
+        nn1, nn2 = dep_stripped(n1), dep_stripped(n2)
+
+        return (
+            ((n1, n2), (nn1, n2))
+            if n1 is not nn1
+            else ((n1, n2), (n1, nn2))
+            if n2 is not nn2
+            else ((n1, n2),)
+        )
+
+    clone = graph.__class__()
+    clone.add_nodes_from(
+        (nn, nd) for n, nd in graph.nodes.items() for nn in with_stripped_node(n)
+    )
+    clone.add_edges_from(
+        (*ee, ed) for e, ed in graph.edges.items() for ee in with_stripped_edge(*e)
+    )
+
+    return clone
 
 
 def unsatisfied_operations(dag, inputs: Iterable) -> List:
@@ -599,6 +630,15 @@ class Network(Plottable):
             # so just add the Operations.
             return list(yield_ops(ordered_nodes))
 
+        ## Strip SFXED without the fear of cycles
+        #  (must augment dag before stripping outputs docchains).
+        #
+        pruned_dag = clone_graph_with_stripped_sfxed(pruned_dag)
+        outputs = set(oo for o in outputs for oo in (o, dep_stripped(o)))
+        outputs = set(yield_chaindocs(pruned_dag, outputs))
+
+        ## Add Operation and Eviction steps.
+        #
         def add_eviction(dep):
             if steps:
                 if steps[-1] == dep:
@@ -616,11 +656,7 @@ class Network(Plottable):
                     log.debug("Re-evicting %r @ #%i.", dep, len(steps))
             steps.append(dep)
 
-        outputs = set(yield_chaindocs(pruned_dag, outputs))
         steps = []
-
-        ## Add Operation and Eviction steps.
-        #
         for i, op in enumerate(ordered_nodes):
             if not isinstance(op, Operation):
                 continue
