@@ -9,7 +9,7 @@ from textwrap import dedent
 import pytest
 
 from graphtik import NULL_OP, compose, operation, sfx, sfxed, vararg
-from graphtik.modifiers import dep_renamed
+from graphtik.modifier import dep_renamed
 from graphtik.op import Operation
 
 from .helpers import abspow, addall

@@ -4,7 +4,7 @@
 :term:`compose` operations into :term:`pipeline` and the backing :term:`network`.
 
 .. note::
-    This module (along with :mod:`.op` & :mod:`.modifiers`) is what client code needs
+    This module (along with :mod:`.op` & :mod:`.modifier`) is what client code needs
     to define pipelines *on import time* without incurring a heavy price
     (<5ms on a 2019 fast PC)
 """
@@ -26,7 +26,7 @@ from .base import (
     aslist,
     jetsam,
 )
-from .modifiers import dep_renamed
+from .modifier import dep_renamed
 
 log = logging.getLogger(__name__)
 

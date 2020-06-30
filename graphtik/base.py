@@ -682,7 +682,7 @@ class Plottable(abc.ABC):
         **Examples:**
 
             >>> from graphtik import compose, operation
-            >>> from graphtik.modifiers import optional
+            >>> from graphtik.modifier import optional
             >>> from operator import add
 
             >>> pipeline = compose("pipeline",
@@ -902,7 +902,7 @@ class Operation(Plottable, abc.ABC):
             - if a `renamer` was neither dict nor callable
             - if a `renamer` dict contained a non-string value,
         """
-        from .modifiers import dep_renamed
+        from .modifier import dep_renamed
 
         def with_errors_logged(fn, ren_args: RenArgs) -> str:
             """Wrap `fn` to log its errors without touching ex, for debug aid."""

@@ -4,7 +4,7 @@
 Define :term:`operation` & :term:`dependency` and match/zip inputs/outputs during :term:`execution`.
 
 .. note::
-    This module (along with :mod:`.modifiers` & :mod:`.pipeline`) is what client code needs
+    This module (along with :mod:`.modifier` & :mod:`.pipeline`) is what client code needs
     to define pipelines *on import time* without incurring a heavy price
     (<5ms on a 2019 fast PC)
 """
@@ -41,7 +41,7 @@ from .base import (
     func_name,
     jetsam,
 )
-from .modifiers import (
+from .modifier import (
     dep_renamed,
     dep_singularized,
     dep_stripped,

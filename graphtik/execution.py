@@ -37,7 +37,7 @@ from .config import (
     is_reschedule_operations,
     is_skip_evictions,
 )
-from .modifiers import (
+from .modifier import (
     acc_contains,
     acc_delitem,
     acc_getitem,

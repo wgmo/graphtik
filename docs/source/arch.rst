@@ -351,11 +351,11 @@ Architecture
         function arguments, `provides` and *needs* can be annotated as "ghost" `sideffects`
         or assigned an `accessor` to work with `hierarchical data`.
 
-        .. include:: ../../graphtik/modifiers.py
+        .. include:: ../../graphtik/modifier.py
             :start-after: .. diacritics-start
             :end-before: .. diacritics-end
 
-        See :mod:`graphtik.modifiers` module.
+        See :mod:`graphtik.modifier` module.
 
     optionals
         A `needs` only `modifier` for a `inputs` that do not hinder `operation` execution
@@ -378,7 +378,7 @@ Architecture
         - the :func:`.varargs` annotates *iterable* values and all its items are appended
           in the ``*args`` one-by-one.
 
-        .. include:: ../../graphtik/modifiers.py
+        .. include:: ../../graphtik/modifier.py
             :start-after: .. varargs-mistake-start
             :end-before: .. varargs-mistake-end
 

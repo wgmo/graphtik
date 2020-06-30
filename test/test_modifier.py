@@ -5,7 +5,7 @@ from operator import contains, delitem, getitem, setitem
 import pytest
 
 from graphtik.jsonpointer import jsonp_path
-from graphtik.modifiers import (
+from graphtik.modifier import (
     Accessor,
     accessor,
     dep_renamed,

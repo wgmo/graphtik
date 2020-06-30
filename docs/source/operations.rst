@@ -156,19 +156,19 @@ Declarations of *needs* and *provides* is affected by :term:`modifier`\s like
 
 Map inputs to different function arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.keyword
+.. autofunction:: graphtik.modifier.keyword
    :noindex:
 
 Operations may execute with missing inputs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.optional
+.. autofunction:: graphtik.modifier.optional
    :noindex:
 
 Calling functions with varargs (``*args``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.vararg
+.. autofunction:: graphtik.modifier.vararg
    :noindex:
-.. autofunction:: graphtik.modifiers.varargs
+.. autofunction:: graphtik.modifier.varargs
    :noindex:
 
 
@@ -179,7 +179,7 @@ Aliased `provides`
 Sometimes, you need to interface functions & operations where they name a
 :term:`dependency` differently.
 This is doable without introducing "pipe-through" interface operation, either
-by annotating certain `needs` with :func:`.keyword` `modifiers` (above), or
+by annotating certain `needs` with :func:`.keyword` *modifier* (above), or
 by :term:`alias`\sing certain `provides` to different names:
 
    >>> op = operation(str,

@@ -244,12 +244,12 @@ Advanced pipelines
 
 Depending on sideffects
 ^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.sfx
+.. autofunction:: graphtik.modifier.sfx
    :noindex:
 
 Modifying existing values in solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifiers.sfxed
+.. autofunction:: graphtik.modifier.sfxed
    :noindex:
 
 Resilience when operations fail (*endurance*)
@@ -398,7 +398,7 @@ First, let's build the single day's workflow, without any nesting:
     >>> from graphtik import NO_RESULT, sfxed
     >>> from graphtik.base import RenArgs  # type hints for autocompletion.
     >>> from graphtik.execution import task_context
-    >>> from graphtik.modifiers import dep_renamed
+    >>> from graphtik.modifier import dep_renamed
 
     >>> todos = sfxed("backlog", "todos")
     >>> @operation(name="wake up",

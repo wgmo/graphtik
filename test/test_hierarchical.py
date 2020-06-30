@@ -12,7 +12,7 @@ from graphtik import NO_RESULT, MultiValueError, compose, operation, sfxed, vara
 from graphtik.base import RenArgs
 from graphtik.config import solution_layered
 from graphtik.execution import task_context
-from graphtik.modifiers import accessor, dep_renamed, jsonp
+from graphtik.modifier import accessor, dep_renamed, jsonp
 
 
 def test_solution_accessor_simple():

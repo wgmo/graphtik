@@ -7,7 +7,7 @@ API Reference
      graphtik
      graphtik.op
      graphtik.pipeline
-     graphtik.modifiers
+     graphtik.modifier
      graphtik.network
      graphtik.execution
      graphtik.plot
@@ -36,10 +36,10 @@ Module: `pipeline`
      :private-members:
      :special-members:
 
-Module: `modifiers`
+Module: `modifier`
 ====================
 
-.. automodule:: graphtik.modifiers
+.. automodule:: graphtik.modifier
      :members:
      :private-members:
      :special-members:

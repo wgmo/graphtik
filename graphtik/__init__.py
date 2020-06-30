@@ -12,7 +12,7 @@ __author__ = "hnguyen, ankostis"  # chronologically ordered
 
 
 from .base import AbortedException, IncompleteExecutionError, MultiValueError
-from .modifiers import (
+from .modifier import (
     accessor,
     jsonp,
     keyword,

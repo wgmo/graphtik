@@ -28,7 +28,7 @@ from graphtik.config import (
     tasks_in_parallel,
     tasks_marshalled,
 )
-from graphtik.modifiers import dep_renamed
+from graphtik.modifier import dep_renamed
 from graphtik.network import yield_ops
 from graphtik.op import (
     FunctionalOperation,

@@ -50,7 +50,7 @@ from .config import (
     is_parallel_tasks,
     is_reschedule_operations,
 )
-from .modifiers import is_sfx, is_sfxed
+from .modifier import is_sfx, is_sfxed
 
 log = logging.getLogger(__name__)
 
