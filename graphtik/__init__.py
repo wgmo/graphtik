@@ -24,7 +24,7 @@ from .modifier import (
     vararg,
     varargs,
 )
-from .op import NO_RESULT, NO_RESULT_BUT_SFX, operation
+from .fnop import NO_RESULT, NO_RESULT_BUT_SFX, operation
 from .pipeline import NULL_OP, compose
 
 ## SEE ALSO: `.plot.active_plotter_plugged()`, `.plot.set_active_plotter()` &

@@ -5,7 +5,7 @@ API Reference
 .. autosummary::
 
      graphtik
-     graphtik.op
+     graphtik.fnop
      graphtik.pipeline
      graphtik.modifier
      graphtik.planning
@@ -18,17 +18,17 @@ API Reference
 .. graphviz::
      GraphtikModuleDependencies.dot
 
-Module: `op`
-=====================
+Module: `fnop`
+==============
 
-.. automodule:: graphtik.op
+.. automodule:: graphtik.fnop
      :members:
      :undoc-members:
      :private-members:
      :special-members:
 
 Module: `pipeline`
-=====================
+==================
 
 .. automodule:: graphtik.pipeline
      :members:
@@ -37,7 +37,7 @@ Module: `pipeline`
      :special-members:
 
 Module: `modifier`
-====================
+==================
 
 .. automodule:: graphtik.modifier
      :members:
@@ -63,14 +63,14 @@ Module: `execution`
      :undoc-members:
 
 Module: `plot`
-===============
+==============
 
 .. automodule:: graphtik.plot
      :members:
      :undoc-members:
 
 Module: `config`
-====================
+================
 
 .. automodule:: graphtik.config
      :members:
@@ -83,7 +83,7 @@ Module: `base`
      :undoc-members:
 
 Module: `sphinxext`
-==============================
+===================
 
 .. automodule:: graphtik.sphinxext
      :members:

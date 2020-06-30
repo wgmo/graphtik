@@ -36,7 +36,7 @@ Architecture
 
         .. autosummary::
 
-            graphtik.op.FnOp
+            graphtik.fnop.FnOp
             graphtik.pipeline.Pipeline
             graphtik.planning.Network
             graphtik.execution.ExecutionPlan
@@ -285,7 +285,7 @@ Architecture
 
           These matchings are affected by `modifier`\s, print-out with `diacritic`\s.
 
-        .. include:: ../../graphtik/op.py
+        .. include:: ../../graphtik/fnop.py
             :start-after: .. dep-attributes-start
             :end-before: .. dep-attributes-end
 

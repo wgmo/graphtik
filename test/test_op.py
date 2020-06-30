@@ -30,7 +30,7 @@ from graphtik.config import (
 )
 from graphtik.modifier import dep_renamed
 from graphtik.planning import yield_ops
-from graphtik.op import (
+from graphtik.fnop import (
     FnOp,
     Operation,
     as_renames,

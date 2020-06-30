@@ -169,7 +169,7 @@ class Pipeline(Operation):
 
                 *Operations may only be added once, ...*
         """
-        from .op import reparse_operation_data
+        from .fnop import reparse_operation_data
 
         ## Set data asap, for debugging, although `net.withset()` will reset them.
         self.name = name

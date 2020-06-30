@@ -10,7 +10,7 @@ import pytest
 
 from graphtik import NULL_OP, compose, operation, sfx, sfxed, vararg
 from graphtik.modifier import dep_renamed
-from graphtik.op import Operation
+from graphtik.fnop import Operation
 
 from .helpers import abspow, addall
 

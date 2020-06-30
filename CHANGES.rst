@@ -185,7 +185,7 @@ v9.0.0.dev2 (30 Jun 2020, @ankostis): JSONP; net, evictions & sfxed fixes; conve
 + DOC(op): table explaining the differences between various dependency attributes of
   :class:`.FnOp`.
 
-  .. include:: ../../graphtik/op.py
+  .. include:: ../../graphtik/fnop.py
       :start-after: .. dep-attributes-start
       :end-before: .. dep-attributes-end
 
@@ -244,7 +244,7 @@ v8.1.0 (11 May 2020, @ankostis): drop last plan, Rename/Nest, Netop-->Pipeline, 
 + FEAT(pipeline): :data:`.NO_RESULT_BUT_SFX` token can cancel regular data but leave
   sideffects of a rescheduled op.
 
-+ REFACT: revert module splits and arrive back to :mod:`base.py`, :mod:`op.py` &
++ REFACT: revert module splits and arrive back to :mod:`base.py`, :mod:`fnop.py` &
   :mod:`pipeline.py`, to facilitate development with smaller files, but still
   with very few import-time dependencies.
 
@@ -989,8 +989,8 @@ v2.3.0 (24 Nov 2019, @ankostis): Zoomable SVGs & more op jobs
 
 v2.2.0 (20 Nov 2019, @ankostis): enhance OPERATIONS & restruct their modules
 ============================================================================
-+ REFACT(src): split module ``nodes.py`` --> ``op.py`` + `netop.py` and
-  move :class:`Operation` from ``base.py`` --> ``op.py``, in order to break cycle
++ REFACT(src): split module ``nodes.py`` --> ``fnop.py`` + `netop.py` and
+  move :class:`Operation` from ``base.py`` --> ``fnop.py``, in order to break cycle
   of `base(op) <-- net <-- netop`, and keep utils only in `base.py`.
 + ENH(op): allow Operations WITHOUT any NEEDS.
 + ENH(op): allow Operation FUNCTIONS to return directly Dictionaries.

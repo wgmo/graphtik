@@ -15,7 +15,7 @@ from jinja2 import Template
 
 from graphtik import base, compose, planning, operation, plot
 from graphtik.modifier import optional
-from graphtik.op import PlotArgs
+from graphtik.fnop import PlotArgs
 from graphtik.pipeline import Pipeline
 from graphtik.plot import (
     Plotter,
