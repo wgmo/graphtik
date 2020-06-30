@@ -122,7 +122,7 @@ def build_network(
 
     assert all(bool(n) for n in merge_set)
 
-    from .network import Network  # Imported here not to affect locals() at the top.
+    from .planning import Network  # Imported here not to affect locals() at the top.
 
     return Network(*merge_set)
 
@@ -370,7 +370,7 @@ class Pipeline(Operation):
         Compile a plan & :term:`execute` the graph, sequentially or parallel.
 
         .. Attention::
-            If intermediate :term:`compilation` is successful, the "global
+            If intermediate :term:`planning` is successful, the "global
             :term:`abort run` flag is reset before the :term:`execution` starts.
 
         :param named_inputs:

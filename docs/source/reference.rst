@@ -8,7 +8,7 @@ API Reference
      graphtik.op
      graphtik.pipeline
      graphtik.modifier
-     graphtik.network
+     graphtik.planning
      graphtik.execution
      graphtik.plot
      graphtik.config
@@ -44,10 +44,10 @@ Module: `modifier`
      :private-members:
      :special-members:
 
-Module: `network`
-=================
+Module: `planning`
+==================
 
-.. automodule:: graphtik.network
+.. automodule:: graphtik.planning
      :members:
      :private-members:
      :special-members:

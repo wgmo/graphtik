@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from graphtik import base, network, operation, pipeline
+from graphtik import base, planning, operation, pipeline
 from graphtik.execution import ExecutionPlan, Solution, _OpTask
 from graphtik.base import Operation
 from graphtik.pipeline import Pipeline

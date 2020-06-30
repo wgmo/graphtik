@@ -421,7 +421,7 @@ class PlotArgs(NamedTuple):
     #: the list of output names .
     outputs: Collection = None
     #: Contains the computed results, which might be different from :attr:`plottable`.
-    solution: "graphtik.network.Solution" = None
+    solution: "graphtik.planning.Solution" = None
     #: Either a mapping of node-names to dot(``.``)-separated cluster-names, or
     #: false/true to enable :term:`plotter`'s default clustering of nodes based
     #: on their dot-separated name parts.
@@ -514,7 +514,7 @@ class Plottable(abc.ABC):
         steps=None,
         inputs=None,
         outputs=None,
-        solution: "graphtik.network.Solution" = None,
+        solution: "graphtik.planning.Solution" = None,
         clusters: Mapping = None,
         jupyter_render: Union[None, Mapping, str] = None,
     ) -> "pydot.Dot":
@@ -794,14 +794,14 @@ class Plottable(abc.ABC):
     @property
     def ops(self) -> List["Operation"]:
         """A new list with all :term:`operation`\\s contained in the :term:`network`."""
-        from .network import yield_ops
+        from .planning import yield_ops
 
         return list(yield_ops(self.graph))
 
     @property
     def data(self) -> List[str]:
         """A new list with all :term:`operation`\\s contained in the :term:`network`."""
-        from .network import yield_datanodes
+        from .planning import yield_datanodes
 
         return list(yield_datanodes(self.graph))
 

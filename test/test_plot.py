@@ -13,7 +13,7 @@ import pydot
 import pytest
 from jinja2 import Template
 
-from graphtik import base, compose, network, operation, plot
+from graphtik import base, compose, planning, operation, plot
 from graphtik.modifier import optional
 from graphtik.op import PlotArgs
 from graphtik.pipeline import Pipeline
@@ -67,7 +67,7 @@ def test_plotting_docstring():
     common_formats = ".png .dot .jpg .jpeg .pdf .svg".split()
     for ext in common_formats:
         assert ext in Pipeline.plot.__doc__
-        assert ext in network.Network.plot.__doc__
+        assert ext in planning.Network.plot.__doc__
 
 
 def _striplines(s):

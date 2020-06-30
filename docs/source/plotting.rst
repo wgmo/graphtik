@@ -496,7 +496,7 @@ deeply nested stacks is notoriously hard
 Logging
 ^^^^^^^
 Increase the logging verbosity; logging statements have been placed melticulously
-to describe the :term:`execution` flows  (but not :term:`compilation` :-(),
+to describe the :term:`execution` flows  (but not :term:`planning` :-(),
 with each log statement accompanied by the :attr:`solution id <.Solution.solid>` of that flow,
 like the ``(3C40)`` & ``(8697)`` below, important for when running pipelines
 in :term:`parallel`::

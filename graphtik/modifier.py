@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-:term:`modifier`\\s change :term:`dependency` behavior during :term:`compilation` & :term:`execution`.
+:term:`modifier`\\s change :term:`dependency` behavior during :term:`planning` & :term:`execution`.
 
 The `needs` and `provides` annotated with *modifiers* designate, for instance,
 :term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
@@ -783,7 +783,7 @@ def sfx(name, optional: bool = None) -> _Modifier:
     :term:`sideffects` denoting modifications beyond the scope of the solution.
 
     Both `needs` & `provides` may be designated as *sideffects* using this modifier.
-    They work as usual while solving the graph (:term:`compilation`) but
+    They work as usual while solving the graph (:term:`planning`) but
     they have a limited interaction with the operation's underlying function;
     specifically:
 

@@ -29,7 +29,7 @@ from graphtik.config import (
     tasks_marshalled,
 )
 from graphtik.modifier import dep_renamed
-from graphtik.network import yield_ops
+from graphtik.planning import yield_ops
 from graphtik.op import (
     FunctionalOperation,
     Operation,

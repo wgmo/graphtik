@@ -48,7 +48,7 @@ from .modifier import (
     get_jsonp,
     is_sfx,
 )
-from .network import (
+from .planning import (
     unsatisfied_operations,
     yield_chaindocs,
     yield_node_names,
@@ -432,7 +432,7 @@ class ExecutionPlan(
     """
     A pre-compiled list of operation steps that can :term:`execute` for the given inputs/outputs.
 
-    It is the result of the network's :term:`compilation` phase.
+    It is the result of the network's :term:`planning` phase.
 
     Note the execution plan's attributes are on purpose immutable tuples.
 

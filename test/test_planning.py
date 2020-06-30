@@ -6,7 +6,7 @@ import networkx as nx
 import pytest
 from networkx.readwrite.edgelist import parse_edgelist
 
-from graphtik.network import (
+from graphtik.planning import (
     yield_also_chaindocs,
     yield_also_subdocs,
     yield_also_superdocs,

@@ -15,7 +15,7 @@ Architecture
         The definition & execution of networked operation is split in 1+2 phases:
 
         - `composition`
-        - `compilation`
+        - `planning`
         - `execution`
 
         ... it is constrained by these IO data-structures:
@@ -38,7 +38,7 @@ Architecture
 
             graphtik.op.FunctionalOperation
             graphtik.pipeline.Pipeline
-            graphtik.network.Network
+            graphtik.planning.Network
             graphtik.execution.ExecutionPlan
             graphtik.execution.Solution
 
@@ -90,7 +90,7 @@ Architecture
             :ref:`hierarchical-data` (example).
 
     compile
-    compilation
+    planning
         The `phase` where the :class:`.Network` creates a new `execution plan`
         by `pruning` all `graph` nodes into a subgraph `dag`, and  deriving
         the `execution steps`.
@@ -116,7 +116,7 @@ Architecture
         During `composition`, the nodes of the graph are connected by repeated calls
         of :meth:`.Network._append_operation()` within ``Network`` constructor.
 
-        During `compilation` the *graph* is `prune`\d based on the given `inputs`,
+        During `planning` the *graph* is `prune`\d based on the given `inputs`,
         `outputs` & `node predicate` to extract the `dag`, and it is ordered,
         to derive the `execution steps`, stored in a new `plan`, which is then
         cached on the ``Network`` class.
@@ -178,7 +178,7 @@ Architecture
 
     prune
     pruning
-        A subphase of `compilation` performed by method :meth:`.Network._prune_graph()`,
+        A subphase of `planning` performed by method :meth:`.Network._prune_graph()`,
         which extracts a subgraph `dag` that does not contain any `unsatisfied operation`\s.
 
         It topologically sorts the `graph`, and *prunes* based on given `inputs`,
@@ -186,7 +186,7 @@ Architecture
 
     unsatisfied operation
         The core of `pruning` & `rescheduling`, performed by
-        :func:`.network.unsatisfied_operations()` function, which collects
+        :func:`.planning.unsatisfied_operations()` function, which collects
         all `operation`\s with unreachable `dependencies <dependency>`:
 
         - they have `needs` that do not correspond to any of the given `inputs` or
@@ -220,7 +220,7 @@ Architecture
         A memory footprint optimization where intermediate `inputs` & `outputs`
         are erased from `solution` as soon as they are not needed further down the `dag`.
 
-        *Evictions* are pre-calculated during `compilation`, denoted with the
+        *Evictions* are pre-calculated during `planning`, denoted with the
         `dependency` inserted in the `steps` of the `execution plan`.
 
     inputs
@@ -273,7 +273,7 @@ Architecture
           *Operations* are then interlinked together, by matching the *needs* & *provides*
           of all *operations* contained in a `pipeline`.
 
-        - During `compilation` the `graph` is then `prune`\d based on the :term:`reachability
+        - During `planning` the `graph` is then `prune`\d based on the :term:`reachability
           <unsatisfied operation>` of the *dependencies*.
 
         - During `execution` :meth:`.Operation.compute()` performs 2 "matchings":
@@ -345,7 +345,7 @@ Architecture
 
     modifier
     diacritic
-        A `modifier` change `dependency` behavior during `compilation` or `execution`.
+        A `modifier` change `dependency` behavior during `planning` or `execution`.
 
         For instance, a `needs` may be annotated as :func:`.keyword` and/or `optionals`
         function arguments, `provides` and *needs* can be annotated as "ghost" `sideffects`
@@ -403,7 +403,7 @@ Architecture
           denoting modifications on a *real* dependency read from and written to
           the solution.
 
-        Both kinds of sideffects participate in the `compilation` of the graph,
+        Both kinds of sideffects participate in the `planning` of the graph,
         and both may be given or asked in the `inputs` & `outputs` of a `pipeline`,
         but they are never given to functions.
         A function of a `returns dictionary` operation can return a falsy value
@@ -517,14 +517,14 @@ Architecture
     predicate
     node predicate
         A callable(op, node-data) that should return true for nodes to be
-        included in `graph` during `compilation`.
+        included in `graph` during `planning`.
 
     abort run
         A global `configurations` flag that when set with :func:`.abort_run()` function,
         it halts the execution of all currently or future `plan`\s.
 
         It is reset automatically on every call of :meth:`.Pipeline.compute()`
-        (after a successful intermediate :term:`compilation`), or manually,
+        (after a successful intermediate :term:`planning`), or manually,
         by calling :func:`.reset_abort()`.
 
     parallel

@@ -309,7 +309,7 @@ class Network(Plottable):
                 raise TypeError(f"Must be a NetworkX graph, was: {graph}")
 
         #: The :mod:`networkx` (Di)Graph containing all operations and dependencies,
-        #: prior to :term:`compilation`.
+        #: prior to :term:`planning`.
         self.graph = graph
 
         for op in operations:

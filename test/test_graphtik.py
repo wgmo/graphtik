@@ -7,7 +7,7 @@ from operator import add, floordiv, mul, sub
 
 import pytest
 
-from graphtik import NO_RESULT, compose, network, operation, optional, vararg
+from graphtik import NO_RESULT, compose, planning, operation, optional, vararg
 from graphtik.base import IncompleteExecutionError
 from graphtik.config import evictions_skipped, operations_endured
 
