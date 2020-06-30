@@ -265,7 +265,10 @@ class Network(Plottable):
             dupes = list(operations)
             for i in uniques:
                 dupes.remove(i)
-            raise ValueError(f"Operations may only be added once, dupes: {list(dupes)}")
+            raise ValueError(
+                f"Operations may only be added once, dupes: {list(dupes)}"
+                f"\n  out of: {list(operations)}"
+            )
 
         if graph is None:
             # directed graph of operation and data nodes defining the net.
