@@ -577,6 +577,15 @@ class FunctionalOperation(Operation):
 
         return FunctionalOperation(**kw)
 
+    def validate_fn_name(self):
+        """Call it before enclosing it in a pipeline, or it will fail on compute(). """
+        if self.fn is None or not self.name:
+            ## Could not check earlier due to builder pattern.
+            raise ValueError(
+                f"Operation must have a callable `fn` and a non-empty `name`:\n    {self}"
+                "\n  (tip: for defaulting `fn` to conveyor-identity, # of provides must equal needs)"
+            )
+
     def _prepare_match_inputs_error(
         self,
         exceptions: List[Tuple[Any, Exception]],
@@ -806,12 +815,7 @@ class FunctionalOperation(Operation):
 
     def compute(self, named_inputs=None, outputs: Items = None) -> dict:
         try:
-            if self.fn is None or not self.name:
-                ## Could not check earlier due to builder pattern.
-                raise ValueError(
-                    f"Operation must have a callable `fn` and a non-empty `name`:\n    {self}"
-                    "\n  (tip: for defaulting `fn` to conveyor-identity, # of provides must equal needs)"
-                )
+            self.validate_fn_name()
             assert self.name is not None, self
             if named_inputs is None:
                 named_inputs = {}

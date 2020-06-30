@@ -108,11 +108,8 @@ def build_network(
         #  (or Plot will fail later).
         #
         if hasattr(op, "fn"):
-            if op.fn is None or op.name is None:
-                ## Could not check earlier due to builder pattern.
-                raise ValueError(
-                    f"Incomplete FnOperation missing `fn` and/or `name`: {op}"
-                )
+            ## Could not check earlier due to builder pattern.
+            op.validate_fn_name()
         return op
 
     merge_set = iset()  # Preseve given node order.
