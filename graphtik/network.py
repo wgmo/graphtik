@@ -479,6 +479,7 @@ class Network(Plottable):
                 if unknown_outputs:
                     raise ValueError(
                         f"Unknown output nodes: {list(unknown_outputs)}\n  {self}"
+                        "\n  (tip: set GRAPHTIK_DEBUG envvar to view Op details in print-outs)"
                     )
 
         assert isinstance(satisfied_inputs, abc.Collection)

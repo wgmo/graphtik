@@ -602,7 +602,7 @@ def jsonp(name: str, jsonp=None) -> _Modifier:
                                    needs=['inputs/a'($), 'inputs/b'($)],
                                    provides=['RESULTS/A'($), 'RESULTS/BB'($)],
                                    fn='identity_fn')
-            (tip: set GRAPHTIK_DEBUG envvar log for immediate raising stack trace)
+            (tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)
 
         >>> results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
         >>> results
@@ -751,7 +751,7 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
             +++FunctionalOperation(name='enlist', needs=['a', 'b'(+)], provides=['sum'], fn='enlist')
-            (tip: set GRAPHTIK_DEBUG envvar log for immediate raising stack trace)
+            (tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)
 
     .. varargs-mistake-start
     .. Attention::
@@ -768,7 +768,7 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
                                    needs=['a', 'b'(+)],
                                    provides=['sum'],
                                    fn='enlist')
-            (tip: set GRAPHTIK_DEBUG envvar log for immediate raising stack trace)
+            (tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)
 
     .. varargs-mistake-end
     """

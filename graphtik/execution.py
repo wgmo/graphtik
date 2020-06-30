@@ -868,7 +868,8 @@ class ExecutionPlan(
                 # It is a proper subset when not all outputs calculated.
                 assert set(solution).issubset(expected_provides), (
                     f"Evictions left more data{list(iset(solution) - set(self.provides))} than {self}!"
-                    ' \n Did you bypass "impossible-outputs" validation?'
+                    '\n  (hint: did you bypass "impossible-outputs" validation?)'
+                    "\n  (tip: enable DEBUG-logging and/or set GRAPHTIK_DEBUG envvar to investigate)"
                 )
 
             return solution

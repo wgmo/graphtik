@@ -36,6 +36,7 @@ from .base import (
     Token,
     aslist,
     astuple,
+    debug_var_tip,
     first_solid,
     func_name,
     jetsam,
@@ -602,7 +603,7 @@ class FunctionalOperation(Operation):
         errors.append(f"+++inputs: {inputs}")
         errors.append(f"+++{self}")
         errors.append(
-            "(tip: set GRAPHTIK_DEBUG envvar log for immediate raising stack trace)"
+            "(tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)"
         )
 
         msg = textwrap.indent("\n".join(errors), " " * 4)
@@ -682,6 +683,7 @@ class FunctionalOperation(Operation):
                 raise ValueError(
                     "Expected results as mapping, named_tuple, object, "
                     f"got {type(results).__name__!r}: {results}\n  {self}"
+                    f"\n  {debug_var_tip}"
                 )
 
             fn_required = fn_expected
@@ -717,6 +719,7 @@ class FunctionalOperation(Operation):
                     raise ValueError(
                         f"Got x{len(results)} results({list(results)}) mismatched "
                         f"-{len(missmatched)} provides({list(fn_expected)})!\n  {self}"
+                        f"\n  {debug_var_tip}"
                     )
 
         elif results in (NO_RESULT, NO_RESULT_BUT_SFX) and rescheduled:
@@ -759,6 +762,7 @@ class FunctionalOperation(Operation):
                     raise TypeError(
                         f"Expected x{nexpected} ITERABLE results, "
                         f"got {type(results).__name__!r}: {results}\n  {self}"
+                        f"\n  {debug_var_tip}"
                     )
                 ngot = len(results)
 
@@ -766,6 +770,7 @@ class FunctionalOperation(Operation):
                 raise ValueError(
                     f"Got {ngot - nexpected} fewer results, while expected x{nexpected} "
                     f"provides({list(fn_expected)})!\n  {self}"
+                    f"\n  {debug_var_tip}"
                 )
 
             if ngot > nexpected:
@@ -804,7 +809,8 @@ class FunctionalOperation(Operation):
             if self.fn is None or not self.name:
                 ## Could not check earlier due to builder pattern.
                 raise ValueError(
-                    f"Operation must have a callable `fn` and a non-empty `name`:\n  {self}"
+                    f"Operation must have a callable `fn` and a non-empty `name`:\n    {self}"
+                    "\n  (tip: for defaulting `fn` to conveyor-identity, # of provides must equal needs)"
                 )
             assert self.name is not None, self
             if named_inputs is None:
@@ -1001,7 +1007,8 @@ def operation(
         >>> op.compute({"a":1, "b": 2})
         Traceback (most recent call last):
         ValueError: Operation must have a callable `fn` and a non-empty `name`:
-          FunctionalOperation(name=None, needs=['a', 'b'], fn=None)
+            FunctionalOperation(name=None, needs=['a', 'b'], fn=None)
+          (tip: for defaulting `fn` to conveyor-identity, # of provides must equal needs)
 
     But if you give just a `name` with ``None`` as `fn` it will build an :term:`conveyor operation`
     for some `needs` & `provides`:

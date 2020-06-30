@@ -106,6 +106,8 @@ class Token(str):
 
 UNSET = Token("UNSET")
 
+debug_var_tip = "(tip: set GRAPHTIK_DEBUG envvar to view Op details in print-outs)"
+
 
 def first_solid(*tristates, default=None):
     """Utility combining multiple tri-state booleans."""
