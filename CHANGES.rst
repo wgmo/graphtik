@@ -68,6 +68,11 @@ Graphtik Changelog
   - [V] jsonpointer mass-dict-update
   - [V] DOC: tutorial section  "Week tasks" about JSONPs.
   - [V] FIX: SFXED evicted unjustly!
+  - v9.0.0.dev2: 30 Jun
+  - [V] REFACT:
+    - [V] rename `modifiers.py` --> `modifier.py`
+    - [V] network.py --> planning.py
+    - [V] rename `op.py:FunctionalOperation` --> `fnop.py:FnOp`
 
   - [ ] DROIP accessors
   - [ ] DROP/ENH: Solution updates GivenInputs only, layers jsonp-refer to its values
@@ -141,8 +146,8 @@ Changelog
 %%%%%%%%%
 
 
-v9.0.0.dev2 (30 Jun 2020, @ankostis): JSONP; net, evictions & sfxed fixes; conveyor fn
-======================================================================================
+v9.0.0 (30 Jun 2020, @ankostis): JSONP; net, evictions & sfxed fixes; conveyor fn; rename modules
+=================================================================================================
 + FEAT(modifier): Dependencies with :term:`json pointer path` that can read/write
   :term:`subdoc`\s (e.g. nested dicts & pandas).
 
@@ -154,7 +159,22 @@ v9.0.0.dev2 (30 Jun 2020, @ankostis): JSONP; net, evictions & sfxed fixes; conve
   + doc: new section :ref:`hierarchical-data` putting together all advanced features
     of the project in a "Weekly task runner".
 
-+ break/REFACT(modifier): ``fn_kwarg-->keyword``
++ BREAK/REFACT: modules and objects renamed:
+
+  +---------------------------------+-----------------------------+
+  | FROM                            | TO                          |
+  +=================================+=============================+
+  | :file:`modifierS.py`            | :file:`modifier.py`         |
+  +---------------------------------+-----------------------------+
+  | func: modifiers.fn_kwarg        | :func:`.modifier.keyword()` |
+  +---------------------------------+-----------------------------+
+  | :file:`network.py`              | :file:`planning.py`         |
+  +---------------------------------+-----------------------------+
+  | :file:`op.py`                   | :file:`fnop.py`             |
+  +---------------------------------+-----------------------------+
+  | class: op.FunctionalOperation   | :class:`.fnop.FnOp`         |
+  +---------------------------------+-----------------------------+
+
 + FEAT(op): default :func:`.identity_function()` acting as :term:`conveyor operation`.
 + FIX(NET, EXECUTION): discovered and fixed bugs in pruning, evictions and rescheduling
   with overwrites, while testing new `jsonp` modifier;  rely on dag alone while pruning
