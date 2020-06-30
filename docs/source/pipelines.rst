@@ -261,7 +261,7 @@ are raising errors, if they are marked as :term:`endured`:
     ... def get_out():
     ...     raise ValueError("Quarantined!")
     >>> get_out
-    FunctionalOperation!(name='get_out', provides=['space', 'time'], fn='get_out')
+    FnOp!(name='get_out', provides=['space', 'time'], fn='get_out')
 
 Notice the exclamation(``!``) before the parenthesis in the string representation
 of the operation.
@@ -325,7 +325,7 @@ actual `provides` delivered:
     ...     else:
     ...          return {"space": "around the block"}
     >>> get_out_or_stay_home
-    FunctionalOperation?(name='get_out_or_stay_home',
+    FnOp?(name='get_out_or_stay_home',
                          needs=['quarantine'],
                          provides=['space', 'time'],
                          fn{}='get_out_or_stay_home')

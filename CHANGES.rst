@@ -183,7 +183,7 @@ v9.0.0.dev2 (30 Jun 2020, @ankostis): JSONP; net, evictions & sfxed fixes; conve
     when a pipeline fails.
 
 + DOC(op): table explaining the differences between various dependency attributes of
-  :class:`.FunctionalOperation`.
+  :class:`.FnOp`.
 
   .. include:: ../../graphtik/op.py
       :start-after: .. dep-attributes-start
@@ -203,7 +203,7 @@ v9.0.0.dev2 (30 Jun 2020, @ankostis): JSONP; net, evictions & sfxed fixes; conve
 
 v8.4.0 (15 May 2020, @ankostis): subclass-able Op, plot edges from south-->north of nodes
 =========================================================================================
-+ ENH(pipe): nest all Ops (not just FnOps), dropping ``FunctionalOperation``
++ ENH(pipe): nest all Ops (not just FnOps), dropping ``FnOp``
   dependency in network code, to **allow for further sub-classing** :class:`Operation`.
 + FIX(pipeline): due to a side-effect on a ``kw`` dictionary, it was mixing the attributes
   of earlier operations into later ones while merging them into pipelines.
@@ -343,7 +343,7 @@ NET: fix rescheduled, cancelable sfx, improve compute API
 + ENH(OP): more intuitive API, ``compute()`` may be called with no args,
   or a single string as `outputs` param.  Operation's ``__call__`` now delegates
   to ``compute()`` - to quickly experiment with function, access it from the
-  operation's :attr:`.FunctionalOperation.fn` attribute
+  operation's :attr:`.FnOp.fn` attribute
 
 MODIFIERS: modifier combinations, rename sol_sideffects
 -------------------------------------------------------
@@ -397,7 +397,7 @@ v7.0.0 (28 Apr 2020, @ankostis): In-solution sideffects, unified OpBuilder, plot
 
 + BREAK(op): The :func:`.operation` factory function (used to be *class*) now behave
   like a regular decorator when `fn` given in the first call, and constructs
-  the :class:`.FunctionalOperation` without a need to call again the factory.
+  the :class:`.FnOp` without a need to call again the factory.
 
   Specifically the last empty call at the end ``()`` is not needed (or possible)::
 
@@ -418,7 +418,7 @@ MODIFIERS: Sideffecteds;  arg--> mapped
   "cycles":
 
   + feat(op): introduce ``_fn_needs``, ``op_needs`` & ``op_provides`` on
-    :class:`.FunctionalOperation`, used when matching Inps/Outs and when pruning
+    :class:`.FnOp`, used when matching Inps/Outs and when pruning
     graph.
   + FEAT(op): print detailed deps when DEBUG enabled.
 
@@ -760,7 +760,7 @@ Details
 + FIX(NET): keep Solution's insertion order also for PARALLEL executions.
 
 + FEAT(NET, OP): :term:`reschedule`\d operations with partial outputs;
-  they must have :attr:`.FunctionalOperation.rescheduled` set to true,
+  they must have :attr:`.FnOp.rescheduled` set to true,
   or else they will fail.
 
 + FEAT(OP, netop): specify :term:`endurance`/`reschedule` on a per operation basis,
@@ -894,7 +894,7 @@ v4.0.0 (11 Dec 2019, @ankostis): NESTED merge, revert v3.x Unvarying, immutable 
 + BREAK/REFACT(OP): simplify hierarchy, make :class:`.Operation` fully abstract,
   without name or requirements.
 
-  + enh: make :class:`.FunctionalOperation` IMMUTABLE, by inheriting
+  + enh: make :class:`.FnOp` IMMUTABLE, by inheriting
     from class:`.namedtuple`.
 
 + refact(net): consider as netop `needs` also intermediate data nodes.
@@ -999,7 +999,7 @@ v2.2.0 (20 Nov 2019, @ankostis): enhance OPERATIONS & restruct their modules
 + BREAK(op): drop unused `Operation._after_init()` pickle-hook; use `dill` instead.
 + refact(op): convert :meth:`Operation._validate()` into a function,
   to be called by clients wishing to automate operation construction.
-+ refact(op): replace ``**kwargs`` with named-args in class:`FunctionalOperation`,
++ refact(op): replace ``**kwargs`` with named-args in class:`FnOp`,
   because it allowed too wide args, and offered no help to the user.
 + REFACT(configs): privatize ``network._execution_configs``; expose more
   config-methods from base package.

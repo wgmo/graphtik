@@ -245,7 +245,7 @@ def _spread_sideffects(
         return deps, deps
 
 
-class FunctionalOperation(Operation):
+class FnOp(Operation):
     """
     An :term:`operation` performing a callable (ie a function, a method, a lambda).
 
@@ -445,7 +445,7 @@ class FunctionalOperation(Operation):
         parallel = "|" if first_solid(is_parallel_tasks(), self.parallel) else ""
         marshalled = "&" if first_solid(is_marshal_tasks(), self.marshalled) else ""
 
-        return f"FunctionalOperation{endured}{resched}{parallel}{marshalled}({', '.join(items)})"
+        return f"FnOp{endured}{resched}{parallel}{marshalled}({', '.join(items)})"
 
     @property
     def deps(self) -> Mapping[str, Collection]:
@@ -486,7 +486,7 @@ class FunctionalOperation(Operation):
         returns_dict=...,
         node_props: Mapping = ...,
         renamer=None,
-    ) -> "FunctionalOperation":
+    ) -> "FnOp":
         """
         Make a *clone* with the some values replaced, or operation and dependencies renamed.
 
@@ -528,7 +528,7 @@ class FunctionalOperation(Operation):
             ...                     'b': "B",
             ...                     sfx('c'): "cc",
             ...                     "B-aliased": "new.B-aliased"})
-            FunctionalOperation(name='BAR',
+            FnOp(name='BAR',
                                 needs=['A'],
                                 provides=['B', sfx('cc')],
                                 aliases=[('B', 'new.B-aliased')],
@@ -546,7 +546,7 @@ class FunctionalOperation(Operation):
             ...            dep_renamed(ren_args.name, lambda n: f"parent.{n}")
             ...            if ren_args.typ != 'op' else
             ...            False)
-            FunctionalOperation(name='foo',
+            FnOp(name='foo',
                                 needs=['parent.a'],
                                 provides=['parent.b', sfx('parent.c')],
                                 aliases=[('parent.b', 'parent.B-aliased')],
@@ -575,7 +575,7 @@ class FunctionalOperation(Operation):
         if renamer:
             self._rename_graph_names(kw, renamer)
 
-        return FunctionalOperation(**kw)
+        return FnOp(**kw)
 
     def validate_fn_name(self):
         """Call it before enclosing it in a pipeline, or it will fail on compute(). """
@@ -911,10 +911,10 @@ def operation(
             This is a twisted way for `"fancy decorators"
             <https://realpython.com/primer-on-python-decorators/#both-please-but-never-mind-the-bread>`_.
 
-        After all that, you can always call :meth:`FunctionalOperation.withset()`
+        After all that, you can always call :meth:`FnOp.withset()`
         on existing operation, to obtain a re-configured clone.
 
-        If the `fn` is still not given when calling :meth:`.FunctionalOperation.compute()`,
+        If the `fn` is still not given when calling :meth:`.FnOp.compute()`,
         then :term:`default identity function` is implied, if `name` is given and the number of
         `provides` match the number of `needs`.
 
@@ -932,9 +932,9 @@ def operation(
         .. seealso::
             - :term:`needs`
             - :term:`modifier`
-            - :attr:`.FunctionalOperation.needs`
-            - :attr:`.FunctionalOperation.op_needs`
-            - :attr:`.FunctionalOperation._fn_needs`
+            - :attr:`.FnOp.needs`
+            - :attr:`.FnOp.op_needs`
+            - :attr:`.FnOp._fn_needs`
 
 
     :param provides:
@@ -952,9 +952,9 @@ def operation(
         .. seealso::
             - :term:`provides`
             - :term:`modifier`
-            - :attr:`.FunctionalOperation.provides`
-            - :attr:`.FunctionalOperation.op_provides`
-            - :attr:`.FunctionalOperation._fn_provides`
+            - :attr:`.FnOp.provides`
+            - :attr:`.FnOp.op_provides`
+            - :attr:`.FnOp._fn_provides`
 
     :param aliases:
         an optional mapping of `provides` to additional ones
@@ -982,11 +982,11 @@ def operation(
         unless they start with underscore(``_``)
 
     :return:
-        when called with `fn`, it returns a :class:`.FunctionalOperation`,
+        when called with `fn`, it returns a :class:`.FnOp`,
         otherwise it returns a decorator function that accepts `fn` as the 1st argument.
 
         .. Note::
-            Actually the returned decorator is the :meth:`.FunctionalOperation.withset()`
+            Actually the returned decorator is the :meth:`.FnOp.withset()`
             method and accepts all arguments, monkeypatched to support calling a virtual
             ``withset()`` method on it, not to interrupt the builder-pattern,
             but only that - besides that trick, it is just a bound method.
@@ -999,19 +999,19 @@ def operation(
 
         >>> op = operation()
         >>> op
-        <function FunctionalOperation.withset at ...
+        <function FnOp.withset at ...
 
     But if `fn` is set to `None`
         >>> op = op(needs=['a', 'b'])
         >>> op
-        FunctionalOperation(name=None, needs=['a', 'b'], fn=None)
+        FnOp(name=None, needs=['a', 'b'], fn=None)
 
     If you call an operation without `fn` and no `name`, it will scream:
 
         >>> op.compute({"a":1, "b": 2})
         Traceback (most recent call last):
         ValueError: Operation must have a callable `fn` and a non-empty `name`:
-            FunctionalOperation(name=None, needs=['a', 'b'], fn=None)
+            FnOp(name=None, needs=['a', 'b'], fn=None)
           (tip: for defaulting `fn` to conveyor-identity, # of provides must equal needs)
 
     But if you give just a `name` with ``None`` as `fn` it will build an :term:`conveyor operation`
@@ -1026,7 +1026,7 @@ def operation(
         >>> op = op.withset(needs=['a', 'b'],
         ...                 provides='SUM', fn=lambda a, b: a + b)
         >>> op
-        FunctionalOperation(name='copy', needs=['a', 'b'], provides=['SUM'], fn='<lambda>')
+        FnOp(name='copy', needs=['a', 'b'], provides=['SUM'], fn='<lambda>')
         >>> op.compute({"a":1, "b": 2})
         {'SUM': 3}
 
@@ -1034,7 +1034,7 @@ def operation(
         {'SUM': 10}
     """
     kw = {k: v for k, v in locals().items() if v is not UNSET and k != "self"}
-    op = FunctionalOperation(**kw)
+    op = FnOp(**kw)
 
     if "fn" in kw:
         # Either used as a "naked" decorator (without any arguments)

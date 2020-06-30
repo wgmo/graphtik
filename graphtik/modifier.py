@@ -438,7 +438,7 @@ def keyword(
         ... def myadd(a, *, b):
         ...    return a + b
         >>> myadd
-        FunctionalOperation(name='myadd',
+        FnOp(name='myadd',
                             needs=['a', 'name-in-inputs'(>'b')],
                             provides=['sum'],
                             fn='myadd')
@@ -520,7 +520,7 @@ def optional(
         >>> operation(needs=['a', optional("quasi-real", "b")],
         ...           provides="sum"
         ... )(myadd.fn)  # Cannot wrap an operation, its `fn` only.
-        FunctionalOperation(name='myadd',
+        FnOp(name='myadd',
                             needs=['a', 'quasi-real'(?'b')],
                             provides=['sum'],
                             fn='myadd')
@@ -598,7 +598,7 @@ def jsonp(name: str, jsonp=None) -> _Modifier:
         graphtik.base.MultiValueError: Failed preparing needs:
             1. Missing compulsory needs['inputs/a'($), 'inputs/b'($)]!
             +++inputs: ['inputs']
-            +++FunctionalOperation(name='copy a+b-->A+BB',
+            +++FnOp(name='copy a+b-->A+BB',
                                    needs=['inputs/a'($), 'inputs/b'($)],
                                    provides=['RESULTS/A'($), 'RESULTS/BB'($)],
                                    fn='identity_fn')
@@ -610,7 +610,7 @@ def jsonp(name: str, jsonp=None) -> _Modifier:
 
     Notice that the :term:`hierarchical dependencies <subdoc>` did not yet worked,
     because *jsonp* modifiers work internally with :term:`accessor`\\s, and
-    :class:`.FunctionalOperation` is unaware of them -- it's the :class:`.Solution`
+    :class:`.FnOp` is unaware of them -- it's the :class:`.Solution`
     class that supports *accessors**, and this requires the operation to be wrapped
     in a pipeline (see below).
 
@@ -673,7 +673,7 @@ def vararg(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         ... def addall(a, *b):
         ...    return a + sum(b)
         >>> addall
-        FunctionalOperation(name='addall',
+        FnOp(name='addall',
                             needs=['a', 'b'(*), 'c'(*)],
                             provides=['sum'],
                             fn='addall')
@@ -750,7 +750,7 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         graphtik.base.MultiValueError: Failed preparing needs:
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
-            +++FunctionalOperation(name='enlist', needs=['a', 'b'(+)], provides=['sum'], fn='enlist')
+            +++FnOp(name='enlist', needs=['a', 'b'(+)], provides=['sum'], fn='enlist')
             (tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)
 
     .. varargs-mistake-start
@@ -764,7 +764,7 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         graphtik.base.MultiValueError: Failed preparing needs:
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
-            +++FunctionalOperation(name='enlist',
+            +++FnOp(name='enlist',
                                    needs=['a', 'b'(+)],
                                    provides=['sum'],
                                    fn='enlist')
@@ -930,7 +930,7 @@ def sfxed(
 
         >>> with debug_enabled(True):
         ...     finalize_prices
-        FunctionalOperation(name='finalize_prices',
+        FnOp(name='finalize_prices',
                             needs=[sfxed('ORDER', 'Prices'), sfxed('ORDER', 'VAT')],
                             op_needs=[sfxed('ORDER', 'Prices'), sfxed('ORDER', 'VAT')],
                             _fn_needs=['ORDER'],

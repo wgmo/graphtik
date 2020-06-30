@@ -36,7 +36,7 @@ Architecture
 
         .. autosummary::
 
-            graphtik.op.FunctionalOperation
+            graphtik.op.FnOp
             graphtik.pipeline.Pipeline
             graphtik.planning.Network
             graphtik.execution.ExecutionPlan
@@ -56,7 +56,7 @@ Architecture
         <dependency>`.
 
         .. Tip::
-            - Use :func:`.operation` factory to construct :class:`.FunctionalOperation`
+            - Use :func:`.operation` factory to construct :class:`.FnOp`
               instances (a.k.a. operations).
             - Use :func:`.compose()` factory to build :class:`.Pipeline`
               instances (a.k.a. pipelines).
@@ -160,7 +160,7 @@ Architecture
         This layering is disabled if a `jsonp` `dependency` exists in the `network`,
         assuming that :func:`.set_layered_solution` `configurations` has not been
         called with a ``True/False``, nor has the respective parameter been given
-        to methods :meth:`~.FunctionalOperation.compute()`/:meth:`~.ExecutionPlan.execute()`.
+        to methods :meth:`~.FnOp.compute()`/:meth:`~.ExecutionPlan.execute()`.
 
         .. hint::
 
@@ -257,7 +257,7 @@ Architecture
 
     operation
         Either the abstract notion of an action with specified `needs` and `provides`,
-        *dependencies*, or the concrete wrapper :class:`.FunctionalOperation` for
+        *dependencies*, or the concrete wrapper :class:`.FnOp` for
         (any :func:`callable`), that feeds on `inputs` and update `outputs`,
         from/to `solution`, or given-by/returned-to the user by a `pipeline`.
 
@@ -269,7 +269,7 @@ Architecture
         The (possibly `hierarchical <subdoc>`) name of a `solution` value an `operation` `needs` or `provides`.
 
         - *Dependencies* are declared during `composition`, when building
-          :class:`.FunctionalOperation` instances.
+          :class:`.FnOp` instances.
           *Operations* are then interlinked together, by matching the *needs* & *provides*
           of all *operations* contained in a `pipeline`.
 
@@ -328,14 +328,14 @@ Architecture
     default identity function
         The default function if none given to an `operation` that conveys `needs` to `provides`.
 
-        For this to happen when :meth:`.FunctionalOperation.compute()` is called,
+        For this to happen when :meth:`.FnOp.compute()` is called,
         an operation *name* must have been given AND the number of `provides` must match
         that of the number of `needs`.
 
         :seealso: :ref:`conveyor-function` & :func:`.identity_function()`.
 
     returns dictionary
-        When an `operation` is marked with :attr:`FunctionalOperation.returns_dict` flag,
+        When an `operation` is marked with :attr:`FnOp.returns_dict` flag,
         the underlying function is not expected to return `fn_provides` as a sequence
         but as a dictionary; hence, no "zipping" of function-results --> `fn_provides`
         takes place.
@@ -487,7 +487,7 @@ Architecture
         The partial `pruning` of the `solution`'s dag during `execution`.
         It happens when any of these 2 conditions apply:
 
-        - an `operation` is marked with the :attr:`.FunctionalOperation.rescheduled`
+        - an `operation` is marked with the :attr:`.FnOp.rescheduled`
           attribute, which means that its underlying *callable* may produce
           only a subset of its `provides` (*partial outputs*);
         - `endurance` is enabled, either globally (in the `configurations`), or
@@ -505,7 +505,7 @@ Architecture
     endured
         Keep executing as many `operation`\s as possible, even if some of them fail.
         Endurance for an operation  is enabled if :func:`.set_endure_operations()`
-        is true globally in the `configurations` or if :attr:`.FunctionalOperation.endured`
+        is true globally in the `configurations` or if :attr:`.FnOp.endured`
         is true.
 
         You may interrogate :attr:`.Solution.executed` to discover the status
@@ -563,7 +563,7 @@ Architecture
 
     plottable
         Objects that can plot their graph network, such as those inheriting :class:`.Plottable`,
-        (:class:`.FunctionalOperation`, :class:`.Pipeline`, :class:`.Network`,
+        (:class:`.FnOp`, :class:`.Pipeline`, :class:`.Network`,
         :class:`.ExecutionPlan`, :class:`.Solution`) or a |pydot.Dot|_ instance
         (the result of the :meth:`.Plottable.plot()` method).
 

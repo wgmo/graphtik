@@ -248,7 +248,7 @@ class Pipeline(Operation):
             mark all contained `operations` to be :term:`marshalled <marshalling>`
             (usefull when run in `parallel` with a :term:`process pool`).
         :param renamer:
-            see respective parameter in :meth:`.FunctionalOperation.withset()`.
+            see respective parameter in :meth:`.FnOp.withset()`.
 
         :return:
             A narrowed pipeline clone, which **MIGHT be empty!***

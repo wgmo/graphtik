@@ -31,7 +31,7 @@ from graphtik.config import (
 from graphtik.modifier import dep_renamed
 from graphtik.planning import yield_ops
 from graphtik.op import (
-    FunctionalOperation,
+    FnOp,
     Operation,
     as_renames,
     reparse_operation_data,
@@ -65,11 +65,11 @@ def test_repr_smoke(opname, opneeds, opprovides):
 def test_repr_returns_dict():
     assert (
         str(operation(lambda: None, name="", returns_dict=True))
-        == "FunctionalOperation(name='', fn{}='<lambda>')"
+        == "FnOp(name='', fn{}='<lambda>')"
     )
     assert (
         str(operation(lambda: None, name="myname"))
-        == "FunctionalOperation(name='myname', fn='<lambda>')"
+        == "FnOp(name='myname', fn='<lambda>')"
     )
 
 
@@ -80,30 +80,24 @@ def test_auto_func_name():
 
 def test_builder_pattern():
     opb = operation()
-    assert not isinstance(opb, FunctionalOperation)
-    assert str(opb).startswith("<function FunctionalOperation.withset at")
+    assert not isinstance(opb, FnOp)
+    assert str(opb).startswith("<function FnOp.withset at")
 
-    assert str(opb(sum)) == "FunctionalOperation(name='sum', fn='sum')"
+    assert str(opb(sum)) == "FnOp(name='sum', fn='sum')"
 
-    assert str(opb(name="K")) == "FunctionalOperation(name='K', fn='identity_fn')"
+    assert str(opb(name="K")) == "FnOp(name='K', fn='identity_fn')"
 
     op = opb.withset(needs=["a", "b"])
-    assert isinstance(op, FunctionalOperation)
-    assert str(op) == "FunctionalOperation(name=None, needs=['a', 'b'], fn=None)"
+    assert isinstance(op, FnOp)
+    assert str(op) == "FnOp(name=None, needs=['a', 'b'], fn=None)"
     with pytest.raises(ValueError, match=f"Operation must have a callable `fn` and"):
         op.compute({})
 
     op = op.withset(provides="SUM", fn=sum, name=None)
-    assert (
-        str(op)
-        == "FunctionalOperation(name='sum', needs=['a', 'b'], provides=['SUM'], fn='sum')"
-    )
+    assert str(op) == "FnOp(name='sum', needs=['a', 'b'], provides=['SUM'], fn='sum')"
 
     op = op.withset(provides="s", needs="a", fn=str)
-    assert (
-        str(op)
-        == "FunctionalOperation(name='sum', needs=['a'], provides=['s'], fn='str')"
-    )
+    assert str(op) == "FnOp(name='sum', needs=['a'], provides=['s'], fn='str')"
 
 
 @pytest.mark.parametrize(
@@ -156,9 +150,9 @@ def test_func_op_validation(opargs, exp):
 def test_func_op_init(args, kw, exp):
     if isinstance(exp, Exception):
         with pytest.raises(type(exp), match=str(exp)):
-            FunctionalOperation(str, "", *args, **kw)
+            FnOp(str, "", *args, **kw)
     else:
-        FunctionalOperation(str, "", *args, **kw)
+        FnOp(str, "", *args, **kw)
 
 
 @pytest.mark.parametrize(
@@ -418,37 +412,37 @@ def test_reschedule_unknown_dict_outs(caplog):
 
 def test_rescheduled_op_repr():
     op = operation(str, name="t", provides=["a"], rescheduled=True)
-    assert str(op) == "FunctionalOperation?(name='t', provides=['a'], fn='str')"
+    assert str(op) == "FnOp?(name='t', provides=['a'], fn='str')"
 
 
 def test_endured_op_repr():
     op = operation(str, name="t", provides=["a"], endured=True)
-    assert str(op) == "FunctionalOperation!(name='t', provides=['a'], fn='str')"
+    assert str(op) == "FnOp!(name='t', provides=['a'], fn='str')"
 
 
 def test_endured_rescheduled_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1)
-    assert str(op) == "FunctionalOperation!?(name='t', fn='str')"
+    assert str(op) == "FnOp!?(name='t', fn='str')"
 
 
 def test_parallel_op_repr():
     op = operation(str, name="t", provides=["a"], parallel=True)
-    assert str(op) == "FunctionalOperation|(name='t', provides=['a'], fn='str')"
+    assert str(op) == "FnOp|(name='t', provides=['a'], fn='str')"
 
 
 def test_marshalled_op_repr():
     op = operation(str, name="t", provides=["a"], marshalled=True)
-    assert str(op) == ("FunctionalOperation&(name='t', provides=['a'], fn='str')")
+    assert str(op) == ("FnOp&(name='t', provides=['a'], fn='str')")
 
 
 def test_marshalled_parallel_op_repr():
     op = operation(str, name="t", parallel=1, marshalled=1)
-    assert str(op) == "FunctionalOperation|&(name='t', fn='str')"
+    assert str(op) == "FnOp|&(name='t', fn='str')"
 
 
 def test_ALL_op_repr():
     op = operation(str, name="t", rescheduled=1, endured=1, parallel=1, marshalled=1)
-    assert str(op) == "FunctionalOperation!?|&(name='t', fn='str')"
+    assert str(op) == "FnOp!?|&(name='t', fn='str')"
 
 
 def test_CONFIG_op_repr():
@@ -456,9 +450,9 @@ def test_CONFIG_op_repr():
         1
     ), tasks_marshalled(1):
         op = operation(str, name="t")
-        assert str(op) == "FunctionalOperation!?|&(name='t', fn='str')"
+        assert str(op) == "FnOp!?|&(name='t', fn='str')"
     op = operation(str, name="t", rescheduled=0, endured=0, parallel=0, marshalled=0)
-    assert str(op) == "FunctionalOperation(name='t', fn='str')"
+    assert str(op) == "FnOp(name='t', fn='str')"
 
 
 def test_reschedule_outputs():
@@ -551,7 +545,7 @@ def test_pipeline_conveys_attr_to_ops(attr, value):
     "op_fact",
     [
         lambda: Operation,
-        lambda: FunctionalOperation,
+        lambda: FnOp,
         lambda: operation(str),
         lambda: operation(lambda: None),
     ],
@@ -599,7 +593,7 @@ def test_op_rename():
     got = str(ren)
     assert got == (
         """
-    FunctionalOperation(name='PP.op1', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b')], aliases=[('PP.a', 'PP.b')], fn='str')
+    FnOp(name='PP.op1', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b')], aliases=[('PP.a', 'PP.b')], fn='str')
         """.strip()
     )
 
@@ -624,7 +618,7 @@ def test_op_rename_parts():
         r"[\n ]+",  # collapse all space-chars into a single space
         " ",
         """
-        FunctionalOperation(name='op1',
+        FnOp(name='op1',
             needs=[sfx('a/b'), '/PP.a/PP.b'($)],
             provides=['PP.b/PP.c'($), sfxed('PP.d/PP.e/PP.f'($), 'k/l')],
             aliases=[('PP.b/PP.c'($), '/PP.b/PP.t'($))], fn='str')
@@ -662,8 +656,8 @@ def test_pipe_rename():
         r"[\n ]+",  # collapse all space-chars into a single space
         " ",
         """
-        [FunctionalOperation(name='PP.op1', needs=[sfx('PP.a')], fn='str'),
-         FunctionalOperation(name='PP.op2', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b')],
+        [FnOp(name='PP.op1', needs=[sfx('PP.a')], fn='str'),
+         FnOp(name='PP.op2', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b')],
          aliases=[('PP.a', 'PP.b')], fn='str')]
         """.strip(),
     )
@@ -678,8 +672,8 @@ def test_pipe_rename():
         r"[\n ]+",  # collapse all space-chars into a single space
         " ",
         """
-        [FunctionalOperation(name='OP1', needs=[sfx('a')], fn='str'),
-         FunctionalOperation(name='op2', needs=[sfx('a')], provides=['a'(?), sfx('b')],
+        [FnOp(name='OP1', needs=[sfx('a')], fn='str'),
+         FnOp(name='op2', needs=[sfx('a')], provides=['a'(?), sfx('b')],
          aliases=[('a'(?), 'B')], fn='str')]
         """.strip(),
     )

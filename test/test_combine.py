@@ -38,8 +38,8 @@ def test_compose_rename_dict(caplog):
         str(pip.ops)
         == dedent(
             """
-        [FunctionalOperation(name='OP1', provides=['A', 'aa'], fn='str'),
-         FunctionalOperation(name='OP2', needs=['A'], provides=['bb', sfx('c')],
+        [FnOp(name='OP1', provides=['A', 'aa'], fn='str'),
+         FnOp(name='OP2', needs=['A'], provides=['bb', sfx('c')],
          aliases=[('bb', 'B'), ('bb', 'p')], fn='str')]
     """
         ).replace("\n", "")
@@ -259,9 +259,9 @@ def test_compose_nest_dict(caplog):
         r"[\n ]{2,}",  # collapse all space-chars into a single space
         " ",
         """
-        [FunctionalOperation(name='p1.op1', needs=[sfx('p1.a'), 'aa'],
+        [FnOp(name='p1.op1', needs=[sfx('p1.a'), 'aa'],
          provides=[sfxed('p1.S1', 'g'), sfxed('ss2', 'h')], fn='str'),
-        FunctionalOperation(name='p2.op2', needs=[sfx('p2.a')],
+        FnOp(name='p2.op2', needs=[sfx('p2.a')],
          provides=['a', sfx('p2.b')], aliases=[('a', 'PP.b')], fn='str')]
 
         """.strip(),

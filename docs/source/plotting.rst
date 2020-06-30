@@ -32,7 +32,7 @@ solution of the last computation, calling methods with arguments like this::
 
 The same :meth:`.Plottable.plot()` method applies also for:
 
-- :class:`.FunctionalOperation`
+- :class:`.FnOp`
 - :class:`.Pipeline`
 - :class:`.Network`
 - :class:`.ExecutionPlan`
@@ -251,7 +251,7 @@ Directives
 
       the variable name containing what to render, which it can be:
 
-      - an instance of :class:`.Plottable` (such as :class:`.FunctionalOperation`,
+      - an instance of :class:`.Plottable` (such as :class:`.FnOp`,
         :class:`.Pipeline`, :class:`.Network`, :class:`.ExecutionPlan` or
         :class:`.Solution`);
 
@@ -506,9 +506,9 @@ in :term:`parallel`::
    DEBUG    ... cache-updated key: ((), None, None)
    DEBUG    === (3C40) Executing pipeline(t), in parallel, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x2 steps: op1, op2)...
    DEBUG    +++ (3C40) Parallel batch['op1'] on solution[].
-   DEBUG    +++ (3C40) Executing OpTask(FunctionalOperation|(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>'), sol_keys=[])...
+   DEBUG    +++ (3C40) Executing OpTask(FnOp|(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>'), sol_keys=[])...
    INFO     graphtik.op.py:534 Results[sfx: 'b'] contained +1 unknown provides[sfx: 'b']
-   FunctionalOperation|(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>')
+   FnOp|(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>')
    DEBUG    ... (3C40) op(op1) completed in 1.406ms.
 
    ...
@@ -516,11 +516,11 @@ in :term:`parallel`::
    DEBUG    === Compiling pipeline(t)...
    DEBUG    ... cache-hit key: ((), None, None)
    DEBUG    === (8697) Executing pipeline(t), evicting, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x3 steps: op1, op2, sfx: 'b')...
-   DEBUG    +++ (8697) Executing OpTask(FunctionalOperation(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>'), sol_keys=[])...
+   DEBUG    +++ (8697) Executing OpTask(FnOp(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>'), sol_keys=[])...
    INFO     graphtik.op.py:534 Results[sfx: 'b'] contained +1 unknown provides[sfx: 'b']
-   FunctionalOperation(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>')
+   FnOp(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>')
    DEBUG    ... (8697) op(op1) completed in 0.149ms.
-   DEBUG    +++ (8697) Executing OpTask(FunctionalOperation(name='op2', needs=[sfx: 'b'], provides=['b'], fn='<lambda>'), sol_keys=[sfx: 'b'])...
+   DEBUG    +++ (8697) Executing OpTask(FnOp(name='op2', needs=[sfx: 'b'], provides=['b'], fn='<lambda>'), sol_keys=[sfx: 'b'])...
    DEBUG    ... (8697) op(op2) completed in 0.08ms.
    DEBUG    ... (8697) evicting 'sfx: 'b'' from solution[sfx: 'b', 'b'].
    DEBUG    === (8697) Completed pipeline(t) in 0.229ms.
@@ -562,13 +562,13 @@ with the following properties, as a debug aid:
 {'aliases': None,
  'args': {'kwargs': {}, 'positional': [None], 'varargs': []},
  'network': Network(x3 nodes, x1 ops: screamer),
- 'operation': FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream'),
+ 'operation': FnOp(name='screamer', needs=['a'], provides=['foo'], fn='scream'),
  'outputs': None,
  'plan': ExecutionPlan(needs=['a'], provides=['foo'], x1 steps: screamer),
  'results_fn': None,
  'results_op': None,
  'solution': {'a': None},
- 'task': OpTask(FunctionalOperation(name='screamer', needs=['a'], provides=['foo'], fn='scream'), sol_keys=['a'])}
+ 'task': OpTask(FnOp(name='screamer', needs=['a'], provides=['foo'], fn='scream'), sol_keys=['a'])}
 
 
 In interactive *REPL* console you may use this to get the last raised exception::
@@ -633,7 +633,7 @@ problems with computed values.
 Accessing wrapper operation from task-context
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Alternatively, when the debugger is stopped inside an underlying function,
-you may access the wrapper :class:`.FunctionalOperation` and the :class:`.Solution`
+you may access the wrapper :class:`.FnOp` and the :class:`.Solution`
 through the :data:`graphtik.execution.task_context` context-var.
 This is populated with the :class:`._OpTask` instance of the currently executing operation,
 as shown in the :mod:`pdb` session printout, below::
@@ -659,7 +659,7 @@ Printing the operation-task gives you a quick overview of the operation and
 the available solution keys (but not the values, not to clutter the debugger console)::
 
    (Pdb) p op_task
-   OpTask(FunctionalOperation(name=..., needs=..., provides=..., fn=...), sol_keys=[...])
+   OpTask(FnOp(name=..., needs=..., provides=..., fn=...), sol_keys=[...])
 
 Print the wrapper operation::
 

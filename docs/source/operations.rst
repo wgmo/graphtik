@@ -24,7 +24,7 @@ to retrofitting existing *functions* unaware of all these, into :term:`operation
 
 Operations from existing functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The :class:`.FunctionalOperation` provides a concrete lightweight wrapper
+The :class:`.FnOp` provides a concrete lightweight wrapper
 around any arbitrary function to define and execute within a *pipeline*.
 Use the :func:`.operation()` factory to instantiate one:
 
@@ -35,16 +35,16 @@ Use the :func:`.operation()` factory to instantiate one:
    ...                    needs=['a', 'b'],
    ...                    provides=['a_plus_b'])
    >>> add_op
-   FunctionalOperation(name='add', needs=['a', 'b'], provides=['a_plus_b'], fn='add')
+   FnOp(name='add', needs=['a', 'b'], provides=['a_plus_b'], fn='add')
 
-You may still call the original function at :attr:`.FunctionalOperation.fn`,
+You may still call the original function at :attr:`.FnOp.fn`,
 bypassing thus any operation pre-processing:
 
       >>> add_op.fn(3, 4)
       7
 
 But the proper way is to *call the operation* (either directly or by calling the
-:meth:`.FunctionalOperation.compute()` method).  Notice though that unnamed
+:meth:`.FnOp.compute()` method).  Notice though that unnamed
 positional parameters are not supported:
 
       >>> add_op(a=3, b=4)
@@ -58,7 +58,7 @@ positional parameters are not supported:
 
 Builder pattern
 ^^^^^^^^^^^^^^^
-There are two ways to instantiate a :class:`.FunctionalOperation`\s, each one suitable
+There are two ways to instantiate a :class:`.FnOp`\s, each one suitable
 for different scenarios.
 
 We've seen that calling manually :func:`.operation()` allows putting into a pipeline
@@ -69,7 +69,7 @@ with similar attributes, e.g. ``needs``:
 
    >>> op_factory = operation(needs=['a'])
 
-Notice that we specified a `fn`, in order to get back a :class:`.FunctionalOperation`
+Notice that we specified a `fn`, in order to get back a :class:`.FnOp`
 instance (and not a decorator).
 
    >>> from graphtik import operation, compose
@@ -134,8 +134,8 @@ to the :func:`.operation` factory, specifically:
 
    It can be a single string, in which case a 1-element iterable is assumed.
 
-   :seealso: :term:`needs`, :term:`modifier`, :attr:`.FunctionalOperation.needs`,
-      :attr:`.FunctionalOperation.op_needs`, :attr:`.FunctionalOperation._fn_needs`
+   :seealso: :term:`needs`, :term:`modifier`, :attr:`.FnOp.needs`,
+      :attr:`.FnOp.op_needs`, :attr:`.FnOp._fn_needs`
 
 ``provides``
    this argument names the list of (positionally ordered) :term:`outputs` data
@@ -148,8 +148,8 @@ to the :func:`.operation` factory, specifically:
    If they are more than one, the underlying function must return an iterable
    with same number of elements (unless it :term:`returns dictionary`).
 
-   :seealso: :term:`provides`, :term:`modifier`, :attr:`.FunctionalOperation.provides`,
-      :attr:`.FunctionalOperation.op_provides`, :attr:`.FunctionalOperation._fn_provides`
+   :seealso: :term:`provides`, :term:`modifier`, :attr:`.FnOp.provides`,
+      :attr:`.FnOp.op_provides`, :attr:`.FnOp._fn_provides`
 
 Declarations of *needs* and *provides* is affected by :term:`modifier`\s like
 :func:`.keyword`:

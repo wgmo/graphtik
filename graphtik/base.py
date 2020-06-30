@@ -896,7 +896,7 @@ class Operation(Plottable, abc.ABC):
             all data are extracted 1st from this kw, falling back on the operation's
             attributes, and it is modified in-place
 
-        For the other 2 params, see :meth:`.FunctionalOperation.withset()`.
+        For the other 2 params, see :meth:`.FnOp.withset()`.
 
         :raise ValueError:
             - if a `renamer` was neither dict nor callable

@@ -88,7 +88,7 @@ Affected behavior:
 
 .. debug-behavior-start
 
-+ :meth:`FunctionalOperation.compute()` raise any matching-needs errors immediately;
++ :meth:`FnOp.compute()` raise any matching-needs errors immediately;
 + net objects print details recursively;
 + plotted SVG diagrams include style-provenance as tooltips;
 + Sphinx extension also saves the original DOT file next to each image
