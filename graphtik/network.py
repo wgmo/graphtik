@@ -603,24 +603,41 @@ class Network(Plottable):
         self, pruned_dag, inputs: Collection, outputs: Collection
     ) -> List:
         """
-        Create the list of operation-nodes & *instructions* evaluating all
-
-        operations & instructions needed a) to free memory and b) avoid
-        overwriting given intermediate inputs.
+        Create the list of operations and :term:`eviction` steps, to execute given IOs.
 
         :param pruned_dag:
             The original dag, pruned; not broken.
+        :param inputs:
+            Not used(!), useless inputs will be evicted when the solution is created.
         :param outputs:
             outp-names to decide whether to add (and which) evict-instructions
 
-        Dependencies (str instances or :term:`modifier`-annotated) are inserted
-        in `steps` between operation nodes to :term:`evict <eviction>` respective value
-        andreduce the memory footprint of solutions while the computation is running.
-        An evict-instruction is inserted whenever a *need* / *provide* of an executed op
-        is not used by any other *operation* further down the DAG.
+        :return:
+            the list of operation or dependencies to evict, in computation order
 
-        Note that for :term:`doc chain`\\s, it is evicted either the whole chain
-        (from root), or nothing at all.
+
+        **IMPLEMENTATION:**
+
+        The operation steps are based on the topological sort of the DAG,
+        therefore pruning must have eliminated any cycles.
+
+        Then the eviction steps are introduced between the operation nodes
+        (if enabled, and `outputs` have been asked, or else all outputs are kept),
+        to reduce asap solution's memory footprint while the computation is running.
+
+        - An evict-instruction is inserted on 2 occasions:
+
+          1. whenever a *need* of a an executed op is not used by any other *operation*
+             further down the DAG.
+          2. whenever a *provide* falls beyond the `pruned_dag`.
+
+        - For :term:`doc chain`\\s, it is either evicted the whole chain (from root),
+          or nothing at all.
+
+        - For eviction purposes, :class:`sfxed` dependencies are equivalent
+          to their stripped :term:`sideffected` ones, so these are also inserted
+          in the graph (after sorting, to evade cycles).
+
         """
         ## Sort by execution order, then by operation-insertion, to break ties.
         ordered_nodes = iset(self._topo_sort_nodes(pruned_dag))
