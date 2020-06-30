@@ -602,8 +602,13 @@ class Network(Plottable):
         def add_eviction(dep):
             if steps:
                 if steps[-1] == dep:
-                    # Functions with redandant SFXEDs like ['a', sfxed('a', ...)]??
-                    log.warning("Skipped dupe step %r @ #%i.", dep, len(steps))
+                    # Functions with redundant SFXEDs like ['a', sfxed('a', ...)]??
+                    log.warning(
+                        "Skipped dupe step %r @ #%i."
+                        "\n  (hint: do you have redundant SFXEDs like ['a', sfxed('a', ...)]??)",
+                        dep,
+                        len(steps),
+                    )
                     return
                 if log.isEnabledFor(logging.DEBUG) and dep in steps:
                     # Happens by rule-2 if multiple Ops produce
