@@ -573,6 +573,18 @@ def test_serialize_pipeline(samplenet, ser_method):
     assert eq(ser_method(samplenet), samplenet)
 
 
+def test_non_op_given():
+    with pytest.raises(
+        TypeError, match=r"(?s)Received x1 non-Operation instances.+\[1\].+\['b', 'a'\]"
+    ):
+        compose("", operation(None, name="b"), 1, operation(None, name="a"))
+    with pytest.raises(
+        TypeError,
+        match=r"(?s)Received x1 non-Operation instances.+'noop'.+\['b', 'a'\]",
+    ):
+        compose("", "noop", operation(None, name="b"), operation(None, name="a"))
+
+
 def test_op_rename():
     op = operation(
         str, name="op1", needs=sfx("a"), provides=["a", sfx("b")], aliases=[("a", "b")],

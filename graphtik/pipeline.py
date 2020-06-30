@@ -16,7 +16,16 @@ from typing import Callable, List, Mapping, Union
 
 from boltons.setutils import IndexedSet as iset
 
-from .base import UNSET, Items, Operation, PlotArgs, Plottable, RenArgs, aslist, jetsam
+from .base import (
+    UNSET,
+    Items,
+    Operation,
+    PlotArgs,
+    Plottable,
+    RenArgs,
+    aslist,
+    jetsam,
+)
 from .modifiers import dep_renamed
 
 log = logging.getLogger(__name__)
@@ -567,7 +576,12 @@ def compose(
     """
     operations = (op1,) + operations
     if not all(isinstance(op, Operation) for op in operations):
-        raise TypeError(f"Non-Operation instances given: {operations}")
+        bad_ops = [op for op in operations if not isinstance(op, Operation)]
+        op_names = [op.name for op in operations if isinstance(op, Operation)]
+        raise TypeError(
+            f"Received x{len(bad_ops)} non-Operation instances: {bad_ops}"
+            f"\n  out of: {op_names}"
+        )
 
     ## Apply default nesting if user asked just a truthy.
     #
