@@ -608,16 +608,19 @@ class ExecutionPlan(
         except Exception as ex:
             is_endured = first_solid(solution.is_endurance, op.endured)
             elapsed = elapsed_ms(op)
-            loglevel = logging.WARNING if is_endured else logging.DEBUG
+            loglevel = logging.WARNING if is_endured else logging.ERROR
             log.log(
                 loglevel,
-                "... (%s) %s op(%s) FAILED in %0.3fms, due to: %s(%s)",
+                "... (%s) %s op(%s) FAILED in %0.3fms, due to: %s(%s)"
+                "\n  x%i ops executed so far: %s",
                 solution.solid,
                 "*Enduring* " if is_endured else "",
                 op.name,
                 elapsed,
                 type(ex).__name__,
                 ex,
+                len(solution.executed),
+                solution.executed,
                 exc_info=is_debug(),
             )
 
