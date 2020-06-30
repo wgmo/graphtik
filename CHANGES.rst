@@ -49,18 +49,38 @@ Graphtik Changelog
   - [+] Function access executing Operation & Plan from its context.
       - [ ] Unify OpTask & FuncOp
       - [ ] function self-toggles `returns-dict` amidst execution.
-  - [ ] break cycles with dijkstra; weights
-  - [ ] Config DEBUG flags:
+
+  - [V] FIX: FnOp.op_needs & FnOp.op_provides not respected during pruning.
+  - v9.0.0.dev0: 17 May
+  - [V] FIX jsonp evictions with +delete_path().
+  - [V] store parts on modifier.
+  - [V] FnOp recognize jsonpointers even for plain strings.
+  - [V] More subdoc tests (e.g. Aliases, SDFexed)
+
+  - v9.0.0.dev1: 21 Jun
+    [V} FIXED JSONPs to work!
+  - [V] BUG: subdoc splitting // results in cycle nodes!
+  - [v] BUG: Handle root, double-slash, ginal-slash in jsonps
+    FIXME: only root handled.
+  - [V] BUG: ChainMap(sol) badly interacts with SubDocs - `overwrites` subdoc parents!
+    FIXED with NON-LAYERS.
+  - [V] Plot: match compute inputs & outputs with nested deps
+  - [V] jsonpointer mass-dict-update
+  - [V] DOC: tutorial section  "Week tasks" about JSONPs.
+  - [V] FIX: SFXED evicted unjustly!
+
+  - [ ] DROIP accessors
+  - [ ] DROP/ENH: Solution updates GivenInputs only, layers jsonp-refer to its values
+  - [ ] FEAT: break cycles with dijkstra; weights
+  - [ ] FEAT: Config DEBUG flags:
     - [ ] skip - evictions(drop config)
     - [ ] keep SFX in outputs
-  - [ ] FIX: FnOp.op_needs & FnOp.op_provides not respected during pruning.
   - [ ] ENH: virtual graph roots for inputs & outputs, for visiting algos (eg prune by outs)
   - [ ] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
-  - [ ] ENH: varargs for Outs collect all outs ate the very end
-  - [ ] ENH: varargs for Outs collect all outs ate the very end
+  - [ ] ENH: varargs for Outs collect all outs te the very end
   - [ ] ENH: use Signature.Param from `inspect` module to match needs & zip provides
-  - [ ] REFACT: network.py --> compilation.py
   - [ ] FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
+
   - plot:
 
     - [+] plot red partial outs/failures
@@ -85,15 +105,29 @@ Graphtik Changelog
     - [+] add a list of Features in quick-start section
     - [ ] Merge tutorial (operations + composition)
 
-  - Dropped:
+  - DROPPED
 
     - [-] Solution-retriever modifier;
-      DROPPED: easier and more generic to access solution from Op-context.
+      WONTFIX: easier and more generic to access solution from Op-context.
       REINSTATED to support simple conveyor belts from json-pointer paths.
     - [-] `solution.executed` pre-populated with all operations
     - [-] parallel batches restart from last position in steps
     - [-] covert custom op classes & modifiers directly into mergeable networkx graphs;
-      DROPPED bc foreign function would not work with merged deps.
+      WONTFIX bc foreign function would not work with merged deps.
+
+    - v9.0.0
+    - [X] Accept jsonp inputs & outputs,
+      WONTFIX user's business to expand into given Inputs, Outputs already working.
+    - [x] REVERT rename subdocs;
+      WONTFIX bc eventually made it work correctly and added TC.
+    - [x] REFACT: separate op-decorator from factory
+      (to facilitate defining conveyor operations):
+      NO, simplify passing fn=None.
+    - [x] Nest-rename subdocs: not by default, possible by renamer/nester.
+    - [x] accessors accept default (not to search x2 contain+get_path)
+      WONTFIX bc not worth it.
+    - [x] Simplify Task-context by injecting it in a parametric argument of `fn`.
+      NO, current solution works without `inspect` module.
 
   + See :gg:`1`.
 
@@ -107,11 +141,19 @@ Changelog
 %%%%%%%%%
 
 
-v9.0.0.dev1 (21 Jun 2020, @ankostis): JSONP+Accessors
-=====================================================
+v9.0.0.dev2 (30 Jun 2020, @ankostis): JSONP; net, evictions & sfxed fixes; conveyor fn
+======================================================================================
 + FEAT(modifier): Dependencies with :term:`json pointer path` that can read/write
   :term:`subdoc`\s (e.g. nested dicts & pandas).
-+ FEAT(modifier, solution): +modifier with accessor functions to read/write Solution.
+
+  + feat(config): added :func:`set_layered_solution()` into :term:`configurations`
+    which when True (or *jsnops* in the network if None (default)) all results
+    are stored in the given inputs to the pipeline
+    (this may become the regular behavior in the future).
+  + feat(modifier, solution): +modifier with accessor functions to read/write Solution.
+  + doc: new section :ref:`hierarchical-data` putting together all advanced features
+    of the project in a "Weekly task runner".
+
 + break/REFACT(modifier): ``fn_kwarg-->keyword``
 + FEAT(op): default :func:`.identity_function()` acting as :term:`conveyor operation`.
 + FIX(NET, EXECUTION): discovered and fixed bugs in pruning, evictions and rescheduling
@@ -131,6 +173,15 @@ v9.0.0.dev1 (21 Jun 2020, @ankostis): JSONP+Accessors
 + DROP(net): ``_EvictionInstruction`` class was obscuring modifier combinations, and
   it didn't make sense any more, being the only instruction.
 + FEAT(ops, pipelines, net, sol): unified :meth:`.Plottable.ops` utility properties.
++ ENH: Error reporting:
+
+  + enh(op, pipe): fail earlier if no function/name given when defining operations
+    and pipelines.
+  + enh(op): when :envvar:`GRAPHTIK_DEBUG` var defined, any errors during inputs/needs
+    matching are raised immediately.
+  + enh: improve tips & hints in exception messages;  log past executed operations
+    when a pipeline fails.
+
 + DOC(op): table explaining the differences between various dependency attributes of
   :class:`.FunctionalOperation`.
 
@@ -138,12 +189,16 @@ v9.0.0.dev1 (21 Jun 2020, @ankostis): JSONP+Accessors
       :start-after: .. dep-attributes-start
       :end-before: .. dep-attributes-end
 
-+ enh(op): with DEBUG errors during inputs/needs matching are raised immediately.
 + enh(op, pipe): restrict operation names to be strings (were :class:`collection.abc.Hashable`).
 + feat(modifier): public-ize :func:`modifier_withset()` to produce modified
   clones -- handle it with care.
++ feat(doc): Add new section with most significant :ref:`features` of this project.
 + fix(travis): update `pytest` or else `pip-install chokes with
   <https://travis-ci.org/github/ankostis/graphkit/jobs/700326904>`_ `pytest-coverage` plugin.
++ enh(pytest): add ``--logger-disabled`` CLI option when running TCs, as explained
+  in `pytest-dev/pytest#7431 <https://github.com/pytest-dev/pytest/issues/7431>`_.
++ refact(tests): split big :file:`test/test_graphtik.py` TC file into multiple
+  ones, per functionality area (features).
 
 
 v8.4.0 (15 May 2020, @ankostis): subclass-able Op, plot edges from south-->north of nodes

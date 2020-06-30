@@ -50,6 +50,8 @@ but has diverged significantly with enhancements ever since.
    </details>
 
 
+.. _features:
+
 Features
 --------
 .. default-role:: term
