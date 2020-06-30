@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-:term:`compose` operations into :term:`pipeline` and the backing :term:`network`.
+:term:`compose` :term:`pipeline`\\s by :term:`combining <combine pipelines>` operations into :term:`network`.
 
 .. note::
     This module (along with :mod:`.op` & :mod:`.modifier`) is what client code needs
