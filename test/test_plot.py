@@ -109,7 +109,7 @@ def test_op_label_template_full():
                             ><FONT FACE="monospace" COLOR="white"><B>!</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#fc89ac" TITLE="rescheduled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-partial-outputs" TARGET="_blank"
                             ><FONT FACE="monospace" COLOR="white"><B>?</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#b1ce9a" TITLE="parallel" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-parallel-execution" TARGET="_blank"
                             ><FONT FACE="monospace" COLOR="white"><B>|</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#4e3165" TITLE="marshalled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-marshalling" TARGET="_blank"
-                            ><FONT FACE="monospace" COLOR="white"><B>&amp;</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dict" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>&amp;</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dictionary" TARGET="_blank"
                             ><FONT FACE="monospace" COLOR="white"><B>}</B></FONT></TD></TR>
                     </TABLE></TD>
             </TR><TR>

@@ -576,7 +576,8 @@ class Theme:
                 "tooltip": "returns_dict",
                 "bgcolor": "#cc5500",
                 "color": "white",
-                "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dict",
+                "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dictionary",
+
             },
         }
     }
