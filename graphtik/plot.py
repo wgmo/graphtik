@@ -688,6 +688,8 @@ class Theme:
     ## Other
     ##
 
+    #: When true, plot also :term:`execution steps`, linking operations and evictions
+    #: with green dotted lines labeled with numbers denoting the execution order.
     show_steps = False
     kw_step = {
         "style": "dotted",  # Note: Step styles are not *remerged*.`
