@@ -176,15 +176,6 @@ def _monkey_patch_for_jupyter(pydot):
 _monkey_patch_for_jupyter(pydot)
 
 
-def _is_class_value_in_list(lst, cls, value):
-    return any(isinstance(i, cls) and i == value for i in lst)
-
-
-def _merge_conditions(*conds):
-    """combines conditions as a choice in binary range, eg, 2 conds --> [0, 3]"""
-    return sum(int(bool(c)) << i for i, c in enumerate(conds))
-
-
 # TODO: move to base.py, to reduce fan-in imports (and be frank with module diagram).
 def graphviz_html_string(
     s, *, repl_nl=None, repl_colon=None, xmltext=None,
