@@ -383,7 +383,7 @@ PLOT: Badges, StyleStacks, refact Themes, fix style mis-classifications, don't p
 
 + UPD: dot no plot Steps by default;  use this :ref:`plot-customizations` to re-enable them::
 
-      plottable.plot(plotter=Plotter(include_steps=True))
+      plottable.plot(plotter=Plotter(show_steps=True))
 
 + FEAT: now `operations` are also :term:`plottable`.
 

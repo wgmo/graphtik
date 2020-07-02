@@ -90,7 +90,7 @@ into the plot:
 
 .. graphtik::
 
-    >>> dot = out.plot(theme={"include_steps": True})
+    >>> dot = out.plot(theme={"show_steps": True})
 
 .. tip:
    Read :ref:`plot-customizations` to understand the trick with the :term:`plotter`.

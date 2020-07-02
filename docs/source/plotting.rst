@@ -42,7 +42,7 @@ each one capable to producing diagrams with increasing complexity.
 
 For instance, when a pipeline has just been composed, plotting it will
 come out bare bone, with just the 2 types of nodes (data & operations), their
-dependencies, and (optionally, if :term:`plot theme` ``include_steps`` is true)
+dependencies, and (optionally, if :term:`plot theme` ``show_steps`` is true)
 the sequence of the execution-steps of the :term:`plan`.
 
 .. image:: images/barebone_3ops.svg
@@ -133,13 +133,13 @@ ordered by breadth of the effects (most broadly effecting method at the top):
 3. Pass `theme` or `plotter` arguments when calling :meth:`.Plottable.plot()`::
 
       pipeline.plot(plotter=Plotter(kw_legend=None))
-      pipeline.plot(theme=Theme(include_steps=True)
+      pipeline.plot(theme=Theme(show_steps=True)
 
    You may clone and customize an existing plotter, to preserve any pre-existing
    customizations::
 
       active_plotter = get_active_plotter()
-      pipeline.plot(theme={"include_steps": True})
+      pipeline.plot(theme={"show_steps": True})
 
    ... OR::
 

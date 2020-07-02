@@ -254,7 +254,7 @@ def _check_common_end(s1, s2, clip_index):
             assert s1 == s2
 
 
-@active_plotter_plugged(Plotter(include_steps=True))
+@active_plotter_plugged(Plotter(show_steps=True))
 def test_plotters_hierarchy(pipeline: Pipeline, inputs, outputs):
     # Plotting original network, no plan.
     base_dot = str(pipeline.plot(inputs=inputs, outputs=outputs))
@@ -390,9 +390,9 @@ def test_Theme_withset():
     p2 = p.withset()
     assert p is not p2
 
-    p3 = p.withset(include_steps=True)
-    assert p3.include_steps
-    assert not p.include_steps
+    p3 = p.withset(show_steps=True)
+    assert p3.show_steps
+    assert not p.show_steps
 
 
 def test_Plotter_with_styles():
@@ -401,9 +401,9 @@ def test_Plotter_with_styles():
     assert p is not p2
     assert p.default_theme is not p2.default_theme
 
-    p3 = p.with_styles(include_steps=True)
-    assert p3.default_theme.include_steps
-    assert not p.default_theme.include_steps
+    p3 = p.with_styles(show_steps=True)
+    assert p3.default_theme.show_steps
+    assert not p.default_theme.show_steps
 
 
 def test_StylesStack_expansion_ok():

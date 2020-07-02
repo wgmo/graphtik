@@ -577,7 +577,6 @@ class Theme:
                 "bgcolor": "#cc5500",
                 "color": "white",
                 "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dictionary",
-
             },
         }
     }
@@ -698,7 +697,7 @@ class Theme:
     ## Other
     ##
 
-    include_steps = False
+    show_steps = False
     kw_step = {
         "style": "dotted",  # Note: Step styles are not *remerged*.`
         "color": Ref("steps_color"),
@@ -1119,7 +1118,7 @@ class Plotter:
 
         ## Draw steps sequence, if it's worth it.
         #
-        if steps and theme.include_steps and len(steps) > 1:
+        if steps and theme.show_steps and len(steps) > 1:
             it1 = iter(steps)
             it2 = iter(steps)
             next(it2)
