@@ -23,6 +23,7 @@ from collections import abc, namedtuple
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import partial
+from itertools import chain
 from typing import (
     Any,
     Callable,
@@ -162,7 +163,7 @@ def _monkey_patch_for_jupyter(pydot):
 
         def parse_dot_data(s):
             """Patched to fix pydot/pydot#171 by letting ex bubble-up."""
-            global top_graphs  # lint: disable=variable-not-defined-globally
+            global top_graphs  # pylint: disable=variable-not-defined-globally
 
             top_graphs = list()
             graphparser = dot_parser.graph_definition()
@@ -174,6 +175,18 @@ def _monkey_patch_for_jupyter(pydot):
 
 
 _monkey_patch_for_jupyter(pydot)
+
+
+def is_nx_node_dependent(graph, nx_node):
+    """Return true if node's edges are not :term:`subdoc` only. """
+    return any(
+        1
+        for _src, _dst, subdoc in chain(
+            graph.in_edges(nx_node, data="subdoc"),
+            graph.out_edges(nx_node, data="subdoc"),
+        )
+        if not subdoc
+    )
 
 
 # TODO: move to base.py, to reduce fan-in imports (and be frank with module diagram).
@@ -691,6 +704,9 @@ class Theme:
     #: When true, plot also :term:`execution steps`, linking operations and evictions
     #: with green dotted lines labeled with numbers denoting the execution order.
     show_steps = False
+    #: When true, plot also :term:`hierarchical data` nodes that
+    #: are not directly linked to operations.
+    show_chaindocs = False
     kw_step = {
         "style": "dotted",  # Note: Step styles are not *remerged*.`
         "color": Ref("steps_color"),
@@ -1094,9 +1110,15 @@ class Plotter:
         if plot_args.name:
             dot.set_name(as_identifier(plot_args.name))
 
+        hidden = set()
+
         ## NODES
         #
         for nx_node, data in graph.nodes.data(True):
+            if not theme.show_chaindocs and not is_nx_node_dependent(graph, nx_node):
+                hidden.add(nx_node)
+                continue
+
             plot_args = base_plot_args._replace(nx_item=nx_node, nx_attrs=data)
             dot_node = self._make_node(plot_args)
             plot_args = plot_args._replace(dot_item=dot_node)
@@ -1106,6 +1128,9 @@ class Plotter:
         ## EDGES
         #
         for src, dst, data in graph.edges.data(True):
+            if src in hidden or dst in hidden:
+                continue
+
             plot_args = base_plot_args._replace(nx_item=(src, dst), nx_attrs=data)
             dot.add_edge(self._make_edge(plot_args))
 
@@ -1156,7 +1181,7 @@ class Plotter:
 
         3. Set tooltips with the solution-values for data-nodes.
         """
-        theme = plot_args.theme
+        theme: Theme = plot_args.theme
         graph = plot_args.graph
         nx_node = plot_args.nx_item
         node_attrs = plot_args.nx_attrs
