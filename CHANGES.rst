@@ -77,13 +77,29 @@ Changelog
 %%%%%%%%%
 
 
+v9.1.0 (4 Jul 2020, @ankostis): Bugfix, panda-polite, privatize modifier fields
+===============================================================================
+- BREAK(modifier): privatize all :class:`._Modifier` properties;  it is uncanny
+  for a str to have more public attributes.
+- fix: avoid equality checks on results, to avoid pandas notorious
+  "The truth value of a Series/DataFrame is ambiguous."
+- break(plot): Rename theme property ``include_steps => show_steps``.
+- feat(plot): new theme property ``show_chaindocs`` by default false,
+  that when enabled, plots all nodes in the subdoc hierarchy (even if those
+  not used as deps), like this::
+
+      pipeline.plot(theme={"show_chaindocs": True})
+
+- fix(plot): returns-dictionary op-badge had broken url.
+
+
 v9.0.0 (30 Jun 2020, @ankostis): JSONP; net, evictions & sfxed fixes; conveyor fn; rename modules
 =================================================================================================
 + FEAT(modifier): Dependencies with :term:`json pointer path` that can read/write
   :term:`subdoc`\s (e.g. nested dicts & pandas).
 
   + feat(config): added :func:`set_layered_solution()` into :term:`configurations`
-    which when True (or *jsnops* in the network if None (default)) all results
+    which when True (or *jsonps* in the network if None (default)) all results
     are stored in the given inputs to the pipeline
     (this may become the regular behavior in the future).
   + feat(modifier, solution): +modifier with accessor functions to read/write Solution.
