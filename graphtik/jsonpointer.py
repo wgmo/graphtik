@@ -273,7 +273,8 @@ def contains_path(
 ) -> bool:
     """Test if `doc` has a value for json-pointer path by calling :func:`.resolve_path()`. """
     try:
-        return resolve_path(doc, path, root=root, descend_objects=descend_objects)
+        resolve_path(doc, path, root=root, descend_objects=descend_objects)
+        return True
     except ResolveError:
         return False
 
