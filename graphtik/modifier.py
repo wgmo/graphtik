@@ -175,17 +175,17 @@ class _Modifier(str):
     _func: str
     #: Map my name in `needs` into this kw-argument of the function.
     #: :func:`get_keyword()` returns it.
-    keyword: str = None
+    _keyword: str = None
     #: required is None, regular optional or varargish?
     #: :func:`is_optional()` returns it.
     #: All regulars are `keyword`.
-    optional: _Optionals = None
+    _optional: _Optionals = None
     #: An :term:`accessor` with getter/setter functions to read/write solution values.
     #: Any sequence of 2-callables will do.
-    accessor: Accessor = None
+    _accessor: Accessor = None
     #: Has value only for sideffects: the pure-sideffect string or
     #: the existing :term:`sideffected` dependency.
-    sideffected: str = None
+    _sideffected: str = None
     #: At least one name(s) denoting the :term:`sideffects` modification(s) on
     #: the :term:`sideffected`, performed/required by the operation.
     #:
@@ -193,7 +193,7 @@ class _Modifier(str):
     #:    and :func:`is_pure_optional()` returns True.
     #: - If not empty :func:`is_sfxed()` returns true
     #:   (the :attr:`sideffected`).
-    sfx_list: Tuple[Union[str, None]] = ()
+    _sfx_list: Tuple[Union[str, None]] = ()
 
     def __new__(
         cls,
@@ -236,15 +236,15 @@ class _Modifier(str):
         obj._repr = _repr
         obj._func = _func
         if keyword:
-            obj.keyword = keyword
+            obj._keyword = keyword
         if optional:
-            obj.optional = optional
+            obj._optional = optional
         if accessor:
-            obj.accessor = accessor
+            obj._accessor = accessor
         if sideffected:
-            obj.sideffected = sideffected
+            obj._sideffected = sideffected
         if sfx_list:
-            obj.sfx_list = sfx_list
+            obj._sfx_list = sfx_list
         vars(obj).update(kw)
         return obj
 
@@ -255,17 +255,17 @@ class _Modifier(str):
     @property
     def cmd(self):
         """the code to reproduce it"""
-        dep = self.sideffected or str(self)
+        dep = self._sideffected or str(self)
         items = [f"'{dep}'"]
-        if self.sfx_list:
-            items.append(", ".join(f"'{i}'" for i in self.sfx_list))
-        if self.keyword and self.keyword != dep:
-            keyword = f"'{self.keyword}'"
-            items.append(f"keyword={keyword}" if self.sfx_list else keyword)
-        if self.optional == _Optionals.keyword and self._func != "optional":
-            items.append("optional=1" if self.sfx_list else "1")
-        if self.accessor:
-            items.append(f"accessor={self.accessor!r}")
+        if self._sfx_list:
+            items.append(", ".join(f"'{i}'" for i in self._sfx_list))
+        if self._keyword and self._keyword != dep:
+            keyword = f"'{self._keyword}'"
+            items.append(f"keyword={keyword}" if self._sfx_list else keyword)
+        if self._optional == _Optionals.keyword and self._func != "optional":
+            items.append("optional=1" if self._sfx_list else "1")
+        if self._accessor:
+            items.append(f"accessor={self._accessor!r}")
         return f"{self._func}({', '.join(items)})"
 
     def __getnewargs__(self):
@@ -273,11 +273,11 @@ class _Modifier(str):
             str(self),
             self._repr,
             self._func,
-            self.keyword,
-            self.optional,
-            self.accessor,
-            self.sideffected,
-            self.sfx_list,
+            self._keyword,
+            self._optional,
+            self._accessor,
+            self._sideffected,
+            self._sfx_list,
         )
 
 
@@ -367,9 +367,9 @@ def modifier_withset(
     if isinstance(dep, _Modifier):
         kw = {
             **{
-                k: v
+                k.lstrip("_"): v
                 for k, v in vars(dep).items()
-                # Regenerate cached, truthy-only, jsnop-parts.
+                # Regenerate cached, truthy-only, jsonp-parts.
                 if k != "_jsonp" or not v
             },
             **{k: v for k, v in locals().items() if v is not ...},
@@ -378,10 +378,10 @@ def modifier_withset(
         kw = {
             k: v
             for k, v in kw.items()
-            if k not in ("dep", "name", "kw", "_repr", "_func")
+            if k not in set(["dep", "name", "kw", "repr", "func"])
         }
         if name is ...:
-            name = dep.sideffected or str(dep)
+            name = dep._sideffected or str(dep)
     else:
         name = dep
 
@@ -1017,7 +1017,7 @@ def get_keyword(dep) -> Optional[str]:
     :return:
         the :attr:`.keyword`
     """
-    return getattr(dep, "keyword", None)
+    return getattr(dep, "_keyword", None)
 
 
 def is_optional(dep) -> Optional[_Optionals]:
@@ -1029,22 +1029,22 @@ def is_optional(dep) -> Optional[_Optionals]:
     :return:
         the :attr:`.optional`
     """
-    return getattr(dep, "optional", None)
+    return getattr(dep, "_optional", None)
 
 
 def is_vararg(dep) -> bool:
     """Check if an :term:`optionals` dependency is `vararg`."""
-    return getattr(dep, "optional", None) == _Optionals.vararg
+    return getattr(dep, "_optional", None) == _Optionals.vararg
 
 
 def is_varargs(dep) -> bool:
     """Check if an :term:`optionals` dependency is `varargs`."""
-    return getattr(dep, "optional", None) == _Optionals.varargs
+    return getattr(dep, "_optional", None) == _Optionals.varargs
 
 
 def is_varargish(dep) -> bool:
     """Check if an :term:`optionals` dependency is :term:`varargish`."""
-    return dep.optional in (_Optionals.vararg, _Optionals.vararg)
+    return dep._optional in (_Optionals.vararg, _Optionals.vararg)
 
 
 def get_jsonp(dep) -> Union[List[str], None]:
@@ -1059,17 +1059,17 @@ def is_sfx(dep) -> Optional[str]:
     :return:
         the :attr:`.sideffected`
     """
-    return getattr(dep, "sideffected", None)
+    return getattr(dep, "_sideffected", None)
 
 
 def is_pure_sfx(dep) -> bool:
     """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
-    return getattr(dep, "sideffected", None) and not getattr(dep, "sfx_list", None)
+    return getattr(dep, "_sideffected", None) and not getattr(dep, "_sfx_list", None)
 
 
 def is_sfxed(dep) -> bool:
     """Check if it is :term:`sideffected`."""
-    return getattr(dep, "sideffected", None) and getattr(dep, "sfx_list", None)
+    return getattr(dep, "_sideffected", None) and getattr(dep, "_sfx_list", None)
 
 
 def get_accessor(dep) -> bool:
@@ -1079,14 +1079,14 @@ def get_accessor(dep) -> bool:
     :return:
         the :attr:`accessor`
     """
-    return getattr(dep, "accessor", None)
+    return getattr(dep, "_accessor", None)
 
 
 def acc_contains(dep) -> Callable[[Collection, str], Any]:
     """
     A fn like :func:`operator.contains` for any `dep` (with-or-without :term:`accessor`)
     """
-    acc = getattr(dep, "accessor", None)
+    acc = getattr(dep, "_accessor", None)
     return acc.contains if acc else operator.contains
 
 
@@ -1094,7 +1094,7 @@ def acc_getitem(dep) -> Callable[[Collection, str], Any]:
     """
     A fn like :func:`operator.getitem` for any `dep` (with-or-without :term:`accessor`)
     """
-    acc = getattr(dep, "accessor", None)
+    acc = getattr(dep, "_accessor", None)
     return acc.getitem if acc else operator.getitem
 
 
@@ -1102,7 +1102,7 @@ def acc_setitem(dep) -> Callable[[Collection, str, Any], None]:
     """
     A fn like :func:`operator.setitem` for any `dep` (with-or-without :term:`accessor`)
     """
-    acc = getattr(dep, "accessor", None)
+    acc = getattr(dep, "_accessor", None)
     return acc.setitem if acc else operator.setitem
 
 
@@ -1110,7 +1110,7 @@ def acc_delitem(dep) -> Callable[[Collection, str], None]:
     """
     A fn like :func:`operator.delitem` for any `dep` (with-or-without :term:`accessor`)
     """
-    acc = getattr(dep, "accessor", None)
+    acc = getattr(dep, "_accessor", None)
     return acc.delitem if acc else operator.delitem
 
 
@@ -1122,7 +1122,7 @@ def dependency(dep) -> str:
     the the pure-sideffect string or the existing :term:`sideffected` dependency
     stored in :attr:`sideffected`.
     """
-    return str(dep) if is_sfx(dep) else dep.sideffected
+    return str(dep) if is_sfx(dep) else dep._sideffected
 
 
 def dep_renamed(dep, ren) -> Union[_Modifier, str]:
@@ -1142,7 +1142,7 @@ def dep_renamed(dep, ren) -> Union[_Modifier, str]:
 
     if isinstance(dep, _Modifier):
         if is_sfx(dep):
-            new_name = renamer(dep.sideffected)
+            new_name = renamer(dep._sideffected)
             dep = modifier_withset(dep, name=new_name, sideffected=new_name)
         else:
             dep = modifier_withset(dep, name=renamer(str(dep)))
@@ -1157,7 +1157,7 @@ def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
     Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
     """
     return (
-        (modifier_withset(dep, sfx_list=(s,)) for s in dep.sfx_list)
+        (modifier_withset(dep, sfx_list=(s,)) for s in dep._sfx_list)
         if is_sfxed(dep)
         else (dep,)
     )
@@ -1170,5 +1170,7 @@ def dep_stripped(dep) -> Union[str, _Modifier]:
     conveying all other properties of the original modifier to the stripped dependency.
     """
     if is_sfxed(dep):
-        dep = modifier_withset(dep, name=dep.sideffected, sideffected=None, sfx_list=())
+        dep = modifier_withset(
+            dep, name=dep._sideffected, sideffected=None, sfx_list=()
+        )
     return dep
