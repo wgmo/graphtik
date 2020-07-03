@@ -86,8 +86,8 @@ def jsonp_path(jsonpointer: str) -> List[str]:
         ['']
 
     """
-    # Optimization: modifier caches splitted parts as a "jsonp" attribute.
-    parts = getattr(jsonpointer, "jsonp", None)
+    # Optimization: modifier caches splitted parts as a "_jsonp" attribute.
+    parts = getattr(jsonpointer, "_jsonp", None)
     if parts is False:
         parts = [jsonpointer]
     elif parts is None:

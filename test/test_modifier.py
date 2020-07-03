@@ -252,10 +252,10 @@ def test_modifs_rename_fn(mod, exp, ser_method):
         # Check not just(!) `_repr` has changed.
         assert got.sideffected != dep.sideffected
 
-    if getattr(dep, "jsonp", None):
-        assert got.jsonp != dep.jsonp
-        assert got.jsonp == jsonp_path(got)
-        assert got.jsonp == jsonp_path(str(got))
+    if getattr(dep, "_jsonp", None):
+        assert got._jsonp != dep._jsonp
+        assert got._jsonp == jsonp_path(got)
+        assert got._jsonp == jsonp_path(str(got))
 
 
 @pytest.mark.parametrize(

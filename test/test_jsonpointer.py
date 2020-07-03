@@ -69,12 +69,12 @@ def test_jsonp_path_cached():
 
     p = C("a/b")
     assert jsonp_path(p) == ["a", "b"]
-    p.jsonp = False
+    p._jsonp = False
     assert jsonp_path(p) == [p]
-    assert p.jsonp == False
-    p.jsonp = None
+    assert p._jsonp == False
+    p._jsonp = None
     assert jsonp_path(p) == ["a", "b"]
-    assert p.jsonp == None
+    assert p._jsonp == None
 
 
 @pytest.mark.parametrize(

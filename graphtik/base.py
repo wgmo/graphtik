@@ -941,7 +941,7 @@ class Operation(Plottable, abc.ABC):
             return new_name
 
         def rename_subdocs(ren_args):
-            parts = getattr(ren_args.name, "jsonp", None)
+            parts = getattr(ren_args.name, "_jsonp", None)
             if parts:  # assuming deps here have been jsonpized earlier.
                 path = "/".join(
                     rename_driver(

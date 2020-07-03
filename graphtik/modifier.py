@@ -308,21 +308,21 @@ def _modifier(
         for client code to extend its own modifiers.
     """
     if jsonp is not None:
-        kw["jsonp"] = jsonp  # WARN: must be False or a collection for jsonp-accessors!
+        kw["_jsonp"] = jsonp  # WARN: must be False or a collection for jsonp-accessors!
     # Prevent sfx-jsonp.
     elif "/" in name and jsonp is None and (sideffected is None or sfx_list):
         from .jsonpointer import jsonp_path
 
-        kw["jsonp"] = jsonp_path(name)
+        kw["_jsonp"] = jsonp_path(name)
     # Don't override user's accessor.
     #
-    if not accessor and kw.get("jsonp"):
+    if not accessor and kw.get("_jsonp"):
         accessor = JsonpAccessor()
 
     args = (name, keyword, optional, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
     if not formats:
-        if kw.get("jsonp") is not None:
+        if kw.get("_jsonp") is not None:
             # Just jsonp given.
             assert not accessor and (optional, accessor, sideffected, sfx_list) == (
                 None,
@@ -330,7 +330,7 @@ def _modifier(
                 None,
                 (),
             ), locals()
-            return _Modifier(name, name, f"jsonp", *args[1:], jsonp=jsonp)
+            return _Modifier(name, name, "jsonp", *args[1:], jsonp=jsonp)
 
         # Make a plain string instead.
         return str(name)
@@ -370,7 +370,7 @@ def modifier_withset(
                 k: v
                 for k, v in vars(dep).items()
                 # Regenerate cached, truthy-only, jsnop-parts.
-                if k != "jsonp" or not v
+                if k != "_jsonp" or not v
             },
             **{k: v for k, v in locals().items() if v is not ...},
             **kw,
@@ -1049,7 +1049,7 @@ def is_varargish(dep) -> bool:
 
 def get_jsonp(dep) -> Union[List[str], None]:
     """Check if the dependency is :term:`json pointer path` and return steps."""
-    return getattr(dep, "jsonp", None)
+    return getattr(dep, "_jsonp", None)
 
 
 def is_sfx(dep) -> Optional[str]:
