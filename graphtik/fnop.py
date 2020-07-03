@@ -732,16 +732,20 @@ class FnOp(Operation):
                         f"\n  {debug_var_tip}"
                     )
 
-        elif results in (NO_RESULT, NO_RESULT_BUT_SFX) and rescheduled:
+        elif rescheduled and (results is NO_RESULT or results is NO_RESULT_BUT_SFX):
             results = (
                 {}
-                if results == NO_RESULT_BUT_SFX
+                if results is NO_RESULT_BUT_SFX
                 # Cancel also any SFX.
                 else {p: False for p in set(self.provides) if is_sfx(p)}
             )
 
         elif not fn_expected:  # All provides were sideffects?
-            if results and results not in (NO_RESULT, NO_RESULT_BUT_SFX):
+            if (
+                results is not None
+                and results is not NO_RESULT
+                and results is not NO_RESULT_BUT_SFX
+            ):
                 ## Do not scream,
                 #  it is common to call a function for its sideffects,
                 # which happens to return an irrelevant value.
@@ -755,7 +759,7 @@ class FnOp(Operation):
         else:  # Handle result sequence: no-result, single-item, many
             nexpected = len(fn_expected)
 
-            if results in (NO_RESULT, NO_RESULT_BUT_SFX):
+            if results is NO_RESULT or results is NO_RESULT_BUT_SFX:
                 results = ()
                 ngot = 0
 
