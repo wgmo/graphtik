@@ -8,7 +8,7 @@ from collections import namedtuple
 
 import pytest
 
-from graphtik import NO_RESULT, MultiValueError, compose, operation, sfxed, vararg
+from graphtik import NO_RESULT, compose, operation, sfxed, vararg
 from graphtik.base import RenArgs
 from graphtik.config import solution_layered
 from graphtik.execution import task_context
@@ -60,7 +60,7 @@ def test_jsonp_and_conveyor_fn_simple():
 
     ## Ops are unaware of subdocs, Solution does.
     #
-    with pytest.raises(MultiValueError, match="Missing compulsory needs"):
+    with pytest.raises(ValueError, match="Missing compulsory needs"):
         copy_values.compute({"inputs": {"a": 1, "b": 2}})
     results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
     assert results == {"RESULTS/A": 1, "RESULTS/BB": 2}

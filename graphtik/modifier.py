@@ -595,14 +595,13 @@ def jsonp(name: str, jsonp=None) -> _Modifier:
 
         >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
         Traceback (most recent call last):
-        graphtik.base.MultiValueError: Failed preparing needs:
+        ValueError: Failed preparing needs:
             1. Missing compulsory needs['inputs/a'($), 'inputs/b'($)]!
             +++inputs: ['inputs']
             +++FnOp(name='copy a+b-->A+BB',
                                    needs=['inputs/a'($), 'inputs/b'($)],
                                    provides=['RESULTS/A'($), 'RESULTS/BB'($)],
                                    fn='identity_fn')
-            (tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)
 
         >>> results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
         >>> results
@@ -747,11 +746,10 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         >>> graph(a=5, b=0xBAD)
         Traceback (most recent call last):
         ...
-        graphtik.base.MultiValueError: Failed preparing needs:
+        ValueError: Failed preparing needs:
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
             +++FnOp(name='enlist', needs=['a', 'b'(+)], provides=['sum'], fn='enlist')
-            (tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)
 
     .. varargs-mistake-start
     .. Attention::
@@ -761,14 +759,13 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         >>> graph(a=5, b="mistake")
         Traceback (most recent call last):
         ...
-        graphtik.base.MultiValueError: Failed preparing needs:
+        ValueError: Failed preparing needs:
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
             +++FnOp(name='enlist',
                                    needs=['a', 'b'(+)],
                                    provides=['sum'],
                                    fn='enlist')
-            (tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)
 
     .. varargs-mistake-end
 

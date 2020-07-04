@@ -29,7 +29,6 @@ from boltons.setutils import IndexedSet as iset
 from .base import (
     UNSET,
     Items,
-    MultiValueError,
     Operation,
     Plottable,
     PlotArgs,
@@ -587,20 +586,12 @@ class FnOp(Operation):
             )
 
     def _prepare_match_inputs_error(
-        self,
-        exceptions: List[Tuple[Any, Exception]],
-        missing: List,
-        varargs_bad: List,
-        named_inputs: Mapping,
+        self, missing: List, varargs_bad: List, named_inputs: Mapping,
     ) -> ValueError:
         from .config import is_debug
 
-        errors = [
-            f"{i}. Need({n!r}) failed due to: {type(nex).__name__}({nex})"
-            for i, (n, nex) in enumerate(exceptions, 1)
-        ]
-        ner = len(exceptions) + 1
-
+        ner = 1
+        errors = []
         if missing:
             errors.append(f"{ner}. Missing compulsory needs{list(missing)}!")
             ner += 1
@@ -611,20 +602,18 @@ class FnOp(Operation):
         inputs = dict(named_inputs) if is_debug() else list(named_inputs)
         errors.append(f"+++inputs: {inputs}")
         errors.append(f"+++{self}")
-        errors.append(
-            "(tip: set GRAPHTIK_DEBUG envvar to raise immediately and/or enable DEBUG-logging)"
-        )
 
         msg = textwrap.indent("\n".join(errors), " " * 4)
-        raise MultiValueError(f"Failed preparing needs: \n{msg}", *exceptions)
+        raise ValueError(f"Failed preparing needs: \n{msg}")
 
     def _match_inputs_with_fn_needs(self, named_inputs) -> Tuple[list, list, dict]:
         positional, vararg_vals = [], []
         kwargs = {}
-        errors, missing, varargs_bad = [], [], []
+        missing, varargs_bad = [], []
         for n in self._fn_needs:
-            assert not is_sfx(n), locals()
             try:
+                ok = False
+                assert not is_sfx(n), locals()
                 if n not in named_inputs:
                     if not is_optional(n) or is_sfx(n):
                         # It means `inputs` < compulsory `needs`.
@@ -653,25 +642,15 @@ class FnOp(Operation):
 
                 else:
                     positional.append(inp_value)
+                ok = True
+            finally:
+                if not ok:
+                    log.error(
+                        "Failed while preparing op(%s) need(%s)!", self.name, n,
+                    )
 
-            except Exception as nex:
-                from .config import is_debug
-
-                if is_debug():
-                    raise
-                log.debug(
-                    "Cannot prepare op(%s) need(%s) due to: %s",
-                    self.name,
-                    n,
-                    nex,
-                    exc_info=nex,
-                )
-                errors.append((n, nex))
-
-        if errors or missing or varargs_bad:
-            raise self._prepare_match_inputs_error(
-                errors, missing, varargs_bad, named_inputs
-            )
+        if missing or varargs_bad:
+            raise self._prepare_match_inputs_error(missing, varargs_bad, named_inputs)
 
         return positional, vararg_vals, kwargs
 

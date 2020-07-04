@@ -88,7 +88,6 @@ Affected behavior:
 
 .. debug-behavior-start
 
-+ :meth:`FnOp.compute()` raise any matching-needs errors immediately;
 + :meth:`FnOp.compute()` prints out full given-inputs (not just their keys);
 + net objects print details recursively;
 + plotted SVG diagrams include style-provenance as tooltips;
