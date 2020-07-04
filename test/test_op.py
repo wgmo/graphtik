@@ -8,6 +8,7 @@ from functools import partial
 from textwrap import dedent
 from types import SimpleNamespace
 
+import pandas as pd
 import pytest
 
 from graphtik import (
@@ -28,14 +29,9 @@ from graphtik.config import (
     tasks_in_parallel,
     tasks_marshalled,
 )
+from graphtik.fnop import FnOp, Operation, as_renames, reparse_operation_data
 from graphtik.modifier import dep_renamed
 from graphtik.planning import yield_ops
-from graphtik.fnop import (
-    FnOp,
-    Operation,
-    as_renames,
-    reparse_operation_data,
-)
 
 
 @pytest.fixture(params=[None, "got"])
@@ -711,3 +707,17 @@ def test_conveyor_identity_fn():
     #     provides=["C", "B", "A", varargs(sadasa"b", 's')]
     # )()
     # assert op(c=7, a=5, b=[6]) == {"A": 5, "B1": [6], "B2", "C": 7}
+
+
+def test_pandas_result():
+    ser = pd.Series([1, 2])
+    sol = operation(lambda: ser, name="pandas", provides="a").compute()
+    assert (sol["a"] == ser).all()
+
+
+def test_pandas_input():
+    ser = pd.Series([1, 2])
+    sol = operation(fn=None, name="pandas", needs="a", provides="A")(a=ser)
+    assert (sol["A"] == ser).all()
+    sol = operation(fn=None, name="pandas", needs="a", provides="A").compute({"a": ser})
+    assert (sol["A"] == ser).all()
