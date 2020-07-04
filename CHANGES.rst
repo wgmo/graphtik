@@ -77,6 +77,10 @@ Changelog
 %%%%%%%%%
 
 
+v9.2.0 (4 Jul 2020, @ankostis): Drop MultiValueError
+====================================================
+Delayed raising of needs errors hindered debug.
+
 v9.1.0 (4 Jul 2020, @ankostis): Bugfix, panda-polite, privatize modifier fields
 ===============================================================================
 - BREAK(modifier): privatize all :class:`._Modifier` properties;  it is uncanny
