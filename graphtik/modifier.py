@@ -1065,7 +1065,12 @@ def is_pure_sfx(dep) -> bool:
 
 
 def is_sfxed(dep) -> bool:
-    """Check if it is :term:`sideffected`."""
+    """
+    Check if it is :term:`sideffected`.
+
+    :return:
+        the :attr:`._sfx_list` if it is  a *sideffected* dep, None/empty-tuple otherwise
+    """
     return getattr(dep, "_sideffected", None) and getattr(dep, "_sfx_list", None)
 
 
