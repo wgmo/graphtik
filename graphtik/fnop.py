@@ -875,7 +875,7 @@ def operation(
     marshalled=UNSET,
     returns_dict=UNSET,
     node_props: Mapping = UNSET,
-):
+) -> FnOp:
     r"""
     An :term:`operation` factory that works like a "fancy decorator".
 
