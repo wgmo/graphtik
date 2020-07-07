@@ -214,7 +214,10 @@ def func_name(
     try:
         if human and inspect.isbuiltin(fn):
             return str(fn)
-        fn_name = fn.__qualname__ if fqdn else fn.__name__
+        # Not possible for all objects to fake ``__qualname__``.
+        fn_name = (
+            fn.__qualname__ if fqdn and hasattr(fn, "__qualname__") else fn.__name__
+        )
         assert fn_name
 
         mod_name = getattr(fn, "__module__", None)
