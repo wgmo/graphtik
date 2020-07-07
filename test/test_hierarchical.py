@@ -177,7 +177,7 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
             return True
         # if is_sfxed(dep):
         #     return modifier_withset(
-        #         dep, sfx_list=[f"{ra.parent.name}.{s}" for s in dep.sfx_list]
+        #         dep, sfx_list=[f"{ra.parent.name}.{s}" for s in dep._sfx_list]
         #     )
         if dep == "daily_tasks":
             return dep_renamed(dep, lambda n: f"{n}/{ra.parent.name}")
@@ -340,7 +340,7 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
             return True
         # if is_sfxed(dep):
         #     return modifier_withset(
-        #         dep, sfx_list=[f"{ra.parent.name}.{s}" for s in dep.sfx_list]
+        #         dep, sfx_list=[f"{ra.parent.name}.{s}" for s in dep._sfx_list]
         #     )
         if dep == "daily_tasks":
             return dep_renamed(dep, lambda n: f"{n}/{ra.parent.name}")

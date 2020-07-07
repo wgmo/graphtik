@@ -248,9 +248,9 @@ def test_modifs_rename_fn(mod, exp, ser_method):
     assert repr(got) == exp
     assert repr(ser_method(got)) == exp
 
-    if getattr(dep, "sideffected", None):
+    if getattr(dep, "_sideffected", None):
         # Check not just(!) `_repr` has changed.
-        assert got.sideffected != dep.sideffected
+        assert got._sideffected != dep._sideffected
 
     if getattr(dep, "_jsonp", None):
         assert got._jsonp != dep._jsonp

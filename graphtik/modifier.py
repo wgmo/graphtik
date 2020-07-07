@@ -171,7 +171,7 @@ class _Modifier(str):
     #: pre-calculated representation
     _repr: str
     #: The name of a modifier function here, needed to reconstruct
-    #: cstor code in :attr:`cmd`
+    #: cstor code in :meth:`.cmd()`
     _func: str
     #: Map my name in `needs` into this kw-argument of the function.
     #: :func:`get_keyword()` returns it.
@@ -192,7 +192,7 @@ class _Modifier(str):
     #: - If it is an empty tuple`, it is an abstract sideffect,
     #:    and :func:`is_pure_optional()` returns True.
     #: - If not empty :func:`is_sfxed()` returns true
-    #:   (the :attr:`sideffected`).
+    #:   (the :attr:`._sideffected`).
     _sfx_list: Tuple[Union[str, None]] = ()
 
     def __new__(
@@ -1012,7 +1012,7 @@ def get_keyword(dep) -> Optional[str]:
     All non-varargish optionals are "keyword" (including sideffected ones).
 
     :return:
-        the :attr:`.keyword`
+        the :attr:`._keyword`
     """
     return getattr(dep, "_keyword", None)
 
@@ -1024,7 +1024,7 @@ def is_optional(dep) -> Optional[_Optionals]:
     Varargish & optional sideffects are included.
 
     :return:
-        the :attr:`.optional`
+        the :attr:`._optional`
     """
     return getattr(dep, "_optional", None)
 
@@ -1054,7 +1054,7 @@ def is_sfx(dep) -> Optional[str]:
     Check if a dependency is :term:`sideffects` or :term:`sideffected`.
 
     :return:
-        the :attr:`.sideffected`
+        the :attr:`._sideffected`
     """
     return getattr(dep, "_sideffected", None)
 
@@ -1079,7 +1079,7 @@ def get_accessor(dep) -> bool:
     Check if dependency has an :term:`accessor`, and get it (if funcs below are unfit)
 
     :return:
-        the :attr:`accessor`
+        the :attr:`._accessor`
     """
     return getattr(dep, "_accessor", None)
 
@@ -1122,7 +1122,7 @@ def dependency(dep) -> str:
 
     For non-sideffects, it coincides with str(), otherwise,
     the the pure-sideffect string or the existing :term:`sideffected` dependency
-    stored in :attr:`sideffected`.
+    stored in :attr:`._sideffected`.
     """
     return str(dep) if is_sfx(dep) else dep._sideffected
 
@@ -1156,7 +1156,7 @@ def dep_renamed(dep, ren) -> Union[_Modifier, str]:
 
 def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
     """
-    Yield one sideffected for each sfx in :attr:`.sfx_list`, or iterate `dep` in other cases.
+    Yield one sideffected for each sfx in :attr:`._sfx_list`, or iterate `dep` in other cases.
     """
     return (
         (modifier_withset(dep, sfx_list=(s,)) for s in dep._sfx_list)
@@ -1167,7 +1167,7 @@ def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
 
 def dep_stripped(dep) -> Union[str, _Modifier]:
     """
-    Return the :attr:`_Modifier.sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
+    Return the :attr:`._sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
 
     conveying all other properties of the original modifier to the stripped dependency.
     """

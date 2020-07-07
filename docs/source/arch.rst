@@ -416,7 +416,7 @@ Architecture
 
         .. Note::
             To be precise, the *"sideffected dependency"* is the name held in
-            :attr:`._Modifier.sideffected` attribute of a *modifier* created by
+            :attr:`._Modifier._sideffected` attribute of a *modifier* created by
             :func:`.sfxed` function.
 
         The `outputs` of a *sideffected dependency* will produce an `overwrite` if

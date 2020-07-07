@@ -193,7 +193,7 @@ class Solution(ChainMap, Plottable):
             for ac, kv in zip(accessors, outputs.items()):
                 update_groups[ac and ac.update].append(kv)
 
-            ## Values without :attr:`Accessor.update` are to be set one-by-one,
+            ## Values without :attr:`._accessor.update` are to be set one-by-one,
             #  further below.
             outputs = update_groups.pop(None, None)
 

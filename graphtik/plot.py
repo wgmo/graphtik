@@ -474,8 +474,8 @@ class Theme:
     kw_data_sideffected = {
         "label": make_template(
             """
-            <{{ nx_item.sideffected | eee }}<BR/>
-            (<I>sfx:</I> {{ nx_item.sfx_list | join(', ') | eee }})>
+            <{{ nx_item._sideffected | eee }}<BR/>
+            (<I>sfx:</I> {{ nx_item._sfx_list | join(', ') | eee }})>
             """
         ),
     }

@@ -215,7 +215,7 @@ def _spread_sideffects(
         `op_deps`
             any :func:`.sfxed` are replaced by a sequence of ":func:`singularized
             <.dep_singularized>`" instances, one for each item in their
-            :attr:`._Modifier.sfx_list` attribute, in the order they are first met
+            :attr:`._Modifier._sfx_list` attribute, in the order they are first met
             (any duplicates are discarded, order is irrelevant, since they don't reach
             the function);
     """
