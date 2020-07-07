@@ -334,6 +334,8 @@ def _make_jinja2_environment() -> jinja2.Environment:
     env.filters["hrefer"] = _drop_gt_lt
     env.filters["ex"] = _format_exception
     env.filters["truncate"] = _reversing_truncate
+    env.filters["sideffected"] = is_sfx or None
+    env.filters["sfx_list"] = is_sfxed or None
 
     return env
 
@@ -474,8 +476,8 @@ class Theme:
     kw_data_sideffected = {
         "label": make_template(
             """
-            <{{ nx_item._sideffected | eee }}<BR/>
-            (<I>sfx:</I> {{ nx_item._sfx_list | join(', ') | eee }})>
+            <{{ nx_item | sideffected | eee }}<BR/>
+            (<I>sfx:</I> {{ nx_item | sfx_list | join(', ') | eee }})>
             """
         ),
     }
