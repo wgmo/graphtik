@@ -33,6 +33,8 @@ from graphtik.fnop import FnOp, Operation, as_renames, reparse_operation_data
 from graphtik.modifier import dep_renamed
 from graphtik.planning import yield_ops
 
+from .helpers import oneliner
+
 
 @pytest.fixture(params=[None, "got"])
 def opname(request):
@@ -610,15 +612,13 @@ def test_op_rename_parts():
     ren = op.withset(renamer=renamer)
     got = str(ren)
     print(got)
-    assert got == re.sub(
-        r"[\n ]+",  # collapse all space-chars into a single space
-        " ",
+    assert got == oneliner(
         """
         FnOp(name='op1',
             needs=[sfx('a/b'), '/PP.a/PP.b'($)],
             provides=['PP.b/PP.c'($), sfxed('PP.d/PP.e/PP.f'($), 'k/l')],
             aliases=[('PP.b/PP.c'($), '/PP.b/PP.t'($))], fn='str')
-        """.strip(),
+        """,
     )
 
 
@@ -648,14 +648,12 @@ def test_pipe_rename():
         """.strip()
     )
     got = str(ren.ops)
-    assert got == re.sub(
-        r"[\n ]+",  # collapse all space-chars into a single space
-        " ",
+    assert got == oneliner(
         """
         [FnOp(name='PP.op1', needs=[sfx('PP.a')], fn='str'),
          FnOp(name='PP.op2', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b')],
          aliases=[('PP.a', 'PP.b')], fn='str')]
-        """.strip(),
+        """
     )
 
     ## Check dictionary with callables
@@ -664,14 +662,12 @@ def test_pipe_rename():
         renamer={"op1": lambda n: "OP1", "op2": False, "a": optional("a"), "b": "B",}
     )
     got = str(ren.ops)
-    assert got == re.sub(
-        r"[\n ]+",  # collapse all space-chars into a single space
-        " ",
+    assert got == oneliner(
         """
         [FnOp(name='OP1', needs=[sfx('a')], fn='str'),
          FnOp(name='op2', needs=[sfx('a')], provides=['a'(?), sfx('b')],
          aliases=[('a'(?), 'B')], fn='str')]
-        """.strip(),
+        """
     )
 
 

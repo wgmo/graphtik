@@ -22,6 +22,11 @@ _ExeParams = namedtuple("_ExeParams", "parallel, proc, marshal")
 _exe_params = _ExeParams(None, None, None)
 
 
+def oneliner(s) -> str:
+    """Collapse any whitespace in stringified `s` into a single space. """
+    return re.sub(r"[\n ]+", " ", str(s).strip())
+
+
 def flat_dict(d):
     return chain.from_iterable(
         [zip(cycle([fname]), values) for fname, values in d.items()]
