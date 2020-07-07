@@ -340,6 +340,8 @@ class FnOp(Operation):
         #: any "parents split by dots(``.``)".
         #: :seealso: :ref:`operation-nesting`
         self.name = name
+        #: Fake function attributes.
+        self.__qualname__ = name
 
         #: The :term:`needs` almost as given by the user
         #: (which may contain MULTI-sideffecteds and dupes),
