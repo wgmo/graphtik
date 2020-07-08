@@ -179,6 +179,7 @@
         "pytest",
         "pyversion",
         "qmark",
+        "qname",
         "qubed",
         "questionmark",
         "quickstart",
@@ -245,6 +246,7 @@
         "withset",
         "writtable",
         "xfail",
+        "xfailif",
         "xlib",
         "zoomable"
     ]

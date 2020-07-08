@@ -43,13 +43,15 @@ Graphtik Changelog
 
   - DROPPED
 
-    - [-] Solution-retriever modifier;
+    - [X] Solution-retriever modifier;
       WONTFIX: easier and more generic to access solution from Op-context.
       REINSTATED to support simple conveyor belts from json-pointer paths.
-    - [-] `solution.executed` pre-populated with all operations
-    - [-] parallel batches restart from last position in steps
-    - [-] covert custom op classes & modifiers directly into mergeable networkx graphs;
+    - [X] `solution.executed` pre-populated with all operations
+    - [X] parallel batches restart from last position in steps
+    - [X] covert custom op classes & modifiers directly into mergeable networkx graphs;
       WONTFIX bc foreign function would not work with merged deps.
+    - [X] conditionals
+      WONTFIX bc it permits pipelines with too complex execution flow to debug.
 
     - v9.0.0
     - [X] Accept jsonp inputs & outputs,
@@ -77,9 +79,25 @@ Changelog
 %%%%%%%%%
 
 
+v9.3.0 (8 Jul 2020, @ankostis): Sphinx AutoDocumenter; fix plot sfx-nodes
+=========================================================================
+- FIX/FEAT(SPHINXEXT): so far, :func:`.operation`-annotated module functions were
+  excluded from generated sites.  Until the installed *autodoc* function-documenter
+  was instructed how to render the  wrapped function in place of the wrapping
+  ``FnOp``:
+
+  - fix(fnop, pipeline): wrapped function attributes are conveyed to wrapping `FnOp`.
+
+- FIX(plot): sideffect templates were left broken by recent privatization
+  of modifier fields;  add x2 Jinja-filters encapsulating the access to these fields.
+- fix(op): fully fake callables by attaching a ``__qualname__`` property on operations;
+  also teach :func:`.func_name()` not to choke if ``__qualname__`` missing.
+
+
 v9.2.0 (4 Jul 2020, @ankostis): Drop MultiValueError
-====================================================
+----------------------------------------------------
 Delayed raising of needs errors hindered debug.
+
 
 v9.1.0 (4 Jul 2020, @ankostis): Bugfix, panda-polite, privatize modifier fields
 ===============================================================================
