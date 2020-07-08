@@ -39,7 +39,7 @@ try:
     import importlib.resources as pkg_resources
 except ImportError:
     # Use backported to PY<3.7 `importlib_resources` lib.
-    import importlib_resources as pkg_resources
+    import importlib_resources as pkg_resources  # noqa
 
 obj_name = "graphtik diagram"
 role_name = "graphtik"
