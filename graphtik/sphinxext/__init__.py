@@ -25,6 +25,7 @@ from sphinx.ext import doctest as extdoctest
 from sphinx.ext.autodoc import ModuleDocumenter
 from sphinx.locale import _, __
 from sphinx.roles import XRefRole
+from sphinx.util import inspect
 from sphinx.util import logging
 from sphinx.util.console import bold  # pylint: disable=no-name-in-module
 from sphinx.writers.html import HTMLTranslator
@@ -515,14 +516,27 @@ def _teach_documenter_about_operations(FuncDocClass):
     FuncDocClass.can_document_member = classmethod(patched__can_document_member)
 
 
-def setup(app: Sphinx):
-    setup.app = app
-    app.require_sphinx("2.0")
-    app.setup_extension("sphinx.ext.doctest")
+def process_fnop_signature(app, what, name, obj, options, signature, return_annotation):
+    try:
+        if isinstance(obj, FnOp):
+            fn = obj.fn
+            fn_sig = inspect.signature(fn)
+            signature = str(fn_sig)
+            return_annotation = None
+    except Exception as ex:
+        log.error("Failed `autodoc-process-signature`: %s", ex, exc_info=1)
+    return (signature, return_annotation)
+
+
+def _setup_autodoc(app: Sphinx):
     app.setup_extension("sphinx.ext.autodoc")
 
     _teach_documenter_about_operations(app.registry.documenters["function"])
+    app.connect("autodoc-process-signature", process_fnop_signature)
 
+
+def _setup_directive(app: Sphinx):
+    app.setup_extension("sphinx.ext.doctest")
     app.add_config_value(
         "graphtik_graph_formats_by_builder",
         {"html": "svg", "readthedocs": "svg", "latex": "pdf"},
@@ -580,6 +594,14 @@ def setup(app: Sphinx):
 
     # Permanently set this, or else, e.g. +SKIP will not work!
     app.config.trim_doctest_flags = False
+
+
+def setup(app: Sphinx):
+    setup.app = app
+    app.require_sphinx("2.0")
+
+    _setup_autodoc(app)
+    _setup_directive(app)
 
     return {
         "version": __version__,
