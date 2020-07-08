@@ -6,7 +6,7 @@ import types
 from itertools import cycle
 from operator import add, mul, sub
 from textwrap import dedent
-from typing import Tuple
+from typing import Any, Tuple
 
 import pytest
 
@@ -274,12 +274,15 @@ def test_sideffect_not_canceled_if_not_resched(exemethod):
     assert sol == {"b": 1}
 
 
+DataFrame = Any
+
+
 @pytest.fixture(params=[0, 1])
 def calc_prices_pipeline(request, exemethod):
     """A pipeline that may work even without VAT-rates."""
 
     @operation(needs="order_items", provides=sfxed("ORDER", "Items", "Prices"))
-    def new_order(items: list) -> "pd.DataFrame":
+    def new_order(items: list) -> DataFrame:
         order = {"items": items}
         # Pretend we get the prices from sales.
         order["prices"] = list(range(1, len(order["items"]) + 1))
@@ -289,7 +292,7 @@ def calc_prices_pipeline(request, exemethod):
         needs=[sfxed("ORDER", "Items"), "vat rate"],
         provides=sfxed("ORDER", "VAT rates"),
     )
-    def fill_in_vat_ratios(order: "pd.DataFrame", base_vat: float) -> "pd.DataFrame":
+    def fill_in_vat_ratios(order: DataFrame, base_vat: float) -> DataFrame:
         order["VAT_rates"] = [
             v for _, v in zip(order["prices"], cycle((base_vat, 2 * base_vat)))
         ]
@@ -299,7 +302,7 @@ def calc_prices_pipeline(request, exemethod):
         needs=[sfxed("ORDER", "Prices"), sfxed("ORDER", "VAT rates", optional=True),],
         provides=[sfxed("ORDER", "VAT", "Totals"), "vat owed"],
     )
-    def finalize_prices(order: "pd.DataFrame") -> Tuple["pd.DataFrame", float]:
+    def finalize_prices(order: DataFrame) -> Tuple[DataFrame, float]:
         if "VAT_rates" in order:
             order["VAT"] = [p * v for p, v in zip(order["prices"], order["VAT_rates"])]
             order["totals"] = [p + v for p, v in zip(order["prices"], order["VAT"])]
@@ -366,7 +369,7 @@ def test_sideffecteds_endured(calc_prices_pipeline):
         provides=sfxed("ORDER", "VAT rates"),
         endured=True,
     )
-    def fill_in_vat_ratios(order: "pd.DataFrame", base_vat: float) -> "pd.DataFrame":
+    def fill_in_vat_ratios(order: DataFrame, base_vat: float) -> DataFrame:
         raise ValueError("EC transactions have no VAT!")
 
     calc_prices_pipeline = compose(
