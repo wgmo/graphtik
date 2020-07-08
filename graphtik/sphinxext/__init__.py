@@ -22,12 +22,15 @@ from sphinx.domains import Domain, Index, ObjType
 from sphinx.domains.std import StandardDomain
 from sphinx.environment import BuildEnvironment
 from sphinx.ext import doctest as extdoctest
+from sphinx.ext.autodoc import ModuleDocumenter
 from sphinx.locale import _, __
 from sphinx.roles import XRefRole
 from sphinx.util import logging
 from sphinx.util.console import bold  # pylint: disable=no-name-in-module
 from sphinx.writers.html import HTMLTranslator
 from sphinx.writers.latex import LaTeXTranslator
+
+from graphtik.fnop import FnOp
 
 from .. import __version__
 
@@ -501,10 +504,24 @@ def _validate_and_apply_configs(app: Sphinx, config: Config):
     )
 
 
+def _teach_documenter_about_operations(FuncDocClass):
+    original__can_document_member = FuncDocClass.can_document_member
+
+    def patched__can_document_member(cls, member, membername, isattr, parent):
+        return original__can_document_member(member, membername, isattr, parent) or (
+            isinstance(member, FnOp) and isinstance(parent, ModuleDocumenter)
+        )
+
+    FuncDocClass.can_document_member = classmethod(patched__can_document_member)
+
+
 def setup(app: Sphinx):
     setup.app = app
     app.require_sphinx("2.0")
     app.setup_extension("sphinx.ext.doctest")
+    app.setup_extension("sphinx.ext.autodoc")
+
+    _teach_documenter_about_operations(app.registry.documenters["function"])
 
     app.add_config_value(
         "graphtik_graph_formats_by_builder",
