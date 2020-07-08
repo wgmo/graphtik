@@ -174,9 +174,11 @@ class Pipeline(Operation):
         ## Set data asap, for debugging, although `net.withset()` will reset them.
         self.name = name
         #: Fake function attributes.
-        self.__qualname__ = name
-        # Remember Outputs for future `compute()`?
+        self.__name__ = self.__qualname__ = name
+
+        #: Remember Outputs for future `compute()`?
         self.outputs = outputs
+        #: Remember Outputs for future `compute()`?
         self.predicate = predicate
 
         # Prune network

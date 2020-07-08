@@ -13,7 +13,7 @@ import itertools as itt
 import logging
 import textwrap
 from collections import abc as cabc
-from functools import wraps
+from functools import update_wrapper, wraps
 from typing import (
     Any,
     Callable,
@@ -340,8 +340,22 @@ class FnOp(Operation):
         #: any "parents split by dots(``.``)".
         #: :seealso: :ref:`operation-nesting`
         self.name = name
+
         #: Fake function attributes.
-        self.__qualname__ = name
+        #:
+        if fn:
+            update_wrapper(
+                self,
+                fn,
+                assigned=("__module__", "__doc__", "__annotations__"),
+                updated=(),
+            )
+        self.__name__ = name
+        qname = getattr(fn, "__qualname__", None) or name
+        if qname:
+            # "ab.cd" => "ab.NAME", "ab" => "NAME", "" => "NAME"
+            qname = ".".join((*qname.split(".")[:-1], name))
+        self.__qualname__ = qname
 
         #: The :term:`needs` almost as given by the user
         #: (which may contain MULTI-sideffecteds and dupes),

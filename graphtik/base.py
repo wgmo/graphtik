@@ -859,10 +859,6 @@ class Operation(Plottable, abc.ABC):
     provides: Items
     op_provides: Items
 
-    @property
-    def __name__(self) -> str:
-        return self.name
-
     @abc.abstractmethod
     def compute(self, named_inputs, outputs=None):
         """
