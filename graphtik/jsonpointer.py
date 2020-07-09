@@ -239,23 +239,24 @@ def resolve_path(
             doc = root
             continue
 
-        for indexer in part_indexers:
+        for ii, indexer in enumerate(part_indexers):
             try:
                 doc = indexer(doc, part)
                 break
             except Exception as ex:
-                log.debug(
-                    "indexer %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s ",
-                    indexer,
-                    i,
-                    part,
-                    path,
-                    doc,
-                    ex,
-                    # Don't log int(part) stack-traces.
-                    exc_info=type(ex) is not ValueError
-                    or not str(ex).startswith("invalid literal for int()"),
-                )
+                if ii > 0:  # ignore int-indexing
+                    log.debug(
+                        "indexer %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s ",
+                        indexer,
+                        i,
+                        part,
+                        path,
+                        doc,
+                        ex,
+                        # Don't log int(part) stack-traces.
+                        exc_info=type(ex) is not ValueError
+                        or not str(ex).startswith("invalid literal for int()"),
+                    )
         else:
             if default is ...:
                 raise ResolveError(path, part, i)
@@ -424,23 +425,24 @@ def set_path_value(
             fact = container_factory
             overwrite = False
 
-        for scouter in part_scouters:
+        for ii, scouter in enumerate(part_scouters):
             try:
                 doc = scouter(doc, part, fact, overwrite)
                 break
             except Exception as ex:
-                log.debug(
-                    "scouter %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s",
-                    scouter,
-                    i,
-                    part,
-                    path,
-                    doc,
-                    ex,
-                    # Don't log int(part) stack-traces.
-                    exc_info=type(ex) is not ValueError
-                    or not str(ex).startswith("invalid literal for int()"),
-                )
+                if ii > 0:  # ignore int-indexing
+                    log.debug(
+                        "scouter %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s",
+                        scouter,
+                        i,
+                        part,
+                        path,
+                        doc,
+                        ex,
+                        # Don't log int(part) stack-traces.
+                        exc_info=type(ex) is not ValueError
+                        or not str(ex).startswith("invalid literal for int()"),
+                    )
         else:
             raise ValueError(
                 f"Failed setting step (#{i}){part} of json pointer path {path!r}!"
