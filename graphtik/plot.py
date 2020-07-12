@@ -357,6 +357,14 @@ def make_template(s):
     ``hrefer``
         Dubious escape for when writting URLs inside Graphviz attributes.
         Does NOT collapse nones/empties (like default ``e``)
+    ``ex``
+        format exceptions
+    ``truncate``
+        reversing truncate (keep tail)
+    ``sideffected``
+        return the `sideffected` property of an `sfxed`
+    ``sfx_list``
+        return the `sfx_list` property of an `sfxed`
     """
     return _jinja2_env.from_string(textwrap.dedent(s).strip())
 
@@ -392,7 +400,8 @@ class Theme:
     The poor man's css-like :term:`plot theme` (see also :class:`.StyleStack`).
 
     To use the values contained in theme-instances, stack them in a :class:`.StylesStack`,
-    and :meth:`.StylesStack.merge` them with :term:`style expansion`\\s.
+    and :meth:`.StylesStack.merge` them with :term:`style expansion`\\s
+    (read it from :meth:`.StyleStack.expand()`).
 
     .. theme-warn-start
     .. Attention::

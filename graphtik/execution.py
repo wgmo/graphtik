@@ -295,7 +295,7 @@ class Solution(ChainMap, Plottable):
     @property
     def overwrites(self) -> Mapping[Any, List]:
         """
-        The data in the solution that exist more than once.
+        The data in the solution that exist more than once (refreshed on every call).
 
         A "virtual" property to a dictionary with keys the names of values that
         exist more than once, and values, all those values in a list, ordered
