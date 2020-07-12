@@ -2,6 +2,7 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """Test :term:`sideffects`."""
 import re
+import sys
 import types
 from itertools import cycle
 from operator import add, mul, sub
@@ -318,6 +319,10 @@ def calc_prices_pipeline(request, exemethod):
     return compose("process order", *ops, parallel=exemethod)
 
 
+@pytest.mark.xfail(
+    sys.version_info < (3, 7),
+    reason="Pickling function typing of return annotations fails.",
+)
 def test_sideffecteds_ok(calc_prices_pipeline):
     inp = {"order_items": "milk babylino toilet-paper".split(), "vat rate": 0.18}
     sol = calc_prices_pipeline.compute(inp)
@@ -358,9 +363,13 @@ def test_sideffecteds_ok(calc_prices_pipeline):
     dot = str(sol.plot())
     print(dot)
     assert re.search(r"<vat owed>.+style=dashed", dot)
-    assert re.search(r'<vat owed>.+tooltip="\(evicted\)"', dot)
+    assert re.search(r'<vat owed>.+tooltip=".*\(evicted\)"', dot)
 
 
+@pytest.mark.xfail(
+    sys.version_info < (3, 7),
+    reason="Pickling function typing of return annotations fails.",
+)
 def test_sideffecteds_endured(calc_prices_pipeline):
     ## Break `fill_in_vat_ratios()`.
     #
