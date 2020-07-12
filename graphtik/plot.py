@@ -494,7 +494,7 @@ class Theme:
         "color": Ref("evicted"),
         "fontcolor": Ref("evicted"),
         "style": ["dashed"],
-        "tooltip": "(to evict)",
+        "tooltip": ["(to evict)"],
     }
     ##
     ## data STATE
@@ -502,19 +502,19 @@ class Theme:
     kw_data_pruned = {
         "fontcolor": Ref("pruned_color"),
         "color": Ref("pruned_color"),
-        "tooltip": "(pruned)",
+        "tooltip": ["(pruned)"],
     }
     kw_data_in_solution = {
         "style": ["filled"],
         "fillcolor": Ref("fill_color"),
-        "tooltip": make_data_value_tooltip,
+        "tooltip": [make_data_value_tooltip],
     }
-    kw_data_evicted = {"penwidth": "3", "tooltip": "(evicted)"}
+    kw_data_evicted = {"penwidth": "3", "tooltip": ["(evicted)"]}
     kw_data_overwritten = {"style": ["filled"], "fillcolor": Ref("overwrite_color")}
     kw_data_missing = {
         "fontcolor": Ref("canceled_color"),
         "color": Ref("canceled_color"),
-        "tooltip": "(missing-optional or canceled)",
+        "tooltip": ["(missing-optional or canceled)"],
     }
 
     ##########
@@ -530,20 +530,20 @@ class Theme:
         "name": lambda pa: quote_node_id(pa.nx_item.name),
         "shape": "plain",  # dictated by Graphviz docs
         # Set some base tooltip, or else, "TABLE" shown...
-        "tooltip": lambda pa: graphviz_html_string(pa.nx_item.name),
+        "tooltip": [lambda pa: graphviz_html_string(pa.nx_item.name)],
     }
 
     kw_op_executed = {"fillcolor": Ref("fill_color")}
     kw_op_endured = {
         "penwidth": Ref("resched_thickness"),
         "style": ["dashed"],
-        "tooltip": "(endured)",
+        "tooltip": ["(endured)"],
         "badges": ["!"],
     }
     kw_op_rescheduled = {
         "penwidth": Ref("resched_thickness"),
         "style": ["dashed"],
-        "tooltip": "(rescheduled)",
+        "tooltip": ["(rescheduled)"],
         "badges": ["?"],
     }
     kw_op_parallel = {"badges": ["|"]}
@@ -555,9 +555,9 @@ class Theme:
     kw_op_pruned = {"color": Ref("pruned_color"), "fontcolor": Ref("pruned_color")}
     kw_op_failed = {
         "fillcolor": Ref("failed_color"),
-        "tooltip": make_template("{{ solution.executed[nx_item] if solution | ex }}"),
+        "tooltip": [make_template("{{ solution.executed[nx_item] if solution | ex }}")],
     }
-    kw_op_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": "(canceled)"}
+    kw_op_canceled = {"fillcolor": Ref("canceled_color"), "tooltip": ["(canceled)"]}
     #: Operation styles may specify one or more "letters"
     #: in a `badges` list item, as long as the "letter" is contained in the dictionary
     #: below.
@@ -978,6 +978,8 @@ class StylesStack(NamedTuple):
 
         - Workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
 
+        - Merge tooltip-lists.
+
         .. theme-expansions-end
         """
 
@@ -1014,6 +1016,10 @@ class StylesStack(NamedTuple):
             if "," in graphviz_style:
                 graphviz_style = f'"{graphviz_style}"'
             style["style"] = graphviz_style
+
+        graphviz_style = style.get("tooltip")
+        if isinstance(graphviz_style, (list, tuple)):
+            style["tooltip"] = "\n".join(graphviz_style)
 
         return style
 
