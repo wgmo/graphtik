@@ -1567,7 +1567,11 @@ class Plotter:
             optional    [color=invis label="optional\npartial out"
                         tooltip="Target operation may run without source `need` OR source operation may not `provide` target data."
                         URL="%(arch_url)s#term-needs"];
-            optional    -> sideffect    [color=blue];
+            optional    -> keyword [label="**kw"];
+            keyword    [color=invis label="keyword"
+                        tooltip="A `need` passed in as **kw argument underlying fn."
+                        URL="%(arch_url)s/../reference.html#graphtik.modifier.keyword"];
+            keyword    -> sideffect    [color=blue];
             sideffect   [color=invis
                         tooltip="Fictive data not consumed/produced by operation functions."
                         URL="%(arch_url)s#term-sideffects"];
