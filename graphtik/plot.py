@@ -511,10 +511,10 @@ class Theme:
     }
     kw_data_evicted = {"penwidth": "3", "tooltip": "(evicted)"}
     kw_data_overwritten = {"style": ["filled"], "fillcolor": Ref("overwrite_color")}
-    kw_data_canceled = {
-        "fillcolor": Ref("canceled_color"),
-        "style": ["filled"],
-        "tooltip": "(canceled)",
+    kw_data_missing = {
+        "fontcolor": Ref("canceled_color"),
+        "color": Ref("canceled_color"),
+        "tooltip": "(missing-optional or canceled)",
     }
 
     ##########
@@ -1255,7 +1255,7 @@ class Plotter:
                 elif nx_node in steps:
                     styles.add("kw_data_evicted")
                 elif not is_pruned and not is_sfx(nx_node):
-                    styles.add("kw_data_canceled")
+                    styles.add("kw_data_missing")
 
             styles.stack_user_style(node_attrs)
 
