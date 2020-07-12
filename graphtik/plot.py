@@ -684,7 +684,9 @@ class Theme:
     kw_edge_mapping_keyword = {
         "fontsize": 11,  # default: 14
         "fontname": "italic",
-        "label": make_template("<&gt;{{ nx_attrs['keyword'] | eee }}>"),
+        "label": make_template(
+            "**{{ nx_attrs['keyword'] | eee if nx_attrs['keyword'] != nx_item[0] }}"
+        ),
     }
     kw_edge_subdoc = {
         "color": Ref("subdoc_color"),
