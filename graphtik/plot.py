@@ -951,7 +951,7 @@ class StylesStack(NamedTuple):
         """
         if nx_attrs:
             kw = {
-                k.lstrip(USER_STYLE_PREFFIX): v
+                k[len(USER_STYLE_PREFFIX) :]: v
                 for k, v in nx_attrs.items()
                 if k.startswith(USER_STYLE_PREFFIX) and k not in skip
             }
