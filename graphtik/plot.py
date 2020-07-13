@@ -1147,16 +1147,16 @@ class Plotter:
             dot.set_name(as_identifier(plot_args.name))
 
         ## Item-args for nodes, edges & steps spring off of this.
-        base_plot_args = plot_args._replace(dot=dot, clustered={})
+        plot_args = plot_args._replace(dot=dot, clustered={})
 
         ## Graph's node/edge defaults
         #
         if theme.node_defaults:
-            node_styles = self._new_styles_stack(base_plot_args)
+            node_styles = self._new_styles_stack(plot_args)
             node_styles.add("node_defaults")
             dot.add_node(pydot.Node("node", **node_styles.merge()))
         if theme.edge_defaults:
-            edge_styles = self._new_styles_stack(base_plot_args)
+            edge_styles = self._new_styles_stack(plot_args)
             edge_styles.add("edge_defaults")
             dot.add_node(pydot.Node("edge", **edge_styles.merge()))
 
@@ -1170,11 +1170,11 @@ class Plotter:
                 hidden.add(nx_node)
                 continue
 
-            plot_args = base_plot_args._replace(nx_item=nx_node, nx_attrs=data)
-            dot_node = self._make_node(plot_args)
-            plot_args = plot_args._replace(dot_item=dot_node)
+            node_plot_args = plot_args._replace(nx_item=nx_node, nx_attrs=data)
+            dot_node = self._make_node(node_plot_args)
+            node_plot_args = node_plot_args._replace(dot_item=dot_node)
 
-            self._append_or_cluster_node(plot_args)
+            self._append_or_cluster_node(node_plot_args)
 
         ## EDGES
         #
@@ -1182,8 +1182,8 @@ class Plotter:
             if src in hidden or dst in hidden:
                 continue
 
-            plot_args = base_plot_args._replace(nx_item=(src, dst), nx_attrs=data)
-            dot.add_edge(self._make_edge(plot_args))
+            edge_plot_args = plot_args._replace(nx_item=(src, dst), nx_attrs=data)
+            dot.add_edge(self._make_edge(edge_plot_args))
 
         ## Draw steps sequence, if it's worth it.
         #
@@ -1194,7 +1194,7 @@ class Plotter:
             for i, (src, dst) in enumerate(zip(it1, it2), 1):
                 src_name = get_node_name(src)
                 dst_name = get_node_name(dst)
-                styles = self._new_styles_stack(base_plot_args)
+                styles = self._new_styles_stack(plot_args)
 
                 styles.add("kw_step")
                 edge = pydot.Edge(

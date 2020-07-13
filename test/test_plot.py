@@ -679,3 +679,7 @@ def test_combine_clusters():
     dot: pydot.Dot = merged_graph.plot()
     assert dot.get_subgraph(f"cluster_{p1.name}")
     assert dot.get_subgraph(f"cluster_{p2.name}")
+
+
+def test_degenerate_pipeline():
+    compose("defs", operation(str, "a")).plot()
