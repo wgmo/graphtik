@@ -649,6 +649,18 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     assert "<node>" not in dot_str
 
 
+def test_node_edge_defaults():
+    dot = compose("defs", operation(str, "a", "b")).plot(
+        theme={"node_defaults": {"color": "red"}}
+    )
+    assert "color=red" in str(dot)
+
+    dot = compose("defs", operation(str, "a", "b")).plot(
+        theme={"edge_defaults": {"color": "red"}}
+    )
+    assert "color=red" in str(dot)
+
+
 def test_combine_clusters():
     p1 = compose(
         "op1",

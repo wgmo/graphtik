@@ -474,6 +474,13 @@ class Theme:
     #: in :attr:`.kw_plottable_type` ( ot missing altogether).
     kw_graph_plottable_type_unknown = {}
 
+    #: Attributes applying to all nodes with ``node [...]`` graphviz construct,
+    #: append in graph only if non-empty.
+    node_defaults = {}
+    #: Attributes applying to all edges with ``edge [...]`` graphviz construct,
+    #: appended in graph only if non-empty.
+    edge_defaults = {}
+
     ##########
     ## DATA node
     ##
@@ -1136,12 +1143,24 @@ class Plotter:
 
         kw = styles.merge()
         dot = pydot.Dot(**kw)
-        ## Item-args for nodes, edges & steps spring off of this.
-        base_plot_args = plot_args._replace(dot=dot, clustered={})
-
         if plot_args.name:
             dot.set_name(as_identifier(plot_args.name))
 
+        ## Item-args for nodes, edges & steps spring off of this.
+        base_plot_args = plot_args._replace(dot=dot, clustered={})
+
+        ## Graph's node/edge defaults
+        #
+        if theme.node_defaults:
+            node_styles = self._new_styles_stack(base_plot_args)
+            node_styles.add("node_defaults")
+            dot.add_node(pydot.Node("node", **node_styles.merge()))
+        if theme.edge_defaults:
+            edge_styles = self._new_styles_stack(base_plot_args)
+            edge_styles.add("edge_defaults")
+            dot.add_node(pydot.Node("edge", **edge_styles.merge()))
+
+        # To hide edges from unused chain-docs.
         hidden = set()
 
         ## NODES
