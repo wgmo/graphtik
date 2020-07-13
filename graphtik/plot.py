@@ -1155,8 +1155,8 @@ class Plotter:
 
         styles.stack_user_style(graph.graph)
 
-        kw = styles.merge()
-        dot = pydot.Dot(**kw)
+        dot = pydot.Dot(**styles.merge())
+
         if plot_args.name:
             dot.set_name(as_identifier(plot_args.name))
 
@@ -1346,19 +1346,17 @@ class Plotter:
             # TODO: Optimize and merge badge_styles once!
             label_styles.add("op_badge_styles")
 
-            kw = label_styles.merge()
             styles = self._new_styles_stack(plot_args)
             styles.add("kw_op")
             styles.add(
                 "op_label_template",
-                {"label": _render_template(theme.op_template, **kw,)},
+                {"label": _render_template(theme.op_template, **label_styles.merge(),)},
             )
 
             # Exclude Graphviz node attributes interacting badly with HTML-Labels.
             styles.stack_user_style(node_attrs, skip=theme.op_bad_html_label_keys)
 
-        kw = styles.merge()
-        return pydot.Node(**kw)
+        return pydot.Node(**styles.merge())
 
     def _build_cluster_path(self, plot_args: PlotArgs, *path,) -> None:
         """Return the last cluster in the path created"""
@@ -1445,8 +1443,7 @@ class Plotter:
             styles.add("kw_edge_broken")
 
         styles.stack_user_style(edge_attrs)
-        kw = styles.merge()
-        edge = pydot.Edge(src=src_name, dst=dst_name, **kw)
+        edge = pydot.Edge(src=src_name, dst=dst_name, **styles.merge())
 
         return edge
 
