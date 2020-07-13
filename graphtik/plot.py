@@ -23,7 +23,7 @@ from collections import abc, namedtuple
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import partial
-from itertools import chain
+from itertools import chain, count
 from typing import (
     Any,
     Callable,
@@ -51,7 +51,7 @@ from .config import (
     is_parallel_tasks,
     is_reschedule_operations,
 )
-from .modifier import is_sfx, is_sfxed
+from .modifier import get_jsonp, is_sfx, is_sfxed
 
 log = logging.getLogger(__name__)
 
@@ -319,6 +319,17 @@ def _reversing_truncate(
     return ret[::-1]
 
 
+def _make_jsonp_label(name):
+    jsonp = get_jsonp(name)
+    if jsonp:
+        ## Make a further indented line for each jsonp step.
+        #
+        jsonp = (f"{' ' * 4 * i}{c}" for c, i in zip(jsonp, count()))
+        name = '/<BR ALIGN="LEFT"/>'.join(html.escape(i) for i in jsonp)
+        name = f"<{name}>"
+    return name
+
+
 def _make_jinja2_environment() -> jinja2.Environment:
     env = jinja2.Environment()
 
@@ -336,6 +347,7 @@ def _make_jinja2_environment() -> jinja2.Environment:
     env.filters["truncate"] = _reversing_truncate
     env.filters["sideffected"] = lambda x: is_sfx(x) or None
     env.filters["sfx_list"] = lambda x: is_sfxed(x) or None
+    env.filters["jsonp_label"] = _make_jsonp_label
 
     return env
 
@@ -471,7 +483,7 @@ class Theme:
     kw_data = {
         "shape": "rect",
         "margin": "0.04,0.02",
-        "label": make_template("{{ nx_item | truncate }}"),
+        "label": make_template("{{ nx_item | jsonp_label }}"),
     }
     kw_data_inp = {}
     kw_data_out = {}
