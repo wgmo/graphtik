@@ -319,17 +319,6 @@ def _reversing_truncate(
     return ret[::-1]
 
 
-def _make_jsonp_label(name):
-    jsonp = get_jsonp(name)
-    if jsonp:
-        ## Make a further indented line for each jsonp step.
-        #
-        jsonp = (f"{' ' * 4 * i}{c}" for c, i in zip(jsonp, count()))
-        name = '/<BR ALIGN="LEFT"/>'.join(html.escape(i) for i in jsonp)
-        name = f"<{name}>"
-    return name
-
-
 def _make_jinja2_environment() -> jinja2.Environment:
     env = jinja2.Environment()
 
@@ -347,7 +336,7 @@ def _make_jinja2_environment() -> jinja2.Environment:
     env.filters["truncate"] = _reversing_truncate
     env.filters["sideffected"] = lambda x: is_sfx(x) or None
     env.filters["sfx_list"] = lambda x: is_sfxed(x) or None
-    env.filters["jsonp_label"] = _make_jsonp_label
+    env.filters["jsonp"] = get_jsonp
 
     return env
 
@@ -372,11 +361,13 @@ def make_template(s):
     ``ex``
         format exceptions
     ``truncate``
-        reversing truncate (keep tail)
+        reversing truncate (keep tail) if `truncate` arg is true
     ``sideffected``
-        return the `sideffected` property of an `sfxed`
+        return the `sideffected` part of an `sfxed` or none
     ``sfx_list``
-        return the `sfx_list` property of an `sfxed`
+        return the `sfx_list` part of an `sfxed` or none
+    ``jsonp``
+        return the `jsonp` list of a dependency or none
     """
     return _jinja2_env.from_string(textwrap.dedent(s).strip())
 
@@ -490,8 +481,31 @@ class Theme:
     kw_data = {
         "shape": "rect",
         "fixedsize": "shape",
-        "margin": "0.04,0.02",
-        "label": make_template("{{ nx_item | jsonp_label }}"),
+        "label": make_template(
+            """
+            {%- if nx_item | jsonp -%}
+                <
+                {%- for step in nx_item | jsonp -%}
+                    {%- if loop.first -%}
+                        {{- step | truncate -}}
+                        /
+                    {%- else -%}
+                        {{- '\n' -}}
+                        {{- '  ' * (loop.index - 1) -}}
+                        +--
+                        {{- step | truncate -}}
+                        {%- if not loop.last -%}
+                            /
+                        {%- endif -%}
+                    {%- endif -%}
+                    <BR ALIGN="LEFT"/>
+                {%- endfor -%}
+                >
+            {%- else -%}
+                {{- nx_item | truncate -}}
+            {%- endif -%}
+            """
+        ),
     }
     kw_data_inp = {}
     kw_data_out = {}
