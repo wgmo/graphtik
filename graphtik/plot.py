@@ -334,8 +334,8 @@ def _make_jinja2_environment() -> jinja2.Environment:
     env.filters["hrefer"] = _drop_gt_lt
     env.filters["ex"] = _format_exception
     env.filters["truncate"] = _reversing_truncate
-    env.filters["sideffected"] = is_sfx or None
-    env.filters["sfx_list"] = is_sfxed or None
+    env.filters["sideffected"] = lambda x: is_sfx(x) or None
+    env.filters["sfx_list"] = lambda x: is_sfxed(x) or None
 
     return env
 
