@@ -482,6 +482,7 @@ class Theme:
     #: (default margin: x=0.11, y=0.055O)
     kw_data = {
         "shape": "rect",
+        "fixedsize": "shape",
         "margin": "0.04,0.02",
         "label": make_template("{{ nx_item | jsonp_label }}"),
     }

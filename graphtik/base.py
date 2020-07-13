@@ -708,7 +708,7 @@ class Plottable(abc.ABC):
             digraph pipeline {
             fontname=italic;
             label=<pipeline>;
-            <a> [fillcolor=wheat, label=a, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
+            <a> [fillcolor=wheat, fixedsize=shape, label=a, margin="0.04,0.02", shape=invhouse, style=filled, tooltip="(int) 1"];
             ...
 
         .. graphtik::
