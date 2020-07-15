@@ -18,7 +18,6 @@ from typing import (
     Any,
     Callable,
     Collection,
-    Hashable,
     List,
     Mapping,
     Tuple,
@@ -133,7 +132,7 @@ def jsonp_ize_all(deps):
 def reparse_operation_data(
     name, needs, provides, aliases=()
 ) -> Tuple[
-    Hashable, Collection[str], Collection[str], Collection[Tuple[str, str]],
+    str, Collection[str], Collection[str], Collection[Tuple[str, str]],
 ]:
     """
     Validate & reparse operation data as lists.
@@ -144,8 +143,6 @@ def reparse_operation_data(
     As a separate function to be reused by client building operations,
     to detect errors early.
     """
-    # if name is not None and not name or not isinstance(name, cabc.Hashable):
-    #     raise TypeError(f"Operation `name` must be a truthy hashable, got: {name}")
     if name is not None and not isinstance(name, str):
         raise TypeError(f"Non-str `name` given: {name}")
 
