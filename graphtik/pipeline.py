@@ -9,6 +9,7 @@
     (<5ms on a 2019 fast PC)
 """
 
+import inspect
 import logging
 import re
 from collections import abc as cabc
@@ -237,10 +238,12 @@ class Pipeline(Operation):
             the name for the new pipeline:
 
             - if `None`, the same name is kept;
-            - if True, a distinct name is  devised::
+            - if True, a distinct name is devised::
 
                 <old-name>-<uid>
 
+            - if ellipses(``...``), the name of the function where this function
+              call happened is used,
             - otherwise, the given `name` is applied.
         :param rescheduled:
             applies :term:`reschedule`\\d to all contained `operations`
@@ -479,7 +482,7 @@ def nest_any_node(ren_args: RenArgs) -> str:
 
 
 def compose(
-    name,
+    name: Union[str, type(...), None],
     op1,
     *operations,
     outputs: Items = None,
@@ -498,8 +501,10 @@ def compose(
     Operations given earlier (further to the left) override those following
     (further to the right), similar to `set` behavior (and contrary to `dict`).
 
-    :param str name:
-        A optional name for the graph being composed by this object.
+    :param name:
+        An optional name for the graph being composed by this object.
+        If ellipses(``...``), derrived from function name where the pipeline
+        is defined.
     :param op1:
         syntactically force at least 1 operation
     :param operations:
@@ -575,6 +580,12 @@ def compose(
         - If `nest` callable/dictionary produced an non-string or empty name
           (see (NetworkPipeline))
     """
+    if name is ...:
+        pf = inspect.currentframe().f_back
+        if pf:
+            name = pf.f_code.co_name
+        del pf
+
     operations = (op1,) + operations
     if not all(isinstance(op, Operation) for op in operations):
         bad_ops = [op for op in operations if not isinstance(op, Operation)]
