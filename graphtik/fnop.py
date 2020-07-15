@@ -200,14 +200,8 @@ def _spread_sideffects(
     Build fn/op dependencies from user ones by stripping or singularizing any :term:`sideffects`.
 
     :return:
-        the given `deps` duplicated as ``(fn_deps,  op_deps)``, where any instances of
+        the given `deps` duplicated as ``(op_deps, fn_deps)``, where any instances of
         :term:`sideffects` are processed like this:
-
-        `fn_deps`
-            - any :func:`.sfxed` are replaced by the :func:`stripped <.dep_stripped>`
-              dependency consumed/produced by underlying functions, in the order
-              they are first met (the rest duplicate `sideffected` are discarded).
-            - any :func:`.sfx` are simply dropped;
 
         `op_deps`
             any :func:`.sfxed` are replaced by a sequence of ":func:`singularized
@@ -215,6 +209,12 @@ def _spread_sideffects(
             :attr:`._Modifier._sfx_list` attribute, in the order they are first met
             (any duplicates are discarded, order is irrelevant, since they don't reach
             the function);
+
+        `fn_deps`
+            - any :func:`.sfxed` are replaced by the :func:`stripped <.dep_stripped>`
+              dependency consumed/produced by underlying functions, in the order
+              they are first met (the rest duplicate `sideffected` are discarded).
+            - any :func:`.sfx` are simply dropped;
     """
 
     #: The dedupe  any `sideffected`.
