@@ -616,8 +616,7 @@ class FnOp(Operation):
         errors.append(f"+++inputs: {inputs}")
         errors.append(f"+++{self}")
 
-        msg = textwrap.indent("\n".join(errors), " " * 4)
-        raise ValueError(f"Failed preparing needs: \n{msg}")
+        return textwrap.indent("\n".join(errors), " " * 4)
 
     def _match_inputs_with_fn_needs(self, named_inputs) -> Tuple[list, list, dict]:
         positional, vararg_vals = [], []
@@ -664,7 +663,8 @@ class FnOp(Operation):
                     )
 
         if missing or varargs_bad:
-            raise self._prepare_match_inputs_error(missing, varargs_bad, named_inputs)
+            msg = self._prepare_match_inputs_error(missing, varargs_bad, named_inputs)
+            raise ValueError(f"Failed preparing needs: \n{msg}")
 
         return positional, vararg_vals, kwargs
 
