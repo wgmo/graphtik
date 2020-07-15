@@ -177,9 +177,9 @@ class Pipeline(Operation):
         #: Fake function attributes.
         self.__name__ = self.__qualname__ = name
 
-        #: Remember Outputs for future `compute()`?
+        #: Remember `outputs` for future `compute()`?
         self.outputs = outputs
-        #: Remember Outputs for future `compute()`?
+        #: Remember `predicate` for future `compute()`?
         self.predicate = predicate
 
         # Prune network
@@ -483,8 +483,8 @@ def nest_any_node(ren_args: RenArgs) -> str:
 
 def compose(
     name: Union[str, type(...), None],
-    op1,
-    *operations,
+    op1: Operation,
+    *operations: Operation,
     outputs: Items = None,
     rescheduled=None,
     endured=None,
