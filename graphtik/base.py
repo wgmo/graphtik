@@ -298,7 +298,7 @@ def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
 
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
-    Annotate exception with salvaged values from locals() and raise!
+    Annotate exception with salvaged values from locals(), log and raise!
 
     :param ex:
         the exception to annotate
@@ -358,6 +358,8 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
     blocks the debugger from landing on the real cause of the error - it would
     land on that block;  and that could be many nested levels above it.
     """
+    from .config import is_debug
+
     ## Fail EARLY before yielding on bad use.
     #
     assert isinstance(ex, Exception), ("Bad `ex`, not an exception dict:", ex)
@@ -393,6 +395,11 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
                     "Suppressed error while salvaging jetsam item (%r, %r): %r"
                     % (dst_key, src, ex)
                 )
+        logging.getLogger(f"{__name__}.jetsam").log(
+            logging.ERROR if is_debug() else logging.DEBUG,
+            "Salvaged jetsam: %s",
+            annotations,
+        )
     except Exception as ex2:
         log.warning("Suppressed error while annotating exception: %r", ex2, exc_info=1)
         raise ex2

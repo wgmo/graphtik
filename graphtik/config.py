@@ -88,6 +88,8 @@ Affected behavior:
 
 .. debug-behavior-start
 
++ :term:`jetsam` logs in ERROR (instead of in DEBUG) all annotations on all calls
+  up the stack trace (logged from ``graphtik.base.jetsam`` logger);
 + :meth:`FnOp.compute()` prints out full given-inputs (not just their keys);
 + net objects print details recursively;
 + plotted SVG diagrams include style-provenance as tooltips;
