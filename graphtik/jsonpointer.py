@@ -481,7 +481,7 @@ def _update_paths(
                             child = None
                             _log_overwrite(group_prefix, doc, child)
 
-                    if not child:
+                    if child is None:
                         child = doc[group_prefix] = container_factory()
                     _update_paths(child, [(p[1:], v) for p, v in group])
 
