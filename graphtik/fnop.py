@@ -634,6 +634,7 @@ class FnOp(Operation):
                         # but ..?
                         ##
                         missing.append(n)
+                    ok = True
                     continue
                 else:
                     inp_value = named_inputs[n]
