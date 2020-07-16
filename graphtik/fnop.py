@@ -48,6 +48,7 @@ from .modifier import (
     is_pure_sfx,
     is_sfx,
     is_sfxed,
+    is_skip_func,
     is_vararg,
     is_varargs,
     jsonp,
@@ -204,25 +205,27 @@ def _spread_sideffects(
         :term:`sideffects` are processed like this:
 
         `op_deps`
-            any :func:`.sfxed` are replaced by a sequence of ":func:`singularized
-            <.dep_singularized>`" instances, one for each item in their
-            :attr:`._Modifier._sfx_list` attribute, in the order they are first met
-            (any duplicates are discarded, order is irrelevant, since they don't reach
-            the function);
+            - any :func:`.sfxed` is replaced by a sequence of ":func:`singularized
+              <.dep_singularized>`" instances, one for each item in its
+              :term:`sfx_list`;
+            - any duplicates are discarded;
+            - order is irrelevant, since they don't reach the function.
 
         `fn_deps`
-            - any :func:`.sfxed` are replaced by the :func:`stripped <.dep_stripped>`
-              dependency consumed/produced by underlying functions, in the order
-              they are first met (the rest duplicate `sideffected` are discarded).
-            - any :func:`.sfx` are simply dropped;
+            - the dependencies consumed/produced by underlying functions, in the order
+              they are first met.  In particular, it replaces any :func:`.sfxed`
+              by the :func:`stripped <.dep_stripped>`, unless ...
+            - it had been declared as `skip_func`, in which case, it is discared;
+            - discards all the rest duplicate `sideffected` dependencies;
+            - any :func:`.sfx` are simply dropped.
     """
 
     #: The dedupe  any `sideffected`.
     seen_sideffecteds = set()
 
-    def strip_sideffecteds(dep):
+    def strip_unique(dep):
         """Strip and dedupe any sfxed, drop any sfx. """
-        if is_sfxed(dep):
+        if is_sfxed(dep) and not is_skip_func(dep):
             dep = dep_stripped(dep)
             if not dep in seen_sideffecteds:
                 seen_sideffecteds.add(dep)
@@ -235,7 +238,7 @@ def _spread_sideffects(
 
     if deps:
         deps = tuple(nn for n in deps for nn in dep_singularized(n))
-        fn_deps = tuple(nn for n in deps for nn in strip_sideffecteds(n))
+        fn_deps = tuple(nn for n in deps for nn in strip_unique(n))
         return deps, fn_deps
     else:
         return deps, deps

@@ -858,6 +858,7 @@ def sfxed(
     dependency: str,
     sfx0: str,
     *sfx_list: str,
+    skip_func=None,
     keyword: str = None,
     optional: bool = None,
     accessor: Accessor = None,
@@ -866,6 +867,19 @@ def sfxed(
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
 
+    :param dependency:
+        the actual dependency receiving the sideffect, which will be fed into/out
+        of the function (unless marked as `skip_func`).
+    :param sfx0:
+        the 1st (arbitrary object) sideffect marked as "acting" on the `dependency`.
+    :param sfx0:
+        more (arbitrary object) sideffects (like the `sfx0`)
+    :param skip_func:
+        if true, the `dependency` is not fed into/out of the function.
+
+        One use case is an operation enforcing some sideffect on a container,
+        but feeds/receives only some container's :term:`subdoc`\(s) to/from
+        the underlying function.
     :param keyword:
         the name for the function argument it corresponds.
         When optional, it becomes the same as `name` if falsy, so as
@@ -976,6 +990,7 @@ def sfxed(
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
         jsonp=jsonp,
+        skip_func=skip_func,
     )
 
 
@@ -1074,6 +1089,14 @@ def is_sfxed(dep) -> bool:
         the :attr:`._sfx_list` if it is  a *sideffected* dep, None/empty-tuple otherwise
     """
     return getattr(dep, "_sideffected", None) and getattr(dep, "_sfx_list", None)
+
+
+def is_skip_func(dep) -> bool:
+    """
+    Return the value of the ``skip_func`` param when :term:`sideffected` was created
+    (but does not check if it is indeed a `sideffected`).
+    """
+    return getattr(dep, "_skip_func", None)
 
 
 def get_accessor(dep) -> bool:

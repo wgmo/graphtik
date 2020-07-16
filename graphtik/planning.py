@@ -36,6 +36,7 @@ from .modifier import (
     is_optional,
     is_pure_sfx,
     is_sfx,
+    is_skip_func,
     optional,
 )
 
@@ -390,11 +391,13 @@ class Network(Plottable):
             if json_path:
                 append_subdoc_chain(json_path)
 
-            nkw, ekw = {}, {}
+            nkw, ekw = {}, {}  # node, edge props
             if is_optional(n):
                 ekw["optional"] = True
             if is_sfx(n):
                 ekw["sideffect"] = nkw["sideffect"] = True
+            if is_skip_func(n):
+                ekw["skip_func"] = True
             keyword = get_keyword(n)
             if keyword:
                 ekw["keyword"] = keyword
@@ -421,6 +424,8 @@ class Network(Plottable):
             if is_sfx(n):
                 kw["sideffect"] = True
                 graph.add_node(n, sideffect=True)
+            if is_skip_func(n):
+                kw["skip_func"] = True
 
             if n in alias_sources:
                 src_provide = alias_sources[n]

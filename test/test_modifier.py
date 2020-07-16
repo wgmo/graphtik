@@ -12,6 +12,7 @@ from graphtik.modifier import (
     dep_renamed,
     dep_singularized,
     dep_stripped,
+    is_skip_func,
     jsonp,
     keyword,
     optional,
@@ -338,3 +339,16 @@ def test_sideffected_strip(mod, exp):
 def test_sideffected_singularized(mod, exp):
     got = list(dep_singularized(mod))
     assert got == exp
+
+
+def test_skip_func(ser_method):
+    assert is_skip_func("a") is None
+    m = sfxed("a", "b")
+    assert is_skip_func(m) is None
+    m = sfxed("a", "b", skip_func=1)
+    assert is_skip_func(m) == 1
+    m = sfxed("a", "b", "c", skip_func=0)
+    assert is_skip_func(m) == 0
+
+    assert dep_renamed(m, "R")._skip_func == m._skip_func
+    assert ser_method(m)._skip_func == m._skip_func

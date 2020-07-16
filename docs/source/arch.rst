@@ -410,21 +410,25 @@ Architecture
         to declare it as `canceled <partial outputs>`.
 
     sideffected
-        A `modifier` that denotes `sideffects` on a `dependency` that exists in `solution`,
-        allowing to declare an `operation` that both `needs` and `provides` that
-        *sideffected dependency*.
+    sfx_list
+        A `modifier` denoting `sideffects`\(*sfx_list*) acting on a `solution` `dependency`,
 
         .. Note::
             To be precise, the *"sideffected dependency"* is the name held in
             :attr:`._Modifier._sideffected` attribute of a *modifier* created by
-            :func:`.sfxed` function.
+            :func:`.sfxed()` function;  it may have all `diacritic`\s in printouts.
+
+        The main use case is to declare an `operation` that both `needs` and `provides`
+        the same *dependency*, to mutate it.
+
+        If ``skip_func`` param is true when modifier is created, the *sideffected dependency*
+        is not fed into/out of the function, but the *sfx_list* is still enforced while `pruning`.
 
         The `outputs` of a *sideffected dependency* will produce an `overwrite` if
         the *sideffected dependency* is declared both as *needs* and *provides*
         of some operation.
 
-        It is annotated with :func:`.sfxed`;  it may have all `diacritic`\s
-        in printouts.
+        It is annotated with :func:`.sfxed`;
 
         See also the elaborate example in :ref:`hierarchical-data` section.
 

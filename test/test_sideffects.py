@@ -425,3 +425,12 @@ def test_sideffected_canceled(sideffected_resched):
     sol = sideffected_resched.compute({})
     print(sol)
     assert sol == {"DEP": 1, sfxed("DEP", "no"): False, "yes": "yes!"}
+
+
+def test_sfxed_skip_func():
+    op = operation(str, "hh", ["A", sfxed("a", "b", skip_func=1)], "a")
+    assert "(skip_func)" in str(op.plot())
+
+    pipe = compose(..., op)
+    got = pipe.compute({"A": "val", sfxed("a", "b"): 1}, "a")
+    assert got == {"a": "val"}
