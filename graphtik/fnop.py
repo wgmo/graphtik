@@ -554,6 +554,7 @@ class FnOp(Operation):
         But usually a callable is more practical, like the one below renaming
         only data names:
 
+            >>> from graphtik.modifier import dep_renamed
             >>> op.withset(renamer=lambda ren_args:
             ...            dep_renamed(ren_args.name, lambda n: f"parent.{n}")
             ...            if ren_args.typ != 'op' else
