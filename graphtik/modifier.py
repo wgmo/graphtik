@@ -332,7 +332,7 @@ def _modifier(
                 None,
                 (),
             ), locals()
-            return _Modifier(name, name, "modify", *args[1:], jsonp=jsonp)
+            return _Modifier(name, name, "modify", *args[1:], **kw)
 
         # Make a plain string instead.
         return str(name)
