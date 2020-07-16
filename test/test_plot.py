@@ -547,8 +547,8 @@ def test_node_dot_str0(dot_str_pipeline):
         digraph graph_ {
         fontname=italic;
         label=<graph>;
-        <edge> [fixedsize=shape, label=edge, shape=invhouse];
-        <digraph&#58; strict> [fixedsize=shape, label="digraph: strict", shape=invhouse];
+        <edge> [fixedsize=shape, label=edge, shape=invhouse, tooltip="(input)"];
+        <digraph&#58; strict> [fixedsize=shape, label="digraph: strict", shape=invhouse, tooltip="(input)"];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET="_top"
@@ -559,7 +559,7 @@ def test_node_dot_str0(dot_str_pipeline):
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
-        <&lt;graph&gt;> [fixedsize=shape, label=<graph>, shape=house];
+        <&lt;graph&gt;> [fixedsize=shape, label=<graph>, shape=house, tooltip="(output)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
@@ -594,15 +594,15 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     overlay.add_node(hidden_op, no_plot=True)
     overlay.graph["graphviz.splines"] = "ortho"
 
-    exp = """
+    exp = r"""
         digraph solution_x5_nodes {
         fontname=italic;
         splines=ortho;
         subgraph "cluster_after pruning" {
         label=<after pruning>;
-        <edge> [fillcolor=wheat, fixedsize=shape, label=edge, shape=invhouse, style=filled, tooltip="(int) 1"];
-        <digraph&#58; strict> [fillcolor=wheat, fixedsize=shape, label="digraph: strict", shape=invhouse, style=filled, tooltip="(int) 2"];
-        <&lt;graph&gt;> [fillcolor=SkyBlue, fixedsize=shape, label=<graph>, shape=house, style=filled, tooltip="(None)"];
+        <edge> [fillcolor=wheat, fixedsize=shape, label=edge, shape=invhouse, style=filled, tooltip="(input)\n(int) 1"];
+        <digraph&#58; strict> [fillcolor=wheat, fixedsize=shape, label="digraph: strict", shape=invhouse, style=filled, tooltip="(input)\n(int) 2"];
+        <&lt;graph&gt;> [fillcolor=SkyBlue, fixedsize=shape, label=<graph>, shape=house, style=filled, tooltip="(output)\n(None)\n(overridden)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"

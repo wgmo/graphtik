@@ -510,9 +510,12 @@ class Theme:
     }
     kw_data_inp = {}
     kw_data_out = {}
-    kw_data_inp_only = {"shape": "invhouse"}
-    kw_data_out_only = {"shape": "house"}
-    kw_data_io = {"shape": "hexagon"}
+    kw_data_inp_only = {"shape": "invhouse", "tooltip": ["(input)"]}
+    kw_data_out_only = {"shape": "house", "tooltip": ["(output)"]}
+    kw_data_io = {
+        "shape": "hexagon",
+        "tooltip": ["(input+output)"],
+    }
     kw_data_sideffect = {
         "color": Ref("sideffect_color"),
         "fontcolor": Ref("sideffect_color"),
@@ -545,7 +548,11 @@ class Theme:
         "tooltip": [make_data_value_tooltip],
     }
     kw_data_evicted = {"penwidth": "3", "tooltip": ["(evicted)"]}
-    kw_data_overwritten = {"style": ["filled"], "fillcolor": Ref("overwrite_color")}
+    kw_data_overwritten = {
+        "style": ["filled"],
+        "fillcolor": Ref("overwrite_color"),
+        "tooltip": ["(overridden)"],
+    }
     kw_data_missing = {
         "fontcolor": Ref("canceled_color"),
         "color": Ref("canceled_color"),
@@ -715,7 +722,7 @@ class Theme:
     kw_edge = {"tailport": "s", "headport": "n"}
     kw_edge_tail_op = {}
     kw_edge_head_op = {"arrowtail": "inv", "dir": "back"}
-    kw_edge_optional = {"style": ["dashed"]}
+    kw_edge_optional = {"style": ["dashed",], "tooltip": ["(optional)"]}
     kw_edge_sideffect = {"color": Ref("sideffect_color")}
     kw_edge_implicit = {
         (
@@ -738,6 +745,7 @@ class Theme:
     kw_edge_mapping_keyword = {
         "fontsize": 11,  # default: 14
         "fontname": "italic",
+        "tooltip": ["(mapped-fn-keyword)"],
         "label": make_template(
             "**{{ nx_attrs['keyword'] | eee if nx_attrs['keyword'] != nx_item[0] }}"
         ),
@@ -748,6 +756,7 @@ class Theme:
         "dir": "back",
         "tailport": "se",
         "headport": "nw",
+        "tooltip": ["(subdoc)"],
     }
 
     kw_edge_pruned = {"color": Ref("pruned_color")}
