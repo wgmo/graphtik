@@ -427,10 +427,19 @@ def test_sideffected_canceled(sideffected_resched):
     assert sol == {"DEP": 1, sfxed("DEP", "no"): False, "yes": "yes!"}
 
 
-def test_sfxed_implicit():
+def test_sfxed_implicit_inp():
     op = operation(str, "hh", ["A", sfxed("a", "b", implicit=1)], "a")
     assert "(implicit)" in str(op.plot())
 
     pipe = compose(..., op)
     got = pipe.compute({"A": "val", sfxed("a", "b"): 1}, "a")
     assert got == {"a": "val"}
+
+
+def test_sfxed_implicit_out():
+    op = operation(str, "hh", provides=["A", sfxed("a", "b", implicit=1)])
+    assert "(implicit)" in str(op.plot())
+
+    pipe = compose(..., op)
+    got = pipe.compute()
+    assert got == {"A": ""}
