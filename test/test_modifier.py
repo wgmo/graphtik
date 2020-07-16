@@ -7,6 +7,7 @@ import pytest
 from graphtik.jsonpointer import jsonp_path
 from graphtik.modifier import (
     Accessor,
+    _Modifier,
     accessor,
     dep_renamed,
     dep_singularized,
@@ -25,9 +26,21 @@ from graphtik.modifier import (
 acc = Accessor(contains, getitem, setitem, delitem)
 
 
+def modifier_kws(m):
+    if isinstance(m, _Modifier):
+        return {
+            k: v
+            for k, v in vars(m).items()
+            if k
+            not in "_repr _func _sideffected _sfx_list _keyword _optional _jsonp".split()
+        }
+    return {}
+
+
 def test_serialize_modifier(ser_method):
     s = sfxed("foo", "gg")
     assert repr(ser_method(s)) == repr(s)
+    assert modifier_kws(ser_method(s)) == modifier_kws(s)
 
 
 ## construct in lambdas, not to crash pytest while modifying core _Modifier
@@ -247,6 +260,7 @@ def test_modifs_rename_fn(mod, exp, ser_method):
     got = dep_renamed(dep, renamer)
     assert repr(got) == exp
     assert repr(ser_method(got)) == exp
+    assert modifier_kws(got) == modifier_kws(dep)
 
     if getattr(dep, "_sideffected", None):
         # Check not just(!) `_repr` has changed.

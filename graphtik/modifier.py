@@ -304,9 +304,11 @@ def _modifier(
         a falsy (but not ``None``) value, to disable the automatic interpeting of
         the dependency name as a json pointer path, regardless of any containing slashes.
     :param kw:
-        Not used here, any given kKVs are assigned as :class:`_Modifier` attributes,
+        Not used here, any given kKVs are assigned as :class:`_Modifier`
+        **private** attributes (with ``_`` prefix if not already there),
         for client code to extend its own modifiers.
     """
+    kw = {k if k.startswith("_") else f"_{k}": v for k, v in kw.items()}
     if jsonp is not None:
         kw["_jsonp"] = jsonp  # WARN: must be False or a collection for jsonp-accessors!
     # Prevent sfx-jsonp.
