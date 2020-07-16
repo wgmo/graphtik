@@ -1158,11 +1158,11 @@ def dep_renamed(dep, ren) -> Union[_Modifier, str]:
 
 def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
     """
-    Yield one sideffected for each sfx in :attr:`._sfx_list`, or iterate `dep` in other cases.
+    Return one sideffected for each sfx in :attr:`._sfx_list`, or iterate `dep` in other cases.
     """
     sfx_list = is_sfxed(dep)
     return (
-        (modifier_withset(dep, sfx_list=(s,)) for s in sfx_list) if sfx_list else (dep,)
+        [modifier_withset(dep, sfx_list=(s,)) for s in sfx_list] if sfx_list else (dep,)
     )
 
 
