@@ -436,7 +436,7 @@ Architecture
         One use case is for an operation to consume/produce a `subdoc`\(s)
         with its own means (not through `jsonp` `accessor`\s).
 
-        Only :func:`.sfxed` *modifier* functions accept
+        Only a :func:`.modify` & :func:`.sfxed` *modifier* functions accept
         the ``implicit`` param.
 
     accessor

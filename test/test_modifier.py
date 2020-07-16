@@ -341,7 +341,8 @@ def test_sideffected_singularized(mod, exp):
     assert got == exp
 
 
-def test_implicit(ser_method):
+@pytest.mark.parametrize("modif", [sfxed, modify])
+def test_implicit(modif, ser_method):
     assert is_implicit("a") is None
     m = sfxed("a", "b")
     assert is_implicit(m) is None

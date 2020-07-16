@@ -304,11 +304,10 @@ def _modifier(
         a falsy (but not ``None``) value, to disable the automatic interpeting of
         the dependency name as a json pointer path, regardless of any containing slashes.
     :param kw:
-        Not used here, any given kKVs are assigned as :class:`_Modifier`
-        **private** attributes (with ``_`` prefix if not already there),
-        for client code to extend its own modifiers.
+        extra kv pairs assigned as :class:`_Modifier` **private** attributes
+        (prefixed with ``_`` if not already) only if values are not null.
+        Here used for :term:`implicit`, and client code may extend its own modifiers.
     """
-    kw = {k if k.startswith("_") else f"_{k}": v for k, v in kw.items()}
     if jsonp is not None:
         kw["_jsonp"] = jsonp  # WARN: must be False or a collection for jsonp-accessors!
     # Prevent sfx-jsonp.
@@ -323,8 +322,13 @@ def _modifier(
 
     args = (name, keyword, optional, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
+
+    ## Private-ize all keywords and throw away nulls.
+    kw = {
+        k if k.startswith("_") else f"_{k}": v for k, v in kw.items() if v is not None
+    }
     if not formats:
-        if kw.get("_jsonp") is not None:
+        if kw:
             # Just jsonp given.
             assert not accessor and (optional, accessor, sideffected, sfx_list) == (
                 None,
@@ -390,7 +394,7 @@ def modifier_withset(
     return _modifier(name=name, **kw)
 
 
-def modify(name: str, jsonp=None) -> _Modifier:
+def modify(name: str, jsonp=None, implicit=None) -> _Modifier:
     """
     Generic :term:`modifier` for term:`json pointer path` & :term:`implicit` dependencies.
 
@@ -404,6 +408,8 @@ def modify(name: str, jsonp=None) -> _Modifier:
             If accessing pandas, you may pass an already splitted path with
             its last *part* being a `callable indexer
             <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
+    :param implicit:
+        :term:`implicit` dependencies are not fed into/out of the function.
 
     **Example:**
 
@@ -459,7 +465,7 @@ def modify(name: str, jsonp=None) -> _Modifier:
 
     .. graphtik::
     """
-    return _modifier(name, jsonp=jsonp)
+    return _modifier(name, jsonp=jsonp, implicit=implicit)
 
 
 def keyword(
@@ -635,78 +641,6 @@ def accessor(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
       and pass an argument value to their `accessor` parameter.
     """
     return _modifier(name, accessor=accessor, jsonp=jsonp)
-
-
-def modify(name: str, jsonp=None) -> _Modifier:
-    """
-    Control the automatic interpretation of dependencies containing slashes into :term:`json pointer path`.
-
-    :param jsonp:
-        If given, it may be the pre-splitted *parts* of the json pointer path
-        for the dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
-
-        .. Tip::
-            If accessing pandas, you may pass an already splitted path with
-            its last *part* being a `callable indexer
-            <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
-
-    **Example:**
-
-    Let's use *json pointer dependencies* along with the default :term:`conveyor operation`
-    to build an operation copying values around in the solution:
-
-        >>> from graphtik import operation, compose, modify
-
-        >>> copy_values = operation(
-        ...     fn=None,  # ask for the "conveyor op"
-        ...     name="copy a+b-->A+BB",
-        ...     needs=["inputs/a", "inputs/b"],
-        ...     provides=["RESULTS/A", "RESULTS/BB"]
-        ... )
-
-        >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
-        Traceback (most recent call last):
-        ValueError: Failed preparing needs:
-            1. Missing compulsory needs['inputs/a'($), 'inputs/b'($)]!
-            +++inputs: ['inputs']
-            +++FnOp(name='copy a+b-->A+BB',
-                                   needs=['inputs/a'($), 'inputs/b'($)],
-                                   provides=['RESULTS/A'($), 'RESULTS/BB'($)],
-                                   fn='identity_fn')
-
-        >>> results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
-        >>> results
-        {'RESULTS/A'($): 1, 'RESULTS/BB'($): 2}
-
-    Notice that the :term:`hierarchical dependencies <subdoc>` did not yet worked,
-    because *jsonp* modifiers work internally with :term:`accessor`\\s, and
-    :class:`.FnOp` is unaware of them -- it's the :class:`.Solution`
-    class that supports *accessors**, and this requires the operation to be wrapped
-    in a pipeline (see below).
-
-    Note also that it we see the "representation' of the key as ``'RESULTS/A'($)``
-    but the actual string value simpler:
-
-        >>> str(next(iter(results)))
-        'RESULTS/A'
-
-    The results were not nested, because this modifer works with :term:`accessor` functions,
-    that act only on a real :class:`.Solution`, given to the operation only when wrapped
-    in a pipeline (as done below).
-
-    Now watch how these paths access deep into solution when the same operation
-    is wrapped in a pipeline:
-
-        >>> pipe = compose("copy pipe", copy_values)
-        >>> sol = pipe.compute({"inputs": {"a": 1, "b": 2}}, outputs="RESULTS")
-        >>> sol
-        {'RESULTS': {'A': 1, 'BB': 2}}
-
-    .. graphtik::
-    """
-    return _modifier(name, jsonp=jsonp)
 
 
 def vararg(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:

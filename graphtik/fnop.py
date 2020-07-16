@@ -198,7 +198,7 @@ def _spread_sideffects(
     deps: Collection[str],
 ) -> Tuple[Collection[str], Collection[str]]:
     """
-    Build fn/op dependencies from user ones by stripping or singularizing any :term:`sideffects`.
+    Build fn/op dependencies by stripping/singularizing any :term:`implicit`/:term:`sideffects`.
 
     :return:
         the given `deps` duplicated as ``(op_deps, fn_deps)``, where any instances of
@@ -224,8 +224,10 @@ def _spread_sideffects(
     seen_sideffecteds = set()
 
     def strip_unique(dep):
-        """Strip and dedupe any sfxed, drop any sfx. """
-        if is_sfxed(dep) and not is_implicit(dep):
+        """Strip and dedupe any sfxed, drop any sfx and implicit. """
+        if is_implicit(dep):
+            pass
+        elif is_sfxed(dep):
             dep = dep_stripped(dep)
             if not dep in seen_sideffecteds:
                 seen_sideffecteds.add(dep)
@@ -629,7 +631,7 @@ class FnOp(Operation):
         for n in self._fn_needs:
             try:
                 ok = False
-                assert not is_sfx(n), locals()
+                assert not is_sfx(n) and not is_implicit(n), locals()
                 if n not in named_inputs:
                     if not is_optional(n) or is_sfx(n):
                         # It means `inputs` < compulsory `needs`.

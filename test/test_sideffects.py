@@ -1,6 +1,6 @@
 # Copyright 2020-2020, Kostis Anagnostopoulos;
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""Test :term:`sideffects`."""
+"""Test :term:`implicit` & :term:`sideffects`."""
 import re
 import sys
 import types
@@ -11,7 +11,15 @@ from typing import Any, Tuple
 
 import pytest
 
-from graphtik import NO_RESULT, NO_RESULT_BUT_SFX, compose, operation, sfx, sfxed
+from graphtik import (
+    NO_RESULT,
+    NO_RESULT_BUT_SFX,
+    compose,
+    modify,
+    operation,
+    sfx,
+    sfxed,
+)
 from graphtik.config import get_execution_pool, is_marshal_tasks
 from graphtik.pipeline import Pipeline
 
@@ -427,19 +435,44 @@ def test_sideffected_canceled(sideffected_resched):
     assert sol == {"DEP": 1, sfxed("DEP", "no"): False, "yes": "yes!"}
 
 
-def test_sfxed_implicit_inp():
-    op = operation(str, "hh", ["A", sfxed("a", "b", implicit=1)], "a")
+def test_implicit_inp():
+    op = operation(str, needs=["A", modify("a", implicit=1)], provides="b")
+
+    pipe = compose(..., op)
+    got = pipe.compute({"A": "val", "a": 1})
+    assert got == {"A": "val", "a": 1, "b": "val"}
+
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        pipe.compute({"A": "val"})
+
     assert "(implicit)" in str(op.plot())
+
+
+def test_implicit_out():
+    op = operation(str, "hh", provides=["A", modify("a", implicit=1)])
+
+    pipe = compose(..., op)
+    got = pipe.compute()
+    assert got == {"A": ""}
+
+    assert "(implicit)" in str(op.plot())
+
+
+def test_sfxed_implicit_inp():
+    op = operation(str, needs=["A", sfxed("a", "b", implicit=1)], provides="a")
 
     pipe = compose(..., op)
     got = pipe.compute({"A": "val", sfxed("a", "b"): 1}, "a")
     assert got == {"a": "val"}
 
+    assert "(implicit)" in str(op.plot())
+
 
 def test_sfxed_implicit_out():
     op = operation(str, "hh", provides=["A", sfxed("a", "b", implicit=1)])
-    assert "(implicit)" in str(op.plot())
 
     pipe = compose(..., op)
     got = pipe.compute()
     assert got == {"A": ""}
+
+    assert "(implicit)" in str(op.plot())
