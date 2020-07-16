@@ -1083,7 +1083,7 @@ class StylesStack(NamedTuple):
         :return:
             the merged styles
         """
-
+        # FIXME: too clever, avoided re-writting own merge, and now errors cannot debug :-(
         if not self.named_styles:
             return {}
 
@@ -1104,6 +1104,13 @@ class StylesStack(NamedTuple):
 
         else:
             style = remerge(*(style_dict for _name, style_dict in self.named_styles))
+            style = remerge(
+                *(
+                    ## Expand also callables producing the whole style-dict
+                    style_dict(self.plot_args) if callable(style_dict) else style_dict
+                    for _name, style_dict in self.named_styles
+                )
+            )
         assert isinstance(style, dict), (style, self.named_styles)
 
         return self.expand(style)
