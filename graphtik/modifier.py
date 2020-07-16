@@ -332,7 +332,7 @@ def _modifier(
                 None,
                 (),
             ), locals()
-            return _Modifier(name, name, "jsonp", *args[1:], jsonp=jsonp)
+            return _Modifier(name, name, "modify", *args[1:], jsonp=jsonp)
 
         # Make a plain string instead.
         return str(name)
@@ -557,7 +557,7 @@ def accessor(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
             <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
 
 
-    - Probably not very usefull -- see the :func:`jsonp` modifier for an integrated
+    - Probably not very usefull -- see the :func:`.modify` modifier for an integrated
       use case.
     - To combine it with `optional`, `keyword`, etc use the rest modifier factories
       and pass an argument value to their `accessor` parameter.
@@ -565,7 +565,7 @@ def accessor(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
     return _modifier(name, accessor=accessor, jsonp=jsonp)
 
 
-def jsonp(name: str, jsonp=None) -> _Modifier:
+def modify(name: str, jsonp=None) -> _Modifier:
     """
     Control the automatic interpretation of dependencies containing slashes into :term:`json pointer path`.
 
@@ -580,13 +580,12 @@ def jsonp(name: str, jsonp=None) -> _Modifier:
             its last *part* being a `callable indexer
             <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
 
-
     **Example:**
 
     Let's use *json pointer dependencies* along with the default :term:`conveyor operation`
     to build an operation copying values around in the solution:
 
-        >>> from graphtik import operation, compose, jsonp
+        >>> from graphtik import operation, compose, modify
 
         >>> copy_values = operation(
         ...     fn=None,  # ask for the "conveyor op"

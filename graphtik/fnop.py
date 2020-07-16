@@ -29,8 +29,8 @@ from .base import (
     UNSET,
     Items,
     Operation,
-    Plottable,
     PlotArgs,
+    Plottable,
     Token,
     aslist,
     astuple,
@@ -51,7 +51,7 @@ from .modifier import (
     is_skip_func,
     is_vararg,
     is_varargs,
-    jsonp,
+    modify,
     optional,
 )
 
@@ -120,7 +120,7 @@ def as_renames(i, argname):
 
 
 def jsonp_ize(dep):
-    return jsonp(dep) if "/" in dep and type(dep) is str else dep
+    return modify(dep) if "/" in dep and type(dep) is str else dep
 
 
 def jsonp_ize_all(deps):

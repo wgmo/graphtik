@@ -27,16 +27,16 @@ from boltons.setutils import IndexedSet as iset
 from .base import Items, Operation, PlotArgs, Plottable, astuple, jetsam
 from .config import is_debug, is_skip_evictions
 from .modifier import (
-    modifier_withset,
     dep_renamed,
     dep_stripped,
-    get_keyword,
     get_jsonp,
-    jsonp,
+    get_keyword,
+    is_skip_func,
     is_optional,
     is_pure_sfx,
     is_sfx,
-    is_skip_func,
+    modifier_withset,
+    modify,
     optional,
 )
 
@@ -376,7 +376,7 @@ class Network(Plottable):
         def append_subdoc_chain(doc_parts):
             doc_chain = list(doc_parts)
             doc_chain = [
-                jsonp("/".join(doc_chain[: i + 1])) for i in range(len(doc_chain))
+                modify("/".join(doc_chain[: i + 1])) for i in range(len(doc_chain))
             ]
             # FIXME: subdocs ignore double-slashes or final slash!
             doc_chain = [p for p in doc_chain if p]

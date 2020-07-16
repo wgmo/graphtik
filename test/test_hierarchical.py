@@ -12,7 +12,7 @@ from graphtik import NO_RESULT, compose, operation, sfxed, vararg
 from graphtik.base import RenArgs
 from graphtik.config import solution_layered
 from graphtik.execution import task_context
-from graphtik.modifier import accessor, dep_renamed, jsonp
+from graphtik.modifier import accessor, dep_renamed, modify
 
 
 def test_solution_accessor_simple():
@@ -34,8 +34,8 @@ def test_jsonp_disabled():
     no_jsonp_res = operation(
         fn=None,
         name="copy a+b-->A+BB",
-        needs=[jsonp("inputs/a"), jsonp("inputs/b")],
-        provides=["RESULTS/A", jsonp("RESULTS/BB", False)],
+        needs=[modify("inputs/a"), modify("inputs/b")],
+        provides=["RESULTS/A", modify("RESULTS/BB", False)],
     )
     assert "provides=['RESULTS/A'($), RESULTS/BB" in str(no_jsonp_res)
     res = compose("", no_jsonp_res).compute({"inputs": {"a": 1, "b": 2}})
@@ -43,7 +43,7 @@ def test_jsonp_disabled():
 
     no_jsonp_inp = operation(
         name="copy a+b-->A+BB",
-        needs=["inputs/a", jsonp("inputs/b", False)],
+        needs=["inputs/a", modify("inputs/b", False)],
         provides=["RESULTS/A", "RESULTS/BB"],
     )()
     assert "needs=['inputs/a'($), inputs/b]" in str(no_jsonp_inp)
@@ -103,7 +103,7 @@ def test_jsonp_and_conveyor_fn_complex_LAYERED(solution_layered_true):
         operation(
             name="op1",
             needs=["i/a", "i/a"],  # dupe jsonp needs
-            provides=["r/a", jsonp("a")],
+            provides=["r/a", modify("a")],
         )(),
         operation(
             lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"],
@@ -128,7 +128,7 @@ def test_jsonp_and_conveyor_fn_complex_NOT_LAYERED(solution_layered_false):
         operation(
             name="op1",
             needs=["i/a", "i/a"],  # dupe jsonp needs
-            provides=["r/a", jsonp("a")],
+            provides=["r/a", modify("a")],
         )(),
         operation(
             lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"],

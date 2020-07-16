@@ -436,7 +436,7 @@ Architecture
         Getter/setter functions to extract/populate `solution` values given as a `modifier` parameter
         (not applicable for pure `sideffects`).
 
-        See :class:`.Accessor` defining class and the :func:`.jsonp` concrete factory.
+        See :class:`.Accessor` defining class and the :func:`.modify` concrete factory.
 
     subdoc
     superdoc
