@@ -428,6 +428,7 @@ class Theme:
     #: args for jinja2 patched `truncate` filter, above.
     truncate_args = ((23, True), {"reverse": True})
     fill_color = "wheat"
+    sideffect_color = "blue"
     subdoc_color = "#8B4513"  # SaddleBrown
     pruned_color = "#d3d3d3"  # LightGrey
     canceled_color = "#a9a9a9"  # DarkGray
@@ -513,8 +514,8 @@ class Theme:
     kw_data_out_only = {"shape": "house"}
     kw_data_io = {"shape": "hexagon"}
     kw_data_sideffect = {
-        "color": "blue",
-        "fontcolor": "blue",
+        "color": Ref("sideffect_color"),
+        "fontcolor": Ref("sideffect_color"),
     }
     kw_data_sideffected = {
         "label": make_template(
@@ -715,7 +716,7 @@ class Theme:
     kw_edge_tail_op = {}
     kw_edge_head_op = {"arrowtail": "inv", "dir": "back"}
     kw_edge_optional = {"style": ["dashed"]}
-    kw_edge_sideffect = {"color": "blue"}
+    kw_edge_sideffect = {"color": Ref("sideffect_color")}
     #: Added conditionally if `alias_of` found in edge-attrs.
     kw_edge_alias = {
         "fontsize": 11,  # default: 14
