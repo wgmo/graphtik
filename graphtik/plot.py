@@ -437,7 +437,7 @@ class Theme:
     broken_color = "Red"
     overwrite_color = "SkyBlue"
     steps_color = "#00bbbb"
-    evicted = "#006666"
+    evicted_color = "#006666"
     #: the url to the architecture section explaining *graphtik* glossary,
     #: linked by legend.
     arch_url = "https://graphtik.readthedocs.io/en/latest/arch.html"
@@ -526,8 +526,8 @@ class Theme:
         ),
     }
     kw_data_to_evict = {
-        "color": Ref("evicted"),
-        "fontcolor": Ref("evicted"),
+        "color": Ref("evicted_color"),
+        "fontcolor": Ref("evicted_color"),
         "style": ["dashed"],
         "tooltip": ["(to evict)"],
     }
