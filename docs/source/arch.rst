@@ -386,6 +386,18 @@ Architecture
 
         See also the elaborate example in :ref:`hierarchical-data` section.
 
+    implicit
+        A `modifier` denoting a `dependency` not to be fed into/out of the function,
+        but the *dependency* is still considered while `planning`.
+
+        One use case is for an operation to consume/produce a `subdoc`\(s)
+        with its own means (not through `jsonp` `accessor`\s).
+
+        Only a :func:`.modify` & :func:`.sfxed` *modifier* functions accept
+        the ``implicit`` param.
+
+        If an *implicit* cannot solve your problems, try `sideffects`...
+
     sideffects
         A `modifier` denoting a fictive `dependency` linking `operation`\s into virtual flows,
         without real data exchanges.
@@ -398,6 +410,9 @@ Architecture
         - An *abstract sideffect* modifier (annotated with :func:`.sfx`)
           describing modifications taking place beyond the scope of the solution.
           It may have just the "optional" `diacritic` in printouts.
+
+          .. tip::
+              Probably you either need `implicit`, or the next variant, not this one.
 
         - The `sideffected` modifier (annotated with :func:`.sfxed`)
           denoting modifications on a *real* dependency read from and written to
@@ -420,24 +435,14 @@ Architecture
 
         The main use case is to declare an `operation` that both `needs` and `provides`
         the same *dependency*, to mutate it.
+        The end result is a strict (no forks) sequence of different *sfxed* modifiers
+        all based on the same *sideffected* dependency.
 
         The `outputs` of a *sideffected dependency* will produce an `overwrite` if
         the *sideffected dependency* is declared both as *needs* and *provides*
         of some operation.
 
-        It is annotated with :func:`.sfxed`;
-
         See also the elaborate example in :ref:`hierarchical-data` section.
-
-    implicit
-        A `modifier` denoting a `dependency` not to be fed into/out of the function,
-        but the *dependency* is still considered while `planning`.
-
-        One use case is for an operation to consume/produce a `subdoc`\(s)
-        with its own means (not through `jsonp` `accessor`\s).
-
-        Only a :func:`.modify` & :func:`.sfxed` *modifier* functions accept
-        the ``implicit`` param.
 
     accessor
         Getter/setter functions to extract/populate `solution` values given as a `modifier` parameter

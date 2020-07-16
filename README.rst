@@ -40,9 +40,11 @@ Features
 - Support functions with `partial outputs`; keep working even if certain `endured` operations fail.
 - Support `alias` of function `provides` to avoid the need for trivial conveyor operations.
 - Default `conveyor operation` to easily pass (possibly *nested*) dependencies around.
+- `Merge <operation merging>` or `nest <operation nesting>` sub-pipelines.
 - `Hierarchical dependencies <subdoc>` may access data values deep in `solution`
    with `json pointer path` expressions.
-- `Merge <operation merging>` or `nest <operation nesting>` sub-pipelines.
+- Hierarchical dependencies annotated as `implicit` imply which subdoc dependency
+  the function reads or writes in the parent-doc.
 - Denote and schedule `sideffects` on `dependency` values, to update them repeatedly
   (e.g. to add columns into :class:`pandas.DataFrame`\s).
 - Deterministic pre-decided `execution plan`.
