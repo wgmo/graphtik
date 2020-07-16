@@ -1004,15 +1004,16 @@ class StylesStack(NamedTuple):
 
         .. theme-expansions-start
 
+        - Call any *callables* found as keys, values or the whole style-dict,
+          passing in the current :class:`plot_args <.PlotArgs>`, and replace those
+          with the callable's result (even more flexible than templates).
+
         - Resolve any :class:`.Ref` instances, first against the current *nx_attrs*
           and then against the attributes of the current theme.
 
         - Render jinja2 templates (see :meth:`_expand_styles()`) with template-arguments
           all the attributes of the :class:`plot_args <.PlotArgs>` instance in use
           (hence much more flexible than :class:`.Ref`).
-
-        - Call any *callables* with current :class:`plot_args <.PlotArgs>` and
-          replace them by their result (even more flexible than templates).
 
         - Any Nones results above are discarded.
 
@@ -1029,15 +1030,22 @@ class StylesStack(NamedTuple):
             """
             visit_type = type(v).__name__
             try:
+                expanded = False
+                if callable(k):
+                    k = k(self.plot_args)
+                    expanded = True
+
                 if isinstance(v, Ref):
                     v = v.resolve(self.plot_args.nx_attrs, self.plot_args.theme)
+                    expanded = True
                 elif isinstance(v, jinja2.Template):
                     v = v.render(**self.plot_args._asdict())
+                    expanded = True
                 elif callable(v):
                     v = v(self.plot_args)
-                else:
-                    return False if v in (..., None) else True
-                return False if v in (None, ...) else (k, v)
+                    expanded = True
+
+                return False if v in (..., None) else (k, v) if expanded else True
             except Exception as ex:
                 path = f'{"/".join(path)}/{k}'
                 msg = f"Failed expanding {visit_type} @ '{path}' = {v!r} due to: {type(ex).__name__}({ex})"
