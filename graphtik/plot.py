@@ -717,9 +717,9 @@ class Theme:
     kw_edge_head_op = {"arrowtail": "inv", "dir": "back"}
     kw_edge_optional = {"style": ["dashed"]}
     kw_edge_sideffect = {"color": Ref("sideffect_color")}
-    kw_edge_skip_func = {
+    kw_edge_implicit = {
         "label": "X",
-        "tooltip": ["(skip_func)"],
+        "tooltip": ["(implicit)"],
         "fontcolor": Ref("sideffect_color"),
     }
     #: Added conditionally if `alias_of` found in edge-attrs.
@@ -1425,8 +1425,8 @@ class Plotter:
             styles.add("kw_edge_optional")
         if edge_attrs.get("sideffect"):
             styles.add("kw_edge_sideffect")
-        if edge_attrs.get("skip_func"):
-            styles.add("kw_edge_skip_func")
+        if edge_attrs.get("implicit"):
+            styles.add("kw_edge_implicit")
         if edge_attrs.get("alias_of"):
             styles.add("kw_edge_alias")
         if edge_attrs.get("keyword"):

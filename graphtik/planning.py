@@ -31,7 +31,7 @@ from .modifier import (
     dep_stripped,
     get_jsonp,
     get_keyword,
-    is_skip_func,
+    is_implicit,
     is_optional,
     is_pure_sfx,
     is_sfx,
@@ -396,8 +396,8 @@ class Network(Plottable):
                 ekw["optional"] = True
             if is_sfx(n):
                 ekw["sideffect"] = nkw["sideffect"] = True
-            if is_skip_func(n):
-                ekw["skip_func"] = True
+            if is_implicit(n):
+                ekw["implicit"] = True
             keyword = get_keyword(n)
             if keyword:
                 ekw["keyword"] = keyword
@@ -424,8 +424,8 @@ class Network(Plottable):
             if is_sfx(n):
                 kw["sideffect"] = True
                 graph.add_node(n, sideffect=True)
-            if is_skip_func(n):
-                kw["skip_func"] = True
+            if is_implicit(n):
+                kw["implicit"] = True
 
             if n in alias_sources:
                 src_provide = alias_sources[n]

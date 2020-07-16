@@ -857,28 +857,22 @@ def sfxed(
     dependency: str,
     sfx0: str,
     *sfx_list: str,
-    skip_func=None,
     keyword: str = None,
     optional: bool = None,
     accessor: Accessor = None,
     jsonp=None,
+    implicit=None,
 ) -> _Modifier:
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
 
     :param dependency:
         the actual dependency receiving the sideffect, which will be fed into/out
-        of the function (unless marked as `skip_func`).
+        of the function (unless marked as :term:`implicit`).
     :param sfx0:
         the 1st (arbitrary object) sideffect marked as "acting" on the `dependency`.
     :param sfx0:
         more (arbitrary object) sideffects (like the `sfx0`)
-    :param skip_func:
-        if true, the `dependency` is not fed into/out of the function.
-
-        One use case is an operation enforcing some sideffect on a container,
-        but feeds/receives only some container's :term:`subdoc`\(s) to/from
-        the underlying function.
     :param keyword:
         the name for the function argument it corresponds.
         When optional, it becomes the same as `name` if falsy, so as
@@ -897,7 +891,8 @@ def sfxed(
             If accessing pandas, you may pass an already splitted path with
             its last *part* being a `callable indexer
             <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
-
+    :param implicit:
+        :term:`implicit` dependencies are not fed into/out of the function.
 
     Like :func:`.sfx` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
@@ -989,7 +984,7 @@ def sfxed(
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
         jsonp=jsonp,
-        skip_func=skip_func,
+        implicit=implicit,
     )
 
 
@@ -1090,12 +1085,9 @@ def is_sfxed(dep) -> bool:
     return getattr(dep, "_sideffected", None) and getattr(dep, "_sfx_list", None)
 
 
-def is_skip_func(dep) -> bool:
-    """
-    Return the value of the ``skip_func`` param when :term:`sideffected` was created
-    (but does not check if it is indeed a `sideffected`).
-    """
-    return getattr(dep, "_skip_func", None)
+def is_implicit(dep) -> bool:
+    """Return if it is a :term:`implicit` dependency. """
+    return getattr(dep, "_implicit", None)
 
 
 def get_accessor(dep) -> bool:

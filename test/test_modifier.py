@@ -12,7 +12,7 @@ from graphtik.modifier import (
     dep_renamed,
     dep_singularized,
     dep_stripped,
-    is_skip_func,
+    is_implicit,
     keyword,
     modify,
     optional,
@@ -341,14 +341,14 @@ def test_sideffected_singularized(mod, exp):
     assert got == exp
 
 
-def test_skip_func(ser_method):
-    assert is_skip_func("a") is None
+def test_implicit(ser_method):
+    assert is_implicit("a") is None
     m = sfxed("a", "b")
-    assert is_skip_func(m) is None
-    m = sfxed("a", "b", skip_func=1)
-    assert is_skip_func(m) == 1
-    m = sfxed("a", "b", "c", skip_func=0)
-    assert is_skip_func(m) == 0
+    assert is_implicit(m) is None
+    m = sfxed("a", "b", implicit=1)
+    assert is_implicit(m) == 1
+    m = sfxed("a", "b", "c", implicit=0)
+    assert is_implicit(m) == 0
 
-    assert dep_renamed(m, "R")._skip_func == m._skip_func
-    assert ser_method(m)._skip_func == m._skip_func
+    assert dep_renamed(m, "R")._implicit == m._implicit
+    assert ser_method(m)._implicit == m._implicit

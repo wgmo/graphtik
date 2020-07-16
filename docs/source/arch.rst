@@ -421,9 +421,6 @@ Architecture
         The main use case is to declare an `operation` that both `needs` and `provides`
         the same *dependency*, to mutate it.
 
-        If ``skip_func`` param is true when modifier is created, the *sideffected dependency*
-        is not fed into/out of the function, but the *sfx_list* is still enforced while `pruning`.
-
         The `outputs` of a *sideffected dependency* will produce an `overwrite` if
         the *sideffected dependency* is declared both as *needs* and *provides*
         of some operation.
@@ -431,6 +428,16 @@ Architecture
         It is annotated with :func:`.sfxed`;
 
         See also the elaborate example in :ref:`hierarchical-data` section.
+
+    implicit
+        A `modifier` denoting a `dependency` not to be fed into/out of the function,
+        but the *dependency* is still considered while `planning`.
+
+        One use case is for an operation to consume/produce a `subdoc`\(s)
+        with its own means (not through `jsonp` `accessor`\s).
+
+        Only :func:`.sfxed` *modifier* functions accept
+        the ``implicit`` param.
 
     accessor
         Getter/setter functions to extract/populate `solution` values given as a `modifier` parameter

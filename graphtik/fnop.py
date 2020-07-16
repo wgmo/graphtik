@@ -44,11 +44,11 @@ from .modifier import (
     dep_singularized,
     dep_stripped,
     get_keyword,
+    is_implicit,
     is_optional,
     is_pure_sfx,
     is_sfx,
     is_sfxed,
-    is_skip_func,
     is_vararg,
     is_varargs,
     modify,
@@ -215,7 +215,7 @@ def _spread_sideffects(
             - the dependencies consumed/produced by underlying functions, in the order
               they are first met.  In particular, it replaces any :func:`.sfxed`
               by the :func:`stripped <.dep_stripped>`, unless ...
-            - it had been declared as `skip_func`, in which case, it is discared;
+            - it had been declared as :term:`implicit`, in which case, it is discared;
             - discards all the rest duplicate `sideffected` dependencies;
             - any :func:`.sfx` are simply dropped.
     """
@@ -225,7 +225,7 @@ def _spread_sideffects(
 
     def strip_unique(dep):
         """Strip and dedupe any sfxed, drop any sfx. """
-        if is_sfxed(dep) and not is_skip_func(dep):
+        if is_sfxed(dep) and not is_implicit(dep):
             dep = dep_stripped(dep)
             if not dep in seen_sideffecteds:
                 seen_sideffecteds.add(dep)

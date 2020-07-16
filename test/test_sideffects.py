@@ -427,9 +427,9 @@ def test_sideffected_canceled(sideffected_resched):
     assert sol == {"DEP": 1, sfxed("DEP", "no"): False, "yes": "yes!"}
 
 
-def test_sfxed_skip_func():
-    op = operation(str, "hh", ["A", sfxed("a", "b", skip_func=1)], "a")
-    assert "(skip_func)" in str(op.plot())
+def test_sfxed_implicit():
+    op = operation(str, "hh", ["A", sfxed("a", "b", implicit=1)], "a")
+    assert "(implicit)" in str(op.plot())
 
     pipe = compose(..., op)
     got = pipe.compute({"A": "val", sfxed("a", "b"): 1}, "a")
