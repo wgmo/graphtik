@@ -490,46 +490,53 @@ which you may :graphtik:`reference <addmul-operation>` with this syntax:
 Errors & debugging
 ------------------
 
-Graphs may become arbitrary deep.  Launching a debugger-session to inspect
-deeply nested stacks is notoriously hard
+Graphs are complex, and execution pipelines may become arbitrarily deep.
+Launching a debugger-session to inspect deeply nested stacks is notoriously hard.
+
+This projects has dogfooded various approaches when designing and debugging
+pipelines.
+
 
 Logging
 ^^^^^^^
-Increase the logging verbosity; logging statements have been placed melticulously
-to describe the :term:`execution` flows  (but not :term:`planning` :-(),
-with each log statement accompanied by the :attr:`solution id <.Solution.solid>` of that flow,
-like the ``(3C40)`` & ``(8697)`` below, important for when running pipelines
-in :term:`parallel`::
+The 1st pit-stop it to increase the logging verbosity.
+
+Logging statements have been melticulously placed to describe the :term:`pruning`
+while :term:`planning` and subsequent :term:`execution` flow;
+*execution flow* log-statements are accompanied by the unique :attr:`solution id
+<.Solution.solid>` of each flow, like the ``(3C40)`` & ``(8697)`` below,
+important for when running pipelines in :term:`parallel`::
 
    --------------------- Captured log call ---------------------
-   DEBUG    === Compiling pipeline(t)...
+   INFO    === Compiling pipeline(t)...
+   DEBUG   ... adding evict-1 for not-to-be-used NEED-chain{'a'} of topo-sorted #1 OpTask(FnOp|(name='...
    DEBUG    ... cache-updated key: ((), None, None)
-   DEBUG    === (3C40) Executing pipeline(t), in parallel, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x2 steps: op1, op2)...
+   INFO    === (3C40) Executing pipeline(t), in parallel, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x2 steps: op1, op2)...
    DEBUG    +++ (3C40) Parallel batch['op1'] on solution[].
    DEBUG    +++ (3C40) Executing OpTask(FnOp|(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>'), sol_keys=[])...
    INFO     graphtik.fnop.py:534 Results[sfx: 'b'] contained +1 unknown provides[sfx: 'b']
    FnOp|(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>')
-   DEBUG    ... (3C40) op(op1) completed in 1.406ms.
+   INFO    ... (3C40) op(op1) completed in 1.406ms.
 
    ...
 
    DEBUG    === Compiling pipeline(t)...
    DEBUG    ... cache-hit key: ((), None, None)
-   DEBUG    === (8697) Executing pipeline(t), evicting, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x3 steps: op1, op2, sfx: 'b')...
+   INFO    === (8697) Executing pipeline(t), evicting, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x3 steps: op1, op2, sfx: 'b')...
    DEBUG    +++ (8697) Executing OpTask(FnOp(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>'), sol_keys=[])...
    INFO     graphtik.fnop.py:534 Results[sfx: 'b'] contained +1 unknown provides[sfx: 'b']
    FnOp(name='op1', needs=[], provides=[sfx: 'b'], fn{}='<lambda>')
-   DEBUG    ... (8697) op(op1) completed in 0.149ms.
+   INFO    ... (8697) op(op1) completed in 0.149ms.
    DEBUG    +++ (8697) Executing OpTask(FnOp(name='op2', needs=[sfx: 'b'], provides=['b'], fn='<lambda>'), sol_keys=[sfx: 'b'])...
-   DEBUG    ... (8697) op(op2) completed in 0.08ms.
-   DEBUG    ... (8697) evicting 'sfx: 'b'' from solution[sfx: 'b', 'b'].
-   DEBUG    === (8697) Completed pipeline(t) in 0.229ms.
+   INFO    ... (8697) op(op2) completed in 0.08ms.
+   INFO    ... (8697) evicting 'sfx: 'b'' from solution[sfx: 'b', 'b'].
+   INFO    === (8697) Completed pipeline(t) in 0.229ms.
 
 
 ``DEBUG`` flag
 ^^^^^^^^^^^^^^
-Enable the :func:`.set_debug()` in :term:`configurations`, or externally,
-by setting the :envvar:`GRAPHTIK_DEBUG` environment variable,
+The 2nd pit-stop is to enable the :func:`.set_debug()` in :term:`configurations`,
+or externally, by setting the :envvar:`GRAPHTIK_DEBUG` environment variable,
 to enact the following:
 
 .. include:: ../../graphtik/config.py
@@ -540,12 +547,13 @@ to enact the following:
    From code you may wrap the code you are interested in with :func:`.config.debug_enabled`
    "context-manager", to get augmented print-outs for selected code-paths only.
 
+
 .. _jetsam:
 
 Jetsam on exceptions
 ^^^^^^^^^^^^^^^^^^^^
-Additionally, when some operation fails, you may access many in-progress variables
-on the original exception (e.g. ``sys.last_value``) from its ":term:`jetsam`",
+If you are on an interactive session, you may access many in-progress variables
+on raised exception (e.g. ``sys.last_value``) from their ":term:`jetsam`" attribute,
 as an immediate post-mortem debugging aid:
 
 >>> from graphtik import compose, operation
@@ -613,7 +621,8 @@ The following annotated attributes *might* have meaningful value on an exception
     note that :attr:`.Solution.executed` contain the list of executed `operations` so far.
 
 Of course you may plot some "jetsam" values, to visualize the condition
-that caused the error.
+that caused the error (see :ref:`plotting`).
+
 
 Debugger
 ^^^^^^^^
