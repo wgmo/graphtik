@@ -316,7 +316,7 @@ class Solution(ChainMap, Plottable):
         }
         incomplete = iset(chain(self.canceled, failures.keys()))
         if incomplete:
-            incomplete = [op.name for op in incomplete]
+            incomplete = list(yield_node_names(incomplete))
             partial_msgs = {
                 f"\n  +--{op.name}: {list(pouts)}"
                 for op, pouts in self.executed.items()

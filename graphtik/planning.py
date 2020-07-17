@@ -454,7 +454,7 @@ class Network(Plottable):
                 raise ValueError(
                     f"Node-predicate({predicate}) failed due to: {ex}\n  node: {node}, {self}"
                 ) from ex
-        log.info("... predicate filtered out %s.", [op.name for op in to_del])
+        log.info("... predicate filtered out %s.", list(yield_node_names(to_del)))
         graph.remove_nodes_from(to_del)
 
     def _prune_graph(
