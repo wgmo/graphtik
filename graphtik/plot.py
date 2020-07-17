@@ -771,9 +771,11 @@ class Theme:
     #: When true, plot also :term:`execution steps`, linking operations and evictions
     #: with green dotted lines labeled with numbers denoting the execution order.
     show_steps = False
-    #: When true, plot also :term:`hierarchical data` nodes that
-    #: are not directly linked to operations.
-    show_chaindocs = False
+    #: - true: plot also :term:`hierarchical data` nodes not directly linked
+    #:   to operations;
+    #: - (default) None: hide any parent/subdoc not related directly to some operation;
+    #: - false: hide also parent-subdoc relation edges.
+    show_chaindocs = None
     kw_step = {
         "style": "dotted",  # Note: Step styles are not *remerged*.`
         "color": Ref("steps_color"),
@@ -1228,7 +1230,15 @@ class Plotter:
         ## EDGES
         #
         for src, dst, data in graph.edges.data(True):
-            if src in hidden or dst in hidden:
+            if (
+                src in hidden
+                or dst in hidden
+                or (
+                    data.get("subdoc")
+                    and not theme.show_chaindocs
+                    and theme.show_chaindocs is not None
+                )
+            ):
                 continue
 
             edge_plot_args = plot_args._replace(nx_item=(src, dst), nx_attrs=data)
