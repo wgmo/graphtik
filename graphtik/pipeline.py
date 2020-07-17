@@ -436,7 +436,7 @@ class Pipeline(Operation):
             if not predicate:
                 predicate = self.predicate
 
-            log.debug("=== Compiling %s...", self)
+            log.info("=== Compiling pipeline(%s) ...", self.name)
             # # Discover nested inputs given.
             # plan = net.compile(
             #     self._nested_inputs_given(named_inputs), outputs, predicate

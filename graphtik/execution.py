@@ -605,7 +605,7 @@ class ExecutionPlan(
             solution.operation_executed(op, outputs)
 
             elapsed = elapsed_ms(op)
-            log.debug(
+            log.info(
                 "... (%s) op(%s) completed in %sms.", solution.solid, op.name, elapsed
             )
         except Exception as ex:
@@ -688,8 +688,8 @@ class ExecutionPlan(
                             )
                         )
                     ):
-                        if _isDebugLogging():
-                            log.debug(
+                        if log.isEnabledFor(logging.INFO):
+                            log.info(
                                 "... (%s) evicting '%s' from solution%s.",
                                 solution.solid,
                                 node,
@@ -743,7 +743,7 @@ class ExecutionPlan(
             elif isinstance(step, str):
                 # Cache value may be missing if it is optional.
                 if step in solution:
-                    log.debug(
+                    log.info(
                         "... (%s) evicting '%s' from solution%s.",
                         solution.solid,
                         step,
@@ -836,7 +836,7 @@ class ExecutionPlan(
                 layered_solution=layered_solution,
             )
 
-            log.debug(
+            log.info(
                 "=== (%s) Executing pipeline(%s)%s%s, on inputs%s, according to %s...",
                 solution.solid,
                 name,
@@ -853,9 +853,9 @@ class ExecutionPlan(
             finally:
                 ## Log cumulative operations elapsed time.
                 #
-                if _isDebugLogging():
+                if log.isEnabledFor(logging.INFO):
                     elapsed = sum(solution.elapsed_ms.values())
-                    log.debug(
+                    log.info(
                         "=== (%s) %s pipeline(%s) in %0.3fms.",
                         solution.solid,
                         "Completed" if ok else "FAILED",
