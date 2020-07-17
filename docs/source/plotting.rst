@@ -544,8 +544,9 @@ to enact the following:
 
 Jetsam on exceptions
 ^^^^^^^^^^^^^^^^^^^^
-Additionally, when some operation fails, the original exception gets annotated
-with the following properties, as a debug aid:
+Additionally, when some operation fails, you may access many in-progress variables
+on the original exception (e.g. ``sys.last_value``) from its ":term:`jetsam`",
+as an immediate post-mortem debugging aid:
 
 >>> from graphtik import compose, operation
 >>> from pprint import pprint
@@ -578,7 +579,8 @@ In interactive *REPL* console you may use this to get the last raised exception:
      sys.last_value.jetsam
 
 
-The following annotated attributes *might* have meaningful value on an exception:
+The following annotated attributes *might* have meaningful value on an exception
+(press :kbd:`[Tab]` to auto-complete):
 
 ``network``
    the innermost network owning the failed operation/function
@@ -610,7 +612,8 @@ The following annotated attributes *might* have meaningful value on an exception
     an instance of :class:`.Solution`, contains `inputs` & `outputs` till the error happened;
     note that :attr:`.Solution.executed` contain the list of executed `operations` so far.
 
-Of course you may use many of the above "jetsam" values when plotting.
+Of course you may plot some "jetsam" values, to visualize the condition
+that caused the error.
 
 Debugger
 ^^^^^^^^
@@ -626,6 +629,9 @@ If you set a :func:`breakpoint()` in one of your functions, *move up a few frame
 to find the :meth:`.ExecutionPlan._handle_task()` method, where the "live"
 :class:`.ExecutionPlan` & :class:`.Solution` instances live, useful when investigating
 problems with computed values.
+
+If you are extending this project, to enter the debugger when a test-case breaks,
+call ``pytest --pdb -k <test-case>`` from the console.
 
 
 .. _task-context:
