@@ -237,11 +237,13 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
     unsatisfied = []
     # Topo-sort dag respecting operation-insertion order to break ties.
     sorted_nodes = nx.topological_sort(dag)
-    for node in sorted_nodes:
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug("Topo-sorted nodes: %s", list(yield_node_names(sorted_nodes)))
+    for i, node in enumerate(sorted_nodes):
         if isinstance(node, Operation):
             if not dag.adj[node]:
                 unsatisfied.append(node)
-                log.info("... dropping unsatisfied(no outputs) %s", node)
+                log.info("... dropping #%i unsatisfied(no outputs) %s", i, node)
             else:
                 real_needs = set(
                     n for n, _, opt in dag.in_edges(node, data="optional") if not opt
@@ -255,8 +257,9 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
                     unsatisfied.append(node)
                     if log.isEnabledFor(logging.INFO):
                         log.info(
-                            "... dropping unsatisfied (partial inputs) %s"
+                            "... dropping #%i unsatisfied (partial inputs) %s"
                             "\n    +--real needs: %s\n    +--satisfied: %s",
+                            i,
                             node,
                             list(real_needs),
                             list(yield_node_names(op_satisfaction[node])),
