@@ -296,6 +296,18 @@ def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
         return default
 
 
+class AttributeDict(dict):
+    """
+    The :term:`jetsam` is a dict with items accessed also as attributes.
+
+    From https://stackoverflow.com/a/5021467/548792
+    """
+
+    __slots__ = ()
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+
+
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
     Annotate exception with salvaged values from locals(), log and raise!
@@ -381,8 +393,8 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
 
     try:
         annotations = getattr(ex, annotation, None)
-        if not isinstance(annotations, dict):
-            annotations = {}
+        if not isinstance(annotations, AttributeDict):
+            annotations = AttributeDict()
             setattr(ex, annotation, annotations)
 
         ## Salvage those asked
