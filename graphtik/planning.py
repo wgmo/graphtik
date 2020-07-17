@@ -240,8 +240,8 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
     for node in sorted_nodes:
         if isinstance(node, Operation):
             if not dag.adj[node]:
-                # Prune operations that ended up providing no output.
                 unsatisfied.append(node)
+                log.info("... dropping unsatisfied(no outputs) %s", node)
             else:
                 real_needs = set(
                     n for n, _, opt in dag.in_edges(node, data="optional") if not opt
@@ -252,8 +252,15 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
                     # Op is satisfied; mark its outputs as ok.
                     ok_data.update(yield_chaindocs(dag, dag.adj[node], ok_data))
                 else:
-                    # Prune operations with partial inputs.
                     unsatisfied.append(node)
+                    if log.isEnabledFor(logging.INFO):
+                        log.info(
+                            "... dropping unsatisfied (partial inputs) %s"
+                            "\n    +--real needs: %s\n    +--satisfied: %s",
+                            node,
+                            list(real_needs),
+                            list(yield_node_names(op_satisfaction[node])),
+                        )
         elif isinstance(node, str):  # `str` are givens
             if node in ok_data:
                 # mark satisfied-needs on all future operations
@@ -565,18 +572,15 @@ class Network(Plottable):
                 list(yield_ops(ending_in_outputs))
             ) != len(self.ops):
                 log.info(
-                    "... dropping output-irrelevant ops%s.",
-                    [
-                        op.name
-                        for op in dag
-                        if isinstance(op, Operation) and op not in ending_in_outputs
-                    ],
+                    "... dropping output-irrelevant ops%s."
+                    "\n    +--outputs: %s\n    +--output reachables: %s",
+                    [op.name for op in yield_ops(dag) if op not in ending_in_outputs],
+                    outputs,
+                    ending_in_outputs,
                 )
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
         unsatisfied = unsatisfied_operations(broken_dag, satisfied_inputs)
-        if log.isEnabledFor(logging.INFO) and unsatisfied:
-            log.info("... dropping unsatisfied ops%s.", [op.name for op in unsatisfied])
         # Clone it, to modify it.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
         ## Clean unlinked data-nodes (except those both given & asked).
