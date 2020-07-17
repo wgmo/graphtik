@@ -296,16 +296,16 @@ def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
         return default
 
 
-class AttributeDict(dict):
+class AttrDict(dict):
     """
     The :term:`jetsam` is a dict with items accessed also as attributes.
 
-    From https://stackoverflow.com/a/5021467/548792
+    From https://stackoverflow.com/a/14620633/548792
     """
 
-    __slots__ = ()
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
 
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
@@ -393,8 +393,8 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
 
     try:
         annotations = getattr(ex, annotation, None)
-        if not isinstance(annotations, AttributeDict):
-            annotations = AttributeDict()
+        if not isinstance(annotations, AttrDict):
+            annotations = AttrDict()
             setattr(ex, annotation, annotations)
 
         ## Salvage those asked
