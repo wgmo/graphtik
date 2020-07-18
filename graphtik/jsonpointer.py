@@ -36,7 +36,7 @@ import pandas as pd
 
 
 log = logging.getLogger(__name__)
-UNSET = ...  # Change this in case of troubles...
+UNSET = "%%UNSET%%"  # Change this in case of troubles...
 
 
 def escape_jsonpointer_part(part: str) -> str:
@@ -226,7 +226,7 @@ def resolve_path(
         *((getattr,) if descend_objects else ()),
     ]
 
-    if root is ...:
+    if root is UNSET:
         root = doc
 
     parts = jsonp_path(path) if isinstance(path, str) else path
@@ -258,7 +258,7 @@ def resolve_path(
                         or not str(ex).startswith("invalid literal for int()"),
                     )
         else:
-            if default is ...:
+            if default is UNSET:
                 raise ResolveError(path, part, i)
 
             return default
@@ -404,7 +404,7 @@ def set_path_value(
         *((object_scouter,) if descend_objects else ()),
     ]
 
-    if root is ...:
+    if root is UNSET:
         root = doc
 
     parts = jsonp_path(path) if isinstance(path, str) else list(path)
@@ -460,12 +460,12 @@ def _update_paths(
     # The `group` is a list of paths with common prefix (root)
     # currently being built.
     group_prefix, group = None, ()
-    for p, v in paths_vals + [((...,), ...)]:
-        assert len(p) >= 1 or v is ..., locals()
+    for p, v in paths_vals + [((UNSET,), UNSET)]:
+        assert len(p) >= 1 or v is UNSET, locals()
 
         next_prefix = p[0]
         if next_prefix != group_prefix:
-            if len(p) == 1 and v is not ...:
+            if len(p) == 1 and v is not UNSET:
                 # Assign value and proceed to the next one,
                 # THOUGH if a deeper path with this same prefix follows,
                 # it will overwrite the value just written.
@@ -597,7 +597,7 @@ def pop_path(
         *((object_popper,) if descend_objects else ()),
     ]
 
-    if root is ...:
+    if root is UNSET:
         root = doc
 
     parts = jsonp_path(path) if isinstance(path, str) else list(path)
@@ -629,7 +629,7 @@ def pop_path(
                     or not str(ex).startswith("invalid literal for int()"),
                 )
         else:
-            if default is ...:
+            if default is UNSET:
                 raise ResolveError(path, part, i)
 
             return default
