@@ -124,3 +124,9 @@ def samplenet():
     sum_op2 = operation(name="sum_op2", needs=["c", "d"], provides="sum2")(add)
     sum_op3 = operation(name="sum_op3", needs=["c", "sum2"], provides="sum3")(add)
     return compose("test_net", sum_op1, sum_op2, sum_op3)
+
+
+@pytest.fixture(params=[10, 20])
+def log_levels(request, caplog):
+    with caplog.at_level(request.param):
+        yield request.param

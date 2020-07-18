@@ -20,6 +20,9 @@ from graphtik.jsonpointer import (
 )
 
 
+pytestmark = pytest.mark.usefixtures("log_levels")
+
+
 def test_jsonpointer_escape_parts():
     def un_esc(part):
         return unescape_jsonpointer_part(escape_jsonpointer_part(part))
