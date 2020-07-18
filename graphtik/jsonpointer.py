@@ -144,7 +144,7 @@ def resolve_path(
     path: Union[str, Iterable[str]],
     default=UNSET,
     root=UNSET,
-    descend_objects=None,
+    descend_objects=True,
 ):
     """
     Resolve *roughly like* a json-pointer `path` within the referenced `doc`.
@@ -270,7 +270,7 @@ def contains_path(
     doc: Union[Sequence, Mapping],
     path: Union[str, Iterable[str]],
     root=UNSET,
-    descend_objects=None,
+    descend_objects=True,
 ) -> bool:
     """Test if `doc` has a value for json-pointer path by calling :func:`.resolve_path()`. """
     try:
@@ -362,7 +362,7 @@ def set_path_value(
     value,
     container_factory=dict,
     root=UNSET,
-    descend_objects=None,
+    descend_objects=True,
 ):
     """
     Resolve a ``jsonpointer`` within the referenced ``doc``.
@@ -455,7 +455,7 @@ def _update_paths(
     paths_vals: Collection[Tuple[List[str], Any]],
     container_factory=dict,
     root=UNSET,
-    descend_objects=None,
+    descend_objects=True,
 ) -> None:
     # The `group` is a list of paths with common prefix (root)
     # currently being built.
@@ -496,7 +496,7 @@ def update_paths(
     paths_vals: Collection[Tuple[str, Any]],
     container_factory=dict,
     root=UNSET,
-    descend_objects=None,
+    descend_objects=True,
 ) -> None:
     paths_vals = sorted(paths_vals)
     _update_paths(
@@ -531,7 +531,7 @@ def pop_path(
     path: Union[str, Iterable[str]],
     default=UNSET,
     root=UNSET,
-    descend_objects=None,
+    descend_objects=True,
 ):
     """
     Delete and return the item referenced by json-pointer `path` from the nested `doc` .
