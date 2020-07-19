@@ -144,6 +144,7 @@ Run the graph-operation and request a subset of the outputs:
 
 .. graphtik::
    :width: 65%
+   :name: legend
 
    >>> from graphtik.plot import legend
    >>> l = legend()
