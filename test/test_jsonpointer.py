@@ -5,8 +5,10 @@ Test utilities for :term:`json pointer path` modifier.
 
 Copied from pypi/pandalone.
 """
-import pytest
+from copy import deepcopy
 from random import shuffle
+
+import pytest
 
 from graphtik.jsonpointer import (
     ResolveError,
@@ -18,7 +20,6 @@ from graphtik.jsonpointer import (
     unescape_jsonpointer_part,
     update_paths,
 )
-
 
 pytestmark = pytest.mark.usefixtures("log_levels")
 
@@ -430,13 +431,14 @@ def test_pop_path_examples_from_spec(std_doc, std_case):
         (([{1: 22}, 2], "/0/1"), 22, [{}, 2]),
     ],
 )
-def test_pop_path_cases(inp, pop_item, culled_doc):
+def test_pop_path_cases(inp, pop_item, culled_doc, log_levels):
     if isinstance(pop_item, type) and issubclass(pop_item, Exception):
         with pytest.raises(pop_item):
             pop_path(*inp)
     else:
-        doc, *_ = inp
-        assert pop_path(*inp) == pop_item
+        doc, *args = inp
+        doc = deepcopy(doc)  # NOTE: doc modified from previous log_level!!
+        assert pop_path(doc, *args) == pop_item
         assert doc == culled_doc
 
 

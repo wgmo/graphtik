@@ -128,5 +128,5 @@ def samplenet():
 
 @pytest.fixture(params=[10, 20])
 def log_levels(request, caplog):
-    with caplog.at_level(request.param):
-        yield request.param
+    caplog.set_level(request.param)
+    return

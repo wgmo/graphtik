@@ -14,6 +14,9 @@ from graphtik.config import evictions_skipped, operations_endured
 from .helpers import addall
 
 
+pytestmark = pytest.mark.usefixtures("log_levels")
+
+
 def scream(*args, **kwargs):
     raise AssertionError(f"Must not have run!\n    args: {args}\n  kwargs: {kwargs}")
 

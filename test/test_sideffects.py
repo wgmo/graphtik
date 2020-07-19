@@ -24,6 +24,9 @@ from graphtik.config import get_execution_pool, is_marshal_tasks
 from graphtik.pipeline import Pipeline
 
 
+pytestmark = pytest.mark.usefixtures("log_levels")
+
+
 # Function without return value.
 def _box_extend(box, *args):
     box.extend([1, 2])
@@ -62,17 +65,17 @@ def test_sideffect_no_real_data(pipeline_sideffect1: Pipeline):
 
     ## Normal data must not match sideffects.
     #
-    with pytest.raises(ValueError, match="Unknown output node"):
-        graph.compute(inp, ["a"])
-    with pytest.raises(ValueError, match="Unknown output node"):
-        graph.compute(inp, ["b"])
+    # with pytest.raises(ValueError, match="Unknown output node"):
+    #     graph.compute(inp, ["a"])
+    # with pytest.raises(ValueError, match="Unknown output node"):
+    #     graph.compute(inp, ["b"])
 
     ## Cannot compile due to missing inputs/outputs
     #
     with pytest.raises(ValueError, match="Unsolvable graph"):
-        assert graph(**inp) == inp
+        graph(**inp)
     with pytest.raises(ValueError, match="Unsolvable graph"):
-        assert graph.compute(inp)
+        graph.compute(inp)
 
     with pytest.raises(ValueError, match="Unreachable outputs"):
         graph.compute(inp, ["box", sfx("b")])

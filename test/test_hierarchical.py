@@ -15,6 +15,9 @@ from graphtik.execution import task_context
 from graphtik.modifier import accessor, dep_renamed, modify
 
 
+pytestmark = pytest.mark.usefixtures("log_levels")
+
+
 def test_solution_accessor_simple():
     acc = (operator.contains, operator.getitem, operator.setitem, operator.delitem)
 
