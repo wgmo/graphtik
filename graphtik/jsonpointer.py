@@ -110,7 +110,7 @@ class ResolveError(KeyError):
 
     def __str__(self):
         return (
-            f"Failed resolving step (#{self.index}){self.part} of json pointer path {self.path!r}."
+            f'Failed resolving step (#{self.index}) "{self.part}" of path {self.path!r}.'
             "\n  Check debug logs."
         )
 
@@ -211,7 +211,7 @@ def resolve_path(
         >>> resolve_path(dt, '/pi/BAD')
         Traceback (most recent call last):
         ...
-        graphtik.jsonpointer.ResolveError: Failed resolving step (#2)BAD of json pointer path '/pi/BAD'.
+        graphtik.jsonpointer.ResolveError: Failed resolving step (#2) "BAD" of path '/pi/BAD'.
           Check debug logs.
 
 
@@ -445,7 +445,7 @@ def set_path_value(
                     )
         else:
             raise ValueError(
-                f"Failed setting step (#{i}){part} of json pointer path {path!r}!"
+                f'Failed setting step (#{i}) "{part}" of path {path!r}!'
                 "\n  Check debug logs."
             )
 
