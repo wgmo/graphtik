@@ -100,8 +100,6 @@ v10.1.0 (XX Jul 2020, @ankostis): Step number badges
 
 v10.0.0 (19 Jul 2020, @ankostis): Implicits; modify(); auto-name pipelines; plot data as overspilled
 ====================================================================================================
-Should have been 10+ for breaking rename of modifier ``jsonp => modify``.
-
 + FEAT: new :term:`implicit` modifier doing a better job than :func:`.sfx`.
 + FEAT(pipeline): auto-derive name from enclosing function.
 + BREAK/fix(modifier): rename modifier ``jsonp =>`` :func:`.modify()`;
