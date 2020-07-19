@@ -1643,8 +1643,8 @@ class Plotter:
         ## From https://stackoverflow.com/questions/3499056/making-a-legend-key-in-graphviz
         # Render it manually with these python commands, and remember to update result in git:
         #
-        #   from graphtik.plot import legend
-        #   legend('docs/source/images/GraphtikLegend.svg')
+        #   from graphtik import plot
+        #   plot.legend('docs/source/images/GraphtikLegend.svg')
         dot_text = (
             """
         digraph {
@@ -1661,15 +1661,15 @@ class Plotter:
             needs [color=invis];
             needs -> provides     [tooltip="Compulsory dependency from src Operation --> dst `provides` data"];
             provides [color=invis];
-            provides -> optional     [style=dashed];
+            provides -> optional     [style=dashed label="**kw"];
             optional    [color=invis label="optional\npartial out"
                         tooltip="Target operation may run without source `need` OR source operation may not `provide` target data."
                         URL="%(arch_url)s#term-needs"];
-            optional    -> keyword [label="**kw"];
-            keyword    [color=invis label="keyword"
+            optional    -> implicit [dir=both arrowtail=inv arrowhead=obox];
+            implicit    [color=invis label="implicit"
                         tooltip="A `need` passed in as **kw argument underlying fn."
-                        URL="%(arch_url)s/../reference.html#graphtik.modifier.keyword"];
-            keyword    -> sideffect    [color=blue];
+                        URL="%(arch_url)s#term-implicit"];
+            implicit    -> sideffect    [color=blue];
             sideffect   [color=invis
                         tooltip="Fictive data not consumed/produced by operation functions."
                         URL="%(arch_url)s#term-sideffects"];
@@ -1691,24 +1691,26 @@ class Plotter:
 
             DataLabel   [shape=plaintext fontsize=16 fontname="bold italic"
                             label=Data];
-            data    [shape=rect
+            data    [shape=rect fixedsize=shape
                     tooltip="Any data not given or asked."
                     URL="%(arch_url)s#term-graph"];
-            input   [shape=invhouse
+            input   [shape=invhouse fixedsize=shape
                     tooltip="Solution value given into the computation."
                     URL="%(arch_url)s#term-inputs"];
-            output  [shape=house
+            output  [shape=house fixedsize=shape
                     tooltip="Solution value asked from the computation."
                     URL="%(arch_url)s#term-outputs"];
-            inp_out [shape=hexagon label="inp+out"
+            inp_out [shape=hexagon label="inp+out" fixedsize=shape
                     tooltip="Data both given and asked."
                     URL="%(arch_url)s#term-dependency"];
             evicted %(evicted)s
             sfx %(sfx)s
-            sol     [shape=rect style=filled fillcolor=wheat label="with value"
+            sol     [shape=rect fixedsize=shape
+                    style=filled fillcolor=wheat label="with value"
                     tooltip="Data contained in the solution."
                     URL="%(arch_url)s#term-solution"];
-            overwrite [shape=rect style=filled fillcolor=SkyBlue
+            overwrite [shape=rect fixedsize=shape
+                    style=filled fillcolor=SkyBlue
                     tooltip="More than 1 values exist in solution with this name."
                     URL="%(arch_url)s#term-overwrite"];
             DataLabel -> data -> input -> output -> inp_out -> sfx -> evicted -> sol -> overwrite [style=invis];
