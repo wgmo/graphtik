@@ -104,6 +104,7 @@ v10.0.0 (19 Jul 2020, @ankostis): Implicits; modify(); auto-name pipelines; plot
 + FEAT(pipeline): auto-derive name from enclosing function.
 + BREAK/fix(modifier): rename modifier ``jsonp =>`` :func:`.modify()`;
   parameter ``jsonp=False`` now works.
++ FEAT(jspoint): descend object attributes were disabled before.
 + ENH(modifier): privatize all fields (`str` with foreign attributes interact badly
   with 3rdp libs).
 + ENH(plot): stackable tooltips; now data nodes kind and state is fully explained there.
