@@ -428,15 +428,17 @@ Architecture
     sfx_list
         A `modifier` denoting `sideffects`\(*sfx_list*) acting on a `solution` `dependency`,
 
-        .. Note::
+        .. Note::will
             To be precise, the *"sideffected dependency"* is the name held in
             :attr:`._Modifier._sideffected` attribute of a *modifier* created by
             :func:`.sfxed()` function;  it may have all `diacritic`\s in printouts.
 
         The main use case is to declare an `operation` that both `needs` and `provides`
         the same *dependency*, to mutate it.
-        The end result is a strict (no forks) sequence of different *sfxed* modifiers
-        all based on the same *sideffected* dependency.
+        When designing a `network` with many *sfxed* modifiers all based on
+        the same *sideffected* dependency (i.e. with different `sfx_list`), then
+        these should form a strict (no forks) sequence, or else, fork modifications
+        will be lost.
 
         The `outputs` of a *sideffected dependency* will produce an `overwrite` if
         the *sideffected dependency* is declared both as *needs* and *provides*
