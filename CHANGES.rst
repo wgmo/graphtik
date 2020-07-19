@@ -26,9 +26,15 @@ Graphtik Changelog
     - [ ] keep SFX in outputs
   - [ ] ENH: virtual graph roots for inputs & outputs, for visiting algos (eg prune by outs)
   - [ ] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
-  - [ ] ENH: varargs for Outs collect all outs te the very end
+  - [ ] ENH: varargs for Outs collect all outs to the very end
   - [ ] ENH: use Signature.Param from `inspect` module to match needs & zip provides
   - [ ] FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
+
+  - [ ] DOC: explain Implicits in tutorial
+  - [ ] ENH: Plan accepts previous solutions
+    - [ ] refact: named_inputs --> sol
+  - [ ] ENH: planning reports unsatisfied node modus, for plotting
+  - [ ] REFACT/FEAT/ENH: Autograph functions by annotating
 
   - plot:
 
@@ -77,6 +83,33 @@ https://github.com/pygraphkit/graphtik/releases
 
 Changelog
 %%%%%%%%%
+
+
+v10.0.0 (19 Jul 2020, @ankostis): Implicits; modify(); auto-name pipelines; plot data as overspilled
+====================================================================================================
+Should have been 10+ for breaking rename of modifier ``jsonp => modify``.
+
++ FEAT: new :term:`implicit` modifier doing a better job than :func:`.sfx`.
++ FEAT(pipeline): auto-derive name from enclosing function.
++ BREAK/fix(modifier): rename modifier ``jsonp =>`` :func:`.modify()`;
+  parameter ``jsonp=False`` now works.
++ ENH(modifier): privatize all fields (`str` with foreign attributes interact badly
+  with 3rdp libs).
++ ENH(plot): stackable tooltips; now data nodes kind and state is fully explained there.
+
+  + enh: split jsonp data nodes in separate lines forming a tree.
+  + enh: label overspill data-node's shapes.
+  + enh: theme-stack now expands any callables in keys or whole kv-pairs.
+  + feat: ``show_chaindocs=False`` them attribute now hides even subdoc relationships
+    (edges).
+  + fix: various fixes & enhancements ("canceled" were misattributed,
+    update legend, infective user ``'graphviz.xxx"`` attributes,
+    plotting no-edge diagrams)
+
++ enh(planning): explained why nodes were pruned in ``DEBUG`` logs.
++ enh(:term:`jetsam`): exception-annotated contents accessed also as attributes.
++ doc(debug) improve instructions.
++ enh(tests): check library also with ``DEBUG`` logging level.
 
 
 v9.3.0 (8 Jul 2020, @ankostis): Sphinx AutoDocumenter; fix plot sfx-nodes
