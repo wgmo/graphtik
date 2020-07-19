@@ -1651,8 +1651,8 @@ class Plotter:
             rankdir=TB;
             subgraph cluster_legend {
             label="Graphtik Legend %(ver)s";
-            edge [target=top];
-            node [target=top];
+            edge [target=_top];
+            node [target=_top];
 
             Dependencies   [shape=plaintext fontsize=16 fontname="bold italic"];
             Dependencies -> needs [dir=back arrowtail=inv
