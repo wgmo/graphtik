@@ -236,8 +236,9 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
     # To collect the operations to drop.
     unsatisfied = []
     # Topo-sort dag respecting operation-insertion order to break ties.
-    sorted_nodes = nx.topological_sort(dag)
+    sorted_nodes = nx.topological_sort(dag)  # generator!
     if log.isEnabledFor(logging.DEBUG):
+        sorted_nodes = list(sorted_nodes)
         log.debug("Topo-sorted nodes: %s", list(yield_node_names(sorted_nodes)))
     for i, node in enumerate(sorted_nodes):
         if isinstance(node, Operation):
