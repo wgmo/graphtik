@@ -492,9 +492,16 @@ class ExecutionPlan(
         )
         return f"ExecutionPlan(needs={needs}, provides={provides}, x{len(self.steps)} steps: {steps})"
 
-    def validate(self, inputs: Items = None, outputs: Items = None):
+    def validate(self, inputs: Items = UNSET, outputs: Items = UNSET):
         """
         Scream on invalid inputs, outputs or no operations in graph.
+
+        :params inputs:
+            they should be the inputs that this plan was :term:`compile`\\d for,
+            or MORE;  will scream if LESS...
+        :params outputs:
+            they should be the outputs that this plan was :term:`compile`\\d for,
+            or LESS;  will scream if MORE...
 
         :raises ValueError:
             - If cannot produce any `outputs` from the given `inputs`, with msg:
@@ -512,6 +519,11 @@ class ExecutionPlan(
         """
         if not self.dag:
             raise ValueError(f"Unsolvable graph:\n  {self}")
+
+        if inputs is UNSET:
+            inputs = self.needs
+        if outputs is UNSET:
+            outputs = self.provides
 
         # Check plan<-->inputs mismatch.
         #
