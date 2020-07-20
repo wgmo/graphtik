@@ -488,15 +488,15 @@ class Theme:
             <<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
               <TR><TD ALIGN="left">
                   {%- if nx_item | jsonp -%}
-                      {%- for step in nx_item | jsonp -%}
+                      {%- for js_step in nx_item | jsonp -%}
                           {%- if loop.first -%}
-                              {{- step | truncate -}}
+                              {{- js_step | truncate -}}
                               /
                           {%- else -%}
                               {{- '\n' -}}
                               {{- '  ' * (loop.index - 1) -}}
                               +--
-                              {{- step | truncate -}}
+                              {{- js_step | truncate -}}
                               {%- if not loop.last -%}
                                   /
                               {%- endif -%}
