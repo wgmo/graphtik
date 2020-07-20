@@ -174,7 +174,7 @@ ordered by breadth of the effects (most broadly effecting method at the top):
 
 
 Sphinx-generated sites
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 This library contains a new Sphinx extension (adapted from the :mod:`sphinx.ext.doctest`)
 that can render :term:`plottable`\s in sites from python code in "doctests".
 
@@ -204,7 +204,7 @@ their `:name:` option(see :ref:`sphinxext-examples` below).
    Unfortunately, you cannot use relative import, and have to write your module's full name.
 
 Directives
-~~~~~~~~~~
+^^^^^^^^^^
 .. rst:directive::  graphtik
 
    Renders a figure with a :ref:`graphtik plots <plotting>` from doctest code.
@@ -321,7 +321,7 @@ Directives
 .. _graphtik-directive-configs:
 
 Configurations
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 .. Note:
    - All configurations from `'doctest' directive
      <https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html#directive-doctest>`_ apply.
@@ -430,7 +430,7 @@ Configurations
 .. _sphinxext-examples:
 
 Examples
-~~~~~~~~
+^^^^^^^^
 The following directive renders a diagram of its doctest code, beneath it:
 
 .. code-block:: rst
