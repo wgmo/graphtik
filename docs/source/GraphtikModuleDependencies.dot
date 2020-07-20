@@ -1,10 +1,10 @@
 digraph {
     label="graphtik-v8.3.1+ module dependencies";
     labelloc=t;
-    node [style=filled];
+    tooltip="graphtik module dependencies";
     nodesep=0.55;
     remincross=true;
-    node [target="_top"];
+    node [target="_top" style=filled];
     edge [target="_top"];
 
     "plot.py"        [shape=component
@@ -64,7 +64,7 @@ digraph {
                                         headport=n tailport=se];
     {"pipeline.py",  "plot.py"} -> "base.py" [tooltip="(import-time)"
                                         headport=n tailport=sw];
-    "base.py" -> "plot.py"                      [tooltip="(run-time)" style=dashed  headport=s];
+    "base.py" -> "plot.py"             [tooltip="(run-time)" style=dashed headport=s];
     "execution.py" -> "planning.py"    [tooltip="(import-time)"];
     "planning.py" -> "execution.py"    [tooltip="(run-time)"  style=dashed];
     "pipeline.py" -> "planning.py"     [tooltip="(run-time)" style=dashed];
