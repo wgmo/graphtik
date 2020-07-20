@@ -518,7 +518,11 @@ class ExecutionPlan(
 
         """
         if not self.dag:
-            raise ValueError(f"Unsolvable graph:\n  {self}")
+            raise ValueError(
+                f"Unsolvable graph:\n  +--{self.net}"
+                f"\n  +--possible inputs: {list(self.net.needs)}"
+                "\n  +--possible outputs: {list(self.net.provides)}"
+            )
 
         if inputs is UNSET:
             inputs = self.needs
