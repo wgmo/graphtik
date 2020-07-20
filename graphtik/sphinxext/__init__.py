@@ -405,13 +405,17 @@ def _should_work(app: Sphinx):
 
 def _run_doctests_on_graphtik_document(app: Sphinx, doctree: nodes.Node):
     """Callback of `doctree-resolved`` event. """
-    docname = app.env.docname
-    from ._graphtikbuilder import get_graphtik_builder
+    try:
+        docname = app.env.docname
+        from ._graphtikbuilder import get_graphtik_builder
 
-    if _should_work(app) and any(doctree.traverse(graphtik_node)):
-        log.info(__("Graphtik-ing document %r..."), docname)
-        graphtik_builder = get_graphtik_builder(app)
-        graphtik_builder.test_doc(docname, doctree)
+        if _should_work(app) and any(doctree.traverse(graphtik_node)):
+            log.info(__("Graphtik-ing document %r..."), docname)
+            graphtik_builder = get_graphtik_builder(app)
+            graphtik_builder.test_doc(docname, doctree)
+    except Exception as ex:
+        log.error("General failure of Graphtik-sphinx extension: %s", ex, exc_info=True)
+        raise
 
 
 class DocFilesPurgatory:
