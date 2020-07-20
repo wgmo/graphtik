@@ -41,8 +41,8 @@ This yields a graph which looks like this (see :ref:`plotting`):
 
 .. _graph-computations:
 
-Running a pipeline
-------------------
+Compiling and Running a pipeline
+--------------------------------
 
 The graph composed above can be run by simply calling it with a dictionary of values
 with keys corresponding to the named :term:`dependencies <dependency>` (`needs` &
@@ -56,14 +56,50 @@ with keys corresponding to the named :term:`dependencies <dependency>` (`needs` 
 You may plot the solution:
 
 .. graphtik::
-    :caption: the solution of the graph
+    :caption: The solution of the graph.
     :graphvar: out
 
     >>> out.plot('a_solution.svg')  # doctest: +SKIP
 
+Alternatively, you may :term:`compile` only (and :meth:`~.ExecutionPlan.validate`)
+the pipeline, to see which operations will be included in the :term:`graph`
+(assuming the graph is solvable at all), based on the given :term:`inputs`/:term:`outputs`
+combination:
 
-Producing a subset of outputs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    >>> plan = formula.compile(inputs=['a', 'b'], outputs='a_minus_ab')
+    >>> plan
+    ExecutionPlan(needs=['a', 'b'],
+                  provides=['a_minus_ab'],
+                  x5 steps: mul1, b, sub1, a, ab)
+    >>> plan.validate()  # all fine
+
+Plotting the :term:`plan <execution plan>` reveals the :term:`prune`\d operations,
+and numbers operations and :term:`eviction`\s (see next section) in the order
+of execution:
+
+.. graphtik::
+    :caption: Obtaining just the :term:`execution plan`.
+    :graphvar: plan
+
+    >>> plan.plot()  # doctest: +SKIP
+
+But if an impossible combination of `inputs` & `outputs`
+is asked, the plan comes out empty:
+
+    >>> plan = formula.compile(inputs='a', outputs="a_minus_ab")
+    >>> plan
+    ExecutionPlan(needs=[], provides=[], x0 steps: )
+    >>> plan.validate()
+    Traceback (most recent call last):
+    ...
+    ValueError: Unsolvable graph:
+      +--Network(x8 nodes, x3 ops: mul1, sub1, abspow1)
+      +--possible inputs: ['a', 'b', 'ab', 'a_minus_ab']
+      +--possible outputs: {list(self.net.provides)}
+
+
+Evictions: producing a subset of outputs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default, calling a graph-operation on a set of inputs will yield all of
 that graph's :term:`outputs`.
@@ -92,8 +128,9 @@ into the plot:
 
     >>> dot = out.plot(theme={"show_steps": True})
 
-.. tip:
-   Read :ref:`plot-customizations` to understand the trick with the :term:`plotter`.
+.. tip::
+   Read :ref:`plot-customizations` to understand the trick with
+   the :term:`plot theme`, above.
 
 
 
