@@ -427,13 +427,12 @@ def modify(name: str, jsonp=None, implicit=None) -> _Modifier:
 
         >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
         Traceback (most recent call last):
-        ValueError: Failed preparing needs:
+        ValueError: Failed preparing `needs` for FnOp(name='copy a+b-->A+BB',
+            needs=['inputs/a'($), 'inputs/b'($)],
+            provides=['RESULTS/A'($), 'RESULTS/BB'($)],
+            fn='identity_fn'):
             1. Missing compulsory needs['inputs/a'($), 'inputs/b'($)]!
             +++inputs: ['inputs']
-            +++FnOp(name='copy a+b-->A+BB',
-                                   needs=['inputs/a'($), 'inputs/b'($)],
-                                   provides=['RESULTS/A'($), 'RESULTS/BB'($)],
-                                   fn='identity_fn')
 
         >>> results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
         >>> results
@@ -753,10 +752,10 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         >>> graph(a=5, b=0xBAD)
         Traceback (most recent call last):
         ...
-        ValueError: Failed preparing needs:
+        ValueError: Failed preparing `needs` for FnOp(name='enlist',
+                needs=['a', 'b'(+)], provides=['sum'], fn='enlist'):
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
-            +++FnOp(name='enlist', needs=['a', 'b'(+)], provides=['sum'], fn='enlist')
 
     .. varargs-mistake-start
     .. Attention::
@@ -766,13 +765,12 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         >>> graph(a=5, b="mistake")
         Traceback (most recent call last):
         ...
-        ValueError: Failed preparing needs:
+        ValueError: Failed preparing `needs` for FnOp(name='enlist',
+                    needs=['a', 'b'(+)],
+                    provides=['sum'],
+                    fn='enlist'):
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
-            +++FnOp(name='enlist',
-                                   needs=['a', 'b'(+)],
-                                   provides=['sum'],
-                                   fn='enlist')
 
     .. varargs-mistake-end
 

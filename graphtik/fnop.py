@@ -620,7 +620,6 @@ class FnOp(Operation):
             )
         inputs = dict(named_inputs) if is_debug() else list(named_inputs)
         errors.append(f"+++inputs: {inputs}")
-        errors.append(f"+++{self}")
 
         return textwrap.indent("\n".join(errors), " " * 4)
 
@@ -670,7 +669,7 @@ class FnOp(Operation):
 
         if missing or varargs_bad:
             msg = self._prepare_match_inputs_error(missing, varargs_bad, named_inputs)
-            raise ValueError(f"Failed preparing needs: \n{msg}")
+            raise ValueError(f"Failed preparing `needs` for {self}: \n{msg}")
 
         return positional, vararg_vals, kwargs
 
