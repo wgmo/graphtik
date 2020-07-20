@@ -492,7 +492,7 @@ class ExecutionPlan(
         )
         return f"ExecutionPlan(needs={needs}, provides={provides}, x{len(self.steps)} steps: {steps})"
 
-    def validate(self, inputs: Items, outputs: Items):
+    def validate(self, inputs: Items = None, outputs: Items = None):
         """
         Scream on invalid inputs, outputs or no operations in graph.
 
