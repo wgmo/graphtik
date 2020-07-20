@@ -104,12 +104,12 @@ def test_op_label_template_full():
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
                 ><FONT COLOR="blue"><B>OP:</B> <I>the op</I></FONT></TD>
-                <TD BORDER="1" SIDES="b"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
-                        <TR><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#04277d" TITLE="endured" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-endured" TARGET="_blank"
-                            ><FONT FACE="monospace" COLOR="white"><B>!</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#fc89ac" TITLE="rescheduled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-partial-outputs" TARGET="_blank"
-                            ><FONT FACE="monospace" COLOR="white"><B>?</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#b1ce9a" TITLE="parallel" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-parallel-execution" TARGET="_blank"
-                            ><FONT FACE="monospace" COLOR="white"><B>|</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#4e3165" TITLE="marshalled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-marshalling" TARGET="_blank"
-                            ><FONT FACE="monospace" COLOR="white"><B>&amp;</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dictionary" TARGET="_blank"
+                <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                        <TR><TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#04277d" TITLE="endured" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-endured" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>!</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#fc89ac" TITLE="rescheduled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-partial-outputs" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>?</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#b1ce9a" TITLE="parallel" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-parallel-execution" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>|</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#4e3165" TITLE="marshalled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-marshalling" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>&amp;</B></FONT></TD><TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dictionary" TARGET="_blank"
                             ><FONT FACE="monospace" COLOR="white"><B>}</B></FONT></TD></TR>
                     </TABLE></TD>
             </TR><TR>
@@ -138,7 +138,7 @@ def test_op_label_template_empty():
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ></TD>
-                <TD BORDER="1" SIDES="b"></TD>
+                <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
             </TR>
         </TABLE>>
         """
@@ -159,7 +159,7 @@ def test_op_label_template_fn_empty():
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ><B>OP:</B> <I>op</I></TD>
-                <TD BORDER="1" SIDES="b"></TD>
+                <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
             </TR><TR>
                 <TD COLSPAN="2" ALIGN="left" TARGET=""
                 ><B>FN:</B> fn</TD>
@@ -190,7 +190,7 @@ def test_op_label_template_nones():
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
                 ></TD>
-                <TD BORDER="1" SIDES="b"></TD>
+                <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
             </TR>
         </TABLE>>
         """
@@ -547,24 +547,30 @@ def test_node_dot_str0(dot_str_pipeline):
         digraph graph_ {
         fontname=italic;
         label=<graph>;
-        <edge> [fixedsize=shape, label=edge, shape=invhouse, tooltip="(input)"];
-        <digraph&#58; strict> [fixedsize=shape, label="digraph: strict", shape=invhouse, tooltip="(input)"];
+        <edge> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                    <TR><TD ALIGN="left">edge</TD></TR>
+                    </TABLE>>, shape=invhouse, tooltip="(input)"];
+        <digraph&#58; strict> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                    <TR><TD ALIGN="left">digraph: strict</TD></TR>
+                    </TABLE>>, shape=invhouse, tooltip="(input)"];
         <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET="_top"
                 ><B>OP:</B> <I>node</I></TD>
-                <TD BORDER="1" SIDES="b"></TD>
+                <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
             </TR><TR>
                 <TD COLSPAN="2" ALIGN="left" TOOLTIP="Same as a + b." TARGET="_top"
                 ><B>FN:</B> &lt;built-in function add&gt;</TD>
             </TR>
         </TABLE>>, shape=plain, tooltip=<node>];
-        <&lt;graph&gt;> [fixedsize=shape, label=<graph>, shape=house, tooltip="(output)"];
+        <&lt;graph&gt;> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                    <TR><TD ALIGN="left"><graph></TD></TR>
+                    </TABLE>>, shape=house, tooltip="(output)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
-                <TD BORDER="1" SIDES="b"></TD>
+                <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
             </TR><TR>
                 <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET="_top"
                 ><B>FN:</B> test.test_plot.func</TD>
@@ -600,14 +606,23 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         splines=ortho;
         subgraph "cluster_after pruning" {
         label=<after pruning>;
-        <edge> [fillcolor=wheat, fixedsize=shape, label=edge, shape=invhouse, style=filled, tooltip="(input)\n(int) 1"];
-        <digraph&#58; strict> [fillcolor=wheat, fixedsize=shape, label="digraph: strict", shape=invhouse, style=filled, tooltip="(input)\n(int) 2"];
-        <&lt;graph&gt;> [fillcolor=SkyBlue, fixedsize=shape, label=<graph>, shape=house, style=filled, tooltip="(output)\n(None)\n(overridden)"];
+        <edge> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                    <TR><TD ALIGN="left">edge</TD></TR>
+                    </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(int) 1"];
+        <digraph&#58; strict> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                    <TR><TD ALIGN="left">digraph: strict</TD></TR>
+                    </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(int) 2"];
+        <&lt;graph&gt;> [fillcolor=SkyBlue, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                    <TR><TD ALIGN="left"><graph></TD></TR>
+                    </TABLE>>, shape=house, style=filled, tooltip="(output)\n(None)\n(overridden)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
-                <TD BORDER="1" SIDES="b"></TD>
+                <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                        <TR><TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD></TR>
+                    </TABLE></TD>
             </TR><TR>
                 <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET="_top"
                 ><B>FN:</B> test.test_plot.func</TD>
@@ -647,6 +662,66 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     )
     assert _striplines(dot_str) == _striplines(exp)
     assert "<node>" not in dot_str
+
+
+def test_step_badge():
+    p = compose(
+        "",
+        operation(str, "0", provides="b"),
+        operation(str, "1", needs="b", provides="c"),
+    )
+    sol = p.compute(outputs="c")
+    dot_str = str(sol.plot())
+    print(dot_str)
+    exp = r"""
+    digraph solution_x4_nodes {
+    fontname=italic;
+    <0> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
+        <TR>
+            <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;0&#x27;, provides=[&#x27;b&#x27;], fn=&#x27;str&#x27;)" TARGET="_top"
+            ><B>OP:</B> <I>0</I></TD>
+            <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                    <TR><TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" TARGET="_blank"
+                        ><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD></TR>
+                </TABLE></TD>
+        </TR><TR>
+            <TD COLSPAN="2" ALIGN="left" TARGET="_top"
+            ><B>FN:</B> builtins.str</TD>
+        </TR>
+    </TABLE>>, shape=plain, tooltip=<0>];
+    <b> [color="#006666", fixedsize=shape, fontcolor="#006666", label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR><TD ALIGN="left">b</TD><TD ALIGN="right">
+                        <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                            <TR>
+                            <TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>2</B></FONT></TD>
+                            </TR>
+                        </TABLE>
+                        </TD></TR>
+                </TABLE>>, penwidth=3, shape=rect, style=dashed, tooltip="(to evict)\n(evicted)"];
+    <1> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
+        <TR>
+            <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;1&#x27;, needs=[&#x27;b&#x27;], provides=[&#x27;c&#x27;], fn=&#x27;str&#x27;)" TARGET="_top"
+            ><B>OP:</B> <I>1</I></TD>
+            <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                    <TR><TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" TARGET="_blank"
+                        ><FONT FACE="monospace" COLOR="white"><B>1</B></FONT></TD></TR>
+                </TABLE></TD>
+        </TR><TR>
+            <TD COLSPAN="2" ALIGN="left" TARGET="_top"
+            ><B>FN:</B> builtins.str</TD>
+        </TR>
+    </TABLE>>, shape=plain, tooltip=<1>];
+    <c> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR><TD ALIGN="left">c</TD></TR>
+                </TABLE>>, shape=house, style=filled, tooltip="(output)\n(str)"];
+    <0> -> <b>  [headport=n, tailport=s];
+    <b> -> <1>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <1> -> <c>  [headport=n, tailport=s];
+    legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
+    }
+    """
+    assert _striplines(dot_str) == _striplines(exp)
 
 
 def test_node_edge_defaults():

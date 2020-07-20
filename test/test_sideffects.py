@@ -373,8 +373,8 @@ def test_sideffecteds_ok(calc_prices_pipeline):
     #
     dot = str(sol.plot())
     print(dot)
-    assert re.search(r"<vat owed>.+style=dashed", dot)
-    assert re.search(r'<vat owed>.+tooltip=".*\(evicted\)"', dot)
+    assert re.search(r"(?s)>vat owed<.+style=dashed", dot)
+    assert re.search(r'(?s)>vat owed<.+tooltip=".*\(evicted\)"', dot)
 
 
 @pytest.mark.xfail(

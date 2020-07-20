@@ -727,7 +727,7 @@ class Plottable(abc.ABC):
             digraph pipeline {
             fontname=italic;
             label=<pipeline>;
-            <a> [fillcolor=wheat, fixedsize=shape, label=a, shape=invhouse, style=filled, tooltip="(input)\\n(int) 1"];
+            <a> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
             ...
 
         .. graphtik::

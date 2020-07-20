@@ -44,6 +44,7 @@ from boltons.iterutils import default_enter, default_exit, get_path, remap
 
 from . import __version__
 from .base import Operation, PlotArgs, first_solid, func_name, func_source
+from .planning import yield_node_names
 from .config import (
     is_debug,
     is_endure_operations,
@@ -436,7 +437,7 @@ class Theme:
     resched_thickness = 4
     broken_color = "Red"
     overwrite_color = "SkyBlue"
-    steps_color = "#00bbbb"
+    steps_color = "#00bbbb"  # repeated literally in data/op labels
     evicted_color = "#006666"
     #: the url to the architecture section explaining *graphtik* glossary,
     #: linked by legend.
@@ -483,28 +484,43 @@ class Theme:
         "shape": "rect",
         "fixedsize": "shape",
         "label": make_template(
-            """
-            {%- if nx_item | jsonp -%}
-                <
-                {%- for step in nx_item | jsonp -%}
-                    {%- if loop.first -%}
-                        {{- step | truncate -}}
-                        /
-                    {%- else -%}
-                        {{- '\n' -}}
-                        {{- '  ' * (loop.index - 1) -}}
-                        +--
-                        {{- step | truncate -}}
-                        {%- if not loop.last -%}
-                            /
-                        {%- endif -%}
-                    {%- endif -%}
-                    <BR ALIGN="LEFT"/>
-                {%- endfor -%}
-                >
-            {%- else -%}
-                {{- nx_item | truncate -}}
-            {%- endif -%}
+            """\
+            <<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+              <TR><TD ALIGN="left">
+                  {%- if nx_item | jsonp -%}
+                      {%- for step in nx_item | jsonp -%}
+                          {%- if loop.first -%}
+                              {{- step | truncate -}}
+                              /
+                          {%- else -%}
+                              {{- '\n' -}}
+                              {{- '  ' * (loop.index - 1) -}}
+                              +--
+                              {{- step | truncate -}}
+                              {%- if not loop.last -%}
+                                  /
+                              {%- endif -%}
+                          {%- endif -%}
+                          <BR ALIGN="LEFT"/>
+                      {%- endfor -%}
+                  {%- else -%}
+                      {{- nx_item | truncate -}}
+                  {%- endif -%}
+                </TD>
+                {%- if steps and nx_item in steps -%}
+                    <TD ALIGN="right">
+                    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                        <TR>
+                        <TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" TARGET="_blank"
+                        ><FONT FACE="monospace" COLOR="white"><B>
+                            {{- steps.index(nx_item) -}}
+                        </B></FONT></TD>
+                        </TR>
+                    </TABLE>
+                    </TD>
+                {%- endif -%}
+              </TR>
+            </TABLE>>
             """
         ),
     }
@@ -655,7 +671,7 @@ class Theme:
     #: (see examples in ``test.test_plot.test_op_template_full()`` for params).
     #: TODO: fix jinja2 template is un-picklable!
     op_template = make_template(
-        """
+        """\
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded"
           {{- {
           'BORDER': penwidth | ee,
@@ -674,12 +690,18 @@ class Theme:
                     {{- '<B>OP:</B> <I>%s</I>' % op_name | truncate(*op_truncate[0], **op_truncate[1]) | ee if op_name -}}
                     {%- if fontcolor -%}</FONT>{%- endif -%}
                 </TD>
-                <TD BORDER="1" SIDES="b">
-                {%- if badges -%}
+                <TD BORDER="1" SIDES="b" ALIGN="right">
+                {%- if badges or (steps and op_name in steps) -%}
                     <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
                         <TR>
+                        {%- if steps and op_name in steps -%}
+                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" TARGET="_blank"
+                            ><FONT FACE="monospace" COLOR="white"><B>
+                                {{- steps.index(op_name) | eee -}}
+                            </B></FONT></TD>
+                        {%- endif -%}
                         {%- for badge in badges -%}
-                            <TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor
+                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor
                                 }}" TITLE="{{ badge_styles[badge].tooltip | e
                                 }}" HREF="{{ badge_styles[badge].URL | hrefer | ee
                                 }}" TARGET="_blank"
@@ -768,13 +790,22 @@ class Theme:
     ## Other
     ##
 
-    #: When true, plot also :term:`execution steps`, linking operations and evictions
-    #: with green dotted lines labeled with numbers denoting the execution order.
-    show_steps = False
-    #: - true: plot also :term:`hierarchical data` nodes not directly linked
-    #:   to operations;
-    #: - (default) None: hide any parent/subdoc not related directly to some operation;
-    #: - false: hide also parent-subdoc relation edges.
+    #: `None`:
+    #:      plot just a badge with the order (a number) of each op/data
+    #:      in steps (if contained);
+    #: true:
+    #:      plot also :term:`execution steps`, linking operations and evictions
+    #:      with green dotted lines labeled with numbers denoting the execution order;
+    #: false:
+    #:      hide even op/data step order badges.
+    show_steps = None
+    #: `None`:
+    #:  hide any parent/subdoc not related directly to some operation;
+    #: true:
+    #:  plot also :term:`hierarchical data` nodes not directly linked
+    #:  to operations;
+    #: false:
+    #:  hide also parent-subdoc relation edges.
     show_chaindocs = None
     kw_step = {
         "style": "dotted",  # Note: Step styles are not *remerged*.`
@@ -1027,9 +1058,8 @@ class StylesStack(NamedTuple):
         - Resolve any :class:`.Ref` instances, first against the current *nx_attrs*
           and then against the attributes of the current theme.
 
-        - Render jinja2 templates (see :meth:`_expand_styles()`) with template-arguments
-          all the attributes of the :class:`plot_args <.PlotArgs>` instance in use
-          (hence much more flexible than :class:`.Ref`).
+        - Render jinja2 templates with template-arguments all attributes of :class:`plot_args
+          <.PlotArgs>` instance in use, (hence much more flexible than :class:`.Ref`).
 
         - Any Nones results above are discarded.
 
@@ -1391,9 +1421,21 @@ class Plotter:
 
             styles = self._new_styles_stack(plot_args)
             styles.add("kw_op")
+
+            # Decide if steps badge would be shown.
+            #
+            if not steps or not theme.show_steps and theme.show_steps is not None:
+                steps = None
+            else:
+                steps = steps and list(yield_node_names(steps))
+
             styles.add(
                 "op_label_template",
-                {"label": _render_template(theme.op_template, **label_styles.merge(),)},
+                {
+                    "label": _render_template(
+                        theme.op_template, steps=steps, **label_styles.merge(),
+                    )
+                },
             )
 
             # Exclude Graphviz node attributes interacting badly with HTML-Labels.
