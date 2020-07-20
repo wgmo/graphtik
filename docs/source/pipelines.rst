@@ -24,7 +24,7 @@ The call here to ``compose()`` yields a runnable computation graph that looks li
 (where the circles are operations, squares are data, and octagons are parameters):
 
     >>> # Compose the mul, sub, and abspow operations into a computation graph.
-    >>> graphop = compose("graphop",
+    >>> formula = compose("maths",
     ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
     ...    operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
     ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
@@ -34,9 +34,9 @@ The call here to ``compose()`` yields a runnable computation graph that looks li
 This yields a graph which looks like this (see :ref:`plotting`):
 
 .. graphtik::
-    :name: graphop
+    :name: formula
 
-    >>> graphop.plot('calc_power.svg')  # doctest: +SKIP
+    >>> formula.plot('calc_power.svg')  # doctest: +SKIP
 
 
 .. _graph-computations:
@@ -49,7 +49,7 @@ with keys corresponding to the named :term:`dependencies <dependency>` (`needs` 
 `provides`):
 
     >>> # Run the graph and request all of the outputs.
-    >>> out = graphop(a=2, b=5)
+    >>> out = formula(a=2, b=5)
     >>> out
     {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
@@ -68,10 +68,10 @@ Producing a subset of outputs
 By default, calling a graph-operation on a set of inputs will yield all of
 that graph's :term:`outputs`.
 You can use the ``outputs`` parameter to request only a subset.
-For example, if ``graphop`` is as above:
+For example, if ``formula`` is as above:
 
     >>> # Run the graph-operation and request a subset of the outputs.
-    >>> out = graphop.compute({'a': 2, 'b': 5}, outputs="a_minus_ab")
+    >>> out = formula.compute({'a': 2, 'b': 5}, outputs="a_minus_ab")
     >>> out
     {'a_minus_ab': -8}
 
@@ -106,7 +106,7 @@ For example, in the graph-operation we've been working with, you could provide
 the value of ``a_minus_ab`` to make the inputs ``a`` and ``b`` unnecessary:
 
     >>> # Run the graph-operation and request a subset of the outputs.
-    >>> out = graphop(a_minus_ab=-8)
+    >>> out = formula(a_minus_ab=-8)
     >>> out
     {'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
 
@@ -276,8 +276,8 @@ of the operation.
     ... def read_book(for_how_long):
     ...     return "relaxed"
 
-    >>> pipeline = compose("covid19", get_out, stay_home, exercise, read_book)
-    >>> pipeline
+    >>> covid19 = compose("covid19", get_out, stay_home, exercise, read_book)
+    >>> covid19
     Pipeline('covid19',
                      needs=['space', 'time'],
                      provides=['space', 'time', 'fun'],
@@ -290,7 +290,7 @@ Notice the thick outlines of the endured (or :term:`reschedule`\d, see below) op
 When executed, the pipeline produced :term:`outputs`, although one of its operations
 has failed:
 
-    >>> sol = pipeline()
+    >>> sol = covid19()
     >>> sol
     {'time': '1h', 'fun': 'relaxed'}
 
@@ -336,17 +336,17 @@ actual `provides` delivered:
     ... def read_book(for_how_long):
     ...     return "relaxed", "popular physics"
 
-    >>> pipeline = compose("covid19", get_out_or_stay_home, exercise, read_book)
+    >>> covid19 = compose("covid19", get_out_or_stay_home, exercise, read_book)
 
 Depending on "quarantine' state we get to execute different part of the pipeline:
 
 .. graphtik::
 
-    >>> sol = pipeline(quarantine=True)
+    >>> sol = covid19(quarantine=True)
 
 .. graphtik::
 
-    >>> sol = pipeline(quarantine=False)
+    >>> sol = covid19(quarantine=False)
 
 
 In both case, a warning gets raised about the missing outputs, but the execution
