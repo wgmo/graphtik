@@ -590,11 +590,17 @@ In interactive *REPL* console you may use this to get the last raised exception:
 The following annotated attributes *might* have meaningful value on an exception
 (press :kbd:`[Tab]` to auto-complete):
 
-``network``
-   the innermost network owning the failed operation/function
+``solution``
+    -- the most usefull object to inspect (plot) -- an instance of :class:`.Solution`,
+    containing `inputs` & `outputs` till the error happened;
+    note that :attr:`.Solution.executed` contain the list of executed
+    `operations` so far.
 
 ``plan``
    the innermost plan that executing when a operation crashed
+
+``network``
+   the innermost network owning the failed operation/function
 
 ``operation``
    the innermost operation that failed
@@ -615,10 +621,6 @@ The following annotated attributes *might* have meaningful value on an exception
 
 ``op_results``
     the results, always a dictionary, as matched with operation's `provides`
-
-``solution``
-    an instance of :class:`.Solution`, contains `inputs` & `outputs` till the error happened;
-    note that :attr:`.Solution.executed` contain the list of executed `operations` so far.
 
 Of course you may plot some "jetsam" values, to visualize the condition
 that caused the error (see :ref:`plotting`).
