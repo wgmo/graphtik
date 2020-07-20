@@ -496,25 +496,20 @@ class ExecutionPlan(
         """
         Scream on invalid inputs, outputs or no operations in graph.
 
-        :params inputs:
-            they should be the inputs that this plan was :term:`compile`\\d for,
-            or MORE;  will scream if LESS...
-        :params outputs:
-            they should be the outputs that this plan was :term:`compile`\\d for,
-            or LESS;  will scream if MORE...
+        :param inputs:
+            the inputs that this plan was :term:`compile`\\d for, or MORE;
+            will scream if LESS...
+        :param outputs:
+            the outputs that this plan was :term:`compile`\\d for, or LESS;
+            will scream if MORE...
 
         :raises ValueError:
-            - If cannot produce any `outputs` from the given `inputs`, with msg:
-
-                *Unsolvable graph: ...*
-
-            - If given `inputs` mismatched plan's :attr:`needs`, with msg:
-
-                *Plan needs more inputs...*
-
-            - If net cannot produce asked `outputs`, with msg:
-
-                *Unreachable outputs...*
+            *Unsolvable graph...*
+                if it cannot produce any `outputs` from the given `inputs`.
+            *Plan needs more inputs...*
+                if given `inputs` mismatched plan's :attr:`needs`.
+            *Unreachable outputs...*
+                if net cannot produce asked `outputs`.
 
         """
         if not self.dag:
@@ -808,17 +803,12 @@ class ExecutionPlan(
             +1 for inputs in separate dictionaries.
 
         :raises ValueError:
-            - If plan does not contain any operations, with msg:
-
-                *Unsolvable graph: ...*
-
-            - If given `inputs` mismatched plan's :attr:`needs`, with msg:
-
-                *Plan needs more inputs...*
-
-            - If net cannot produce asked `outputs`, with msg:
-
-                *Unreachable outputs...*
+            *Unsolvable graph...*
+                if it cannot produce any `outputs` from the given `inputs`.
+            *Plan needs more inputs...*
+                if given `inputs` mismatched plan's :attr:`needs`.
+            *Unreachable outputs...*
+                if net cannot produce asked `outputs`.
         """
         try:
             self.validate(named_inputs, outputs)

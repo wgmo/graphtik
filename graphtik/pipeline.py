@@ -344,21 +344,14 @@ class Pipeline(Operation):
             the :term:`execution plan` satisfying the given `inputs`, `outputs` & `predicate`
 
         :raises ValueError:
-            - If `outputs` asked do not exist in network, with msg:
-
-                *Unknown output nodes: ...*
-
-            - If solution does not contain any operations, with msg:
-
-                *Unsolvable graph: ...*
-
-            - If given `inputs` mismatched plan's :attr:`needs`, with msg:
-
-                *Plan needs more inputs...*
-
-            - If net cannot produce asked `outputs`, with msg:
-
-                *Unreachable outputs...*
+            *Unknown output nodes...*
+                if `outputs` asked do not exist in network.
+            *Unsolvable graph: ...*
+                if it cannot produce any `outputs` from the given `inputs`.
+            *Plan needs more inputs...*
+                if given `inputs` mismatched plan's :attr:`needs`.
+            *Unreachable outputs...*
+                if net cannot produce asked `outputs`.
         """
         outputs = self.outputs if outputs == UNSET else outputs
         predicate = self.predicate if predicate == UNSET else predicate
