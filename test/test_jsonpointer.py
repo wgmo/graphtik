@@ -218,7 +218,7 @@ def std_case(std_doc, request):
     """From https://tools.ietf.org/html/rfc6901#section-5 """
     path, exp = request.param
     if exp is ...:
-        exp = std_doc
+        exp = deepcopy(std_doc)
     return path, exp
 
 
@@ -389,16 +389,13 @@ def test_set_path_sequence_with_str_screams():
 
 def test_pop_path_examples_from_spec(std_doc, std_case):
     path, exp = std_case
-    orig = dict(std_doc)
+    doc = deepcopy(std_doc)
 
-    assert pop_path(std_doc, path) == exp
+    assert pop_path(doc, path) == exp
 
-    if exp == std_doc:
-        # '/' pops nothing :-(
-        assert std_doc == exp
-    else:
-        exp_doc = {k: v for k, v in orig.items() if v != exp}
-        assert std_doc == exp_doc
+    if exp != doc:
+        exp_doc = {k: v for k, v in doc.items() if v != exp}
+        assert doc == exp_doc
 
 
 @pytest.mark.parametrize(
