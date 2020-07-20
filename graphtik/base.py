@@ -792,6 +792,9 @@ class Plottable(abc.ABC):
             else None
         )
 
+        if plot_args.steps is None and plot_args.solution is not None:
+            plot_args = plot_args._replace(steps=plot_args.solution.plan.steps)
+
         return plot_args.plotter.plot(plot_args)
 
     @abc.abstractmethod
