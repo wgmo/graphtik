@@ -85,6 +85,19 @@ Changelog
 %%%%%%%%%
 
 
+v10.1.0 (XX Jul 2020, @ankostis): Step number badges
+----------------------------------------------------
++ ENH(plot): add number badges on operations & data nodes to denote execution order;
+  theme ``show_steps=False`` can hide them;
+
+  + feat: data-nodes are *Graphviz HTML-ized* to support badges.
+
++ fix(plan): :meth:`.ExecutionPlan.validate()` may be called with no args,
+  and uses the compiled ones.
++ fix(SphinxExt): catch top-level errors that if occured, message and stack trace
+  were lost.
+
+
 v10.0.0 (19 Jul 2020, @ankostis): Implicits; modify(); auto-name pipelines; plot data as overspilled
 ====================================================================================================
 Should have been 10+ for breaking rename of modifier ``jsonp => modify``.
