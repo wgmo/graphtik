@@ -336,7 +336,7 @@ def _make_jinja2_environment() -> jinja2.Environment:
     env.filters["ex"] = _format_exception
     env.filters["truncate"] = _reversing_truncate
     env.filters["sideffected"] = lambda x: is_sfx(x) or None
-    env.filters["sfx_list"] = lambda x: is_sfxed(x) or None
+    env.filters["sfxed"] = env.filters["sfx_list"] = lambda x: is_sfxed(x) or None
     env.filters["jsonp"] = get_jsonp
 
     return env
@@ -498,14 +498,7 @@ class Theme:
         "color": Ref("sideffect_color"),
         "fontcolor": Ref("sideffect_color"),
     }
-    kw_data_sideffected = {
-        "label": make_template(
-            """
-            <{{ nx_item | sideffected | eee }}<BR/>
-            (<I>sfx:</I> {{ nx_item | sfx_list | join(', ') | eee }})>
-            """
-        ),
-    }
+    kw_data_sideffected = {}
     kw_data_to_evict = {
         "color": Ref("evicted_color"),
         "fontcolor": Ref("evicted_color"),
@@ -556,9 +549,16 @@ class Theme:
                         {%- endif -%}
                         <BR ALIGN="LEFT"/>
                     {%- endfor -%}
+                {%- elif nx_item | sfxed -%}
+                    {{- nx_item | sideffected | truncate -}}
                 {%- else -%}
                     {{- nx_item | truncate -}}
                 {%- endif -%}
+
+                {%- if nx_item | sfxed -%}
+                    <BR/>(<I>sfx:</I> {{ nx_item | sfx_list | join(', ') | eee }})
+                {%- endif -%}
+
             </TD>
             {%- if steps and nx_item in steps %}
             <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="2" HEIGHT="22" VALIGN="BOTTOM"
