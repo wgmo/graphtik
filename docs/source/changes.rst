@@ -1,7 +1,7 @@
 .. include:: ../../CHANGES.rst
     :end-before: .. _substitutions:
 
-.. |sample-plot| image:: images/sample_plot.svg
+.. |sample-plot| image:: images/sample.svg
     :alt: sample graphtik plot
     :width: 120px
     :align: bottom

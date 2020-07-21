@@ -1323,7 +1323,7 @@ First public release in PyPi & GitHub.
 .. _substitutions:
 
 
-.. |sample-plot| image:: docs/source/images/sample_plot.svg
+.. |sample-plot| image:: docs/source/images/sample.svg
     :alt: sample graphkit plot
     :width: 120px
     :align: bottom
