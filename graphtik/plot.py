@@ -658,7 +658,7 @@ class Theme:
             },
         }
     }
-    #: props of the HTML-Table label for Operations
+    #: Jinja2 params for the HTML-Table label
     kw_op_label = {
         "op_name": lambda pa: pa.nx_item.name,
         "fn_name": lambda pa: pa.nx_item
@@ -700,8 +700,14 @@ class Theme:
                     <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
                         <TR>
                         {%- if steps and op_name in steps -%}
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" TARGET="_blank"
-                            ><FONT FACE="monospace" COLOR="white"><B>
+                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM"
+                            {{- {
+                            'BGCOLOR': step_bgcolor | eee,
+                            'TITLE': step_tooltip | eee,
+                            'HREF': step_url | hrefer | ee,
+                            'TARGET': step_target | eee
+                            } | xmlattr -}}
+                            ><FONT FACE="monospace" COLOR="{{ step_color | eee }}"><B>
                                 {{- steps.index(op_name) | eee -}}
                             </B></FONT></TD>
                         {%- endif -%}
@@ -812,6 +818,15 @@ class Theme:
     #: false:
     #:  hide also parent-subdoc relation edges.
     show_chaindocs = None
+    #: Available as jinja2 params for both data & operation templates.
+    kw_step_badge = {
+        "step_bgcolor": Ref("steps_color"),
+        "step_color": "white",
+        "step_url": "https://graphtik.readthedocs.io/en/latest/arch.html#term-steps",
+        "step_target": "_top",
+        "step_tooltip": "computation order",
+    }
+    #: step edges
     kw_step = {
         "style": "dotted",  # Note: Step styles are not *remerged*.`
         "color": Ref("steps_color"),
