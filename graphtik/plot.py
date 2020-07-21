@@ -501,7 +501,6 @@ class Theme:
     kw_data_sideffected = {}
     kw_data_to_evict = {
         "color": Ref("evicted_color"),
-        "fontcolor": Ref("evicted_color"),
         "style": ["dashed"],
         "tooltip": ["(to evict)"],
     }
@@ -561,7 +560,7 @@ class Theme:
 
             </TD>
             {%- if steps and nx_item in steps %}
-            <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4" VALIGN="MIDDLE"
+            <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4"
             {{- {
                 'BGCOLOR': step_bgcolor | eee,
                 'TITLE': step_tooltip | eee,

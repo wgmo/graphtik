@@ -697,9 +697,9 @@ def test_step_badge():
             ><B>FN:</B> builtins.str</TD>
         </TR>
     </TABLE>>, shape=plain, tooltip=<0>];
-    <b> [color="#006666", fixedsize=shape, fontcolor="#006666", label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+    <b> [color="#006666", fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
                 <TR><TD>b</TD>
-                <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="2" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"
+                <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"
                 ><FONT FACE="monospace" COLOR="white"><B>2</B></FONT></TD></TR>
             </TABLE>>, penwidth=3, shape=rect, style=dashed, tooltip="(to evict)\n(evicted)"];
     <1> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
