@@ -561,7 +561,7 @@ class Theme:
 
             </TD>
             {%- if steps and nx_item in steps %}
-            <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="2" HEIGHT="22" VALIGN="BOTTOM"
+            <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4" VALIGN="MIDDLE"
             {{- {
                 'BGCOLOR': step_bgcolor | eee,
                 'TITLE': step_tooltip | eee,
