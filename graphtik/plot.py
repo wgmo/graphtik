@@ -437,7 +437,7 @@ class Theme:
     resched_thickness = 4
     broken_color = "Red"
     overwrite_color = "SkyBlue"
-    steps_color = "#00bbbb"  # repeated literally in data/op labels
+    steps_color = "#00bbbb"
     evicted_color = "#006666"
     #: the url to the architecture section explaining *graphtik* glossary,
     #: linked by legend.
@@ -478,51 +478,13 @@ class Theme:
     ## DATA node
     ##
 
+    #: Jinja2 params for the HTML-Table label
+    kw_data_label = {}
     #: Reduce margins, since sideffects take a lot of space
     #: (default margin: x=0.11, y=0.055O)
     kw_data = {
         "shape": "rect",
         "fixedsize": "shape",
-        "label": make_template(
-            """\
-            <<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-              <TR><TD ALIGN="left">
-                  {%- if nx_item | jsonp -%}
-                      {%- for js_step in nx_item | jsonp -%}
-                          {%- if loop.first -%}
-                              {{- js_step | truncate -}}
-                              /
-                          {%- else -%}
-                              {{- '\n' -}}
-                              {{- '  ' * (loop.index - 1) -}}
-                              +--
-                              {{- js_step | truncate -}}
-                              {%- if not loop.last -%}
-                                  /
-                              {%- endif -%}
-                          {%- endif -%}
-                          <BR ALIGN="LEFT"/>
-                      {%- endfor -%}
-                  {%- else -%}
-                      {{- nx_item | truncate -}}
-                  {%- endif -%}
-                </TD>
-                {%- if steps and nx_item in steps -%}
-                    <TD ALIGN="right">
-                    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
-                        <TR>
-                        <TD STYLE="rounded" HEIGHT="22" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" TARGET="_blank"
-                        ><FONT FACE="monospace" COLOR="white"><B>
-                            {{- steps.index(nx_item) -}}
-                        </B></FONT></TD>
-                        </TR>
-                    </TABLE>
-                    </TD>
-                {%- endif -%}
-              </TR>
-            </TABLE>>
-            """
-        ),
     }
     kw_data_inp = {}
     kw_data_out = {}
@@ -574,6 +536,46 @@ class Theme:
         "color": Ref("canceled_color"),
         "tooltip": ["(missing-optional or canceled)"],
     }
+    data_template = make_template(
+        """\
+        <<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+            <TR><TD>
+                {%- if nx_item | jsonp -%}
+                    {%- for js_step in nx_item | jsonp -%}
+                        {%- if loop.first -%}
+                            {{- js_step | truncate -}}
+                            /
+                        {%- else -%}
+                            {{- '\n' -}}
+                            {{- '  ' * (loop.index - 1) -}}
+                            +--
+                            {{- js_step | truncate -}}
+                            {%- if not loop.last -%}
+                                /
+                            {%- endif -%}
+                        {%- endif -%}
+                        <BR ALIGN="LEFT"/>
+                    {%- endfor -%}
+                {%- else -%}
+                    {{- nx_item | truncate -}}
+                {%- endif -%}
+            </TD>
+            {%- if steps and nx_item in steps %}
+            <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="2" HEIGHT="22" VALIGN="BOTTOM"
+            {{- {
+                'BGCOLOR': step_bgcolor | eee,
+                'TITLE': step_tooltip | eee,
+                'HREF': step_url | hrefer | ee,
+                'TARGET': step_target | eee
+                } | xmlattr }}
+            ><FONT FACE="monospace" COLOR="{{ step_color | eee }}"><B>
+                    {{- steps.index(nx_item) -}}
+                </B></FONT></TD>
+            {%- endif -%}
+            </TR>
+        </TABLE>>
+        """
+    )
 
     ##########
     ## OPERATION node
@@ -697,9 +699,9 @@ class Theme:
                 </TD>
                 <TD BORDER="1" SIDES="b" ALIGN="right">
                 {%- if badges or (steps and op_name in steps) -%}
-                    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2">
+                    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
                         <TR>
-                        {%- if steps and op_name in steps -%}
+                        {%- if steps and op_name in steps %}
                             <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM"
                             {{- {
                             'BGCOLOR': step_bgcolor | eee,
@@ -711,7 +713,7 @@ class Theme:
                                 {{- steps.index(op_name) | eee -}}
                             </B></FONT></TD>
                         {%- endif -%}
-                        {%- for badge in badges -%}
+                        {%- for badge in badges %}
                             <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor
                                 }}" TITLE="{{ badge_styles[badge].tooltip | e
                                 }}" HREF="{{ badge_styles[badge].URL | hrefer | ee
@@ -719,7 +721,7 @@ class Theme:
                             ><FONT FACE="monospace" COLOR="{{ badge_styles[badge].color }}"><B>
                                 {{- badge | eee -}}
                             </B></FONT></TD>
-                        {%- endfor -%}
+                        {%- endfor %}
                         </TR>
                     </TABLE>
                 {%- endif -%}
@@ -1353,7 +1355,12 @@ class Plotter:
         node_attrs = plot_args.nx_attrs
         (plottable, _, _, steps, inputs, outputs, solution, *_,) = plot_args
 
+        label_styles = self._new_styles_stack(plot_args)
         if isinstance(nx_node, str):  # DATA
+            label_styles.add("kw_data_label")
+            label_styles.stack_user_style(node_attrs)
+            label_styles.add("kw_step_badge")
+
             styles = self._new_styles_stack(plot_args)
 
             styles.add("kw_data")
@@ -1410,9 +1417,18 @@ class Plotter:
 
             styles.stack_user_style(node_attrs)
 
-        else:  # OPERATION
-            label_styles = self._new_styles_stack(plot_args)
+            styles.add(
+                "data_label_template",
+                {
+                    "label": _render_template(
+                        theme.data_template,
+                        **plot_args._asdict(),
+                        **label_styles.merge(),
+                    )
+                },
+            )
 
+        else:  # OPERATION
             label_styles.add("kw_op_label")
 
             ## Op-kind
@@ -1444,6 +1460,7 @@ class Plotter:
 
             # TODO: Optimize and merge badge_styles once!
             label_styles.add("op_badge_styles")
+            label_styles.add("kw_step_badge")
 
             styles = self._new_styles_stack(plot_args)
             styles.add("kw_op")
