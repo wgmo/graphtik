@@ -21,8 +21,8 @@ solution of the last computation, calling methods with arguments like this::
 
    solution.plot(...)
 
-.. image:: images/executed_3ops.svg
-    :alt: execution plan
+.. raw:: html
+   :file: images/sample.svg
 
 .. figure:: images/GraphtikLegend.svg
    :alt:  Graphtik Legend

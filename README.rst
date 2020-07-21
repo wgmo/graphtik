@@ -132,7 +132,7 @@ Run the graph and request all of the outputs:
 
 ... and plot the results (if in *jupyter*, no need to create the file):
 
->>> solution.plot('graphop.svg')    # doctest: +SKIP
+>>> solution.plot('executed_3ops.svg')  # doctest: +SKIP
 
 |sample-sol|
 |plot-legend|
