@@ -626,30 +626,35 @@ class Theme:
                 "bgcolor": "#04277d",
                 "color": "white",
                 "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-endured",
+                "target": "_top",
             },
             "?": {
                 "tooltip": "rescheduled",
                 "bgcolor": "#fc89ac",
                 "color": "white",
                 "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-partial-outputs",
+                "target": "_top",
             },
             "|": {
                 "tooltip": "parallel",
                 "bgcolor": "#b1ce9a",
                 "color": "white",
                 "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-parallel-execution",
+                "target": "_top",
             },
             "&": {
                 "tooltip": "marshalled",
                 "bgcolor": "#4e3165",
                 "color": "white",
                 "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-marshalling",
+                "target": "_top",
             },
             "}": {
                 "tooltip": "returns_dict",
                 "bgcolor": "#cc5500",
                 "color": "white",
                 "URL": "https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dictionary",
+                "target": "_top",
             },
         }
     }
@@ -704,7 +709,7 @@ class Theme:
                             <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor
                                 }}" TITLE="{{ badge_styles[badge].tooltip | e
                                 }}" HREF="{{ badge_styles[badge].URL | hrefer | ee
-                                }}" TARGET="_blank"
+                                }}" TARGET="{{ badge_styles[badge].target }}"
                             ><FONT FACE="monospace" COLOR="{{ badge_styles[badge].color }}"><B>
                                 {{- badge | eee -}}
                             </B></FONT></TD>
