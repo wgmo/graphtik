@@ -478,6 +478,11 @@ class Theme:
     ## DATA node
     ##
 
+    #: Keys to ignore from data styles & node-attrs,
+    #: because they are handled internally by HTML-Label, and/or
+    #: interact badly with that label.
+    data_bad_html_label_keys = {"label"}
+
     #: Jinja2 params for the HTML-Table label
     kw_data_label = {}
     #: Reduce margins, since sideffects take a lot of space
@@ -1414,7 +1419,7 @@ class Plotter:
                 elif not is_pruned and not is_sfx(nx_node):
                     styles.add("kw_data_missing")
 
-            styles.stack_user_style(node_attrs)
+            styles.stack_user_style(node_attrs, skip=theme.data_bad_html_label_keys)
 
             styles.add(
                 "data_label_template",
