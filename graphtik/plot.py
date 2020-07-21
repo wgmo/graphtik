@@ -660,8 +660,8 @@ class Theme:
         and func_name(pa.nx_item.fn, mod=1, fqdn=1, human=1),
         "op_truncate": Ref("truncate_args"),
         "fn_truncate": Ref("truncate_args"),
-        "op_tooltip": make_op_tooltip,
-        "fn_tooltip": make_fn_tooltip,
+        "op_tooltip": [make_op_tooltip],
+        "fn_tooltip": [make_fn_tooltip],
         "op_url": Ref("op_url", default=None),
         "op_link_target": "_top",
         "fn_url": Ref("fn_url", default=None),
@@ -1103,6 +1103,8 @@ class StylesStack(NamedTuple):
 
         style = remap(style, visit=expand_visitor)
 
+        ## Merge Graphviz-style props
+        #
         graphviz_style = style.get("style")
         if isinstance(graphviz_style, (list, tuple)):
             ## FIXME: support only plain-strings as graphviz-styles.
@@ -1111,9 +1113,13 @@ class StylesStack(NamedTuple):
                 graphviz_style = f'"{graphviz_style}"'
             style["style"] = graphviz_style
 
-        graphviz_style = style.get("tooltip")
-        if isinstance(graphviz_style, (list, tuple)):
-            style["tooltip"] = "\n".join(graphviz_style)
+        ## Merge tooltips
+        #
+        for k in style.keys():
+            if k.endswith("tooltip"):
+                tooltips = style[k]
+                if isinstance(tooltips, (list, tuple)):
+                    style[k] = "\n".join(tooltips)
 
         return style
 
