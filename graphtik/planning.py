@@ -41,6 +41,7 @@ from .modifier import (
 )
 
 NodePredicate = Callable[[Any, Mapping], bool]
+OpMap = Mapping[Operation, Any]
 
 #: If this logger is *eventually* DEBUG-enabled,
 #: the string-representation of network-objects (network, plan, solution)
@@ -205,7 +206,7 @@ def clone_graph_with_stripped_sfxed(graph):
     return clone
 
 
-def unsatisfied_operations(dag, inputs: Iterable) -> List:
+def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     """
     Traverse topologically sorted dag to collect un-satisfied operations.
 
@@ -224,7 +225,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
     :param inputs:
         an iterable of the names of the input values
     :return:
-        a list of unsatisfied operations to prune
+        an {op, prune-explanation} dictionary of unsatisfied operations
 
     """
     # Collect data that will be produced.
@@ -234,7 +235,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
     # To collect the map of operations --> satisfied-needs.
     op_satisfaction = defaultdict(set)
     # To collect the operations to drop.
-    unsatisfied = []
+    unsatisfied = {}
     # Topo-sort dag respecting operation-insertion order to break ties.
     sorted_nodes = nx.topological_sort(dag)  # generator!
     if log.isEnabledFor(logging.DEBUG):
@@ -243,8 +244,8 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
     for i, node in enumerate(sorted_nodes):
         if isinstance(node, Operation):
             if not dag.adj[node]:
-                unsatisfied.append(node)
-                log.info("... dropping #%i unsatisfied(no outputs) %s", i, node)
+                unsatisfied[node] = "needless-outputs"
+                log.info("... dropping #%i unsatisfied(needless-outputs) %s", i, node)
             else:
                 real_needs = set(
                     n for n, _, opt in dag.in_edges(node, data="optional") if not opt
@@ -255,16 +256,11 @@ def unsatisfied_operations(dag, inputs: Iterable) -> List:
                     # Op is satisfied; mark its outputs as ok.
                     ok_data.update(yield_chaindocs(dag, dag.adj[node], ok_data))
                 else:
-                    unsatisfied.append(node)
-                    if log.isEnabledFor(logging.INFO):
-                        log.info(
-                            "... dropping #%i unsatisfied (partial inputs) %s"
-                            "\n    +--real needs: %s\n    +--satisfied: %s",
-                            i,
-                            node,
-                            list(real_needs),
-                            list(yield_node_names(op_satisfaction[node])),
-                        )
+                    unsatisfied[node] = msg = (
+                        f"partial-inputs: needs{list(real_needs)}"
+                        f", satisfied{list(op_satisfaction[node])}"
+                    )
+                    log.info("... dropping #%i unsatisfied(%s) %s", i, msg, node)
         elif isinstance(node, str):  # `str` are givens
             if node in ok_data:
                 # mark satisfied-needs on all future operations
@@ -470,7 +466,7 @@ class Network(Plottable):
 
     def _prune_graph(
         self, inputs: Items, outputs: Items, predicate: NodePredicate = None
-    ) -> Tuple[nx.DiGraph, Collection, Collection, Collection]:
+    ) -> Tuple[nx.DiGraph, Tuple, Tuple, OpMap]:
         """
         Determines what graph steps need to run to get to the requested
         outputs from the provided inputs:
@@ -489,9 +485,13 @@ class Network(Plottable):
             that should return true for nodes to include; if None, all nodes included.
 
         :return:
-            a 3-tuple with the *pruned_dag* & the needs/provides resolved based
-            on the given inputs/outputs
-            (which might be a subset of all needs/outputs of the returned graph).
+            a 4-tuple:
+
+            - the *pruned* :term:`execution dag`,
+            - net's needs & outputs based on the given inputs/outputs and the net
+              (may overlap, see :func:`collect_requirements()`),
+            - an {op, prune-explanation} dictionary
+
 
             Use the returned `needs/provides` to build a new plan.
 
@@ -500,7 +500,7 @@ class Network(Plottable):
 
                 *Unknown output nodes: ...*
         """
-        # TODO: break cycles here.
+        # TODO: break cycles based on weights here.
         dag = self.graph
 
         ##  When `inputs` is None, we have to keep all possible input nodes
@@ -560,6 +560,8 @@ class Network(Plottable):
                     )
                 )
 
+        comments: OpMap = {}
+
         # Drop stray input values and operations (if any).
         if outputs is not None:
             ## If caller requested specific outputs, we can prune any
@@ -572,19 +574,22 @@ class Network(Plottable):
                 ending_in_outputs.add(out)
             # Clone it, to modify it, or BUG@@ much later (e.g in eviction planing).
             broken_dag = broken_dag.subgraph(ending_in_outputs).copy()
-            if log.isEnabledFor(logging.INFO) and len(
-                list(yield_ops(ending_in_outputs))
-            ) != len(self.ops):
+
+            irrelevant_ops = [
+                op for op in yield_ops(dag) if op not in ending_in_outputs
+            ]
+            if irrelevant_ops:
+                comments.update((op, "outputs-irrelevant") for op in irrelevant_ops)
                 log.info(
-                    "... dropping output-irrelevant ops%s."
-                    "\n    +--outputs: %s\n    +--output reachables: %s",
-                    [op.name for op in yield_ops(dag) if op not in ending_in_outputs],
+                    "... dropping output-irrelevant ops%s.\n    +--outputs: %s",
+                    irrelevant_ops,
                     outputs,
-                    ending_in_outputs,
                 )
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
         unsatisfied = unsatisfied_operations(broken_dag, satisfied_inputs)
+        comments.update(unsatisfied)
+
         # Clone it, to modify it.
         pruned_dag = dag.subgraph(broken_dag.nodes - unsatisfied).copy()
         ## Clean unlinked data-nodes (except those both given & asked).
@@ -611,7 +616,7 @@ class Network(Plottable):
         assert inputs is not None or isinstance(inputs, abc.Collection)
         assert outputs is not None or isinstance(outputs, abc.Collection)
 
-        return pruned_dag, tuple(inputs), tuple(outputs)
+        return pruned_dag, tuple(inputs), tuple(outputs), comments
 
     def _build_execution_steps(
         self, pruned_dag, inputs: Collection, outputs: Collection
@@ -802,7 +807,9 @@ class Network(Plottable):
             log.debug("... compile cache-hit key: %s", cache_key)
             plan = self._cached_plans[cache_key]
         else:
-            pruned_dag, needs, provides = self._prune_graph(inputs, outputs, predicate)
+            pruned_dag, needs, provides, comments = self._prune_graph(
+                inputs, outputs, predicate
+            )
             steps = self._build_execution_steps(pruned_dag, needs, outputs or ())
             plan = ExecutionPlan(
                 self,
@@ -811,6 +818,7 @@ class Network(Plottable):
                 pruned_dag,
                 tuple(steps),
                 asked_outs=outputs is not None,
+                comments=comments,
             )
 
             self._cached_plans[cache_key] = plan

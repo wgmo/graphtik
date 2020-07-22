@@ -164,7 +164,7 @@ class _ScreamingOperation(Operation):
         ),
         (
             lambda: fnt.partial(
-                ExecutionPlan(*([None] * 6))._handle_task,
+                ExecutionPlan(*([None] * 7))._handle_task,
                 op=_ScreamingOperation(),
                 solution=Solution(MagicMock(), {}),
                 future=_OpTask(_ScreamingOperation(), {}, "solid"),
@@ -197,7 +197,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         ),
         (
             lambda: fnt.partial(
-                ExecutionPlan(*([None] * 6))._handle_task,
+                ExecutionPlan(*([None] * 7))._handle_task,
                 op=operation(_scream, name="Ah!"),
                 solution=Solution(MagicMock(), {}),
                 future=_OpTask(_ScreamingOperation(), {}, "solid"),
@@ -206,7 +206,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         ),
         (
             lambda: fnt.partial(
-                ExecutionPlan(*([None] * 6)).execute, named_inputs=None
+                ExecutionPlan(*([None] * 7)).execute, named_inputs=None
             ),
             ["solution"],
         ),

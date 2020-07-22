@@ -91,7 +91,8 @@ Affected behavior:
 + :term:`jetsam` logs in ERROR (instead of in DEBUG) all annotations on all calls
   up the stack trace (logged from ``graphtik.base.jetsam`` logger);
 + :meth:`FnOp.compute()` prints out full given-inputs (not just their keys);
-+ net objects print details recursively;
++ net objects print more details recursively, like fields (not just op-names) and
+  prune-comments;
 + plotted SVG diagrams include style-provenance as tooltips;
 + Sphinx extension also saves the original DOT file next to each image
   (see :confval:`graphtik_save_dot_files`).

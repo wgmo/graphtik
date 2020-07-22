@@ -49,6 +49,7 @@ from .modifier import (
     is_sfx,
 )
 from .planning import (
+    OpMap,
     unsatisfied_operations,
     yield_chaindocs,
     yield_node_names,
@@ -100,9 +101,11 @@ class Solution(ChainMap, Plottable):
         #: - value None:        execution ok
         #: - value Exception:   execution failed
         #: - value Collection:  canceled provides
-        self.executed = {}
-        #: A sorted set of :term:`canceled operation`\\s due to upstream failures.
-        self.canceled = iset()  # not iterated, order not important, but ...
+        self.executed: OpMap = {}
+        # not iterated, order unimportant, but ...
+        #: A {op, prune-explanation} dictionary with :term:`canceled operation`\\s
+        #: due to upstream failures.
+        self.canceled: OpMap = {}
         self.elapsed_ms = {}
         #: A unique identifier to distinguish separate flows in execution logs.
         self.solid = "%X" % random.randint(0, 2 ** 16)
@@ -165,8 +168,8 @@ class Solution(ChainMap, Plottable):
             ],
         )
         # Minus executed, bc partial-out op might not have any provides left.
-        newly_canceled = iset(canceled) - self.canceled - self.executed
-        self.canceled.update(newly_canceled)
+        newly_canceled = canceled.keys() - self.canceled.keys() - self.executed.keys()
+        self.canceled.update((k, canceled[k]) for k in newly_canceled)
 
         if log.isEnabledFor(logging.INFO):
             log.info(
@@ -427,7 +430,8 @@ def _do_task(task):
 
 
 class ExecutionPlan(
-    namedtuple("ExecPlan", "net needs provides dag steps asked_outs"), Plottable
+    namedtuple("ExecPlan", "net needs provides dag steps asked_outs comments"),
+    Plottable,
 ):
     """
     A pre-compiled list of operation steps that can :term:`execute` for the given inputs/outputs.
@@ -457,6 +461,9 @@ class ExecutionPlan(
 
         When true, :term:`eviction`\\s may kick in (unless disabled by :term:`configurations`),
         otherwise, *evictions* (along with prefect-evictions check) are skipped.
+    .. attribute:: comments
+
+        an {op, prune-explanation} dictionary
     """
 
     @property
@@ -490,7 +497,12 @@ class ExecutionPlan(
             if is_debug()
             else ", ".join(yield_node_names(self.steps))
         )
-        return f"ExecutionPlan(needs={needs}, provides={provides}, x{len(self.steps)} steps: {steps})"
+        comments = f"\n  +--prune-comments: {self.comments}" if is_debug() else ""
+
+        return (
+            f"ExecutionPlan(needs={needs}, provides={provides}"
+            f", x{len(self.steps)} steps: {steps}{comments})"
+        )
 
     def validate(self, inputs: Items = UNSET, outputs: Items = UNSET):
         """
