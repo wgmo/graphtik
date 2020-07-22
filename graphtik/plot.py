@@ -668,19 +668,22 @@ class Theme:
             },
         }
     }
-    #: Jinja2 params for the HTML-Table label
+    #: Jinja2 params for the HTML-Table label, applied 1ST.
     kw_op_label = {
         "op_name": lambda pa: pa.nx_item.name,
         "fn_name": lambda pa: pa.nx_item
         and func_name(pa.nx_item.fn, mod=1, fqdn=1, human=1),
         "op_truncate": Ref("truncate_args"),
         "fn_truncate": Ref("truncate_args"),
-        "op_tooltip": [make_op_tooltip],
-        "fn_tooltip": [make_fn_tooltip],
         "op_url": Ref("op_url", default=None),
         "op_link_target": "_top",
         "fn_url": Ref("fn_url", default=None),
         "fn_link_target": "_top",
+    }
+    #: Jinja2 params for the HTML-Table label applied AT THE END.
+    kw_op_label2 = {
+        "op_tooltip": [make_op_tooltip],  # ensure
+        "fn_tooltip": [make_fn_tooltip],
     }
     #: Try to mimic a regular `Graphviz`_ node attributes
     #: (see examples in ``test.test_plot.test_op_template_full()`` for params).
@@ -1454,8 +1457,13 @@ class Plotter:
 
             ## Op-state
             #
+
             if steps and nx_node not in steps:
                 label_styles.add("kw_op_pruned")
+
+            if nx_node in getattr(plottable, "comments", ()):
+                comments = plottable.comments
+
             if solution:
                 if solution.is_failed(nx_node):
                     label_styles.add("kw_op_failed")
@@ -1464,11 +1472,21 @@ class Plotter:
                 elif nx_node in solution.canceled:
                     label_styles.add("kw_op_canceled")
 
+                if nx_node in solution.plan.comments:
+                    comments = solution.plan.comments
+
+            if "comments" in locals() and nx_node in comments:
+                label_styles.add(
+                    "op_prune_comment_tooltip",
+                    {"op_tooltip": [f"(pruned due to {comments[nx_node]})"]},
+                )
+
             label_styles.stack_user_style(node_attrs)
 
             # TODO: Optimize and merge badge_styles once!
             label_styles.add("op_badge_styles")
             label_styles.add("kw_step_badge")
+            label_styles.add("kw_op_label2")
 
             styles = self._new_styles_stack(plot_args)
             styles.add("kw_op")
