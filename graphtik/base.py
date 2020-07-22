@@ -413,8 +413,9 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
             annotations,
         )
     except Exception as ex2:
-        log.warning("Suppressed error while annotating exception: %r", ex2, exc_info=1)
-        raise ex2
+        log.warning(
+            "Suppressed error while annotating exception: %r", ex2, exc_info=True
+        )
 
 
 class PlotArgs(NamedTuple):
