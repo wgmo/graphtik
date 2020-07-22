@@ -37,14 +37,13 @@ from typing import (
 )
 
 import jinja2
-from jinja2.filters import do_truncate
 import networkx as nx
 import pydot
 from boltons.iterutils import default_enter, default_exit, get_path, remap
+from jinja2.filters import do_truncate
 
 from . import __version__
 from .base import Operation, PlotArgs, first_solid, func_name, func_source
-from .planning import yield_node_names
 from .config import (
     is_debug,
     is_endure_operations,
@@ -53,6 +52,7 @@ from .config import (
     is_reschedule_operations,
 )
 from .modifier import get_jsonp, is_sfx, is_sfxed
+from .planning import yield_node_names
 
 log = logging.getLogger(__name__)
 
