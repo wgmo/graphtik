@@ -952,12 +952,20 @@ def operation(
         <returns dictionary>`, in which case must return a dictionary that containing
         (at least) those named elements.
 
+
+        .. provides-note-start
+        .. Note::
+            When joining a pipeline this must not be empty, or will scream!
+            (an operation without provides would always be pruned)
+        .. provides-note-end
+
         .. seealso::
             - :term:`provides`
             - :term:`modifier`
             - :attr:`.FnOp.provides`
             - :attr:`.FnOp.op_provides`
             - :attr:`.FnOp._fn_provides`
+
 
     :param aliases:
         an optional mapping of `provides` to additional ones

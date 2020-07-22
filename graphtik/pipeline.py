@@ -39,6 +39,9 @@ class NULL_OP(Operation):
     :seealso: :ref:`operation-merging`
     """
 
+    #: Dummy `provides` for pipeline's "last minute" check not to scream.
+    provides = (None,)
+
     def __init__(self, name):
         self.name = name
 
@@ -105,12 +108,13 @@ def build_network(
                 op_kw["renamer"] = parent_wrapper
             op = op.withset(**op_kw)
 
-        ## Last minute checks
-        #  (or Plot will fail later).
+        ## Last minute checks, couldn't check earlier due to builder pattern.
         #
         if hasattr(op, "fn"):
-            ## Could not check earlier due to builder pattern.
             op.validate_fn_name()
+        if not getattr(op, "op_provides", op.provides):
+            TypeError(f"`provides` must not be empty!")
+
         return op
 
     merge_set = iset()  # Preseve given node order.

@@ -319,6 +319,11 @@ Architecture
         - artificially extended the *provides* with `alias`\ed *fn_provides*, or
         - use `modifier`\s to annotate certain names as `sideffects`,
 
+        .. include:: ../../graphtik/fnop.py
+            :start-after: .. provides-note-start
+            :end-before: .. provides-note-end
+
+
     alias
         Map an existing name in `fn_provides` into a duplicate, artificial one in `op_provides` .
 
