@@ -216,7 +216,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
                 named_inputs=None,
                 outputs="bad",
             ),
-            "network plan solution outputs".split(),
+            "network plan solution pipeline outputs".split(),
         ),
     ],
 )

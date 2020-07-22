@@ -576,6 +576,7 @@ as an immediate post-mortem debugging aid:
  'network': Network(x3 nodes, x1 ops: screamer),
  'operation': FnOp(name='screamer', needs=['a'], provides=['foo'], fn='scream'),
  'outputs': None,
+ 'pipeline': Pipeline('errgraph', needs=['a'], provides=['foo'], x1 ops: screamer),
  'plan': ExecutionPlan(needs=['a'], provides=['foo'], x1 steps: screamer),
  'results_fn': None,
  'results_op': None,
@@ -604,6 +605,9 @@ The following annotated attributes *might* have meaningful value on an exception
 
 ``network``
    the innermost network owning the failed operation/function
+
+``pipeline``
+   the innermost :term:`pipeline` that crashed
 
 ``operation``
    the innermost operation that failed

@@ -453,7 +453,15 @@ class Pipeline(Operation):
 
             return solution
         except Exception as ex:
-            jetsam(ex, locals(), "plan", "solution", "outputs", network="net")
+            jetsam(
+                ex,
+                locals(),
+                "plan",
+                "solution",
+                "outputs",
+                pipeline="self",
+                network="net",
+            )
             raise
 
     def __call__(self, **input_kwargs) -> "Solution":
