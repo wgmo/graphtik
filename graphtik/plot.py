@@ -69,7 +69,7 @@ log = logging.getLogger(__name__)
 #:     Jupyter notebooks, as defined in https://github.com/ariutta/svg-pan-zoom#how-to-use
 #:     if `None`, defaults to string (also maps supported)::
 #:
-#:             "{controlIconsEnabled: true, zoomScaleSensitivity: 0.4, fit: true}"
+#:             "{controlIconsEnabled: true, fit: true}"
 #:
 #: :param svg_element_styles:
 #:     mostly for sizing the zoomable SVG in Jupyter notebooks.

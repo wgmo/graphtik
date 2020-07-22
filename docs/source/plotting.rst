@@ -377,7 +377,7 @@ Configurations
 .. confval:: graphtik_zoomable_options
 
    - type: `str`
-   - default: ``{controlIconsEnabled: true, zoomScaleSensitivity: 0.4, fit: true}``
+   - default: ``{controlIconsEnabled: true, fit: true}``
 
    A JS-object with `the options <https://github.com/ariutta/svg-pan-zoom#how-to-use>`_
    for the interactive zoom+pan pf SVGs, when the ``:zoomable-opts:`` directive option
