@@ -391,6 +391,21 @@ def make_data_value_tooltip(plot_args: PlotArgs):
         return quote_html_tooltips(tooltip)
 
 
+def make_op_prune_comment(plot_args: PlotArgs):
+    op = plot_args.nx_item
+    sol = plot_args.solution
+    plottable = plot_args.plottable
+
+    comments = ()
+    if sol is not None and op in sol.plan.comments:
+        comments = sol.plan.comments
+    elif op in getattr(plottable, "comments", ()):
+        comments = plottable.comments
+
+    if comments:
+        return f"(pruned due to {comments[op]})"
+
+
 def make_op_tooltip(plot_args: PlotArgs):
     """the string-representation of an operation (name, needs, provides)"""
     return plot_args.nx_attrs.get("_op_tooltip", str(plot_args.nx_item))
@@ -621,6 +636,7 @@ class Theme:
     ## op STATE
     ##
     kw_op_pruned = {"color": Ref("pruned_color"), "fontcolor": Ref("pruned_color")}
+    kw_op_prune_comment = {"op_tooltip": [make_op_prune_comment]}
     kw_op_failed = {
         "fillcolor": Ref("failed_color"),
         "tooltip": [make_template("{{ solution.executed[nx_item] if solution | ex }}")],
@@ -1460,9 +1476,7 @@ class Plotter:
 
             if steps and nx_node not in steps:
                 label_styles.add("kw_op_pruned")
-
-            if nx_node in getattr(plottable, "comments", ()):
-                comments = plottable.comments
+            label_styles.add("kw_op_prune_comment")
 
             if solution:
                 if solution.is_failed(nx_node):
@@ -1471,15 +1485,6 @@ class Plotter:
                     label_styles.add("kw_op_executed")
                 elif nx_node in solution.canceled:
                     label_styles.add("kw_op_canceled")
-
-                if nx_node in solution.plan.comments:
-                    comments = solution.plan.comments
-
-            if "comments" in locals() and nx_node in comments:
-                label_styles.add(
-                    "op_prune_comment_tooltip",
-                    {"op_tooltip": [f"(pruned due to {comments[nx_node]})"]},
-                )
 
             label_styles.stack_user_style(node_attrs)
 
