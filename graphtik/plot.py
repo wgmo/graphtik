@@ -1177,9 +1177,8 @@ class StylesStack(NamedTuple):
         Recursively merge :attr:`named_styles` and :meth:`.expand` the result style.
 
         :param debug:
-            When not `None`, override :func:`config.is_debug` flag.
-            When debug is enabled, tooltips are overridden with provenance
-            & nx_attrs.
+            When not `None`, override :ref:`debug`;  when enabled,
+            tooltips are overridden with provenance & nx_attrs.
 
         :return:
             the merged styles

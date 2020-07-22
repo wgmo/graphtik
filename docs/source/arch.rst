@@ -648,7 +648,7 @@ Architecture
             :end-before: .. theme-expansions-end
 
         .. tip::
-            if :func:`DEBUG <.is_debug>` is enabled, the provenance of all style values
+            if :ref:`debug` is enabled, the provenance of all style values
             appears in the tooltips of plotted graphs.
 
     configurations

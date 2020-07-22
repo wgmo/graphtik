@@ -76,7 +76,7 @@ is_debug = partial(_getter, _debug)
 """
 Return :func:`.set_debug` or `True` if :envvar:`GRAPHTIK_DEBUG` not one of ``0 false off no``.
 
-Affected behavior when enabled:
+Affected behavior when :ref:`debug` enabled:
 
 .. debug-behavior-start
 

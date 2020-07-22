@@ -401,9 +401,8 @@ Configurations
     For debugging purposes, if enabled, store another :file:`<img>.txt` file
     next to each image file with the DOT text that produced it.
 
-   When ``none`` (default), controlled by :func:`.config.is_debug` from
-   :term:`configurations` (which by default obeys to :envvar:`GRAPHTIK_DEBUG`
-   environment variable), otherwise, any boolean takes precedence here.
+   When ``none`` (default), controlled by :ref:`debug` from
+   :term:`configurations`, otherwise, any boolean takes precedence here.
 
 
 .. confval:: graphtik_warning_is_error
@@ -534,11 +533,14 @@ important for when running pipelines in :term:`parallel`::
    INFO    === (8697) Completed pipeline(t) in 0.229ms.
 
 
+.. _debug:
+
 ``DEBUG`` flag
 ^^^^^^^^^^^^^^
-The 2nd pit-stop is to enable :func:`DEBUG <.is_debug>` in :term:`configurations`
-either by calling :func:`.set_debug()`, or externally, by setting the
-:envvar:`GRAPHTIK_DEBUG` environment variable, to enact the following:
+The 2nd pit-stop is to make :func:`DEBUG <.config.is_debug>` in :term:`configurations`
+returning true, either by calling :func:`.set_debug()`, or externally,
+by setting the :envvar:`GRAPHTIK_DEBUG` environment variable,
+to enact the following:
 
 .. include:: ../../graphtik/config.py
    :start-after: .. debug-behavior-start
