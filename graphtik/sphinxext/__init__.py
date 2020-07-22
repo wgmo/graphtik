@@ -32,6 +32,7 @@ from sphinx.writers.html import HTMLTranslator
 from sphinx.writers.latex import LaTeXTranslator
 
 from graphtik.fnop import FnOp
+from graphtik.plot import default_jupyter_render
 
 from .. import __version__
 
@@ -554,7 +555,7 @@ def _setup_directive(app: Sphinx):
     app.add_config_value("graphtik_save_dot_files", None, "html", [bool])
     app.add_config_value(
         "graphtik_zoomable_options",
-        "{controlIconsEnabled: true, fit: true}",
+        default_jupyter_render["svg_pan_zoom_json"],
         "html",
         [str],
     )

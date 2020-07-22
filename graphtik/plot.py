@@ -80,6 +80,10 @@ log = logging.getLogger(__name__)
 #:
 #: :param svg_container_styles:
 #:     like `svg_element_styles`, if `None`, defaults to empty string (also maps supported).
+#:
+#: .. note::
+#:      referred also by :rst:dir:`graphtik`'s  :confval:`graphtik_zoomable_options`
+#:      default configuration value.
 default_jupyter_render = {
     "svg_pan_zoom_json": "{controlIconsEnabled: true, fit: true}",
     "svg_element_styles": "width: 100%; height: 300px;",
