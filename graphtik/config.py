@@ -73,18 +73,10 @@ Like :func:`set_debug()` as a context-manager, resetting back to old value.
 .. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
 is_debug = partial(_getter, _debug)
-"""see :func:`set_debug()`"""
-set_debug = partial(_tristate_set, _debug)
 """
-When true, increase details on string-representation of network objects and errors.
+Return :func:`.set_debug` or `True` if :envvar:`GRAPHTIK_DEBUG` not one of ``0 false off no``.
 
-:param enabled:
-    - ``None, False, string(0, false, off, no)``: Disabled
-    - TODO: ``1``: Enable ALL ``DEBUG_XXX``
-    - TODO: integers: Enable respective ``DEBUG_XXX`` bit-field constants
-    - anything else: Enable ALL ``DEBUG_XXX``
-
-Affected behavior:
+Affected behavior when enabled:
 
 .. debug-behavior-start
 
@@ -108,6 +100,16 @@ exceptions, doctests), not just debug statements (also affected by this flag).
 
 :return:
     a "reset" token (see :meth:`.ContextVar.set`)
+"""
+set_debug = partial(_tristate_set, _debug)
+"""
+Enable/disable debug-mode.
+
+:param enabled:
+    - ``None, False, string(0, false, off, no)``: Disabled
+    - anything else: Enable DEBUG
+
+see :func:`is_debug()`
 """
 
 

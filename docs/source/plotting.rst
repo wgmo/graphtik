@@ -536,9 +536,9 @@ important for when running pipelines in :term:`parallel`::
 
 ``DEBUG`` flag
 ^^^^^^^^^^^^^^
-The 2nd pit-stop is to enable the :func:`.set_debug()` in :term:`configurations`,
-or externally, by setting the :envvar:`GRAPHTIK_DEBUG` environment variable,
-to enact the following:
+The 2nd pit-stop is to enable :func:`DEBUG <.is_debug>` in :term:`configurations`
+either by calling :func:`.set_debug()`, or externally, by setting the
+:envvar:`GRAPHTIK_DEBUG` environment variable, to enact the following:
 
 .. include:: ../../graphtik/config.py
    :start-after: .. debug-behavior-start
