@@ -694,7 +694,7 @@ class Theme:
                   {{- {
                   'TOOLTIP': op_tooltip | truncate | eee,
                   'HREF': op_url | hrefer | ee,
-                  'TARGET': op_link_target | e
+                  'TARGET': op_link_target | eee
                   } | xmlattr }}
                 >
                     {%- if fontcolor -%}<FONT COLOR="{{ fontcolor }}">{%- endif -%}
@@ -719,7 +719,7 @@ class Theme:
                         {%- endif -%}
                         {%- for badge in badges %}
                             <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="{{ badge_styles[badge].bgcolor
-                                }}" TITLE="{{ badge_styles[badge].tooltip | e
+                                }}" TITLE="{{ badge_styles[badge].tooltip | eee
                                 }}" HREF="{{ badge_styles[badge].URL | hrefer | ee
                                 }}" TARGET="{{ badge_styles[badge].target }}"
                             ><FONT FACE="monospace" COLOR="{{ badge_styles[badge].color }}"><B>
@@ -737,7 +737,7 @@ class Theme:
                   {{- {
                   'TOOLTIP': fn_tooltip | truncate | eee,
                   'HREF': fn_url | hrefer | ee,
-                  'TARGET': fn_link_target | e
+                  'TARGET': fn_link_target | eee
                   } | xmlattr }}
                   >
                     {%- if fontcolor -%}

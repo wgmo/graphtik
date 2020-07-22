@@ -142,7 +142,7 @@ def test_op_label_template_empty():
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
+                <TD BORDER="1" SIDES="b" ALIGN="left"
                 ></TD>
                 <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
             </TR>
@@ -163,11 +163,11 @@ def test_op_label_template_fn_empty():
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
+                <TD BORDER="1" SIDES="b" ALIGN="left"
                 ><B>OP:</B> <I>op</I></TD>
                 <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
             </TR><TR>
-                <TD COLSPAN="2" ALIGN="left" TARGET=""
+                <TD COLSPAN="2" ALIGN="left"
                 ><B>FN:</B> fn</TD>
             </TR>
         </TABLE>>
@@ -194,7 +194,7 @@ def test_op_label_template_nones():
     exp = """
         <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
             <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TARGET=""
+                <TD BORDER="1" SIDES="b" ALIGN="left"
                 ></TD>
                 <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
             </TR>
