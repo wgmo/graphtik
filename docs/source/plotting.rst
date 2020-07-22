@@ -7,7 +7,8 @@ Plotting and Debugging
 Plotting
 --------
 
-For :ref:`debugging` it is necessary to visualize the graph-operation.
+For :ref:`debugging` it is necessary to visualize the graph-operation (e.g. to see
+:ref:`why nodes where pruned <pruned-explanations>`).
 You may plot any :term:`plottable` and annotate on top the *execution plan* and
 solution of the last computation, calling methods with arguments like this::
 

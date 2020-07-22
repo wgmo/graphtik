@@ -73,6 +73,8 @@ combination:
                   x5 steps: mul1, b, sub1, a, ab)
     >>> plan.validate()  # all fine
 
+.. _pruned-explanations:
+
 Plotting the :term:`plan <execution plan>` reveals the :term:`prune`\d operations,
 and numbers operations and :term:`eviction`\s (see next section) in the order
 of execution:
@@ -82,6 +84,9 @@ of execution:
     :graphvar: plan
 
     >>> plan.plot()  # doctest: +SKIP
+
+.. tip::
+    Hover over pruned (grey) operations to see why they were excluded from the plan.
 
 But if an impossible combination of `inputs` & `outputs`
 is asked, the plan comes out empty:
