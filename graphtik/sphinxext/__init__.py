@@ -210,7 +210,7 @@ _doctest_options = extdoctest.DoctestDirective.option_spec
 _img_options = {
     k: v
     for k, v in directives.images.Image.option_spec.items()
-    if k not in ("name", "align", "target")
+    if k not in ("name", "align")
 }
 _fig_options = {
     k: v
