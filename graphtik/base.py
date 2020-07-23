@@ -400,8 +400,9 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         ## Salvage those asked
         for dst_key, src in salvage_mappings.items():
             try:
-                salvaged_value = src(locs) if callable(src) else locs.get(src)
-                annotations.setdefault(dst_key, salvaged_value)
+                if dst_key not in annotations:
+                    salvaged_value = src(locs) if callable(src) else locs.get(src)
+                    annotations[dst_key] = salvaged_value
             except Exception as ex:
                 log.warning(
                     "Suppressed error while salvaging jetsam item (%r, %r): %s(%s)",
