@@ -3,6 +3,7 @@
 """General :term:`network` & :term:`execution` tests. """
 import math
 import re
+import sys
 from operator import add, floordiv, mul, sub
 
 import pytest
@@ -10,14 +11,17 @@ import pytest
 from graphtik import (
     NO_RESULT,
     compose,
+    modify,
     planning,
     operation,
     optional,
     vararg,
+    varargs,
     sfxed,
+    sfx,
 )
 from graphtik.base import IncompleteExecutionError
-from graphtik.config import evictions_skipped, operations_endured
+from graphtik.config import debug_enabled, evictions_skipped, operations_endured
 
 from .helpers import addall
 
@@ -909,3 +913,47 @@ def test_rescheduling_NO_RESULT(exemethod):
     assert "x1 partial-ops" in str(sol.check_if_incomplete())
     with pytest.raises(IncompleteExecutionError, match="x1 partial-ops"):
         assert sol.scream_if_incomplete()
+
+
+def test_jetsam_n_plot_with_DEBUG():
+    pipe = compose(
+        "mix",
+        operation(
+            str,
+            "FUNC",
+            needs=[
+                "a",
+                sfxed("b", "foo", keyword="bb"),
+                modify("c", implicit=1),
+                sfxed("d", "bar", implicit=1),
+                vararg("e"),
+                varargs("f"),
+            ],
+            provides=[
+                "A",
+                sfxed("b", "FOO", keyword="bb"),
+                modify("C", implicit=1),
+                sfxed("d", "BAR", implicit=1),
+                sfx("FOOBAR"),
+            ],
+            aliases={"A": "aaa", "b": "bbb", "C": "ccc", "d": "ddd"},
+        ),
+    )
+
+    with debug_enabled(True), pytest.raises(ValueError, match="^Unsolvable"):
+        pipe.compute()
+    with debug_enabled(True), pytest.raises(
+        ValueError, match="^Failed preparing"
+    ) as exc:
+        pipe.compute(
+            {
+                "a": 1,
+                sfxed("b", "foo"): 2,
+                "c": 3,
+                sfxed("d", "bar"): 4,
+                "e": 5,
+                "f": [6, 7],
+            }
+        )
+
+    exc.value.jetsam.plot_fpath.unlink()

@@ -337,7 +337,7 @@ class Jetsam(dict):
                     try:
                         dir_prefix = Path(gettempdir(), __title__)
                         plot_fpath = save_plot_file_by_sha1(plottable, dir_prefix)
-                        self["plot_fpath"] = str(plot_fpath)
+                        self["plot_fpath"] = plot_fpath
                         break
                     except Exception as ex:
                         log.warning(
