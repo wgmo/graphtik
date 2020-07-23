@@ -1141,7 +1141,13 @@ class StylesStack(NamedTuple):
                     v = v(self.plot_args)
                     expanded = True
 
-                return False if v in (..., None) else (k, v) if expanded else True
+                return (
+                    False
+                    if k is None or v in (..., None)
+                    else (k, v)
+                    if expanded
+                    else True
+                )
             except Exception as ex:
                 path = f'{"/".join(path)}/{k}'
                 msg = f"Failed expanding {visit_type} @ '{path}' = {v!r} due to: {type(ex).__name__}({ex})"
@@ -1198,7 +1204,15 @@ class StylesStack(NamedTuple):
             ## Append debug info
             #
             provenance_str = pformat(
-                {".".join(k): v for k, v in styles_provenance.items()}, indent=2
+                {
+                    ".".join(
+                        # resolve any callable theme-keys
+                        str(k_step(self.plot_args)) if callable(k_step) else k_step
+                        for k_step in k
+                    ): v
+                    for k, v in styles_provenance.items()
+                },
+                indent=2,
             )
             tooltip = f"- styles: {provenance_str}\n- extra_attrs: {pformat(self.plot_args.nx_attrs)}"
             style["tooltip"] = graphviz_html_string(tooltip)
