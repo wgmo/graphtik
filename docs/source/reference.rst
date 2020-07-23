@@ -13,6 +13,7 @@ API Reference
      graphtik.plot
      graphtik.config
      graphtik.base
+     graphtik.jetsam
      graphtik.sphinxext
 
 .. graphviz::
@@ -79,6 +80,13 @@ Module: `base`
 ==============
 
 .. automodule:: graphtik.base
+     :members:
+     :undoc-members:
+
+Module: `jetsam`
+================
+
+.. automodule:: graphtik.jetsam
      :members:
      :undoc-members:
 

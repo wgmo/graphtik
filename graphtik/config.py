@@ -83,7 +83,7 @@ Affected behavior when :ref:`debug` enabled:
 + on errors, plots the 1st errored solution/plan/pipeline/net (in that order)
   in an SVG file inside the temp-directory, and its path is logged in ERROR-level;
 + :term:`jetsam` logs in ERROR (instead of in DEBUG) all annotations on all calls
-  up the stack trace (logged from ``graphtik.base.jetsam`` logger);
+  up the stack trace (logged from ``graphtik.jetsam.err`` logger);
 + :meth:`FnOp.compute()` prints out full given-inputs (not just their keys);
 + net objects print more details recursively, like fields (not just op-names) and
   prune-comments;

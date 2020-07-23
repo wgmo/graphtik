@@ -24,7 +24,8 @@ import networkx as nx
 from boltons.iterutils import pairwise
 from boltons.setutils import IndexedSet as iset
 
-from .base import Items, Operation, PlotArgs, Plottable, astuple, save_jetsam
+from .base import Items, Operation, PlotArgs, Plottable, astuple
+from .jetsam import save_jetsam
 from .config import is_debug, is_skip_evictions
 from .modifier import (
     dep_renamed,

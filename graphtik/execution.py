@@ -24,7 +24,6 @@ from .base import (
     aslist,
     astuple,
     first_solid,
-    save_jetsam,
 )
 from .config import (
     get_execution_pool,
@@ -37,6 +36,7 @@ from .config import (
     is_reschedule_operations,
     is_skip_evictions,
 )
+from .jetsam import save_jetsam
 from .modifier import (
     acc_contains,
     acc_delitem,

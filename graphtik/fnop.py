@@ -37,8 +37,8 @@ from .base import (
     debug_var_tip,
     first_solid,
     func_name,
-    save_jetsam,
 )
+from .jetsam import save_jetsam
 from .modifier import (
     dep_renamed,
     dep_singularized,

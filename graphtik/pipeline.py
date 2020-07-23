@@ -25,8 +25,8 @@ from .base import (
     Plottable,
     RenArgs,
     aslist,
-    save_jetsam,
 )
+from .jetsam import save_jetsam
 from .modifier import dep_renamed
 
 log = logging.getLogger(__name__)
