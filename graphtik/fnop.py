@@ -174,13 +174,14 @@ def reparse_operation_data(
 
         aliases = [(jsonp_ize(src), jsonp_ize(dst)) for src, dst in aliases]
         alias_src = iset(src for src, _dst in aliases)
-        if not alias_src <= set(provides):
+        stripped_provides = iset(dep_stripped(d) for d in provides)
+        if not alias_src <= stripped_provides:
             bad_alias_sources = alias_src - provides
             bad_aliases = ", ".join(
                 f"{src!r}-->{dst!r}" for src, dst in aliases if src in bad_alias_sources
             )
             raise ValueError(
-                f"The `aliases` [{bad_aliases}] rename non-existent provides in {list(provides)}!"
+                f"The `aliases` [{bad_aliases}] rename non-existent provides in {list(stripped_provides)}!"
             )
         sfx_aliases = [
             f"{src} -> {dst}" for src, dst in aliases if is_sfx(src) or is_sfx(dst)

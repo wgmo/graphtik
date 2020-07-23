@@ -7,7 +7,15 @@ from operator import add, floordiv, mul, sub
 
 import pytest
 
-from graphtik import NO_RESULT, compose, planning, operation, optional, vararg
+from graphtik import (
+    NO_RESULT,
+    compose,
+    planning,
+    operation,
+    optional,
+    vararg,
+    sfxed,
+)
 from graphtik.base import IncompleteExecutionError
 from graphtik.config import evictions_skipped, operations_endured
 
@@ -110,9 +118,16 @@ def test_smoke_test():
 
 
 def test_aliases(exemethod):
-    aliased = operation(lambda: "A", name="op1", provides="a", aliases={"a": "b"})
-    assert aliased.provides == ("a",)
-    assert aliased.op_provides == ("a", "b")
+    aliased = operation(
+        lambda: ("A", "B"),
+        name="op1",
+        provides=["a", sfxed("s1", "foo"), sfxed("s2", "foo", implicit=1)],
+        aliases={"a": "b", "s1": "S1", "s2": "S2"},
+    )
+    assert aliased.provides == ("a", sfxed("s1", "foo"), sfxed("s2", "foo"))
+    assert set(aliased.op_provides) == set(
+        ("a", "b", "S1", "S2", sfxed("s1", "foo"), sfxed("s2", "foo"))
+    )
 
     op = compose(
         "test_net",
@@ -120,7 +135,7 @@ def test_aliases(exemethod):
         operation(lambda x: x * 2, name="op2", needs="b", provides="c"),
         parallel=exemethod,
     )
-    assert op() == {"a": "A", "b": "A", "c": "AA"}
+    assert op() == {"a": "A", "s1": "B", "b": "A", "S1": "B", "c": "AA"}
 
 
 def test_node_predicate_based_prune():
