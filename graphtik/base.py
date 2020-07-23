@@ -369,10 +369,6 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
 
     The purpose is not to require a debugger-session to inspect the root-causes
     (without precluding one).
-
-    Naively salvaging values with a simple try/except block around each function,
-    blocks the debugger from landing on the real cause of the error - it would
-    land on that block;  and that could be many nested levels above it.
     """
     from pathlib import Path
     from tempfile import gettempdir
