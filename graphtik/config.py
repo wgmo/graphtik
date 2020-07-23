@@ -80,6 +80,8 @@ Affected behavior when :ref:`debug` enabled:
 
 .. debug-behavior-start
 
++ on errors, plots the 1st errored solution/plan/pipeline/net (in that order)
+  in an SVG file inside the temp-directory, and its path is logged in ERROR-level;
 + :term:`jetsam` logs in ERROR (instead of in DEBUG) all annotations on all calls
   up the stack trace (logged from ``graphtik.base.jetsam`` logger);
 + :meth:`FnOp.compute()` prints out full given-inputs (not just their keys);

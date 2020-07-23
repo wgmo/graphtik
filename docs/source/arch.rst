@@ -663,8 +663,9 @@ Architecture
         value.  All of them default to ``None`` (false).
 
     jetsam
-        When operations fail, the original exception gets annotated with salvaged
-        values from ``locals()`` and raised intact.
+        When a pipeline or an operation fails, the original exception gets annotated
+        with salvaged values from ``locals()`` and raised intact, and optionally
+        (if :ref:`debug`) the diagram of the failed `plottable` is saved in temporary file.
 
         See :ref:`jetsam`.
 

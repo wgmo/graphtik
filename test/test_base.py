@@ -4,13 +4,15 @@ import functools as fnt
 import itertools as itt
 import logging
 import textwrap
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
-from graphtik import base, planning, operation, pipeline
-from graphtik.execution import ExecutionPlan, Solution, _OpTask
+from graphtik import base, operation, pipeline, planning
 from graphtik.base import Operation
+from graphtik.config import debug_enabled
+from graphtik.execution import ExecutionPlan, Solution, _OpTask
 from graphtik.pipeline import Pipeline
 
 
@@ -185,9 +187,8 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
     assert set(ex.jetsam.keys()) == set(expected_jetsam)
 
 
-@pytest.mark.parametrize(
-    "acallable, expected_jetsam",
-    [
+@pytest.fixture(
+    params=[
         # NO old-stuff Operation(fn=_jetsamed_fn, name="test", needs="['a']", provides=[]),
         (
             lambda: fnt.partial(
@@ -216,19 +217,37 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
                 named_inputs=None,
                 outputs="bad",
             ),
-            "network plan solution pipeline outputs".split(),
+            "network plan solution pipeline outputs plot_fpath".split(),
         ),
-    ],
+    ]
 )
-def test_jetsam_sites_scream(acallable, expected_jetsam):
+def failing_jetsam(request):
+    return request.param
+
+
+def test_jetsam_sites_scream(failing_jetsam):
     # Check jetsams when the site fails.
+    acallable, expected_jetsam = failing_jetsam
     acallable = acallable()
     with pytest.raises(Exception) as excinfo:
         acallable()
 
     ex = excinfo.value
     assert hasattr(ex, "jetsam"), acallable
-    assert set(ex.jetsam.keys()) == set(expected_jetsam)
+    assert set(ex.jetsam.keys()) == set(i for i in expected_jetsam if i != "plot_fpath")
+
+
+def test_jetsam_saves_plot(failing_jetsam):
+    acallable, expected_jetsam = failing_jetsam
+    if "plot_fpath" in expected_jetsam:
+        acallable = acallable()
+        with debug_enabled(True), pytest.raises(Exception) as excinfo:
+            acallable()
+
+        ex = excinfo.value
+        fp = Path(ex.jetsam["plot_fpath"])
+        assert fp.exists()
+        fp.unlink(missing_ok=True)
 
 
 ###############

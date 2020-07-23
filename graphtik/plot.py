@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import partial
 from itertools import chain, count
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -43,7 +44,7 @@ from boltons.iterutils import default_enter, default_exit, get_path, remap
 from jinja2.filters import do_truncate
 
 from . import __version__
-from .base import Operation, PlotArgs, first_solid, func_name, func_source
+from .base import Operation, PlotArgs, Plottable, first_solid, func_name, func_source
 from .config import (
     is_debug,
     is_endure_operations,
@@ -1906,6 +1907,27 @@ def legend(
 
     plotter = plotter or get_active_plotter()
     return plotter.legend(filename, jupyter_render)
+
+
+def save_plot_file_by_sha1(plottable: Plottable, dir_prefix: Path):
+    """Save :term:`plottable` in a fpath generated from sha1 of the `dot`."""
+    from hashlib import sha1
+
+    img_format = "svg"
+
+    dot = plottable.plot()
+
+    ## Derrive image-filename from graph contents.
+    hasher = sha1()
+    hasher.update(str(dot).encode())
+    fname = f"{hasher.hexdigest()}.{img_format}"
+    fpath = dir_prefix / fname
+
+    log.info("Rendering errored %s into file '%s'...", plottable, fpath)
+    dir_prefix.mkdir(parents=True, exist_ok=True)
+    dot.write(fpath, format=img_format)
+
+    return fpath
 
 
 def supported_plot_formats() -> List[str]:

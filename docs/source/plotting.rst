@@ -546,6 +546,8 @@ to enact the following:
    :start-after: .. debug-behavior-start
    :end-before: .. debug-behavior-end
 
+Of particular interest is the automatic plotting of the failed :term:`plottable`.
+
 .. Tip::
    From code you may wrap the code you are interested in with :func:`.config.debug_enabled`
    "context-manager", to get augmented print-outs for selected code-paths only.
@@ -628,6 +630,10 @@ The following annotated attributes *might* have meaningful value on an exception
 
 ``op_results``
     the results, always a dictionary, as matched with operation's `provides`
+
+``plot_fpath``
+     if :ref:`debug` is enabled, the path where the broken :term:`plottable`
+     has been saved
 
 Of course you may plot some "jetsam" values, to visualize the condition
 that caused the error (see :ref:`plotting`).

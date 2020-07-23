@@ -310,7 +310,7 @@ class AttrDict(dict):
 
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
-    Annotate exception with salvaged values from locals(), log and raise!
+    Annotate exception with salvaged values from locals(), log, (if :ref:`debug`) plot.
 
     :param ex:
         the exception to annotate
@@ -338,6 +338,8 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
       the raised exception as new  ``jetsam`` attribute with a dict as value.
     - If the exception is already annotated, any new items are inserted,
       but existing ones are preserved.
+    - If :ref:`debug` is enabled, plots the 1st found errored in order
+      solution/plan/pipeline/net, and log its path.
 
     **Example:**
 
@@ -370,7 +372,11 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
     blocks the debugger from landing on the real cause of the error - it would
     land on that block;  and that could be many nested levels above it.
     """
+    from pathlib import Path
+    from tempfile import gettempdir
     from .config import is_debug
+    from . import __title__
+    from .plot import save_plot_file_by_sha1
 
     ## Fail EARLY before yielding on bad use.
     #
@@ -385,6 +391,8 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         "Bad `salvage_mappings`:",
         salvage_mappings,
     )
+
+    debug = is_debug()
 
     ## Merge vars-mapping to save.
     for var in salvage_vars:
@@ -413,8 +421,28 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
                     exc_info=True,
                 )
 
+        ## Plot broken
+        #
+        if debug and "plot_fpath" not in annotations:
+            for p_type in "solution plan pipeline network".split():
+                plottable = annotations.get(p_type)
+                if plottable is not None:
+                    try:
+                        dir_prefix = Path(gettempdir(), __title__)
+                        plot_fpath = save_plot_file_by_sha1(plottable, dir_prefix)
+                        annotations["plot_fpath"] = str(plot_fpath)
+                        break
+                    except Exception as ex:
+                        log.warning(
+                            "Suppressed error while plotting jetsam %s: %s(%s)",
+                            plottable,
+                            type(ex).__name__,
+                            ex,
+                            exc_info=True,
+                        )
+
         logging.getLogger(f"{__name__}.jetsam").log(
-            logging.ERROR if is_debug() else logging.DEBUG,
+            logging.ERROR if debug else logging.DEBUG,
             "Salvaged jetsam: %s",
             annotations,
         )
