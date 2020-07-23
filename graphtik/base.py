@@ -330,6 +330,8 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         by calling ``value(locs)``.
         They take precedence over`salvage_vars`.
 
+    :return:
+        the name of the annotation attribute
     :raises:
         any exception raised by the wrapped function, annotated with values
         assigned as attributes on this context-manager
@@ -441,11 +443,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
                             exc_info=True,
                         )
 
-        logging.getLogger(f"{__name__}.jetsam").log(
-            logging.ERROR if debug else logging.DEBUG,
-            "Salvaged jetsam: %s",
-            annotations,
-        )
+        return annotation
     except Exception as ex2:
         log.warning(
             "Suppressed error while annotating exception: %r", ex2, exc_info=True

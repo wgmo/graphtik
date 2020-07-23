@@ -453,7 +453,10 @@ class Pipeline(Operation):
 
             return solution
         except Exception as ex:
-            jetsam(
+            from textwrap import indent
+            from .config import is_debug
+
+            ann_attr = jetsam(
                 ex,
                 locals(),
                 "plan",
@@ -462,6 +465,20 @@ class Pipeline(Operation):
                 pipeline="self",
                 network="net",
             )
+
+            ## Log collected jetsam
+            #
+            #  NOTE: log jetsam only HERE (pipeline), to avoid repetitive printouts.
+            #
+            annotations = getattr(ex, ann_attr, None)
+            if annotations:
+                jetsam_items = "".join(
+                    f"  +--{k}:\n{indent(str(v), ' ' * 4)}\n\n"
+                    for k, v in annotations.items()
+                )
+                logger = logging.getLogger(f"{__name__}.jetsam")
+                logger.error("Salvaged jetsam:\n%s", jetsam_items)
+
             raise
 
     def __call__(self, **input_kwargs) -> "Solution":
