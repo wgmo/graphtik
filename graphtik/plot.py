@@ -788,10 +788,8 @@ class Theme:
     kw_edge_optional = {"style": ["dashed",], "tooltip": ["(optional)"]}
     kw_edge_sideffect = {"color": Ref("sideffect_color")}
     kw_edge_implicit = {
-        (
-            lambda pa: "arrowtail"
-            if isinstance(pa.nx_item[0], Operation)
-            else "arrowhead"
+        lambda pa: (
+            "arrowtail" if isinstance(pa.nx_item[0], Operation) else "arrowhead"
         ): "obox",
         "dir": "both",
         "tooltip": ["(implicit)"],
