@@ -371,7 +371,7 @@ class Pipeline(Operation):
         layered_solution=None,
     ) -> "Solution":
         """
-        Compile a plan & :term:`execute` the graph, sequentially or parallel.
+        Compile & :term:`execute` the plan, log :term:`jetsam` & plot :term:`plottable` on errors.
 
         .. Attention::
             If intermediate :term:`planning` is successful, the "global
@@ -453,9 +453,6 @@ class Pipeline(Operation):
 
             return solution
         except Exception as ex:
-            from textwrap import indent
-            from .config import is_debug
-
             ann_attr = jetsam(
                 ex,
                 locals(),
@@ -466,18 +463,20 @@ class Pipeline(Operation):
                 network="net",
             )
 
-            ## Log collected jetsam
-            #
-            #  NOTE: log jetsam only HERE (pipeline), to avoid repetitive printouts.
-            #
             annotations = getattr(ex, ann_attr, None)
             if annotations:
-                jetsam_items = "".join(
-                    f"  +--{k}:\n{indent(str(v), ' ' * 4)}\n\n"
-                    for k, v in annotations.items()
-                )
-                logger = logging.getLogger(f"{__name__}.jetsam")
-                logger.error("Salvaged jetsam:\n%s", jetsam_items)
+                try:
+                    annotations.log_n_plot()
+                except Exception as ex2:
+                    log.warning(
+                        "Suppressed error on log/plot jetsam of %s: %s(%s)"
+                        "\n  +--annotations:%s",
+                        self,
+                        annotations,
+                        type(ex).__name__,
+                        ex,
+                        exc_info=True,
+                    )
 
             raise
 

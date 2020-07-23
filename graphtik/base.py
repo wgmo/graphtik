@@ -296,6 +296,7 @@ def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
         return default
 
 
+# TODO: Move to `jetsam` module
 class AttrDict(dict):
     """
     The :term:`jetsam` is a dict with items accessed also as attributes.
@@ -306,6 +307,47 @@ class AttrDict(dict):
     def __init__(self, *args, **kwargs):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
+
+    def log_n_plot(self, plot=None):
+        """Log collected items,and if :ref:`debug` or `plot`, plot 1st :term:`plottable`. """
+        from pathlib import Path
+        from tempfile import gettempdir
+        from textwrap import indent
+        from .config import is_debug
+        from . import __title__
+        from .plot import save_plot_file_by_sha1
+
+        debug = is_debug() if plot is None else plot
+
+        ## Plot broken
+        #
+        if debug and "plot_fpath" not in self:
+            for p_type in "solution plan pipeline network".split():
+                plottable = self.get(p_type)
+                if plottable is not None:
+                    try:
+                        dir_prefix = Path(gettempdir(), __title__)
+                        plot_fpath = save_plot_file_by_sha1(plottable, dir_prefix)
+                        self["plot_fpath"] = str(plot_fpath)
+                        break
+                    except Exception as ex:
+                        log.warning(
+                            "Suppressed error while plotting jetsam %s: %s(%s)",
+                            plottable,
+                            type(ex).__name__,
+                            ex,
+                            exc_info=True,
+                        )
+
+        ## Log collected jetsam
+        #
+        #  NOTE: log jetsam only HERE (pipeline), to avoid repetitive printouts.
+        #
+        if self:
+            items = "".join(
+                f"  +--{k}:\n{indent(str(v), ' ' * 4)}\n\n" for k, v in self.items()
+            )
+            log.error("Salvaged jetsam:\n%s", items)
 
 
 def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
@@ -370,12 +412,6 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
     The purpose is not to require a debugger-session to inspect the root-causes
     (without precluding one).
     """
-    from pathlib import Path
-    from tempfile import gettempdir
-    from .config import is_debug
-    from . import __title__
-    from .plot import save_plot_file_by_sha1
-
     ## Fail EARLY before yielding on bad use.
     #
     assert isinstance(ex, Exception), ("Bad `ex`, not an exception dict:", ex)
@@ -389,8 +425,6 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         "Bad `salvage_mappings`:",
         salvage_mappings,
     )
-
-    debug = is_debug()
 
     ## Merge vars-mapping to save.
     for var in salvage_vars:
@@ -418,26 +452,6 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
                     ex,
                     exc_info=True,
                 )
-
-        ## Plot broken
-        #
-        if debug and "plot_fpath" not in annotations:
-            for p_type in "solution plan pipeline network".split():
-                plottable = annotations.get(p_type)
-                if plottable is not None:
-                    try:
-                        dir_prefix = Path(gettempdir(), __title__)
-                        plot_fpath = save_plot_file_by_sha1(plottable, dir_prefix)
-                        annotations["plot_fpath"] = str(plot_fpath)
-                        break
-                    except Exception as ex:
-                        log.warning(
-                            "Suppressed error while plotting jetsam %s: %s(%s)",
-                            plottable,
-                            type(ex).__name__,
-                            ex,
-                            exc_info=True,
-                        )
 
         return annotation
     except Exception as ex2:
