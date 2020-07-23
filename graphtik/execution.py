@@ -492,16 +492,21 @@ class ExecutionPlan(
     def __repr__(self):
         needs = aslist(self.needs, "needs")
         provides = aslist(self.provides, "provides")
-        steps = (
-            "".join(f"\n  +--{s}" for s in self.steps)
+        steps = self.steps or ()
+        steps_str = (
+            "".join(f"\n  +--{s}" for s in steps)
             if is_debug()
-            else ", ".join(yield_node_names(self.steps))
+            else ", ".join(yield_node_names(steps))
         )
-        comments = f"\n  +--prune-comments: {self.comments}" if is_debug() else ""
+        comments = (
+            (f"\n  +--prune-comments: {self.comments}" if is_debug() else "")
+            if self.comments
+            else ""
+        )
 
         return (
             f"ExecutionPlan(needs={needs}, provides={provides}"
-            f", x{len(self.steps)} steps: {steps}{comments})"
+            f", x{len(steps)} steps: {steps_str}{comments})"
         )
 
     def validate(self, inputs: Items = UNSET, outputs: Items = UNSET):
