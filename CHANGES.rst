@@ -31,6 +31,7 @@ Graphtik Changelog
   - [ ] FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
 
   - [ ] DOC: explain Implicits in tutorial
+    - [ ] TCs: Test DEBUG
   - [ ] ENH: Plan accepts previous solutions
     - [ ] refact: named_inputs --> sol
   - [ ] ENH: planning reports unsatisfied node modus, for plotting
@@ -92,9 +93,24 @@ v10.1.0 (XX Jul 2020, @ankostis): Step number badges
 
   + feat: data-nodes are *Graphviz HTML-ized* to support badges.
 
++ break(fnop): do not accept operations without any `provides` - they were pruned before,
+  but it is better to fail asap.
+
++ enh(plan): why operations are pruned is now explained in the plan & the plot tooltips.
+
 + fix(plan): :meth:`.ExecutionPlan.validate()` may be called with no args,
   and uses the compiled ones.
-+ fix(SphinxExt): catch top-level errors that if occured, message and stack trace
+
+  + doc: enhance existing tutorial section to explain compilation.
+
++ feat(:term:`jetsam`): `pipeline` was not collected, till now.
+
+  + feat: items can be accessed as jetsam attributes (helpful for interactive REPLs).
+  + revert: stop logging every jetsam item on each salvaging point, not to flood
+    logs (which had been introduced in the previous release).
+  + refact: move into own module.
+
++ fix(SphinxExt): catch top-level errors that if occurred, message and stack trace
   were lost.
 
 
