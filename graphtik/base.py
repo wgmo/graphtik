@@ -404,9 +404,14 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
                 annotations.setdefault(dst_key, salvaged_value)
             except Exception as ex:
                 log.warning(
-                    "Suppressed error while salvaging jetsam item (%r, %r): %r"
-                    % (dst_key, src, ex)
+                    "Suppressed error while salvaging jetsam item (%r, %r): %s(%s)",
+                    dst_key,
+                    src,
+                    type(ex).__name__,
+                    ex,
+                    exc_info=True,
                 )
+
         logging.getLogger(f"{__name__}.jetsam").log(
             logging.ERROR if is_debug() else logging.DEBUG,
             "Salvaged jetsam: %s",
