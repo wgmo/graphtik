@@ -24,7 +24,7 @@ from .base import (
     aslist,
     astuple,
     first_solid,
-    jetsam,
+    save_jetsam,
 )
 from .config import (
     get_execution_pool,
@@ -603,7 +603,7 @@ class ExecutionPlan(
 
                 return task
             except Exception as ex:
-                jetsam(ex, locals(), "task", plan="self")
+                save_jetsam(ex, locals(), "task", plan="self")
                 raise
 
         return [prep_task(op) for op in operations]
@@ -660,7 +660,7 @@ class ExecutionPlan(
             else:
                 # Although `plan` have added to jetsam in `compute()``,
                 # add it again, in case compile()/execute() is called separately.
-                jetsam(ex, locals(), "solution", task="future", plan="self")
+                save_jetsam(ex, locals(), "solution", task="future", plan="self")
                 raise
 
     def _execute_thread_pool_barrier_method(self, solution: Solution):
@@ -903,5 +903,5 @@ class ExecutionPlan(
 
             return solution
         except Exception as ex:
-            jetsam(ex, locals(), "solution")
+            save_jetsam(ex, locals(), "solution")
             raise

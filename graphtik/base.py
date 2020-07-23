@@ -16,6 +16,7 @@ import inspect
 import logging
 from collections import abc as cabc
 from functools import partial, partialmethod, wraps
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -297,7 +298,7 @@ def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
 
 
 # TODO: Move to `jetsam` module
-class AttrDict(dict):
+class Jetsam(dict):
     """
     The :term:`jetsam` is a dict with items accessed also as attributes.
 
@@ -305,12 +306,19 @@ class AttrDict(dict):
     """
 
     def __init__(self, *args, **kwargs):
-        super(AttrDict, self).__init__(*args, **kwargs)
+        super(Jetsam, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
-    def log_n_plot(self, plot=None):
-        """Log collected items,and if :ref:`debug` or `plot`, plot 1st :term:`plottable`. """
-        from pathlib import Path
+    def log_n_plot(self, plot=None) -> Path:
+        """
+        Log collected items, and plot 1st :term:`plottable` in a temp-file, if :ref:`debug`.
+
+        :param plot:
+            override DEBUG-flag if given (true, plots, false not)
+
+        :return:
+            the name of temp-file, also ERROR-logged along with the rest jetsam
+        """
         from tempfile import gettempdir
         from textwrap import indent
         from .config import is_debug
@@ -321,6 +329,7 @@ class AttrDict(dict):
 
         ## Plot broken
         #
+        plot_fpath = None
         if debug and "plot_fpath" not in self:
             for p_type in "solution plan pipeline network".split():
                 plottable = self.get(p_type)
@@ -349,8 +358,10 @@ class AttrDict(dict):
             )
             log.error("Salvaged jetsam:\n%s", items)
 
+        return plot_fpath
 
-def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
+
+def save_jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings):
     """
     Annotate exception with salvaged values from locals(), log, (if :ref:`debug`) plot.
 
@@ -373,7 +384,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
         They take precedence over`salvage_vars`.
 
     :return:
-        the name of the annotation attribute
+        the :class:`Jetsam` annotation, also attached on the exception
     :raises:
         any exception raised by the wrapped function, annotated with values
         assigned as attributes on this context-manager
@@ -396,7 +407,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
             b = 2
             raise Exception()
         exception Exception as ex:
-            jetsam(ex, locals(), "a", b="salvaged_b", c_var="c")
+            save_jetsam(ex, locals(), "a", b="salvaged_b", c_var="c")
             raise
 
     And then from a REPL::
@@ -432,17 +443,17 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
             salvage_mappings[var] = var
 
     try:
-        annotations = getattr(ex, annotation, None)
-        if not isinstance(annotations, AttrDict):
-            annotations = AttrDict()
-            setattr(ex, annotation, annotations)
+        jetsam = getattr(ex, annotation, None)
+        if not isinstance(jetsam, Jetsam):
+            jetsam = Jetsam()
+            setattr(ex, annotation, jetsam)
 
         ## Salvage those asked
         for dst_key, src in salvage_mappings.items():
             try:
-                if dst_key not in annotations:
+                if dst_key not in jetsam:
                     salvaged_value = src(locs) if callable(src) else locs.get(src)
-                    annotations[dst_key] = salvaged_value
+                    jetsam[dst_key] = salvaged_value
             except Exception as ex:
                 log.warning(
                     "Suppressed error while salvaging jetsam item (%r, %r): %s(%s)",
@@ -453,7 +464,7 @@ def jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_mappings
                     exc_info=True,
                 )
 
-        return annotation
+        return jetsam
     except Exception as ex2:
         log.warning(
             "Suppressed error while annotating exception: %r", ex2, exc_info=True

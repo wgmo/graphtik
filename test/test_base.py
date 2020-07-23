@@ -27,7 +27,7 @@ def test_jetsam_bad_locals(locs, caplog):
         try:
             raise Exception()
         except Exception as ex:
-            base.jetsam(ex, locs, a="a")
+            base.save_jetsam(ex, locs, a="a")
             raise
 
     assert not hasattr(excinfo.value, "jetsam")
@@ -41,7 +41,7 @@ def test_jetsam_bad_keys(keys, caplog):
         try:
             raise Exception("ABC")
         except Exception as ex:
-            base.jetsam(ex, {}, **keys)
+            base.save_jetsam(ex, {}, **keys)
 
     assert not hasattr(excinfo.value, "jetsam")
     assert "Suppressed error while annotating exception" not in caplog.text
@@ -54,7 +54,7 @@ def test_jetsam_bad_locals_given(locs, caplog):
         try:
             raise Exception("ABC")
         except Exception as ex:
-            base.jetsam(ex, locs, a="a")
+            base.save_jetsam(ex, locs, a="a")
             raise
 
     assert not hasattr(excinfo.value, "jetsam")
@@ -70,7 +70,7 @@ def test_jetsam_bad_existing_annotation(annotation, caplog):
             ex.jetsam = annotation
             raise ex
         except Exception as ex:
-            base.jetsam(ex, {}, a="a")
+            base.save_jetsam(ex, {}, a="a")
             raise
 
     assert excinfo.value.jetsam == {"a": None}
@@ -82,7 +82,7 @@ def test_jetsam_dummy_locals(caplog):
         try:
             raise Exception("ABC")
         except Exception as ex:
-            base.jetsam(ex, {"a": 1}, a="a", bad="bad")
+            base.save_jetsam(ex, {"a": 1}, a="a", bad="bad")
             raise
 
     assert isinstance(excinfo.value.jetsam, dict)
@@ -101,7 +101,7 @@ def _jetsamed_fn(*args, **kwargs):
         b = 2
         _scream()
     except Exception as ex:
-        base.jetsam(ex, locals(), a="a", b="b")
+        base.save_jetsam(ex, locals(), a="a", b="b")
         raise
 
 
@@ -119,7 +119,7 @@ def test_jetsam_nested():
             fn = "inner"
             _jetsamed_fn()
         except Exception as ex:
-            base.jetsam(ex, locals(), fn="fn")
+            base.save_jetsam(ex, locals(), fn="fn")
             raise
 
     def outer():
@@ -129,7 +129,7 @@ def test_jetsam_nested():
             b = 0
             inner()
         except Exception as ex:
-            base.jetsam(ex, locals(), fn="fn")
+            base.save_jetsam(ex, locals(), fn="fn")
             raise
 
     with pytest.raises(Exception, match="ABC") as excinfo:

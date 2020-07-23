@@ -25,7 +25,7 @@ from .base import (
     Plottable,
     RenArgs,
     aslist,
-    jetsam,
+    save_jetsam,
 )
 from .modifier import dep_renamed
 
@@ -453,7 +453,7 @@ class Pipeline(Operation):
 
             return solution
         except Exception as ex:
-            ann_attr = jetsam(
+            jetsam = save_jetsam(
                 ex,
                 locals(),
                 "plan",
@@ -463,20 +463,18 @@ class Pipeline(Operation):
                 network="net",
             )
 
-            annotations = getattr(ex, ann_attr, None)
-            if annotations:
-                try:
-                    annotations.log_n_plot()
-                except Exception as ex2:
-                    log.warning(
-                        "Suppressed error on log/plot jetsam of %s: %s(%s)"
-                        "\n  +--annotations:%s",
-                        self,
-                        annotations,
-                        type(ex).__name__,
-                        ex,
-                        exc_info=True,
-                    )
+            try:
+                jetsam.log_n_plot()
+            except Exception as ex2:
+                log.warning(
+                    "Suppressed error while logging/plotting jetsam of %s: %s(%s)"
+                    "\n  +--annotations:%s",
+                    self,
+                    jetsam,
+                    type(ex).__name__,
+                    ex,
+                    exc_info=True,
+                )
 
             raise
 

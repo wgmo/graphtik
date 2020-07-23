@@ -37,7 +37,7 @@ from .base import (
     debug_var_tip,
     first_solid,
     func_name,
-    jetsam,
+    save_jetsam,
 )
 from .modifier import (
     dep_renamed,
@@ -841,7 +841,7 @@ class FnOp(Operation):
 
             return results_op
         except Exception as ex:
-            jetsam(
+            save_jetsam(
                 ex,
                 locals(),
                 "outputs",
