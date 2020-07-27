@@ -3,6 +3,7 @@
 import functools as fnt
 import itertools as itt
 import logging
+import sys
 import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -238,6 +239,9 @@ def test_jetsam_sites_scream(failing_jetsam):
     assert set(ex.jetsam.keys()) == set(i for i in expected_jetsam if i != "plot_fpath")
 
 
+@pytest.mark.xfail(
+    sys.version_info < (3, 8), reason="unlink(missing_ok) param introduced in PY3.8"
+)
 def test_jetsam_saves_plot(failing_jetsam):
     acallable, expected_jetsam = failing_jetsam
     if "plot_fpath" in expected_jetsam:
