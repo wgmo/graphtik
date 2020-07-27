@@ -226,7 +226,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     :param inputs:
         an iterable of the names of the input values
     :return:
-        an {op, prune-explanation} dictionary of unsatisfied operations
+        an {pruned-op, unsatisfied-explanation} dictionary
 
     """
     # Collect data that will be produced.
@@ -236,7 +236,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     # To collect the map of operations --> satisfied-needs.
     op_satisfaction = defaultdict(set)
     # To collect the operations to drop.
-    unsatisfied = {}
+    pruned_ops = {}
     # Topo-sort dag respecting operation-insertion order to break ties.
     sorted_nodes = nx.topological_sort(dag)  # generator!
     if log.isEnabledFor(logging.DEBUG):
@@ -245,23 +245,23 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     for i, node in enumerate(sorted_nodes):
         if isinstance(node, Operation):
             if not dag.adj[node]:
-                unsatisfied[node] = "needless-outputs"
-                log.info("... dropping #%i unsatisfied(needless-outputs) %s", i, node)
+                pruned_ops[node] = "needless-outputs"
+                log.info("... pruned step #%i due to needless-outputs\n  %s", i, node)
             else:
                 real_needs = set(
                     n for n, _, opt in dag.in_edges(node, data="optional") if not opt
                 )
-                # ## Sanity check that op's needs are never broken
+                satisfied_needs = op_satisfaction[node]
+                ## Sanity check that op's needs are never broken
                 # assert real_needs == set(n for n in node.needs if not is_optional(n))
-                if real_needs.issubset(op_satisfaction[node]):
+                if real_needs.issubset(satisfied_needs):
                     # Op is satisfied; mark its outputs as ok.
                     ok_data.update(yield_chaindocs(dag, dag.adj[node], ok_data))
                 else:
-                    unsatisfied[node] = msg = (
-                        f"partial-inputs: needs{list(real_needs)}"
-                        f", satisfied{list(op_satisfaction[node])}"
-                    )
-                    log.info("... dropping #%i unsatisfied(%s) %s", i, msg, node)
+                    pruned_ops[
+                        node
+                    ] = msg = f"unsatisfied-needs{list(real_needs - satisfied_needs)}"
+                    log.info("... pruned step #%i due to %s\n  %s", i, msg, node)
         elif isinstance(node, str):  # `str` are givens
             if node in ok_data:
                 # mark satisfied-needs on all future operations
@@ -270,7 +270,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
         else:
             raise AssertionError(f"Unrecognized network graph node {node}")
 
-    return unsatisfied
+    return pruned_ops
 
 
 class Network(Plottable):
