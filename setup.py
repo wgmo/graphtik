@@ -44,9 +44,10 @@ test_deps = list(
         matplot_deps
         + sphinx_deps
         + [
-            "pytest",
+            "pytest==5.3.5",  # Pinned due to sugar
+            "pytest-sugar",
+            "pytest-sphinx==0.2.1",  # Pinned due to API break 0.2.2
             "pytest-cov",
-            "pytest-sphinx",
             "dill",
             "sphinxcontrib-spelling",
             "html5lib",  # for sphinxext TCs
