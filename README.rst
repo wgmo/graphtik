@@ -55,6 +55,18 @@ Features
 - Integration with Sphinx sites with the new :rst:dir:`graphtik` directive.
 - Authored with :ref:`debugging <debugging>` in mind.
 
+Anti-features
+^^^^^^^^^^^^^
+- It's not an orchestrator for long-running tasks, nor a calendar scheduler -
+  `Apache Airflow <https://airflow.apache.org/>`_ and `Luigi <https://luigi.readthedocs.io/>`_
+  may help for that.
+
+- It's not really a parallelizing optimizer, neither a map-reduce framework - look
+  additionally at `Dask <https://dask.org/>`_, `IpyParallel
+  <https://ipyparallel.readthedocs.io/en/latest/>`_, `Celery
+  <https://docs.celeryproject.org/en/stable/getting-started/introduction.html>`_,
+  Hive, Pig, Spark, Hadoop, etc.
+
 
 Quick start
 -----------
