@@ -16,13 +16,15 @@ Graphtik
 Lightweight computation graphs for Python
 -----------------------------------------
 
-**Graphtik** is an an understandable and lightweight Python module for executing
-a graph of functions (a.k.a :term:`pipeline`) on :term:`hierarchical data`.
+**Graphtik** is a library to design, plot & execute *graphs of functions*
+(a.k.a :term:`pipeline`\s) that consume and populate (possibly :term:`nested
+<hierarchical data>`) data, based on whether values for those data (a.k.a :term:`dependencies
+<dependency>`) exist.
 
 - The API posits a fair compromise between features and complexity, without precluding any.
 - It can be used as is to build machine learning pipelines for data science projects.
 - It should be extendable to act as the core for a custom ETL engine, a workflow-processor
-  for interdependent tasks & files like GNU Make, or an Excel-like spreadsheet.
+  for interdependent tasks & files like GNU Make, or a spreadsheet calculation engine.
 
 *Graphtik* `sprang <https://docs.google.com/spreadsheets/d/1HPgtg2l6v3uDS81hLOcFOZxIBLCnHGrcFOh3pFRIDio/edit#gid=0>`_
 from `Graphkit`_ (summer 2019, v1.2.2) to :gh:`experiment <22>` with Python 3.6+ features,
