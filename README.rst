@@ -30,10 +30,10 @@ a graph of functions (a.k.a pipeline) on hierarchical data.
     <https://github.com/yahoo/graphkit/issues/>`_ with Python 3.6+ features,
     but has diverged significantly with enhancements ever since.
 
-.. features
-
 Features
 --------
+.. features
+
 - Can assemble existing functions without modifications into `pipeline`\s.
 - `dependency` resolution can bypass calculation cycles based on data given and asked.
 - Support functions with `optional <optionals>` input args and/or `varargs <varargish>`.
@@ -42,12 +42,13 @@ Features
 - Default `conveyor operation` to easily pass (possibly *nested*) dependencies around.
 - `Merge <operation merging>` or `nest <operation nesting>` sub-pipelines.
 - `Hierarchical dependencies <subdoc>` may access data values deep in `solution`
-   with `json pointer path` expressions.
+  with `json pointer path` expressions.
 - Hierarchical dependencies annotated as `implicit` imply which subdoc dependency
   the function reads or writes in the parent-doc.
-- Denote and schedule `sideffects` on `dependency` values, to update them repeatedly
-  (e.g. to add columns into :class:`pandas.DataFrame`\s).
-- Deterministic pre-decided `execution plan`.
+- Denote and schedule `sideffects` on `dependency` values, to update them repeatedly,
+  avoiding cycles (e.g. to add columns into :class:`pandas.DataFrame`\s).
+- Deterministic pre-decided `execution plan`  (excepting *partial-outputs* or
+  *endured operations*).
 - Early `eviction` of intermediate results from `solution`, to optimize memory footprint.
 - Solution tracks all intermediate `overwritten <overwrite>` values for the same dependency.
 - Parallel execution (but underdeveloped).
