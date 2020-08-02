@@ -627,7 +627,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
                 ><B>OP:</B> <I>cu:sto:m</I></TD>
                 <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
                         <TR>
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD>
+                            <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD>
                         </TR>
                     </TABLE></TD>
             </TR><TR>
@@ -689,7 +689,7 @@ def test_step_badge():
             ><B>OP:</B> <I>0</I></TD>
             <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
                     <TR>
-                        <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD>
                     </TR>
                 </TABLE></TD>
         </TR><TR>
@@ -708,7 +708,7 @@ def test_step_badge():
             ><B>OP:</B> <I>1</I></TD>
             <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
                     <TR>
-                        <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>1</B></FONT></TD>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>1</B></FONT></TD>
                     </TR>
                 </TABLE></TD>
         </TR><TR>

@@ -730,7 +730,7 @@ class Theme:
                     <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
                         <TR>
                         {%- if steps and op_name in steps %}
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM"
+                            <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM"
                             {{- {
                             'BGCOLOR': step_bgcolor | eee,
                             'TITLE': step_tooltip | eee,
