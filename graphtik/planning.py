@@ -65,27 +65,6 @@ def yield_node_names(nodes):
     return (getattr(n, "name", n) for n in nodes)
 
 
-def _append_cycles_tip(ex: nx.NetworkXUnfeasible):
-    import sys
-    from textwrap import dedent
-
-    tb = sys.exc_info()[2]
-    msg = dedent(
-        f"""
-        {ex}
-
-        TIP:
-            Launch a post-mortem debugger, move 3 frames UP, and
-            plot the `graphtik.planning.Network' class in `self`
-            to discover the cycle.
-
-            If GRAPHTIK_DEBUG enabled, this plot will be stored tmp-folder
-            automatically :-)
-        """
-    )
-    return nx.NetworkXUnfeasible(msg).with_traceback(tb)
-
-
 def _optionalized(graph, data):
     """Retain optionality of a `data` node based on all `needs` edges."""
     all_optionals = all(e[2] for e in graph.out_edges(data, "optional", False))
@@ -228,16 +207,37 @@ def clone_graph_with_stripped_sfxed(graph):
     return clone
 
 
-def _topo_sort_nodes(dag) -> Iterable:
+def _topo_sort_nodes(dag) -> iset:
     """
-    Topo-sort dag by execution order, then by operation-insertion order
-    to break ties.
+    Topo-sort dag by execution order & operation-insertion order to break ties.
 
     This means (probably!?) that the first inserted win the `needs`, but
     the last one win the `provides` (and the final solution).
+
+    Inform user in case of cycles.
     """
     node_keys = dict(zip(dag.nodes, count()))
-    return nx.lexicographical_topological_sort(dag, key=node_keys.get)
+    try:
+        return iset(nx.lexicographical_topological_sort(dag, key=node_keys.get))
+    except nx.NetworkXUnfeasible as ex:
+        import sys
+        from textwrap import dedent
+
+        tb = sys.exc_info()[2]
+        msg = dedent(
+            f"""
+            {ex}
+
+            TIP:
+                Launch a post-mortem debugger, move 3 frames UP, and
+                plot the `graphtik.planning.Network' class in `self`
+                to discover the cycle.
+
+                If GRAPHTIK_DEBUG enabled, this plot will be stored tmp-folder
+                automatically :-)
+            """
+        )
+        raise nx.NetworkXUnfeasible(msg).with_traceback(tb)
 
 
 def unsatisfied_operations(dag, inputs: Iterable) -> Tuple[OpMap, iset]:
@@ -271,12 +271,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> Tuple[OpMap, iset]:
     # To collect the operations to drop.
     pruned_ops = {}
     ## Topo-sort dag respecting operation-insertion order to break ties.
-    #  and inform user in case of cycles.
-    #
-    try:
-        sorted_nodes = iset(_topo_sort_nodes(dag))  # generator!
-    except nx.NetworkXUnfeasible as ex:
-        raise _append_cycles_tip(ex)
+    sorted_nodes = _topo_sort_nodes(dag)
 
     if log.isEnabledFor(logging.DEBUG):
         log.debug("Topo-sorted nodes: %s", list(yield_node_names(sorted_nodes)))
