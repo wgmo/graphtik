@@ -173,6 +173,13 @@ def test_returns_dict(result, dictres):
     assert op.compute({})["a"] == result
 
 
+def test_returns_dict_extra():
+    res = {"1": 1, "2": 2}
+    op = operation(lambda: res, provides="1", returns_dict=True)
+    assert op.compute({}) == {"1": 1}
+    assert len(res) == 2  # check it did not mutate results
+
+
 @pytest.fixture(params=[None, ["a", "b"]])
 def asked_outputs(request):
     return request.param

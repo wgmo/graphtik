@@ -709,13 +709,15 @@ class FnOp(Operation):
             unknown = res_names - fn_expected
             if unknown:
                 unknown = list(unknown)
-                log.info(
-                    "Results%s contained +%s unknown provides%s\n  %s",
+                log.warning(
+                    "Results%s contained +%i unknown provides%s - will DELETE them!\n  %s",
                     list(res_names),
                     len(unknown),
                     list(unknown),
                     self,
                 )
+                # FIXME: too invasive when no-evictions!
+                results = {k: v for k, v in results.items() if k not in unknown}
 
             missmatched = fn_required - res_names
             if missmatched:
