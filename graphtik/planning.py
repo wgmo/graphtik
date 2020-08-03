@@ -228,6 +228,18 @@ def clone_graph_with_stripped_sfxed(graph):
     return clone
 
 
+def _topo_sort_nodes(dag) -> Iterable:
+    """
+    Topo-sort dag by execution order, then by operation-insertion order
+    to break ties.
+
+    This means (probably!?) that the first inserted win the `needs`, but
+    the last one win the `provides` (and the final solution).
+    """
+    node_keys = dict(zip(dag.nodes, count()))
+    return nx.lexicographical_topological_sort(dag, key=node_keys.get)
+
+
 def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     """
     Traverse topologically sorted dag to collect un-satisfied operations.
@@ -262,7 +274,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     #  and inform user in case of cycles.
     #
     try:
-        sorted_nodes = list(nx.topological_sort(dag))  # generator!
+        sorted_nodes = list(_topo_sort_nodes(dag))  # generator!
     except nx.NetworkXUnfeasible as ex:
         raise _append_cycles_tip(ex)
 
@@ -466,17 +478,6 @@ class Network(Plottable):
                 kw["alias_of"] = src_provide
 
             graph.add_edge(operation, n, **kw)
-
-    def _topo_sort_nodes(self, dag) -> List:
-        """
-        Topo-sort dag by execution order, then by operation-insertion order
-        to break ties.
-
-        This means (probably!?) that the first inserted win the `needs`, but
-        the last one win the `provides` (and the final solution).
-        """
-        node_keys = dict(zip(dag.nodes, count()))
-        return nx.lexicographical_topological_sort(dag, key=node_keys.get)
 
     def _apply_graph_predicate(self, graph, predicate):
         to_del = []
@@ -689,7 +690,7 @@ class Network(Plottable):
         #  and inform user in case of cycles (must have been caught earlier) .
         #
         try:
-            ordered_nodes = iset(self._topo_sort_nodes(pruned_dag))
+            ordered_nodes = iset(_topo_sort_nodes(pruned_dag))
         except nx.NetworkXUnfeasible as ex:
             raise _append_cycles_tip(ex)
 
