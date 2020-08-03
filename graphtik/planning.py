@@ -65,6 +65,27 @@ def yield_node_names(nodes):
     return (getattr(n, "name", n) for n in nodes)
 
 
+def _append_cycles_tip(ex: nx.NetworkXUnfeasible):
+    import sys
+    from textwrap import dedent
+
+    tb = sys.exc_info()[2]
+    msg = dedent(
+        f"""
+        {ex}
+
+        TIP:
+            Launch a post-mortem debugger, move 3 frames UP, and
+            plot the `graphtik.planning.Network' class in `self`
+            to discover the cycle.
+
+            If GRAPHTIK_DEBUG enabled, this plot will be stored tmp-folder
+            automatically :-)
+        """
+    )
+    return nx.NetworkXUnfeasible(msg).with_traceback(tb)
+
+
 def _optionalized(graph, data):
     """Retain optionality of a `data` node based on all `needs` edges."""
     all_optionals = all(e[2] for e in graph.out_edges(data, "optional", False))
@@ -237,10 +258,15 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     op_satisfaction = defaultdict(set)
     # To collect the operations to drop.
     pruned_ops = {}
-    # Topo-sort dag respecting operation-insertion order to break ties.
-    sorted_nodes = nx.topological_sort(dag)  # generator!
+    ## Topo-sort dag respecting operation-insertion order to break ties.
+    #  and inform user in case of cycles.
+    #
+    try:
+        sorted_nodes = list(nx.topological_sort(dag))  # generator!
+    except nx.NetworkXUnfeasible as ex:
+        raise _append_cycles_tip(ex)
+
     if log.isEnabledFor(logging.DEBUG):
-        sorted_nodes = list(sorted_nodes)
         log.debug("Topo-sorted nodes: %s", list(yield_node_names(sorted_nodes)))
     for i, node in enumerate(sorted_nodes):
         if isinstance(node, Operation):
@@ -659,8 +685,13 @@ class Network(Plottable):
           in the graph (after sorting, to evade cycles).
 
         """
-        ## Sort by execution order, then by operation-insertion, to break ties.
-        ordered_nodes = iset(self._topo_sort_nodes(pruned_dag))
+        ## Sort by execution order, then by operation-insertion, to break ties,
+        #  and inform user in case of cycles (must have been caught earlier) .
+        #
+        try:
+            ordered_nodes = iset(self._topo_sort_nodes(pruned_dag))
+        except nx.NetworkXUnfeasible as ex:
+            raise _append_cycles_tip(ex)
 
         if not outputs or is_skip_evictions():
             # When no specific outputs asked, NO EVICTIONS,

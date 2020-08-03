@@ -6,6 +6,7 @@ import re
 import sys
 from operator import add, floordiv, mul, sub
 
+import networkx as nx
 import pytest
 
 from graphtik import (
@@ -119,6 +120,17 @@ def test_smoke_test():
         pipeline.compute({"sum_ab": 1, "b": 2}, "bad_node")
     with pytest.raises(ValueError, match="Unknown output node"):
         pipeline.compute({"sum_ab": 1, "b": 2}, ["b", "bad_node"])
+
+
+def test_cycle_tip():
+    pipe = compose(..., operation(str, "cyclic1", "a", "a"))
+    with pytest.raises(nx.NetworkXUnfeasible, match="TIP:"):
+        pipe.compute()
+    pipe = compose(
+        ..., operation(str, "cyclic1", "a", "b"), operation(str, "cyclic2", "b", "a")
+    )
+    with evictions_skipped(True), pytest.raises(nx.NetworkXUnfeasible, match="TIP:"):
+        pipe.compute()
 
 
 def test_aliases(exemethod):
