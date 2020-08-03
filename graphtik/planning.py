@@ -731,7 +731,7 @@ class Network(Plottable):
 
             steps.append(op)
 
-            future_nodes = set(ordered_nodes[i + 1 :])
+            future_nodes = ordered_nodes[i + 1 :]
 
             ## EVICT(1) operation's needs not to be used in the future.
             #
