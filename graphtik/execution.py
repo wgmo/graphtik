@@ -3,6 +3,7 @@
 """:term:`execute` the :term:`plan` to derrive the :term:`solution`."""
 import logging
 import random
+import sys
 import time
 from collections import ChainMap, abc, defaultdict, namedtuple
 from contextvars import ContextVar, copy_context
@@ -581,6 +582,7 @@ class ExecutionPlan(
         input_values = dict(solution)
 
         def prep_task(op):
+            ok = False
             try:
                 # Mark start time here, to include also marshalling overhead.
                 solution.elapsed_ms[op] = time.time()
@@ -601,10 +603,12 @@ class ExecutionPlan(
                     task = partial(_do_task, task)
                     task.get = task.__call__
 
+                ok = True
                 return task
-            except Exception as ex:
-                save_jetsam(ex, locals(), "task", plan="self")
-                raise
+            finally:
+                if not ok:
+                    ex = sys.exc_info()[1]
+                    save_jetsam(ex, locals(), "task", plan="self")
 
         return [prep_task(op) for op in operations]
 
@@ -827,6 +831,7 @@ class ExecutionPlan(
             *Unreachable outputs...*
                 if net cannot produce asked `outputs`.
         """
+        ok = False
         try:
             self.validate(named_inputs, outputs)
             dag = self.dag  # locals opt
@@ -869,10 +874,10 @@ class ExecutionPlan(
                 self,
             )
 
-            ok = False
+            ok2 = False
             try:
                 executor(solution)
-                ok = True
+                ok2 = True
             finally:
                 ## Log cumulative operations elapsed time.
                 #
@@ -881,7 +886,7 @@ class ExecutionPlan(
                     log.info(
                         "=== (%s) %s pipeline(%s) in %0.3fms.",
                         solution.solid,
-                        "Completed" if ok else "FAILED",
+                        "Completed" if ok2 else "FAILED",
                         name,
                         elapsed,
                     )
@@ -901,7 +906,9 @@ class ExecutionPlan(
                     "\n  (tip: enable DEBUG-logging and/or set GRAPHTIK_DEBUG envvar to investigate)"
                 )
 
+            ok = True
             return solution
-        except Exception as ex:
-            save_jetsam(ex, locals(), "solution")
-            raise
+        finally:
+            if not ok:
+                ex = sys.exc_info()[1]
+                save_jetsam(ex, locals(), "solution")

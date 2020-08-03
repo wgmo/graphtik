@@ -12,6 +12,7 @@
 import inspect
 import logging
 import re
+import sys
 from collections import abc as cabc
 from typing import Callable, List, Mapping, Union
 
@@ -424,6 +425,7 @@ class Pipeline(Operation):
         """
         from .config import reset_abort
 
+        ok = False
         try:
             if named_inputs is UNSET:
                 named_inputs = {}
@@ -451,32 +453,33 @@ class Pipeline(Operation):
                 layered_solution=layered_solution,
             )
 
+            ok = True
             return solution
-        except Exception as ex:
-            jetsam = save_jetsam(
-                ex,
-                locals(),
-                "plan",
-                "solution",
-                "outputs",
-                pipeline="self",
-                network="net",
-            )
-
-            try:
-                jetsam.log_n_plot()
-            except Exception as ex2:
-                log.warning(
-                    "Suppressed error while logging/plotting jetsam of %s: %s(%s)"
-                    "\n  +--annotations:%s",
-                    self,
-                    jetsam,
-                    type(ex).__name__,
+        finally:
+            if not ok:
+                ex = sys.exc_info()[1]
+                jetsam = save_jetsam(
                     ex,
-                    exc_info=True,
+                    locals(),
+                    "plan",
+                    "solution",
+                    "outputs",
+                    pipeline="self",
+                    network="net",
                 )
 
-            raise
+                try:
+                    jetsam.log_n_plot()
+                except Exception as ex2:
+                    log.warning(
+                        "Suppressed error while logging/plotting jetsam of %s: %s(%s)"
+                        "\n  +--annotations:%s",
+                        self,
+                        jetsam,
+                        type(ex).__name__,
+                        ex,
+                        exc_info=True,
+                    )
 
     def __call__(self, **input_kwargs) -> "Solution":
         """

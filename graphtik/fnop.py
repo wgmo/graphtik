@@ -12,6 +12,7 @@
 import itertools as itt
 import logging
 import textwrap
+import sys
 from collections import abc as cabc
 from functools import update_wrapper, wraps
 from typing import (
@@ -818,6 +819,7 @@ class FnOp(Operation):
         return results
 
     def compute(self, named_inputs=None, outputs: Items = None) -> dict:
+        ok = False
         try:
             self.validate_fn_name()
             assert self.name is not None, self
@@ -840,23 +842,25 @@ class FnOp(Operation):
                     key: val for key, val in results_op.items() if key in outputs
                 }
 
+            ok = True
             return results_op
-        except Exception as ex:
-            save_jetsam(
-                ex,
-                locals(),
-                "outputs",
-                "aliases",
-                "results_fn",
-                "results_op",
-                operation="self",
-                args=lambda locs: {
-                    "positional": locs.get("positional"),
-                    "varargs": locs.get("varargs"),
-                    "kwargs": locs.get("kwargs"),
-                },
-            )
-            raise
+        finally:
+            if not ok:
+                ex = sys.exc_info()[1]
+                save_jetsam(
+                    ex,
+                    locals(),
+                    "outputs",
+                    "aliases",
+                    "results_fn",
+                    "results_op",
+                    operation="self",
+                    args=lambda locs: {
+                        "positional": locs.get("positional"),
+                        "varargs": locs.get("varargs"),
+                        "kwargs": locs.get("kwargs"),
+                    },
+                )
 
     def __call__(self, *args, **kwargs):
         """Like dict args, delegates to :meth:`.compute()`."""
