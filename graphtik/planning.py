@@ -240,7 +240,7 @@ def _topo_sort_nodes(dag) -> Iterable:
     return nx.lexicographical_topological_sort(dag, key=node_keys.get)
 
 
-def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
+def unsatisfied_operations(dag, inputs: Iterable) -> Tuple[OpMap, iset]:
     """
     Traverse topologically sorted dag to collect un-satisfied operations.
 
@@ -259,7 +259,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     :param inputs:
         an iterable of the names of the input values
     :return:
-        an {pruned-op, unsatisfied-explanation} dictionary
+        a 2-tuple with ({pruned-op, unsatisfied-explanation}, topo-sorted-nodes)
 
     """
     # Collect data that will be produced.
@@ -274,7 +274,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
     #  and inform user in case of cycles.
     #
     try:
-        sorted_nodes = list(_topo_sort_nodes(dag))  # generator!
+        sorted_nodes = iset(_topo_sort_nodes(dag))  # generator!
     except nx.NetworkXUnfeasible as ex:
         raise _append_cycles_tip(ex)
 
@@ -308,7 +308,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> OpMap:
         else:
             raise AssertionError(f"Unrecognized network graph node {node}")
 
-    return pruned_ops
+    return pruned_ops, sorted_nodes
 
 
 class Network(Plottable):
@@ -615,7 +615,7 @@ class Network(Plottable):
                 )
 
         # Prune unsatisfied operations (those with partial inputs or no outputs).
-        unsatisfied = unsatisfied_operations(broken_dag, satisfied_inputs)
+        unsatisfied, sorted_nodes = unsatisfied_operations(broken_dag, satisfied_inputs)
         comments.update(unsatisfied)
 
         # Clone it, to modify it.
@@ -644,16 +644,19 @@ class Network(Plottable):
         assert inputs is not None or isinstance(inputs, abc.Collection)
         assert outputs is not None or isinstance(outputs, abc.Collection)
 
-        return pruned_dag, tuple(inputs), tuple(outputs), comments
+        return pruned_dag, sorted_nodes, tuple(inputs), tuple(outputs), comments
 
     def _build_execution_steps(
-        self, pruned_dag, inputs: Collection, outputs: Collection
+        self, pruned_dag, sorted_nodes, inputs: Collection, outputs: Collection
     ) -> List:
         """
         Create the list of operations and :term:`eviction` steps, to execute given IOs.
 
         :param pruned_dag:
             The original dag, pruned; not broken.
+        :param sorted_nodes:
+            an :class:`~boltons:boltons.setutils.IndexedSet` with all graph nodes
+            topo-sorted (including pruned ones)
         :param inputs:
             Not used(!), useless inputs will be evicted when the solution is created.
         :param outputs:
@@ -689,15 +692,10 @@ class Network(Plottable):
         ## Sort by execution order, then by operation-insertion, to break ties,
         #  and inform user in case of cycles (must have been caught earlier) .
         #
-        try:
-            ordered_nodes = iset(_topo_sort_nodes(pruned_dag))
-        except nx.NetworkXUnfeasible as ex:
-            raise _append_cycles_tip(ex)
-
         if not outputs or is_skip_evictions():
             # When no specific outputs asked, NO EVICTIONS,
             # so just add the Operations.
-            return list(yield_ops(ordered_nodes))
+            return list(op for op in yield_ops(sorted_nodes) if op in pruned_dag)
 
         ## Strip SFXED without the fear of cycles
         #  (must augment dag before stripping outputs docchains).
@@ -726,13 +724,13 @@ class Network(Plottable):
             steps.append(dep)
 
         steps = []
-        for i, op in enumerate(ordered_nodes):
-            if not isinstance(op, Operation):
+        for i, op in enumerate(sorted_nodes):
+            if not isinstance(op, Operation) or op not in pruned_dag:
                 continue
 
             steps.append(op)
 
-            future_nodes = ordered_nodes[i + 1 :]
+            future_nodes = sorted_nodes[i + 1 :]
 
             ## EVICT(1) operation's needs not to be used in the future.
             #
@@ -840,10 +838,12 @@ class Network(Plottable):
             log.debug("... compile cache-hit key: %s", cache_key)
             plan = self._cached_plans[cache_key]
         else:
-            pruned_dag, needs, provides, comments = self._prune_graph(
+            pruned_dag, sorted_nodes, needs, provides, comments = self._prune_graph(
                 inputs, outputs, predicate
             )
-            steps = self._build_execution_steps(pruned_dag, needs, outputs or ())
+            steps = self._build_execution_steps(
+                pruned_dag, sorted_nodes, needs, outputs or ()
+            )
             plan = ExecutionPlan(
                 self,
                 needs,

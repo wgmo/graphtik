@@ -158,7 +158,7 @@ class Solution(ChainMap, Plottable):
         :param op:
             for logging
         """
-        canceled = unsatisfied_operations(
+        canceled, _sorted_nodes = unsatisfied_operations(
             dag,
             [
                 i
