@@ -4,6 +4,7 @@
 :term:`compose` :term:`network` of operations & dependencies, :term:`compile` the :term:`plan`.
 """
 import logging
+import sys
 from collections import abc, defaultdict
 from functools import partial
 from itertools import count
@@ -25,8 +26,8 @@ from boltons.iterutils import pairwise
 from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Operation, PlotArgs, Plottable, astuple
-from .jetsam import save_jetsam
 from .config import is_debug, is_skip_evictions
+from .jetsam import save_jetsam
 from .modifier import (
     dep_renamed,
     dep_stripped,
@@ -811,45 +812,65 @@ class Network(Plottable):
         """
         from .execution import ExecutionPlan
 
-        ## Make a stable cache-key.
-        #
-        if inputs is not None:
-            inputs = tuple(
-                sorted(astuple(inputs, "inputs", allowed_types=abc.Collection))
-            )
-        if outputs is not None:
-            outputs = tuple(
-                sorted(astuple(outputs, "outputs", allowed_types=abc.Collection))
-            )
-        if not predicate:
-            predicate = None
+        ok = False
+        try:
+            ## Make a stable cache-key.
+            #
+            if inputs is not None:
+                inputs = tuple(
+                    sorted(astuple(inputs, "inputs", allowed_types=abc.Collection))
+                )
+            if outputs is not None:
+                outputs = tuple(
+                    sorted(astuple(outputs, "outputs", allowed_types=abc.Collection))
+                )
+            if not predicate:
+                predicate = None
 
-        cache_key = (inputs, outputs, predicate)
+            cache_key = (inputs, outputs, predicate)
 
-        ## Build (or retrieve from cache) execution plan
-        #  for the given inputs & outputs.
-        #
-        if cache_key in self._cached_plans:
-            log.debug("... compile cache-hit key: %s", cache_key)
-            plan = self._cached_plans[cache_key]
-        else:
-            pruned_dag, sorted_nodes, needs, provides, comments = self._prune_graph(
-                inputs, outputs, predicate
-            )
-            steps = self._build_execution_steps(
-                pruned_dag, sorted_nodes, needs, outputs or ()
-            )
-            plan = ExecutionPlan(
-                self,
-                needs,
-                provides,
-                pruned_dag,
-                tuple(steps),
-                asked_outs=outputs is not None,
-                comments=comments,
-            )
+            ## Build (or retrieve from cache) execution plan
+            #  for the given inputs & outputs.
+            #
+            if cache_key in self._cached_plans:
+                log.debug("... compile cache-hit key: %s", cache_key)
+                plan = self._cached_plans[cache_key]
+            else:
+                (
+                    pruned_dag,
+                    sorted_nodes,
+                    needs,
+                    provides,
+                    op_comments,
+                ) = self._prune_graph(inputs, outputs, predicate)
+                steps = self._build_execution_steps(
+                    pruned_dag, sorted_nodes, needs, outputs or ()
+                )
+                plan = ExecutionPlan(
+                    self,
+                    needs,
+                    provides,
+                    pruned_dag,
+                    tuple(steps),
+                    asked_outs=outputs is not None,
+                    comments=op_comments,
+                )
 
-            self._cached_plans[cache_key] = plan
-            log.debug("... compile cache-updated key: %s", cache_key)
+                self._cached_plans[cache_key] = plan
+                log.debug("... compile cache-updated key: %s", cache_key)
 
-        return plan
+            ok = True
+            return plan
+        finally:
+            if not ok:
+                ex = sys.exc_info()[1]
+                save_jetsam(
+                    ex,
+                    locals(),
+                    "pruned_dag",
+                    "sorted_nodes",
+                    "needs",
+                    "provides",
+                    "op_comments",
+                    "plan",
+                )

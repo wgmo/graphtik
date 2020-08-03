@@ -608,6 +608,24 @@ The following annotated attributes *might* have meaningful value on an exception
 ``network``
    the innermost network owning the failed operation/function
 
+``pruned_dag``
+   The result of :term:`pruning`, ingredient of a :term:`plan`
+   while :term:`compiling <compile>`.
+
+``op_comments``
+   Reason why operations were pruned.
+   Ingredient of a :term:`plan` while :term:`compiling <compile>`.
+
+``sorted_nodes``
+   Topo-sort dag respecting operation-insertion order to break ties.
+   Ingredient of a :term:`plan` while :term:`compiling <compile>`.
+
+``needs``
+   Ingredient of a :term:`plan` while :term:`compiling <compile>`.
+
+``provides``
+   Ingredient of a :term:`plan` while :term:`compiling <compile>`.
+
 ``pipeline``
    the innermost :term:`pipeline` that crashed
 
