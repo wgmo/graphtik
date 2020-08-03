@@ -699,14 +699,16 @@ class FnOp(Operation):
             fn_required = fn_expected
             if rescheduled:
                 # Canceled sfx are welcomed.
-                fn_expected = iset(self.provides)
+                fn_expected = iset(
+                    [*fn_expected, *(i for i in self.provides if is_sfx(i))]
+                )
 
             res_names = results.keys()
 
             ## Allow unknown outs when dict,
             #  bc we can safely ignore them (and it's handy for reuse).
             #
-            unknown = res_names - fn_expected
+            unknown = [i for i in (res_names - fn_expected) if not is_pure_sfx(i)]
             if unknown:
                 unknown = list(unknown)
                 log.warning(

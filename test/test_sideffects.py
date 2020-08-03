@@ -428,7 +428,7 @@ def sideffected_resched(request, exemethod):
     ops = [half_sfx, yes, no]
     if request.param:
         ops = reversed(ops)
-    return compose("process order", *ops, parallel=exemethod)
+    return compose("sfxed_resched", *ops, parallel=exemethod)
 
 
 def test_sideffected_canceled(sideffected_resched):
