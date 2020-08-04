@@ -691,13 +691,12 @@ class FnOp(Operation):
 
         fn_required = fn_expected = self._fn_provides
         if is_rescheduled:
-            # Canceled sfx are welcomed.
+            # Canceled sfx(ed) are welcomed.
             fn_expected = iset([*fn_expected, *(i for i in self.provides if is_sfx(i))])
 
         res_names = results.keys()
 
-        ## Allow unknown outs when dict,
-        #  bc we can safely ignore them (and it's handy for reuse).
+        ## Clip unknown outputs (handy for reuse).
         #
         unknown = [i for i in (res_names - fn_expected) if not is_pure_sfx(i)]
         if unknown:
@@ -709,7 +708,8 @@ class FnOp(Operation):
                 list(unknown),
                 self,
             )
-            # FIXME: too invasive when no-evictions!
+            # Filter results, don't mutate them.
+            # NOTE: too invasive when no-evictions!?
             results = {k: v for k, v in results.items() if k not in unknown}
 
         missmatched = fn_required - res_names
