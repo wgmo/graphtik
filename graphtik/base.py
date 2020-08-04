@@ -717,9 +717,11 @@ class Plottable(abc.ABC):
             if isinstance(n, Operation) and predicate(n, d)
         ]
 
-    def find_op_by_name(self, name) -> Union["Operation", None]:
+    def find_op_by_name(self, name) -> Optional["Operation"]:
         """Fetch the 1st operation named with the given `name`."""
-        for n in self.ops:
+        from .planning import yield_ops
+
+        for n in yield_ops(self.graph):
             if n.name == name:
                 return n
 
