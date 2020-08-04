@@ -823,7 +823,7 @@ class Theme:
     kw_edge_pruned = {"color": Ref("pruned_color"), "fontcolor": Ref("pruned_color")}
     kw_edge_rescheduled = {"style": ["dashed"]}
     kw_edge_endured = {"style": ["dashed"]}
-    kw_edge_broken = {"color": Ref("broken_color")}
+    kw_edge_broken = {"tooltip": ["(partial-broken)"], "color": Ref("broken_color")}
 
     ##########
     ## Other
