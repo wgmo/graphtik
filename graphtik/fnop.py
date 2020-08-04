@@ -675,68 +675,119 @@ class FnOp(Operation):
 
         return positional, vararg_vals, kwargs
 
+    def _zip_results_returns_dict(self, results, is_rescheduled) -> dict:
+        if hasattr(results, "_asdict"):  # named tuple
+            results = results._asdict()
+        elif isinstance(results, cabc.Mapping):
+            pass
+        elif hasattr(results, "__dict__"):  # regular object
+            results = vars(results)
+        else:
+            raise ValueError(
+                "Expected results as mapping, named_tuple, object, "
+                f"got {type(results).__name__!r}: {results}\n  {self}"
+                f"\n  {debug_var_tip}"
+            )
+
+        fn_required = fn_expected = self._fn_provides
+        if is_rescheduled:
+            # Canceled sfx are welcomed.
+            fn_expected = iset([*fn_expected, *(i for i in self.provides if is_sfx(i))])
+
+        res_names = results.keys()
+
+        ## Allow unknown outs when dict,
+        #  bc we can safely ignore them (and it's handy for reuse).
+        #
+        unknown = [i for i in (res_names - fn_expected) if not is_pure_sfx(i)]
+        if unknown:
+            unknown = list(unknown)
+            log.warning(
+                "Results%s contained +%i unknown provides%s - will DELETE them!\n  %s",
+                list(res_names),
+                len(unknown),
+                list(unknown),
+                self,
+            )
+            # FIXME: too invasive when no-evictions!
+            results = {k: v for k, v in results.items() if k not in unknown}
+
+        missmatched = fn_required - res_names
+        if missmatched:
+            if is_rescheduled:
+                log.warning(
+                    "... Op %r did not provide%s",
+                    self.name,
+                    list(fn_expected - res_names),
+                )
+            else:
+                raise ValueError(
+                    f"Got x{len(results)} results({list(results)}) mismatched "
+                    f"-{len(missmatched)} provides({list(fn_expected)})!\n  {self}"
+                    f"\n  {debug_var_tip}"
+                )
+
+        return results
+
+    def _zip_results_plain(self, results, is_rescheduled) -> dict:
+        """Handle result sequence: no-result, single-item, or many. """
+        fn_expected = self._fn_provides
+        nexpected = len(fn_expected)
+
+        if results is NO_RESULT or results is NO_RESULT_BUT_SFX:
+            results = ()
+            ngot = 0
+
+        elif nexpected == 1:
+            results = [results]
+            ngot = 1
+
+        else:
+            # nexpected == 0 was method's 1st check.
+            assert nexpected > 1, nexpected
+            if isinstance(results, (str, bytes)) or not isinstance(
+                results, cabc.Iterable
+            ):
+                raise TypeError(
+                    f"Expected x{nexpected} ITERABLE results, "
+                    f"got {type(results).__name__!r}: {results}\n  {self}"
+                    f"\n  {debug_var_tip}"
+                )
+            ngot = len(results)
+
+        if ngot < nexpected and not is_rescheduled:
+            raise ValueError(
+                f"Got {ngot - nexpected} fewer results, while expected x{nexpected} "
+                f"provides({list(fn_expected)})!\n  {self}"
+                f"\n  {debug_var_tip}"
+            )
+
+        if ngot > nexpected:
+            ## Less problematic if not expecting anything but got something
+            #  (e.g reusing some function for sideffects).
+            extra_results_loglevel = logging.INFO if nexpected == 0 else logging.WARNING
+            logging.log(
+                extra_results_loglevel,
+                "Got +%s more results, while expected "
+                "x%s provides%s\n  results: %s\n  %s",
+                ngot - nexpected,
+                nexpected,
+                list(fn_expected),
+                results,
+                self,
+            )
+
+        return dict(zip(fn_expected, results))  # , fillvalue=UNSET))
+
     def _zip_results_with_provides(self, results) -> dict:
         """Zip results with expected "real" (without sideffects) `provides`."""
         from .config import is_reschedule_operations
 
-        fn_expected = self._fn_provides
-        rescheduled = first_solid(is_reschedule_operations(), self.rescheduled)
+        is_rescheduled = first_solid(is_reschedule_operations(), self.rescheduled)
         if self.returns_dict:
+            results = self._zip_results_returns_dict(results, is_rescheduled)
 
-            if hasattr(results, "_asdict"):  # named tuple
-                results = results._asdict()
-            elif isinstance(results, cabc.Mapping):
-                pass
-            elif hasattr(results, "__dict__"):  # regular object
-                results = vars(results)
-            else:
-                raise ValueError(
-                    "Expected results as mapping, named_tuple, object, "
-                    f"got {type(results).__name__!r}: {results}\n  {self}"
-                    f"\n  {debug_var_tip}"
-                )
-
-            fn_required = fn_expected
-            if rescheduled:
-                # Canceled sfx are welcomed.
-                fn_expected = iset(
-                    [*fn_expected, *(i for i in self.provides if is_sfx(i))]
-                )
-
-            res_names = results.keys()
-
-            ## Allow unknown outs when dict,
-            #  bc we can safely ignore them (and it's handy for reuse).
-            #
-            unknown = [i for i in (res_names - fn_expected) if not is_pure_sfx(i)]
-            if unknown:
-                unknown = list(unknown)
-                log.warning(
-                    "Results%s contained +%i unknown provides%s - will DELETE them!\n  %s",
-                    list(res_names),
-                    len(unknown),
-                    list(unknown),
-                    self,
-                )
-                # FIXME: too invasive when no-evictions!
-                results = {k: v for k, v in results.items() if k not in unknown}
-
-            missmatched = fn_required - res_names
-            if missmatched:
-                if rescheduled:
-                    log.warning(
-                        "... Op %r did not provide%s",
-                        self.name,
-                        list(fn_expected - res_names),
-                    )
-                else:
-                    raise ValueError(
-                        f"Got x{len(results)} results({list(results)}) mismatched "
-                        f"-{len(missmatched)} provides({list(fn_expected)})!\n  {self}"
-                        f"\n  {debug_var_tip}"
-                    )
-
-        elif rescheduled and (results is NO_RESULT or results is NO_RESULT_BUT_SFX):
+        elif is_rescheduled and (results is NO_RESULT or results is NO_RESULT_BUT_SFX):
             results = (
                 {}
                 if results is NO_RESULT_BUT_SFX
@@ -744,7 +795,7 @@ class FnOp(Operation):
                 else {p: False for p in set(self.provides) if is_sfx(p)}
             )
 
-        elif not fn_expected:  # All provides were sideffects?
+        elif not self._fn_provides:  # All provides were sideffects?
             if (
                 results is not None
                 and results is not NO_RESULT
@@ -761,54 +812,7 @@ class FnOp(Operation):
             results = {}
 
         else:  # Handle result sequence: no-result, single-item, many
-            nexpected = len(fn_expected)
-
-            if results is NO_RESULT or results is NO_RESULT_BUT_SFX:
-                results = ()
-                ngot = 0
-
-            elif nexpected == 1:
-                results = [results]
-                ngot = 1
-
-            else:
-                # nexpected == 0 was method's 1st check.
-                assert nexpected > 1, nexpected
-                if isinstance(results, (str, bytes)) or not isinstance(
-                    results, cabc.Iterable
-                ):
-                    raise TypeError(
-                        f"Expected x{nexpected} ITERABLE results, "
-                        f"got {type(results).__name__!r}: {results}\n  {self}"
-                        f"\n  {debug_var_tip}"
-                    )
-                ngot = len(results)
-
-            if ngot < nexpected and not rescheduled:
-                raise ValueError(
-                    f"Got {ngot - nexpected} fewer results, while expected x{nexpected} "
-                    f"provides({list(fn_expected)})!\n  {self}"
-                    f"\n  {debug_var_tip}"
-                )
-
-            if ngot > nexpected:
-                ## Less problematic if not expecting anything but got something
-                #  (e.g reusing some function for sideffects).
-                extra_results_loglevel = (
-                    logging.INFO if nexpected == 0 else logging.WARNING
-                )
-                logging.log(
-                    extra_results_loglevel,
-                    "Got +%s more results, while expected "
-                    "x%s provides%s\n  results: %s\n  %s",
-                    ngot - nexpected,
-                    nexpected,
-                    list(fn_expected),
-                    results,
-                    self,
-                )
-
-            results = dict(zip(fn_expected, results))  # , fillvalue=UNSET))
+            results = self._zip_results_plain(results, is_rescheduled)
 
         assert isinstance(
             results, cabc.Mapping
