@@ -73,7 +73,9 @@ class Jetsam(dict):
         #
         if self:
             items = "".join(
-                f"  +--{k}:\n{indent(str(v), ' ' * 4)}\n\n" for k, v in self.items()
+                f"  +--{f'{k}({v.solid})' if hasattr(v, 'solid') else k}:"
+                f"\n{indent(str(v), ' ' * 4)}\n"
+                for k, v in self.items()
             )
             logging.getLogger(f"{__name__}.err").error("Salvaged jetsam:\n%s", items)
 
