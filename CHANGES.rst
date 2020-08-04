@@ -96,22 +96,33 @@ v10.1.0 (XX Jul 2020, @ankostis): Step number badges
 + break(fnop): do not accept operations without any `provides` - they were pruned before,
   but it is better to fail asap.
 
+  + fix/break: clip extra data from a :term:`returns dictionary` function - previously,
+    full-eviction assertion was kicking.
+
 + enh(plan): why operations are pruned is now explained in the plan & the plot tooltips.
 
 + fix(plan): :meth:`.ExecutionPlan.validate()` may be called with no args,
   and uses the compiled ones.
 
+  + enh: suggest mode of action on the error message, when graph has cycles;
+    top-sort nodes only once, and report them to `jetsam` (see below).
   + doc: enhance existing tutorial section to explain compilation.
 
 + feat(:term:`jetsam`): `pipeline` was not collected, till now.
 
-  + feat: items can be accessed as jetsam attributes (helpful for interactive REPLs).
+  + FEAT: items can be accessed as jetsam attributes (helpful for interactive REPLs).
+  + ENH: don't "catch" exception, use ``try-finally`` with ``ok`` flag instead,
+    not to corrupt the landing position of a post-mortem debugger.
+  + feat: now collecting also ``pruned_dag``, ``op_comments``, ``sorted_nodes`` while
+    :term:`compiling <compile>`.
   + revert: stop logging every jetsam item on each salvaging point, not to flood
     logs (which had been introduced in the previous release).
   + refact: move into own module.
 
 + fix(SphinxExt): catch top-level errors that if occurred, message and stack trace
   were lost.
+
++ doc: list anti-features (when to avoid using this lib).
 
 
 v10.0.0 (19 Jul 2020, @ankostis): Implicits; modify(); auto-name pipelines; plot data as overspilled
