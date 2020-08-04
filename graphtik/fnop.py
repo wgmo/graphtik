@@ -721,8 +721,8 @@ class FnOp(Operation):
             else:
                 raise ValueError(
                     f"Got x{len(results)} results({list(results)}) mismatched "
-                    f"-{len(missmatched)} provides({list(fn_expected)})!\n  {self}"
-                    f"\n  {debug_var_tip}"
+                    f"-{len(missmatched)} provides({list(fn_expected)}):"
+                    f" {list(missmatched)}\n  {self}\n  {debug_var_tip}"
                 )
 
         return results
