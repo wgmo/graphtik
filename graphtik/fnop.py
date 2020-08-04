@@ -716,9 +716,7 @@ class FnOp(Operation):
         if missmatched:
             if is_rescheduled:
                 log.warning(
-                    "... Op %r did not provide%s",
-                    self.name,
-                    list(fn_expected - res_names),
+                    "... Op %r did not provide%s", self.name, list(missmatched),
                 )
             else:
                 raise ValueError(
