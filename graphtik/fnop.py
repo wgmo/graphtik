@@ -671,7 +671,7 @@ class FnOp(Operation):
 
         if missing or varargs_bad:
             msg = self._prepare_match_inputs_error(missing, varargs_bad, named_inputs)
-            raise ValueError(f"Failed preparing `needs` for {self}: \n{msg}")
+            raise ValueError(f"Failed matching inputs <=> needs for {self}: \n{msg}")
 
         return positional, vararg_vals, kwargs
 

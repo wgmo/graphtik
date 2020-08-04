@@ -955,7 +955,7 @@ def test_jetsam_n_plot_with_DEBUG():
     with debug_enabled(True), pytest.raises(ValueError, match="^Unsolvable"):
         pipe.compute()
     with debug_enabled(True), pytest.raises(
-        ValueError, match="^Failed preparing"
+        ValueError, match="^Failed matching inputs <=> needs"
     ) as exc:
         pipe.compute(
             {

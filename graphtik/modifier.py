@@ -427,7 +427,7 @@ def modify(name: str, jsonp=None, implicit=None) -> _Modifier:
 
         >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
         Traceback (most recent call last):
-        ValueError: Failed preparing `needs` for FnOp(name='copy a+b-->A+BB',
+        ValueError: Failed matching inputs <=> needs for FnOp(name='copy a+b-->A+BB',
             needs=['inputs/a'($), 'inputs/b'($)],
             provides=['RESULTS/A'($), 'RESULTS/BB'($)],
             fn='identity_fn'):
@@ -752,7 +752,7 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         >>> graph(a=5, b=0xBAD)
         Traceback (most recent call last):
         ...
-        ValueError: Failed preparing `needs` for FnOp(name='enlist',
+        ValueError: Failed matching inputs <=> needs for FnOp(name='enlist',
                 needs=['a', 'b'(+)], provides=['sum'], fn='enlist'):
             1. Expected needs['b'(+)] to be non-str iterables!
             +++inputs: ['a', 'b']
@@ -765,7 +765,7 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         >>> graph(a=5, b="mistake")
         Traceback (most recent call last):
         ...
-        ValueError: Failed preparing `needs` for FnOp(name='enlist',
+        ValueError: Failed matching inputs <=> needs for FnOp(name='enlist',
                     needs=['a', 'b'(+)],
                     provides=['sum'],
                     fn='enlist'):
