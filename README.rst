@@ -31,9 +31,10 @@ based on whether values for those data (a.k.a dependencies) exist.
     <https://github.com/yahoo/graphkit/issues/>`_ with Python 3.6+ features,
     but has diverged significantly with enhancements ever since.
 
+.. _features:
+
 Features
 --------
-.. features
 
 - Can assemble existing functions without modifications into `pipeline`\s.
 - `dependency` resolution can bypass calculation cycles based on data given and asked.
