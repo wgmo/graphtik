@@ -689,7 +689,14 @@ class FnOp(Operation):
                 f"\n  {debug_var_tip}"
             )
 
-        fn_required = fn_expected = self._fn_provides
+        fn_required = self._fn_provides
+        if fn_required:
+            renames = {get_keyword(i): i for i in fn_required}  # +1 useless key: None
+            renames.pop(None, None)
+            fn_expected = fn_required = [get_keyword(i) or i for i in fn_required]
+        else:
+            fn_expected = fn_required = renames = ()
+
         if is_rescheduled:
             # Canceled sfx(ed) are welcomed.
             fn_expected = iset([*fn_expected, *(i for i in self.provides if is_sfx(i))])
@@ -724,6 +731,9 @@ class FnOp(Operation):
                     f"-{len(missmatched)} provides({list(fn_expected)}):"
                     f" {list(missmatched)}\n  {self}\n  {debug_var_tip}"
                 )
+
+        if renames:
+            results = {renames.get(k, k): v for k, v in results.items()}
 
         return results
 

@@ -180,6 +180,18 @@ def test_returns_dict_extra():
     assert len(res) == 2  # check it did not mutate results
 
 
+def test_returns_dict_keyword_renames():
+    res = {"1": 1, "2": 2}
+    op = operation(lambda: res, provides=keyword("11", "1"), returns_dict=True)
+    assert op.compute({}) == {"11": 1}
+    assert len(res) == 2  # check it did not mutate results
+
+    res = {"1": 1, "11": 11}
+    op = operation(lambda: res, provides=keyword("11", "1"), returns_dict=True)
+    assert op.compute({}) == {"11": 1}  # original '11' was discarded
+    assert len(res) == 2  # check it did not mutate results
+
+
 @pytest.fixture(params=[None, ["a", "b"]])
 def asked_outputs(request):
     return request.param

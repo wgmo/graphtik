@@ -471,10 +471,11 @@ def keyword(
     name: str, keyword: str = None, accessor: Accessor = None, jsonp=None
 ) -> _Modifier:
     """
-    Annotate a :term:`needs` that (optionally) maps `inputs` name --> *keyword* argument name.
+    Annotate a :term:`dependency` that maps to a different name in the underlying function.
 
-    The value of a *keyword* dependency is passed in as *keyword argument*
-    to the underlying function.
+    - The value of a *keyword* `needs` dependency is passed in as *keyword argument*
+      to the underlying function.
+    - For *keyword* to work in `provides`, the operation must be a :term:`returns dictionary`.
 
     :param keyword:
         The argument-name corresponding to this named-input.
@@ -507,30 +508,50 @@ def keyword(
 
     **Example:**
 
-    In case the name of the function arguments is different from the name in the
-    `inputs` (or just because the name in the `inputs` is not a valid argument-name),
+    In case the name of a function input argument is different from the name in the
+    :term:`graph` (or just because the name in the `inputs` is not a valid argument-name),
     you may *map* it with the 2nd argument of :func:`.keyword`:
 
         >>> from graphtik import operation, compose, keyword
 
-        >>> @operation(needs=['a', keyword("name-in-inputs", "b")], provides="sum")
-        ... def myadd(a, *, b):
-        ...    return a + b
-        >>> myadd
-        FnOp(name='myadd',
-                            needs=['a', 'name-in-inputs'(>'b')],
-                            provides=['sum'],
-                            fn='myadd')
+        >>> @operation(needs=[keyword("name-in-inputs", "fn_name")], provides="result")
+        ... def foo(*, fn_name):  # it works also with non-positional args
+        ...    return fn_name
+        >>> foo
+        FnOp(name='foo',
+             needs=['name-in-inputs'(>'fn_name')],
+             provides=['result'],
+             fn='foo')
 
-        >>> graph = compose('mygraph', myadd)
-        >>> graph
-        Pipeline('mygraph', needs=['a', 'name-in-inputs'], provides=['sum'], x1 ops: myadd)
+        >>> pipe = compose('map a need', foo)
+        >>> pipe
+        Pipeline('map a need', needs=['name-in-inputs'], provides=['result'], x1 ops: foo)
 
-        >>> sol = graph.compute({"a": 5, "name-in-inputs": 4})['sum']
-        >>> sol
-        9
+        >>> sol = pipe.compute({"name-in-inputs": 4})
+        >>> sol['result']
+        4
 
         .. graphtik::
+
+    You can do the same thing to the results of a :term:`returns dictionary` operation:
+
+        >>> op = operation(lambda: {"fn key": 1},
+        ...                name="renaming `provides` with a `keyword`",
+        ...                provides=keyword("graph key", "fn key"),
+        ...                returns_dict=True)
+        >>> op
+        FnOp(name='renaming `provides` with a `keyword`',
+             provides=['graph key'(>'fn key')],
+             fn{}='<lambda>')
+
+    .. graphtik::
+
+    .. hint::
+        Mapping `provides` names wouldn't make sense for regular operations, since
+        these are defined arbitrarily at the operation level.
+        OTOH, the result names of :term:`returns dictionary` operation are decided
+        by the underlying function, which may lie beyond the control of the user
+        (e.g. from a 3rd-party object).
     """
     # Must pass a truthy `keyword` bc cstor cannot not know its keyword.
     return _modifier(name, keyword=keyword or name, accessor=accessor, jsonp=jsonp)

@@ -154,8 +154,8 @@ to the :func:`.operation` factory, specifically:
 Declarations of *needs* and *provides* is affected by :term:`modifier`\s like
 :func:`.keyword`:
 
-Map inputs to different function arguments
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Map inputs(& outputs) to differently named function arguments (& results)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autofunction:: graphtik.modifier.keyword
    :noindex:
 
@@ -174,22 +174,29 @@ Calling functions with varargs (``*args``)
 
 .. _aliases:
 
-Aliased `provides`
-^^^^^^^^^^^^^^^^^^
+Interface differently named dependencies: aliases & keyword modifier
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Sometimes, you need to interface functions & operations where they name a
-:term:`dependency` differently.
-This is doable without introducing "pipe-through" interface operation, either
-by annotating certain `needs` with :func:`.keyword` *modifier* (above), or
-by :term:`alias`\sing certain `provides` to different names:
+:term:`dependency` differently.  There are 4 different ways to accomplish that:
 
-   >>> op = operation(str,
-   ...                name="`provides` with `aliases`",
-   ...                needs="anything",
-   ...                provides="real thing",
-   ...                aliases=("real thing", "phony"))
 
-.. graphtik::
+1. Introduce some :term:`"pipe-through" operation <conveyor operation>`
+   (see the example in :ref:`conveyor-function`, below).
 
+2. Annotate certain `needs` with :func:`.keyword` *modifier*
+   (exemplified in the modifier).
+
+3. For a :term:`returns dictionary` operation, annotate certain `provides`
+   with a :func:`.keyword` *modifier* (exemplified in the modifier).
+
+4. :term:`Alias <alias>` (clone) certain `provides` to different names:
+
+       >>> op = operation(str,
+       ...                name="cloning `provides` with an `alias`",
+       ...                provides="real thing",
+       ...                aliases=("real thing", "clone"))
+
+   .. graphtik::
 
 .. _conveyor-function:
 
