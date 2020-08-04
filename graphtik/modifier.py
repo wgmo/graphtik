@@ -754,7 +754,7 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         ...
         ValueError: Failed matching inputs <=> needs for FnOp(name='enlist',
                 needs=['a', 'b'(+)], provides=['sum'], fn='enlist'):
-            1. Expected needs['b'(+)] to be non-str iterables!
+            1. Expected varargs inputs to be non-str iterables: {'b'(+): 2989}
             +++inputs: ['a', 'b']
 
     .. varargs-mistake-start
@@ -769,7 +769,7 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
                     needs=['a', 'b'(+)],
                     provides=['sum'],
                     fn='enlist'):
-            1. Expected needs['b'(+)] to be non-str iterables!
+            1. Expected varargs inputs to be non-str iterables: {'b'(+): 'mistake'}
             +++inputs: ['a', 'b']
 
     .. varargs-mistake-end

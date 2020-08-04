@@ -618,7 +618,8 @@ class FnOp(Operation):
             ner += 1
         if varargs_bad:
             errors.append(
-                f"{ner}. Expected needs{list(varargs_bad)} to be non-str iterables!"
+                f"{ner}. Expected varargs inputs to be non-str iterables:"
+                f" { {k: named_inputs[k] for k in varargs_bad} }"
             )
         inputs = dict(named_inputs) if is_debug() else list(named_inputs)
         errors.append(f"+++inputs: {inputs}")
@@ -626,8 +627,7 @@ class FnOp(Operation):
         return textwrap.indent("\n".join(errors), " " * 4)
 
     def _match_inputs_with_fn_needs(self, named_inputs) -> Tuple[list, list, dict]:
-        positional, vararg_vals = [], []
-        kwargs = {}
+        positional, vararg_vals, kwargs = [], [], {}
         missing, varargs_bad = [], []
         for n in self._fn_needs:
             try:
