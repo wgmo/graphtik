@@ -110,3 +110,7 @@
 .huge {
     font-size: x-large;
 }
+.boldit {
+    font-weight: bold;
+    font-style: italic;
+}

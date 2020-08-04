@@ -194,6 +194,8 @@ rst_prolog = """
 .. _pydot: https://github.com/pydot/pydot
 .. |pydot.Dot| replace:: ``pydot.Dot``
 .. _pydot.Dot: https://github.com/pydot/pydot
+.. role:: boldit
+   :class: boldit
 
 """
 
