@@ -1,4 +1,4 @@
-# Copyright 2016, Yahoo Inc.
+# Copyright 2019-2020, Kostis Anagnostopoulos;
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """:term:`jetsam` utility for annotating exceptions from ``locals()``.
 
@@ -10,8 +10,9 @@
     >>> from graphtik.jetsam import *
     >>> __name__ = "graphtik.jetsam"
 """
-
 import logging
+import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -124,19 +125,37 @@ def save_jetsam(ex, locs, *salvage_vars: str, annotation="jetsam", **salvage_map
     in case of errors::
 
 
-        try:
-            a = 1
-            b = 2
-            raise Exception()
-        exception Exception as ex:
-            save_jetsam(ex, locals(), "a", b="salvaged_b", c_var="c")
-            raise
+        >>> try:
+        ...     a = 1
+        ...     b = 2
+        ...     raise Exception("trouble!")
+        ... except Exception as ex:
+        ...     save_jetsam(ex, locals(), "a", b="salvaged_b", c_var="c")
+        ...     raise
+        Traceback (most recent call last):
+        Exception: trouble!
 
     And then from a REPL::
 
-        import sys
-        sys.last_value.jetsam
+        >>> import sys
+        >>> sys.exc_info()[1].jetsam                # doctest: +SKIP
         {'a': 1, 'salvaged_b': 2, "c_var": None}
+
+    .. Note::
+
+        In order not to obfuscate the landing position of post-mortem debuggers
+        in the case of errors, use the ``try-finally`` with ``ok`` flag pattern:
+
+        >>> ok = False
+        >>> try:
+        ...
+        ...     pass        # do risky stuff
+        ...
+        ...     ok = True   # last statement in the try-body.
+        ... except Exception as ex:
+        ...     if not ok:
+        ...         ex = sys.exc_info()[1]
+        ...         save_jetsam(...)
 
     ** Reason:**
 
