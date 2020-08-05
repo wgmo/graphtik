@@ -96,7 +96,6 @@ is asked, the plan comes out empty:
     ExecutionPlan(needs=[], provides=[], x0 steps: )
     >>> plan.validate()
     Traceback (most recent call last):
-    ...
     ValueError: Unsolvable graph:
       +--Network(x8 nodes, x3 ops: mul1, sub1, abspow1)
       +--possible inputs: ['a', 'b', 'ab', 'a_minus_ab']
@@ -343,7 +342,6 @@ You may still abort on failures, later, by raising an appropriate exception from
 
     >>> sol.scream_if_incomplete()
     Traceback (most recent call last):
-    ...
     graphtik.base.IncompleteExecutionError:
     Not completed x2 operations ['exercise', 'get_out'] due to x1 failures and x0 partial-ops:
       +--get_out: ValueError('Quarantined!')

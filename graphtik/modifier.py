@@ -772,7 +772,6 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         {'a': 5, 'sum': [5]}
         >>> graph(a=5, b=0xBAD)
         Traceback (most recent call last):
-        ...
         ValueError: Failed matching inputs <=> needs for FnOp(name='enlist',
                 needs=['a', 'b'(+)], provides=['sum'], fn='enlist'):
             1. Expected varargs inputs to be non-str iterables: {'b'(+): 2989}
@@ -785,7 +784,6 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
 
         >>> graph(a=5, b="mistake")
         Traceback (most recent call last):
-        ...
         ValueError: Failed matching inputs <=> needs for FnOp(name='enlist',
                     needs=['a', 'b'(+)],
                     provides=['sum'],

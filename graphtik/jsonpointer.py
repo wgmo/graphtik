@@ -210,7 +210,6 @@ def resolve_path(
 
         >>> resolve_path(dt, '/pi/BAD')
         Traceback (most recent call last):
-        ...
         graphtik.jsonpointer.ResolveError: Failed resolving step (#2) "BAD" of path '/pi/BAD'.
           Check debug logs.
 
