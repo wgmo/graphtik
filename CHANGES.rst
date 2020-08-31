@@ -86,8 +86,15 @@ Changelog
 %%%%%%%%%
 
 
-v10.1.0 (XX Jul 2020, @ankostis): Step number badges
-----------------------------------------------------
+v10.1.0 (5 Aug 2020, @ankostis): rename return-dict outs; step number badges
+----------------------------------------------------------------------------
+
+FEAT(op): :func:`.keyword` modifier can rename outputs of a :term:`returns dictionary`
+function.
+
++ fix: rescheduled function err-msg were listing wrong missing provides.
++ enh: err-msg did not list returns-dict mismatches.
+
 + ENH(plot): add number badges on operations & data nodes to denote execution order;
   theme ``show_steps=False`` can hide them;
 

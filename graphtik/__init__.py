@@ -2,8 +2,8 @@
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """Lightweight :term:`computation` graphs for Python."""
 
-__version__ = "10.1.0.dev2"
-__release_date__ = "4 Aug 2020, 15:5"
+__version__ = "10.1.0"
+__release_date__ = "5 Aug 2020, 14:02"
 __title__ = "graphtik"
 __summary__ = __doc__.splitlines()[0]
 __license__ = "Apache-2.0"
