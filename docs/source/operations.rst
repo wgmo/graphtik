@@ -9,15 +9,20 @@ This class specifies the :term:`dependencies <dependency>` forming the *pipeline
 
 Defining Operations
 -------------------
-You may inherit the :class:`.Operation` abstract class and override its
-:meth:`.Operation.compute()` method to manually do the following:
+You may inherit the :class:`.Operation` abstract class to do the following:
 
-- read declared as :term:`needs` values from :term:`solution`,
-- match those values into function arguments,
-- call your function to do it's business,
-- "zip" the function's results with the operation's declared :term:`provides`,
-  and finally
-- hand back those zipped values to *solution* for further actions.
+- define the :term:`needs` & :term:`provides` properties as collection of@ :term:`dependencies
+  <dependency>` (needed to solve the dependencies :term:`network`),
+
+  .. Warning:
+    at the moment the ``op_needs``/``op_provides`` properties must also be set.
+
+- override the ``compute(solution)`` method  to read from the :term:`solution` argument
+  those values listed in `needs` (those values only are guaranteed to exist when called),
+- do some business, and then
+- populate the values listed in `provides` back into `solution`
+  (if other values are populated, they may be ignored).
+
 
 But there is an easier way -- actually half of the code in this project is dedicated
 to retrofitting existing *functions* unaware of all these, into :term:`operation`\s.

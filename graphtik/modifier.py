@@ -991,10 +991,10 @@ def sfxed(
         :width: 100%
         :name: sideffecteds
 
-    Notice that although many functions consume & produce the same ``ORDER`` dependency
-    (check ``fn_needs`` & ``fn_provides``, above), something that :orange:`would have formed
-    cycles`, the wrapping operations *need* and *provide* different sideffected instances,
-    breaking the cycles.
+    Notice that although many functions consume & produce the same ``ORDER`` dependency,
+    something that :orange:`would have formed cycles`, the wrapping operations
+    *need* and *provide* different *sideffected* instances,
+    :green:`breaking thus the cycles`.
 
     .. seealso::
         The elaborate example in :ref:`hierarchical-data` section.
