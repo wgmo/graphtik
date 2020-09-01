@@ -152,6 +152,12 @@ def test_aliases(exemethod):
         parallel=exemethod,
     )
     assert op() == {"a": "A", "s1": "B", "b": "A", "S1": "B", "c": "AA"}
+    assert list(op.provides) == [*aliased.op_provides, "c"]
+    assert list(op.provides) == [
+        *aliased.provides,
+        *(t for _f, t in aliased.aliases),
+        "c",
+    ]
 
 
 def test_node_predicate_based_prune():
