@@ -369,8 +369,6 @@ class FnOp(Operation):
         #: Dependencies ready to lay the graph for :term:`pruning`
         #: (NO-DUPES, SFX, SINGULAR :term:`sideffected`\s).
         self.needs = needs
-        #: TODO: DROP
-        self.op_needs = needs
         #: The :term:`needs` as given by the user, stored for *builder pattern*
         #: to work.
         self._user_needs = user_needs
@@ -381,8 +379,6 @@ class FnOp(Operation):
         #: Value names ready to lay the graph for :term:`pruning`
         #: (NO DUPES, ALIASES, SFX, SINGULAR sideffecteds, +alias destinations).
         self.provides = provides
-        #: TODO: DROP
-        self.op_provides = provides
         #: The :term:`provides` as given by the user, stored for *builder pattern*
         #: to work.
         self._user_provides = user_provides
@@ -446,7 +442,7 @@ class FnOp(Operation):
         )
 
         dep_names = (
-            "needs op_needs _fn_needs provides op_provides _fn_provides aliases"
+            "needs _user_needs _fn_needs provides _user_provides _fn_provides aliases"
             if is_debug()
             else "needs provides aliases"
         ).split()
@@ -473,25 +469,15 @@ class FnOp(Operation):
     @property
     def deps(self) -> Mapping[str, Collection]:
         """
-        All :term:`dependency` names, including `op_` & internal `_fn_`.
+        All :term:`dependency` names, including internal `_user_` & `_fn_`.
 
         if not DEBUG, all deps are converted into lists, ready to be printed.
         """
         from .config import is_debug
 
         return {
-            k: v if is_debug() else list(v)
-            for k, v in zip(
-                "needs op_needs fn_needs provides op_provides fn_provides".split(),
-                (
-                    self.needs,
-                    self.op_needs,
-                    self._fn_needs,
-                    self.provides,
-                    self.op_provides,
-                    self._fn_provides,
-                ),
-            )
+            k: getattr(self, k) if is_debug() else list(getattr(self, k))
+            for k in "needs _user_needs fn_needs provides _user_provides fn_provides".split()
         }
 
     def withset(
@@ -589,11 +575,7 @@ class FnOp(Operation):
         }
         ## Exclude calculated dep-fields.
         #
-        me = {
-            k: v
-            for k, v in vars(self).items()
-            if not k.startswith("_") and not k.startswith("op_")
-        }
+        me = {k: v for k, v in vars(self).items() if not k.startswith("_")}
         kw = {
             **me,
             "needs": self._user_needs,
