@@ -411,12 +411,12 @@ class FnOp(Operation):
         #:
         #: It does not have to return any :term:`alias` `outputs`.
         #:
-        #: Can be changed amidst execution by the operation's function,
-        #: but it is easier for that function to simply call :meth:`.set_results_by_name()`.
+        #: Can be changed amidst execution by the operation's function.
         self.returns_dict = returns_dict
         #: Added as-is into NetworkX graph, and you may filter operations by
         #: :meth:`.Pipeline.withset()`.
         #: Also plot-rendering affected if they match `Graphviz` properties,
+        #: if they start with :data:`.USER_STYLE_PREFFIX`,
         #: unless they start with underscore(``_``).
         self.node_props = node_props
 
