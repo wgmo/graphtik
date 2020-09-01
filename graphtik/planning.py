@@ -87,9 +87,7 @@ def _optionalized(graph, data):
 def collect_requirements(graph) -> Tuple[iset, iset]:
     """Collect & split datanodes in (possibly overlapping) `needs`/`provides`."""
     operations = list(yield_ops(graph))
-    provides = iset(
-        p for op in operations for p in getattr(op, "op_provides", op.provides)
-    )
+    provides = iset(p for op in operations for p in op.provides)
     needs = iset(_optionalized(graph, n) for op in operations for n in op.needs)
     provides = iset(provides)
     return needs, provides
@@ -428,7 +426,7 @@ class Network(Plottable):
         #
         needs = []
         needs_edges = []
-        for n in getattr(operation, "op_needs", operation.needs):
+        for n in operation.needs:
             json_path = get_jsonp(n)
             if json_path:
                 append_subdoc_chain(json_path)
@@ -453,11 +451,11 @@ class Network(Plottable):
         #  to label edges reaching to aliased `provides`.
         #
         aliases = getattr(operation, "aliases", None)
-        alias_sources = {v: src for src, v in aliases} if aliases else ()
+        alias_destinations = {v: src for src, v in aliases} if aliases else ()
 
         ## Provides
         #
-        for n in getattr(operation, "op_provides", operation.provides):
+        for n in operation.provides:
             json_path = get_jsonp(n)
             if json_path:
                 append_subdoc_chain(json_path)
@@ -469,9 +467,8 @@ class Network(Plottable):
             if is_implicit(n):
                 kw["implicit"] = True
 
-            if n in alias_sources:
-                src_provide = alias_sources[n]
-                kw["alias_of"] = src_provide
+            if n in alias_destinations:
+                kw["alias_of"] = alias_destinations[n]
 
             graph.add_edge(operation, n, **kw)
 

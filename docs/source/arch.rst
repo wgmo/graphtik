@@ -302,7 +302,7 @@ Architecture
         the regular *needs*, `modifier`\s must be used.
 
     provides
-    op_provides
+    user_provides
     fn_provides
         The list of `dependency` names an `operation` writes to the `solution` as `outputs`,
 
@@ -311,13 +311,13 @@ Architecture
         Specifically, :meth:`.Operation.compute()` "zips" this list-of-names
         with the `output <outputs>` values produced when the `operation`'s
         function is called.
-        Whenever this "zipping" is not 1-to-1, and function-results  differ from
-        the regular *operation* (**op_provides**) (or results are not a list),
-        it is possible to:
+        You may alter this "zipping" by one of the following methods:
 
-        - mark the *operation* that its function `returns dictionary`,
-        - artificially extended the *provides* with `alias`\ed *fn_provides*, or
-        - use `modifier`\s to annotate certain names as `sideffects`,
+        - artificially extended the *provides* with `alias`\ed *fn_provides*,
+        - use `modifier`\s to annotate certain names with :func:`.keyword`, `sideffects`
+          and/or `implicit`, or
+        - mark the *operation* that its function `returns dictionary`, and
+          cancel zipping.
 
         .. include:: ../../graphtik/fnop.py
             :start-after: .. provides-note-start
@@ -325,7 +325,7 @@ Architecture
 
 
     alias
-        Map an existing name in `fn_provides` into a duplicate, artificial one in `op_provides` .
+        Map an existing name in `fn_provides` into a duplicate, artificial one in `provides` .
 
         You cannot alias an *alias*.  See :ref:`aliases`
 

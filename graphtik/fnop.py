@@ -9,7 +9,6 @@
     (<5ms on a 2019 fast PC)
 """
 
-import itertools as itt
 import logging
 import textwrap
 import sys
@@ -203,8 +202,8 @@ def _spread_sideffects(
     Build fn/op dependencies by stripping/singularizing any :term:`implicit`/:term:`sideffects`.
 
     :return:
-        the given `deps` duplicated as ``(op_deps, fn_deps)``, where any instances of
-        :term:`sideffects` are processed like this:
+        a x2 tuple ``(op_deps, fn_deps)``, where any instances of
+        :term:`sideffects` in `deps` are processed like this:
 
         `op_deps`
             - any :func:`.sfxed` is replaced by a sequence of ":func:`singularized
@@ -218,7 +217,6 @@ def _spread_sideffects(
               they are first met.  In particular, it replaces any :func:`.sfxed`
               by the :func:`stripped <.dep_stripped>`, unless ...
             - it had been declared as :term:`implicit`, in which case, it is discared;
-            - discards all the rest duplicate `sideffected` dependencies;
             - any :func:`.sfx` are simply dropped.
     """
 
@@ -241,9 +239,9 @@ def _spread_sideffects(
     assert deps is not None
 
     if deps:
-        deps = tuple(nn for n in deps for nn in dep_singularized(n))
+        op_deps = iset(nn for n in deps for nn in dep_singularized(n))
         fn_deps = tuple(nn for n in deps for nn in strip_unique(n))
-        return deps, fn_deps
+        return op_deps, fn_deps
     else:
         return deps, deps
 
@@ -261,21 +259,28 @@ class FnOp(Operation):
 
     Differences between various dependency operation attributes:
 
-    +--------------------------+-----+-----+-----+--------+
-    |   dependency attribute   |dupes|sfx  |alias|  SFXED |
-    +==========+===============+=====+=====+=====+========+
-    |          |  **needs**    ||yes|||yes||     |SINGULAR|
-    +          +---------------+-----+-----+     +--------+
-    | *needs*  | **op_needs**  ||no| ||yes||     |SINGULAR|
-    +          +---------------+-----+-----+     +--------+
-    |          |  *_fn_needs*  ||yes|||no| |     |STRIPPED|
-    +----------+---------------+-----+-----+-----+--------+
-    |          | **provides**  ||yes|||yes|||no| |SINGULAR|
-    +          +---------------+-----+-----+-----+--------+
-    |*provides*|**op_provides**||no| ||yes|||yes||SINGULAR|
-    +          +---------------+-----+-----+-----+--------+
-    |          |*_fn_provides* ||yes|||no| ||no| |STRIPPED|
-    +----------+---------------+-----+-----+-----+--------+
+
+    +-----------------------------+-----+-----+-----+--------+
+    |   dependency attribute      |dupes| sfx |alias|  sfxed |
+    +==========+==================+=====+=====+=====+========+
+    |          |    **needs**     ||no| ||yes||     |SINGULAR|
+    +          +------------------+-----+-----+     +--------+
+    | *needs*  | **_user_needs**  ||yes|||yes||     |        |
+    +          +------------------+-----+-----+     +--------+
+    |          |   *_fn_needs*    ||yes|||no| |     |STRIPPED|
+    +----------+------------------+-----+-----+-----+--------+
+    |          |   **provides**   ||no| ||yes|||yes||SINGULAR|
+    +          +------------------+-----+-----+-----+--------+
+    |*provides*|**_user_provides**||yes|||yes|||no| |        |
+    +          +------------------+-----+-----+-----+--------+
+    |          |  *_fn_provides*  ||yes|||no| ||no| |STRIPPED|
+    +----------+------------------+-----+-----+-----+--------+
+
+    where:
+
+    - "dupes=no" means the collection drops any duplicated dependencies
+    - "SINGULAR" means ``sfxed('A', 'a', 'b') ==> sfxed('A', 'b'), sfxed('A', 'b')``
+    - "STRIPPED" means ``sfxed('A', 'a', 'b') ==> sfx('a'), sfxed('b')``
 
     .. |yes| replace:: :green:`✓`
     .. |no| replace:: :red:`✗`
@@ -322,11 +327,11 @@ class FnOp(Operation):
             name, needs, provides, aliases
         )
 
+        user_needs, user_provides = needs, provides
         needs, _fn_needs = _spread_sideffects(needs)
         provides, _fn_provides = _spread_sideffects(provides)
-        op_needs = iset(needs)
         alias_dst = aliases and tuple(dst for _src, dst in aliases)
-        op_provides = iset(itt.chain(provides, alias_dst))
+        provides = iset((*provides, *alias_dst))
 
         # TODO: enact conveyor fn if varargs in the outputs.
         if fn is None and name and len(_fn_needs) == len(_fn_provides):
@@ -361,33 +366,32 @@ class FnOp(Operation):
             qname = ".".join((*qname.split(".")[:-1], name))
         self.__qualname__ = qname
 
-        #: The :term:`needs` almost as given by the user
-        #: (which may contain MULTI-sideffecteds and dupes),
-        #: roughly morphed into `_fn_provides` + sideffects
-        #: (DUPES, SFX, SINGULARIZED :term:`sideffected`\s).
-        #: It is stored for builder functionality to work.
-        self.needs = needs
-        #: Value names ready to lay the graph for :term:`pruning`
+        #: Dependencies ready to lay the graph for :term:`pruning`
         #: (NO-DUPES, SFX, SINGULAR :term:`sideffected`\s).
-        self.op_needs = op_needs
+        self.needs = needs
+        #: TODO: DROP
+        self.op_needs = needs
+        #: The :term:`needs` as given by the user, stored for *builder pattern*
+        #: to work.
+        self._user_needs = user_needs
         #: Value names the underlying function requires
         #: (DUPES preserved, NO-SFX, STRIPPED :term:`sideffected`).
         self._fn_needs = _fn_needs
 
-        #: The :term:`provides` almost as given by the user
-        #: (which may contain MULTI-sideffecteds and dupes),
-        #: roughly morphed into `_fn_provides` + sideffects
-        #: (DUPES, NO-ALIASES, SFX, SINGULAR :term:`sideffected`\s).
-        #: It is stored for builder functionality to work.
-        self.provides = provides
         #: Value names ready to lay the graph for :term:`pruning`
-        #: (NO DUPES, ALIASES, SFX, SINGULAR sideffecteds).
-        self.op_provides = op_provides
+        #: (NO DUPES, ALIASES, SFX, SINGULAR sideffecteds, +alias destinations).
+        self.provides = provides
+        #: TODO: DROP
+        self.op_provides = provides
+        #: The :term:`provides` as given by the user, stored for *builder pattern*
+        #: to work.
+        self._user_provides = user_provides
         #: Value names the underlying function produces
         #: (DUPES, NO-ALIASES, NO_SFX, STRIPPED :term:`sideffected`).
         self._fn_provides = _fn_provides
+
         #: an optional mapping of `fn_provides` to additional ones, together
-        #: comprising this operations :term:`op_provides`.
+        #: comprising this operations the `provides`.
         #:
         #: You cannot alias an :term:`alias`.
         self.aliases = aliases
@@ -549,7 +553,7 @@ class FnOp(Operation):
             ...                     "B-aliased": "new.B-aliased"})
             FnOp(name='BAR',
                                 needs=['A'],
-                                provides=['B', sfx('cc')],
+                                provides=['B', sfx('cc'), 'new.B-aliased'],
                                 aliases=[('B', 'new.B-aliased')],
                                 fn='str')
 
@@ -568,7 +572,7 @@ class FnOp(Operation):
             ...            False)
             FnOp(name='foo',
                                 needs=['parent.a'],
-                                provides=['parent.b', sfx('parent.c')],
+                                provides=['parent.b', sfx('parent.c'), 'parent.B-aliased'],
                                 aliases=[('parent.b', 'parent.B-aliased')],
                                 fn='str')
 
@@ -578,7 +582,7 @@ class FnOp(Operation):
 
             dep_renamed(ren_args.name, f"parent.{dependency(ren_args.name)}")
         """
-        kw = {
+        kwargs = {
             k: v
             for k, v in locals().items()
             if v is not ... and k not in "self renamer".split()
@@ -590,7 +594,12 @@ class FnOp(Operation):
             for k, v in vars(self).items()
             if not k.startswith("_") and not k.startswith("op_")
         }
-        kw = {**me, **kw}
+        kw = {
+            **me,
+            "needs": self._user_needs,
+            "provides": self._user_provides,
+            **kwargs,
+        }
 
         if renamer:
             self._rename_graph_names(kw, renamer)
@@ -957,7 +966,7 @@ def operation(
             - :term:`needs`
             - :term:`modifier`
             - :attr:`.FnOp.needs`
-            - :attr:`.FnOp.op_needs`
+            - :attr:`.FnOp._user_needs`
             - :attr:`.FnOp._fn_needs`
 
 
@@ -984,7 +993,7 @@ def operation(
             - :term:`provides`
             - :term:`modifier`
             - :attr:`.FnOp.provides`
-            - :attr:`.FnOp.op_provides`
+            - :attr:`.FnOp._user_provides`
             - :attr:`.FnOp._fn_provides`
 
 

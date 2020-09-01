@@ -394,46 +394,34 @@ def test_func_op_validation_aliases_BAD(prov_aliases, ex):
 
 def test_provides_aliases():
     op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})
-    assert op.op_provides == {"a", "aa"}
+    assert op.provides == {"a", "aa"}
     assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}
 
 
 def test_sfxed_needs_in_pipeline():
-    op = operation(
-        str, "hh", needs=[sfxed("a", "A", "B"), sfxed("a", "A", "C"), "c", "c"]
-    )
-    assert op.needs == (
-        sfxed("a", "A"),
-        sfxed("a", "B"),
-        sfxed("a", "A"),
-        sfxed("a", "C"),
-        "c",
-        "c",
-    )
-    assert op.op_needs == (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c", "c",)
+    deps = (sfxed("a", "A", "B"), sfxed("a", "A", "C"), "c", "c")
+    op = operation(str, "hh", needs=deps)
+
+    singularized = (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c")
+    assert op.needs == singularized
+    assert op._user_needs == deps
     assert op._fn_needs == ("a", "c", "c")
 
     pipe = compose(..., op)
-    assert pipe.needs == (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c")
+    assert pipe.needs == singularized
 
 
 def test_sfxed_provides_in_pipeline():
-    op = operation(
-        str, "hh", provides=[sfxed("a", "A", "B"), sfxed("a", "A", "C"), "c", "c"]
-    )
-    assert op.provides == (
-        sfxed("a", "A"),
-        sfxed("a", "B"),
-        sfxed("a", "A"),
-        sfxed("a", "C"),
-        "c",
-        "c",
-    )
-    assert op.op_provides == (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c")
+    deps = (sfxed("a", "A", "B"), sfxed("a", "A", "C"), "c", "c")
+    op = operation(str, "hh", provides=deps)
+
+    singularized = (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c")
+    assert op.provides == singularized
+    assert op._user_provides == deps
     assert op._fn_provides == ("a", "c", "c")
 
     pipe = compose(..., op)
-    assert pipe.provides == (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c")
+    assert pipe.provides == singularized
 
 
 @pytest.mark.parametrize("rescheduled", [0, 1])
@@ -648,7 +636,7 @@ def test_op_rename():
     got = str(ren)
     assert got == (
         """
-    FnOp(name='PP.op1', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b')], aliases=[('PP.a', 'PP.b')], fn='str')
+    FnOp(name='PP.op1', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b'), 'PP.b'], aliases=[('PP.a', 'PP.b')], fn='str')
         """.strip()
     )
 
@@ -673,7 +661,7 @@ def test_op_rename_parts():
         """
         FnOp(name='op1',
             needs=[sfx('a/b'), '/PP.a/PP.b'($)],
-            provides=['PP.b/PP.c'($), sfxed('PP.d/PP.e/PP.f'($), 'k/l')],
+            provides=['PP.b/PP.c'($), sfxed('PP.d/PP.e/PP.f'($), 'k/l'), '/PP.b/PP.t'($)],
             aliases=[('PP.b/PP.c'($), '/PP.b/PP.t'($))], fn='str')
         """,
     )
@@ -708,7 +696,7 @@ def test_pipe_rename():
     assert got == oneliner(
         """
         [FnOp(name='PP.op1', needs=[sfx('PP.a')], fn='str'),
-         FnOp(name='PP.op2', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b')],
+         FnOp(name='PP.op2', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b'), 'PP.b'],
          aliases=[('PP.a', 'PP.b')], fn='str')]
         """
     )
@@ -722,7 +710,7 @@ def test_pipe_rename():
     assert got == oneliner(
         """
         [FnOp(name='OP1', needs=[sfx('a')], fn='str'),
-         FnOp(name='op2', needs=[sfx('a')], provides=['a'(?), sfx('b')],
+         FnOp(name='op2', needs=[sfx('a')], provides=['a'(?), sfx('b'), 'B'],
          aliases=[('a'(?), 'B')], fn='str')]
         """
     )

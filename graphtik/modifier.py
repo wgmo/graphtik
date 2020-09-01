@@ -971,7 +971,7 @@ def sfxed(
 
     Notice that declaring a single *sideffected* with many items in `sfx_list`,
     expands into multiple  *"singular"* ``sideffected`` dependencies in the network
-    (check ``needs`` & ``op_needs`` above).
+    (check ``needs`` vs ``_user_needs`` above).
 
         >>> proc_order = compose('process order', new_order, fill_in_vat, finalize_prices)
         >>> sol = proc_order.compute({

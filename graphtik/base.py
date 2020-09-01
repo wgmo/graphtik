@@ -758,9 +758,7 @@ class Operation(Plottable, abc.ABC):
 
     name: str
     needs: Items
-    op_needs: Items
     provides: Items
-    op_provides: Items
 
     @abc.abstractmethod
     def compute(self, named_inputs, outputs=None):

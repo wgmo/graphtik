@@ -134,30 +134,31 @@ def test_cycle_tip():
 
 
 def test_aliases(exemethod):
+    provides = ("a", sfxed("s1", "foo"), sfxed("s2", "foo", implicit=1))
     aliased = operation(
         lambda: ("A", "B"),
         name="op1",
-        provides=["a", sfxed("s1", "foo"), sfxed("s2", "foo", implicit=1)],
+        provides=provides,
         aliases={"a": "b", "s1": "S1", "s2": "S2"},
     )
-    assert aliased.provides == ("a", sfxed("s1", "foo"), sfxed("s2", "foo"))
-    assert set(aliased.op_provides) == set(
-        ("a", "b", "S1", "S2", sfxed("s1", "foo"), sfxed("s2", "foo"))
+    assert aliased._user_provides == provides
+    assert tuple(aliased.provides) == (
+        "a",
+        sfxed("s1", "foo"),
+        sfxed("s2", "foo"),
+        "b",
+        "S1",
+        "S2",
     )
 
-    op = compose(
+    pipe = compose(
         "test_net",
         aliased,
         operation(lambda x: x * 2, name="op2", needs="b", provides="c"),
         parallel=exemethod,
     )
-    assert op() == {"a": "A", "s1": "B", "b": "A", "S1": "B", "c": "AA"}
-    assert list(op.provides) == [*aliased.op_provides, "c"]
-    assert list(op.provides) == [
-        *aliased.provides,
-        *(t for _f, t in aliased.aliases),
-        "c",
-    ]
+    assert pipe() == {"a": "A", "s1": "B", "b": "A", "S1": "B", "c": "AA"}
+    assert list(pipe.provides) == [*aliased.provides, "c"]
 
 
 def test_node_predicate_based_prune():

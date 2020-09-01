@@ -13,10 +13,6 @@ You may inherit the :class:`.Operation` abstract class to do the following:
 
 - define the :term:`needs` & :term:`provides` properties as collection of@ :term:`dependencies
   <dependency>` (needed to solve the dependencies :term:`network`),
-
-  .. Warning:
-    at the moment the ``op_needs``/``op_provides`` properties must also be set.
-
 - override the ``compute(solution)`` method  to read from the :term:`solution` argument
   those values listed in `needs` (those values only are guaranteed to exist when called),
 - do some business, and then
@@ -140,7 +136,7 @@ to the :func:`.operation` factory, specifically:
    It can be a single string, in which case a 1-element iterable is assumed.
 
    :seealso: :term:`needs`, :term:`modifier`, :attr:`.FnOp.needs`,
-      :attr:`.FnOp.op_needs`, :attr:`.FnOp._fn_needs`
+      :attr:`.FnOp._user_needs`, :attr:`.FnOp._fn_needs`
 
 ``provides``
    this argument names the list of (positionally ordered) :term:`outputs` data
@@ -154,7 +150,7 @@ to the :func:`.operation` factory, specifically:
    with same number of elements (unless it :term:`returns dictionary`).
 
    :seealso: :term:`provides`, :term:`modifier`, :attr:`.FnOp.provides`,
-      :attr:`.FnOp.op_provides`, :attr:`.FnOp._fn_provides`
+      :attr:`.FnOp._user_provides`, :attr:`.FnOp._fn_provides`
 
 Declarations of *needs* and *provides* is affected by :term:`modifier`\s like
 :func:`.keyword`:

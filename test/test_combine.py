@@ -39,7 +39,7 @@ def test_compose_rename_dict(caplog):
         == dedent(
             """
         [FnOp(name='OP1', provides=['A', 'aa'], fn='str'),
-         FnOp(name='OP2', needs=['A'], provides=['bb', sfx('c')],
+         FnOp(name='OP2', needs=['A'], provides=['bb', sfx('c'), 'B', 'p'],
          aliases=[('bb', 'B'), ('bb', 'p')], fn='str')]
     """
         ).replace("\n", "")
@@ -262,7 +262,7 @@ def test_compose_nest_dict(caplog):
         [FnOp(name='p1.op1', needs=[sfx('p1.a'), 'aa'],
          provides=[sfxed('p1.S1', 'g'), sfxed('ss2', 'h')], fn='str'),
         FnOp(name='p2.op2', needs=[sfx('p2.a')],
-         provides=['a', sfx('p2.b')], aliases=[('a', 'PP.b')], fn='str')]
+         provides=['a', sfx('p2.b'), 'PP.b'], aliases=[('a', 'PP.b')], fn='str')]
 
         """.strip(),
     )

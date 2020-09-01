@@ -113,7 +113,7 @@ def build_network(
         #
         if hasattr(op, "fn"):
             op.validate_fn_name()
-        if not getattr(op, "op_provides", op.provides):
+        if not op.provides:
             TypeError(f"`provides` must not be empty!")
 
         return op
