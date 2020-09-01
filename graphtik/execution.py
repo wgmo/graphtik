@@ -255,7 +255,7 @@ class Solution(ChainMap, Plottable):
         self._update_op_outs(op, outputs)
         self.executed[op] = None
 
-        if first_solid(self.is_reschedule, op.rescheduled):
+        if first_solid(self.is_reschedule, getattr(op, "rescheduled", None)):
             ## Find which provides have been broken?
             #
             # OPTIMIZE: could use _fn_provides
@@ -588,10 +588,10 @@ class ExecutionPlan(
                 solution.elapsed_ms[op] = time.time()
 
                 task = _OpTask(op, input_values, solution.solid)
-                if first_solid(global_marshal, op.marshalled):
+                if first_solid(global_marshal, getattr(op, "marshalled", None)):
                     task = task.marshalled()
 
-                if first_solid(global_parallel, op.parallel):
+                if first_solid(global_parallel, getattr(op, "parallel", None)):
                     if not pool:
                         raise RuntimeError(
                             "With `parallel` you must `set_execution_pool().`"
@@ -641,7 +641,9 @@ class ExecutionPlan(
                 "... (%s) op(%s) completed in %sms.", solution.solid, op.name, elapsed
             )
         except Exception as ex:
-            is_endured = first_solid(solution.is_endurance, op.endured)
+            is_endured = first_solid(
+                solution.is_endurance, getattr(op, "endured", None)
+            )
             elapsed = elapsed_ms(op)
             loglevel = logging.WARNING if is_endured else logging.ERROR
             log.log(
@@ -839,7 +841,7 @@ class ExecutionPlan(
             ## Choose a method of execution
             #
             in_parallel = is_parallel_tasks() or any(
-                op.parallel for op in yield_ops(self.steps)
+                getattr(op, "parallel", None) for op in yield_ops(self.steps)
             )
             executor = (
                 self._execute_thread_pool_barrier_method

@@ -444,7 +444,8 @@ class Network(Plottable):
             needs.append((n, nkw))
             needs_edges.append((n, operation, ekw))
         graph.add_nodes_from(needs)
-        graph.add_node(operation, **operation.node_props)
+        node_props = getattr(operation, "node_props", None) or {}
+        graph.add_node(operation, **node_props)
         graph.add_edges_from(needs_edges)
 
         ## Prepare inversed-aliases index, used
