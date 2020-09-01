@@ -16,15 +16,20 @@ Graphtik
 Lightweight computation graphs for Python
 -----------------------------------------
 
-**Graphtik** is a library to design, plot & execute *graphs of functions*
+**Graphtik** is a library to compose, plot & execute *graphs of python functions*
 (a.k.a :term:`pipeline`\s) that consume and populate (possibly :term:`nested
-<hierarchical data>`) data, based on whether values for those data (a.k.a :term:`dependencies
-<dependency>`) exist.
+<hierarchical data>`) named data (a.k.a :term:`dependencies <dependency>`),
+based on whether values for those dependencies exist in the inputs
+or have been calculated earlier.
 
-- The API posits a fair compromise between :ref:`features` and complexity, without precluding any.
-- It can be used as is to build machine learning pipelines for data science projects.
-- It should be extendable to act as the core for a custom ETL engine, a workflow-processor
-  for interdependent tasks & files like GNU Make, or a spreadsheet calculation engine.
+- Its primary use case is building flexible algorithms for data science/machine learning projects.
+- It should be extendable to implement the following:
+
+  - an `IoC dependency resolver <https://en.wikipedia.org/wiki/Dependency_injection>`_
+    (e.g. Java Spring);
+  - an executor of interdependent tasks based on files (e.g. GNU Make);
+  - a custom ETL engine;
+  - a spreadsheet calculation engine.
 
 Graph\ **tik** `sprang <https://docs.google.com/spreadsheets/d/1HPgtg2l6v3uDS81hLOcFOZxIBLCnHGrcFOh3pFRIDio/edit#gid=0>`_
 from `Graphkit`_ (summer 2019, v1.2.2) to :gh:`experiment <22>` with Python 3.6+ features,
@@ -64,7 +69,6 @@ but has diverged significantly with enhancements ever since.
 
 Quick start
 -----------
-
 Here's how to install::
 
    pip install graphtik
