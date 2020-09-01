@@ -3,7 +3,7 @@
 Graphtik
 ========
 
-|python-ver| |dev-status| (|release|, |today|) |gh-version| |pypi-version|
+|pypi-version| |gh-version| (|release|, |today|) |python-ver| |dev-status|
 |travis-status| |doc-status| |cover-status| |codestyle| |proj-lic|
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
