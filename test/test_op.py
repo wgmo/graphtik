@@ -398,6 +398,44 @@ def test_provides_aliases():
     assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}
 
 
+def test_sfxed_needs_in_pipeline():
+    op = operation(
+        str, "hh", needs=[sfxed("a", "A", "B"), sfxed("a", "A", "C"), "c", "c"]
+    )
+    assert op.needs == (
+        sfxed("a", "A"),
+        sfxed("a", "B"),
+        sfxed("a", "A"),
+        sfxed("a", "C"),
+        "c",
+        "c",
+    )
+    assert op.op_needs == (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c", "c",)
+    assert op._fn_needs == ("a", "c", "c")
+
+    pipe = compose(..., op)
+    assert pipe.needs == (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c")
+
+
+def test_sfxed_provides_in_pipeline():
+    op = operation(
+        str, "hh", provides=[sfxed("a", "A", "B"), sfxed("a", "A", "C"), "c", "c"]
+    )
+    assert op.provides == (
+        sfxed("a", "A"),
+        sfxed("a", "B"),
+        sfxed("a", "A"),
+        sfxed("a", "C"),
+        "c",
+        "c",
+    )
+    assert op.op_provides == (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c")
+    assert op._fn_provides == ("a", "c", "c")
+
+    pipe = compose(..., op)
+    assert pipe.provides == (sfxed("a", "A"), sfxed("a", "B"), sfxed("a", "C"), "c")
+
+
 @pytest.mark.parametrize("rescheduled", [0, 1])
 def test_reschedule_more_outs(rescheduled, caplog):
     op = operation(
