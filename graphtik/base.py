@@ -760,6 +760,14 @@ class Operation(Plottable, abc.ABC):
     needs: Items
     provides: Items
 
+    def __eq__(self, other):
+        """Operation identity is based on `name`."""
+        return bool(self.name == getattr(other, "name", UNSET))
+
+    def __hash__(self):
+        """Operation identity is based on `name`."""
+        return hash(self.name)
+
     @abc.abstractmethod
     def compute(self, named_inputs, outputs=None):
         """

@@ -420,14 +420,6 @@ class FnOp(Operation):
         #: unless they start with underscore(``_``).
         self.node_props = node_props
 
-    def __eq__(self, other):
-        """Operation identity is based on `name`."""
-        return bool(self.name == getattr(other, "name", UNSET))
-
-    def __hash__(self):
-        """Operation identity is based on `name`."""
-        return hash(self.name)
-
     def __repr__(self):
         """
         Display operation & dependency names annotated with :term:`diacritic`\\s.
