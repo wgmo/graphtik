@@ -1168,7 +1168,7 @@ class StylesStack(NamedTuple):
         graphviz_style = style.get("style")
         if isinstance(graphviz_style, (list, tuple)):
             ## FIXME: support only plain-strings as graphviz-styles.
-            graphviz_style = ",".join(str(i) for i in set(graphviz_style))
+            graphviz_style = ",".join(str(i) for i in iset(graphviz_style))
             if "," in graphviz_style:
                 graphviz_style = f'"{graphviz_style}"'
             style["style"] = graphviz_style
