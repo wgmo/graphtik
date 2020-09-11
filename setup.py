@@ -56,7 +56,7 @@ test_deps = list(
         ]
     )
 )
-dev_deps = test_deps + ["black", "pylint", "mypy"]
+dev_deps = test_deps + ["black==20.8b1", "pylint", "mypy"]
 
 setup(
     name="graphtik",
