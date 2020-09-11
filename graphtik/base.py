@@ -762,7 +762,7 @@ class Operation(Plottable, abc.ABC):
 
     def __eq__(self, other):
         """Operation identity is based on `name`."""
-        return bool(self.name == getattr(other, "name", UNSET))
+        return bool(self.name == getattr(other, "name", other))
 
     def __hash__(self):
         """Operation identity is based on `name`."""
