@@ -197,7 +197,11 @@ def is_nx_node_dependent(graph, nx_node):
 
 # TODO: move to base.py, to reduce fan-in imports (and be frank with module diagram).
 def graphviz_html_string(
-    s, *, repl_nl=None, repl_colon=None, xmltext=None,
+    s,
+    *,
+    repl_nl=None,
+    repl_colon=None,
+    xmltext=None,
 ):
     """
     Workaround *pydot* parsing of node-id & labels by encoding as HTML.
@@ -422,6 +426,8 @@ def make_fn_tooltip(plot_args: PlotArgs):
 class Theme:
     """
     The poor man's css-like :term:`plot theme` (see also :class:`.StyleStack`).
+
+    Tip: `Graphviz node-attributes <https://graphviz.org/doc/info/attrs.html>`_
 
     To use the values contained in theme-instances, stack them in a :class:`.StylesStack`,
     and :meth:`.StylesStack.merge` them with :term:`style expansion`\\s
@@ -785,7 +791,7 @@ class Theme:
     kw_edge = {"tailport": "s", "headport": "n"}
     kw_edge_tail_op = {}
     kw_edge_head_op = {"arrowtail": "inv", "dir": "back"}
-    kw_edge_optional = {"style": ["dashed",], "tooltip": ["(optional)"]}
+    kw_edge_optional = {"style": ["dashed"], "tooltip": ["(optional)"]}
     kw_edge_sideffect = {"color": Ref("sideffect_color")}
     kw_edge_implicit = {
         lambda pa: (
@@ -1113,7 +1119,7 @@ class StylesStack(NamedTuple):
 
         - Workaround pydot/pydot#228 pydot-cstor not supporting styles-as-lists.
 
-        - Merge tooltip-lists.
+        - Merge tooltip & tooltip lists.
 
         .. theme-expansions-end
         """
@@ -1392,7 +1398,7 @@ class Plotter:
         graph = plot_args.graph
         nx_node = plot_args.nx_item
         node_attrs = plot_args.nx_attrs
-        (plottable, _, _, steps, inputs, outputs, solution, *_,) = plot_args
+        (plottable, _, _, steps, inputs, outputs, solution, *_) = plot_args
 
         label_styles = self._new_styles_stack(plot_args)
         if isinstance(nx_node, str):  # DATA
@@ -1472,7 +1478,9 @@ class Plotter:
 
             ## Op-kind
             #
-            if first_solid(is_reschedule_operations(), getattr(nx_node, "rescheduled", None)):
+            if first_solid(
+                is_reschedule_operations(), getattr(nx_node, "rescheduled", None)
+            ):
                 label_styles.add("kw_op_rescheduled")
             if first_solid(is_endure_operations(), getattr(nx_node, "endured", None)):
                 label_styles.add("kw_op_endured")
@@ -1519,7 +1527,7 @@ class Plotter:
                 "op_label_template",
                 {
                     "label": _render_template(
-                        theme.op_template, steps=steps, **label_styles.merge(),
+                        theme.op_template, steps=steps, **label_styles.merge()
                     )
                 },
             )
@@ -1529,7 +1537,7 @@ class Plotter:
 
         return pydot.Node(**styles.merge())
 
-    def _build_cluster_path(self, plot_args: PlotArgs, *path,) -> None:
+    def _build_cluster_path(self, plot_args: PlotArgs, *path) -> None:
         """Return the last cluster in the path created"""
         clustered = plot_args.clustered
         root = plot_args.dot
@@ -1894,7 +1902,10 @@ class Plotter:
 
 
 def legend(
-    filename=None, show=None, jupyter_render: Mapping = None, plotter: Plotter = None,
+    filename=None,
+    show=None,
+    jupyter_render: Mapping = None,
+    plotter: Plotter = None,
 ):
     """
     Generate a legend for all plots (see :meth:`.Plottable.plot()` for args)

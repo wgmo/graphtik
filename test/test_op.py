@@ -379,8 +379,14 @@ def test_as_renames(inp, exp):
                 r"The `aliases` \['b'-->'B'\] rename non-existent provides in \['a'\]"
             ),
         ),
-        ((sfx("a"), {sfx("a"): "a"}), ValueError("must not contain `sideffects"),),
-        (("a", {"a": sfx("AA")}), ValueError("must not contain `sideffects"),),
+        (
+            (sfx("a"), {sfx("a"): "a"}),
+            ValueError("must not contain `sideffects"),
+        ),
+        (
+            ("a", {"a": sfx("AA")}),
+            ValueError("must not contain `sideffects"),
+        ),
         (
             (["a", "b"], {"a": "b"}),
             ValueError(r"clash with existing provides in \['a', 'b'\]"),
@@ -624,7 +630,11 @@ def test_non_op_given():
 
 def test_op_rename():
     op = operation(
-        str, name="op1", needs=sfx("a"), provides=["a", sfx("b")], aliases=[("a", "b")],
+        str,
+        name="op1",
+        needs=sfx("a"),
+        provides=["a", sfx("b")],
+        aliases=[("a", "b")],
     )
 
     def renamer(na):
@@ -704,7 +714,12 @@ def test_pipe_rename():
     ## Check dictionary with callables
     #
     ren = pipe.withset(
-        renamer={"op1": lambda n: "OP1", "op2": False, "a": optional("a"), "b": "B",}
+        renamer={
+            "op1": lambda n: "OP1",
+            "op2": False,
+            "a": optional("a"),
+            "b": "B",
+        }
     )
     got = str(ren.ops)
     assert got == oneliner(

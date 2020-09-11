@@ -88,9 +88,11 @@ class Solution(ChainMap, Plottable):
         #:
         #: If network contains :term:`jsonp` dependencies, by default
         #: layers are disabled, and this is None.
-        self._layers: Optional[Mapping] = {
-            op: {} for op in yield_ops(reversed(plan.steps))
-        } if layered_solution else None
+        self._layers: Optional[Mapping] = (
+            {op: {} for op in yield_ops(reversed(plan.steps))}
+            if layered_solution
+            else None
+        )
         maps = self._layers.values() if self._layers else ()
         super().__init__(*maps, input_values)
 
@@ -898,7 +900,7 @@ class ExecutionPlan(
             if evict:
                 expected_provides = set()
                 expected_provides.update(
-                    yield_chaindocs(dag, self.provides, expected_provides,)
+                    yield_chaindocs(dag, self.provides, expected_provides)
                 )
                 expected_provides = set(dep_stripped(n) for n in expected_provides)
                 # It is a proper subset when not all outputs calculated.

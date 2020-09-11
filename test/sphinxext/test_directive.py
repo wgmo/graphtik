@@ -104,7 +104,14 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
             count=True,
         ),
     )
-    check_xpath(etree, fname, f".//{tag}", attr_check(uri_attr,))
+    check_xpath(
+        etree,
+        fname,
+        f".//{tag}",
+        attr_check(
+            uri_attr,
+        ),
+    )
     check_xpath(etree, fname, ".//*[@class='caption']/*", "Solved")
 
 
@@ -130,5 +137,8 @@ def test_zoomable_svg(app, cached_etree_parse):
         _count_nodes(7),  # -1 zoomable false
     )
     check_xpath(
-        etree, fname, f".//object[@data-svg-zoom-opts]", _count_nodes(1),
+        etree,
+        fname,
+        f".//object[@data-svg-zoom-opts]",
+        _count_nodes(1),
     )

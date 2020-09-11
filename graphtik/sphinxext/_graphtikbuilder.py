@@ -83,7 +83,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         return isinstance(value, (Plottable, pydot.Dot))
 
     def _retrieve_graphvar_plottable(
-        self, globs: dict, graphvar, location,
+        self, globs: dict, graphvar, location
     ) -> PlottableType:
         plottable: PlottableType = None
 

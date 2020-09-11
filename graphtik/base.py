@@ -227,9 +227,7 @@ def func_name(
     except Exception as ex:
         if default is ...:
             raise
-        log.debug(
-            "Ignored error while inspecting %r name: %s", fn, ex,
-        )
+        log.debug("Ignored error while inspecting %r name: %s", fn, ex)
         return default
 
 
@@ -268,9 +266,7 @@ def func_source(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
     except Exception as ex:
         if default is ...:
             raise
-        log.debug(
-            "Ignored error while inspecting %r sources: %s", fn, ex,
-        )
+        log.debug("Ignored error while inspecting %r sources: %s", fn, ex)
         return default
 
 
@@ -290,9 +286,7 @@ def func_sourcelines(fn, default=..., human=None) -> Optional[Tuple[str, int]]:
     except Exception as ex:
         if default is ...:
             raise
-        log.debug(
-            "Ignored error while inspecting %r sourcelines: %s", fn, ex,
-        )
+        log.debug("Ignored error while inspecting %r sourcelines: %s", fn, ex)
         return default
 
 
@@ -789,7 +783,7 @@ class Operation(Plottable, abc.ABC):
     #     raise NotImplementedError("Operation subclasses")
 
     def _rename_graph_names(
-        self, kw, renamer: Union[Callable[[RenArgs], str], Mapping[str, str]],
+        self, kw, renamer: Union[Callable[[RenArgs], str], Mapping[str, str]]
     ) -> None:
         """
         Pass operation & dependency names through `renamer`.

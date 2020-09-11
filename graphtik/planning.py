@@ -108,7 +108,7 @@ EdgeTraversal = Tuple[str, int]
 
 
 def _yield_also_chained_docs(
-    dig_dag: List[EdgeTraversal], dag, doc: str, stop_set=(),
+    dig_dag: List[EdgeTraversal], dag, doc: str, stop_set=()
 ) -> Iterable[str]:
     """
     Dig the `doc` and its sub/super docs, not recursing in those already in `stop_set`.

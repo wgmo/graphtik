@@ -141,7 +141,13 @@ def test_jsonp_path_massive(inp, exp):
 
 
 @pytest.mark.parametrize(
-    "inp, exp", [("/foo", 1), ("/bar/0", 11), ("/bar/1/a", 222), ("/bar/1/a", 222),],
+    "inp, exp",
+    [
+        ("/foo", 1),
+        ("/bar/0", 11),
+        ("/bar/1/a", 222),
+        ("/bar/1/a", 222),
+    ],
 )
 def test_resolve_simple(inp, exp):
     doc = {"foo": 1, "bar": [11, {"a": 222}]}

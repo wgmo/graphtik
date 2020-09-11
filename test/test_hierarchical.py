@@ -109,7 +109,7 @@ def test_jsonp_and_conveyor_fn_complex_LAYERED(solution_layered_true):
             provides=["r/a", modify("a")],
         )(),
         operation(
-            lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"],
+            lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"]
         ),
     )
     inp = {"i": {"a": 1}}
@@ -134,7 +134,7 @@ def test_jsonp_and_conveyor_fn_complex_NOT_LAYERED(solution_layered_false):
             provides=["r/a", modify("a")],
         )(),
         operation(
-            lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"],
+            lambda x: (x, 2 * x), name="op2", needs=["r/a"], provides=["r/A", "r/AA"]
         ),
     )
     inp = {"i": {"a": 1}}
@@ -418,7 +418,10 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
     assert sol == {
         "backlog": range(9, 9),
         "Monday.tasks": range(0, 4),
-        "daily_tasks": {"Monday": range(0, 4), "Tuesday": range(4, 9),},
+        "daily_tasks": {
+            "Monday": range(0, 4),
+            "Tuesday": range(4, 9),
+        },
         "Tuesday.tasks": range(4, 9),
         sfxed("backlog", "todos"): False,
         "weekly_tasks": (range(0, 4), range(4, 9)),
@@ -433,7 +436,10 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
     )
     assert sol == {
         "backlog": range(9, 9),
-        "daily_tasks": {"Monday": range(0, 4), "Tuesday": range(4, 9)},
+        "daily_tasks": {
+            "Monday": range(0, 4),
+            "Tuesday": range(4, 9),
+        },
         "weekly_tasks": (range(0, 4), range(4, 9)),
         "todos": (),
     }
@@ -446,7 +452,10 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
         layered_solution=solution_layered_false,
     )
     assert sol == {
-        "daily_tasks": {"Monday": range(0, 4), "Tuesday": range(4, 9)},
+        "daily_tasks": {
+            "Monday": range(0, 4),
+            "Tuesday": range(4, 9),
+        },
         "weekly_tasks": (range(0, 4), range(4, 9)),
         "todos": (),
     }
@@ -463,5 +472,10 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
         outputs="daily_tasks",
         layered_solution=solution_layered_false,
     )
-    assert sol == {"daily_tasks": {"Monday": range(0, 4), "Tuesday": range(4, 9)}}
+    assert sol == {
+        "daily_tasks": {
+            "Monday": range(0, 4),
+            "Tuesday": range(4, 9),
+        }
+    }
     assert sol.overwrites == {}

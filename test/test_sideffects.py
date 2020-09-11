@@ -311,7 +311,10 @@ def calc_prices_pipeline(request, exemethod):
         return order
 
     @operation(
-        needs=[sfxed("ORDER", "Prices"), sfxed("ORDER", "VAT rates", optional=True),],
+        needs=[
+            sfxed("ORDER", "Prices"),
+            sfxed("ORDER", "VAT rates", optional=True),
+        ],
         provides=[sfxed("ORDER", "VAT", "Totals"), "vat owed"],
     )
     def finalize_prices(order: DataFrame) -> Tuple[DataFrame, float]:
@@ -420,10 +423,10 @@ def sideffected_resched(request, exemethod):
         return {"DEP": 1, sfxed("DEP", "no"): False}
 
     yes = operation(
-        lambda dep: "yes!", name="YES", needs=sfxed("DEP", "yes"), provides="yes",
+        lambda dep: "yes!", name="YES", needs=sfxed("DEP", "yes"), provides="yes"
     )
     no = operation(
-        lambda dep: "no!", name="NO", needs=sfxed("DEP", "no"), provides="no",
+        lambda dep: "no!", name="NO", needs=sfxed("DEP", "no"), provides="no"
     )
     ops = [half_sfx, yes, no]
     if request.param:

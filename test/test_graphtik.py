@@ -290,10 +290,10 @@ def test_impossible_outputs():
         operation(name="op2", needs=["aa", "bb"], provides="aabb")(identity),
     )
     with pytest.raises(ValueError, match="Unreachable outputs"):
-        pipeline.compute({"a": 1,}, ["aabb"])
+        pipeline.compute({"a": 1}, ["aabb"])
 
     with pytest.raises(ValueError, match="Unreachable outputs"):
-        pipeline.compute({"a": 1,}, ["aa", "aabb"])
+        pipeline.compute({"a": 1}, ["aa", "aabb"])
 
 
 def test_pruning_not_overrides_given_intermediate(exemethod):
@@ -837,7 +837,8 @@ def test_skip_eviction_flag():
 
 
 @pytest.mark.parametrize(
-    "endurance, endured", [(None, True), (True, None), (1, 0), (1, 1)],
+    "endurance, endured",
+    [(None, True), (True, None), (1, 0), (1, 1)],
 )
 def test_execution_endurance(exemethod, endurance, endured):
     with operations_endured(endurance):
@@ -879,7 +880,8 @@ def test_execution_endurance(exemethod, endurance, endured):
 
 
 @pytest.mark.parametrize(
-    "resched, rescheduled", [(None, True), (True, None), (1, 0), (1, 1)],
+    "resched, rescheduled",
+    [(None, True), (True, None), (1, 0), (1, 1)],
 )
 def test_rescheduling(exemethod, resched, rescheduled):
     canc = operation(lambda: None, name="canc", needs=["b"], provides="cc")

@@ -649,7 +649,11 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     sol = dot_str_pipeline.compute({"edge": 1, "digraph: strict": 2})
     dot_str = str(
         sol.plot(
-            graph=overlay, theme=Theme(op_link_target="_self", fn_link_target="bad",),
+            graph=overlay,
+            theme=Theme(
+                op_link_target="_self",
+                fn_link_target="bad",
+            ),
         )
     )
 
@@ -663,7 +667,8 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         sol.plot(
             graph=overlay,
             plotter=get_active_plotter().with_styles(
-                op_link_target="_self", fn_link_target="bad",
+                op_link_target="_self",
+                fn_link_target="bad",
             ),
         )
     )

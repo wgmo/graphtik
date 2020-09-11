@@ -359,13 +359,13 @@ def test_func_name_partial_args(kw, exp):
         ({"mod": 0, "fqdn": 0, "human": 0}, "_foo"),
         ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base._foo"),
         ({"mod": 0, "fqdn": 0, "human": 1}, "_foo(1, a=2, b=3, ...)"),
-        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base._foo(1, a=2, b=3, ...)",),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base._foo(1, a=2, b=3, ...)"),
         ## FQDN = 1
         #
         ({"mod": 0, "fqdn": 1, "human": 0}, "_foo"),
         ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._foo"),
         ({"mod": 0, "fqdn": 1, "human": 1}, "_foo(1, a=2, b=3, ...)"),
-        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._foo(1, a=2, b=3, ...)",),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._foo(1, a=2, b=3, ...)"),
     ],
 )
 def test_func_name_partial_x2(kw, exp):
@@ -380,13 +380,13 @@ def test_func_name_partial_x2(kw, exp):
         ({"mod": 0, "fqdn": 0, "human": 0}, "foo"),
         ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.foo"),
         ({"mod": 0, "fqdn": 0, "human": 1}, "foo"),
-        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo",),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo"),
         ## FQDN = 0
         #
         ({"mod": 0, "fqdn": 1, "human": 0}, "_Foo.foo"),
         ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._Foo.foo"),
         ({"mod": 0, "fqdn": 1, "human": 1}, "_Foo.foo"),
-        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo",),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo"),
     ],
 )
 def test_func_name_class_method(kw, exp):
@@ -401,13 +401,13 @@ def test_func_name_class_method(kw, exp):
         ({"mod": 0, "fqdn": 0, "human": 0}, "foo"),
         ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.foo"),
         ({"mod": 0, "fqdn": 0, "human": 1}, "foo"),
-        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo",),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo"),
         ## FQDN = 1
         #
         ({"mod": 0, "fqdn": 1, "human": 0}, "_Foo.foo"),
         ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._Foo.foo"),
         ({"mod": 0, "fqdn": 1, "human": 1}, "_Foo.foo"),
-        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo",),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo"),
     ],
 )
 def test_func_name_object_method(kw, exp):
@@ -422,13 +422,13 @@ def test_func_name_object_method(kw, exp):
         ({"mod": 0, "fqdn": 0, "human": 0}, "foo"),
         ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.foo"),
         ({"mod": 0, "fqdn": 0, "human": 1}, "foo(...)"),
-        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo(...)",),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.foo(...)"),
         ## FQDN = 1
         #
         ({"mod": 0, "fqdn": 1, "human": 0}, "_Foo.foo"),
         ({"mod": 1, "fqdn": 1, "human": 0}, "test.test_base._Foo.foo"),
         ({"mod": 0, "fqdn": 1, "human": 1}, "_Foo.foo(...)"),
-        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo(...)",),
+        ({"mod": 1, "fqdn": 1, "human": 1}, "test.test_base._Foo.foo(...)"),
     ],
 )
 def test_func_name_partial_method(kw, exp):
@@ -440,10 +440,10 @@ def test_func_name_partial_method(kw, exp):
     [
         ## FQDN = 0
         #
-        ({"mod": 0, "fqdn": 0, "human": 0}, "<lambda>",),
-        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.<lambda>",),
-        ({"mod": 0, "fqdn": 0, "human": 1}, "<lambda>",),
-        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.<lambda>",),
+        ({"mod": 0, "fqdn": 0, "human": 0}, "<lambda>"),
+        ({"mod": 1, "fqdn": 0, "human": 0}, "test.test_base.<lambda>"),
+        ({"mod": 0, "fqdn": 0, "human": 1}, "<lambda>"),
+        ({"mod": 1, "fqdn": 0, "human": 1}, "test.test_base.<lambda>"),
         ## FQDN = 1
         #
         (
@@ -488,7 +488,12 @@ def test_func_name_partials_vs_human():
 ## func_source
 ##
 @pytest.mark.parametrize(
-    "fn", [_foo, fnt.partial(_foo), fnt.partial(_foo, 1),],
+    "fn",
+    [
+        _foo,
+        fnt.partial(_foo),
+        fnt.partial(_foo, 1),
+    ],
 )
 def test_func_source_func(fn):
     exp = "def _foo():\n    pass"
@@ -528,7 +533,12 @@ def test_func_source_builtin_human(fn):
 ## func_sourcelines
 ##
 @pytest.mark.parametrize(
-    "fn", [_foo, fnt.partial(_foo), fnt.partial(_foo, 1),],
+    "fn",
+    [
+        _foo,
+        fnt.partial(_foo),
+        fnt.partial(_foo, 1),
+    ],
 )
 def test_func_sourcelines_func(fn):
     exp = "def _foo():\n    pass"

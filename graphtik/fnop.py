@@ -132,9 +132,7 @@ def jsonp_ize_all(deps):
 
 def reparse_operation_data(
     name, needs, provides, aliases=()
-) -> Tuple[
-    str, Collection[str], Collection[str], Collection[Tuple[str, str]],
-]:
+) -> Tuple[str, Collection[str], Collection[str], Collection[Tuple[str, str]]]:
     """
     Validate & reparse operation data as lists.
 
@@ -590,7 +588,7 @@ class FnOp(Operation):
             )
 
     def _prepare_match_inputs_error(
-        self, missing: List, varargs_bad: List, named_inputs: Mapping,
+        self, missing: List, varargs_bad: List, named_inputs: Mapping
     ) -> ValueError:
         from .config import is_debug
 
@@ -648,9 +646,7 @@ class FnOp(Operation):
                 ok = True
             finally:
                 if not ok:
-                    log.error(
-                        "Failed while preparing op(%s) need(%s)!", self.name, n,
-                    )
+                    log.error("Failed while preparing op(%s) need(%s)!", self.name, n)
 
         if missing or varargs_bad:
             msg = self._prepare_match_inputs_error(missing, varargs_bad, named_inputs)
@@ -705,9 +701,7 @@ class FnOp(Operation):
         missmatched = fn_required - res_names
         if missmatched:
             if is_rescheduled:
-                log.warning(
-                    "... Op %r did not provide%s", self.name, list(missmatched),
-                )
+                log.warning("... Op %r did not provide%s", self.name, list(missmatched))
             else:
                 raise ValueError(
                     f"Got x{len(results)} results({list(results)}) mismatched "

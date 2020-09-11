@@ -189,7 +189,13 @@ class Pipeline(Operation):
 
         # Prune network
         self.net = build_network(
-            operations, rescheduled, endured, parallel, marshalled, node_props, renamer,
+            operations,
+            rescheduled,
+            endured,
+            parallel,
+            marshalled,
+            node_props,
+            renamer,
         )
         self.name, self.needs, self.provides, _aliases = reparse_operation_data(
             self.name, self.net.needs, self.net.provides

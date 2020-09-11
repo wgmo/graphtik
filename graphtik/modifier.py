@@ -872,7 +872,7 @@ def sfx(name, optional: bool = None) -> _Modifier:
 
     """
     return _modifier(
-        name, optional=_Optionals.keyword if optional else None, sideffected=name,
+        name, optional=_Optionals.keyword if optional else None, sideffected=name
     )
 
 

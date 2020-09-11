@@ -47,7 +47,12 @@ def test_compose_rename_dict(caplog):
 
 
 def test_compose_rename_dict_non_str(caplog):
-    pip = compose("t", operation(str, "op1"), operation(str, "op2"), nest={"op1": 1},)
+    pip = compose(
+        "t",
+        operation(str, "op1"),
+        operation(str, "op2"),
+        nest={"op1": 1},
+    )
     exp = "Pipeline('t', x2 ops: op1, op2)"
     print(pip)
     assert str(pip) == exp

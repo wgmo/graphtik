@@ -93,7 +93,7 @@ def _zoomable_activation_js_code(default_zoom_opts: str) -> str:
 
 
 def _enact_zoomable_svg(self: HTMLTranslator, node: dynaimage, tag: str):
-    """ Make SVGs zoomable if enabled by option/config.
+    """Make SVGs zoomable if enabled by option/config.
 
     :param node:
         Assign a special *class* for the zoom js-code to select by it.
@@ -264,9 +264,7 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         location = self.state_machine.get_source_and_line(self.lineno)
 
         img_format = self._decide_img_format(options)
-        log.debug(
-            "decided `graph-format`: %r", img_format, location=location,
-        )
+        log.debug("decided `graph-format`: %r", img_format, location=location)
         if not img_format:
             # Bail out, probably unknown builder.
             return original_nodes
