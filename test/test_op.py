@@ -618,14 +618,14 @@ def test_serialize_pipeline(samplenet, ser_method):
 
 def test_non_op_given():
     with pytest.raises(
-        TypeError, match=r"(?s)Received x1 non-Operation instances.+\[1\].+\['b', 'a'\]"
+        TypeError, match=r"(?s)Received x1 non-Operation instances: \[1\]"
     ):
         compose("", operation(None, name="b"), 1, operation(None, name="a"))
     with pytest.raises(
         TypeError,
-        match=r"(?s)Received x1 non-Operation instances.+'noop'.+\['b', 'a'\]",
+        match=r"(?s)Received x2 non-Operation instances: \['noop', <function .+>\]",
     ):
-        compose("", "noop", operation(None, name="b"), operation(None, name="a"))
+        compose("", "noop", operation(None, name="b"), lambda: None)
 
 
 def test_op_rename():

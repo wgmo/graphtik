@@ -143,6 +143,21 @@ def astuple(i, argname, allowed_types=tuple):
     return i
 
 
+def asset(i, argname, allowed_types=set):
+    if not i:
+        return i if isinstance(i, allowed_types) else set()
+
+    if isinstance(i, str):
+        i = {i}
+    elif not isinstance(i, allowed_types):
+        try:
+            i = set(i)
+        except Exception as ex:
+            raise ValueError(f"Cannot set-ize {argname}({i!r}) due to: {ex}") from None
+
+    return i
+
+
 def func_name(
     fn, default=..., mod=None, fqdn=None, human=None, partials=None
 ) -> Optional[str]:

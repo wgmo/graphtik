@@ -8,7 +8,7 @@ from textwrap import dedent
 
 import pytest
 
-from graphtik import NULL_OP, compose, operation, sfx, sfxed, vararg
+from graphtik import compose, operation, sfx, sfxed, vararg
 from graphtik.modifier import dep_renamed
 from graphtik.fnop import Operation
 
@@ -201,7 +201,7 @@ def test_network_nest_in_doctests():
     )
     assert len(weekday.ops) == 3
 
-    weekday = compose("weekday", NULL_OP("sleep"), weekday)
+    weekday = compose("weekday", weekday, excludes="sleep")
     assert len(weekday.ops) == 2
 
     weekdays = [weekday.withset(name=f"day {i}") for i in range(days_count)]

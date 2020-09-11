@@ -26,40 +26,12 @@ from .base import (
     Plottable,
     RenArgs,
     aslist,
+    asset,
 )
 from .jetsam import save_jetsam
 from .modifier import dep_renamed
 
 log = logging.getLogger(__name__)
-
-
-class NULL_OP(Operation):
-    """
-    Eliminates same-named operations added later during term:`operation merging`.
-
-    :seealso: :ref:`operation-merging`
-    """
-
-    #: Dummy `provides` for pipeline's "last minute" check not to scream.
-    provides = (None,)
-
-    def __init__(self, name):
-        self.name = name
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, o):
-        return self.name == o.name
-
-    def __repr__(self):
-        return f"{type(self).__name__}({self.name})"
-
-    def compute(self, *args, **kw):
-        raise AssertionError(f"{self} should have been eliminated!")
-
-    def prepare_plot_args(self, *args, **kw):
-        raise AssertionError(f"{self} should have been eliminated!")
 
 
 def _id_bool(b):
@@ -78,6 +50,7 @@ def build_network(
     marshalled=None,
     node_props=None,
     renamer=None,
+    excludes=None,
 ):
     """
     The :term:`network` factory that does :term:`operation merging` before constructing it.
@@ -86,7 +59,9 @@ def build_network(
         see same-named param in :func:`.compose`
     """
     kw = {
-        k: v for k, v in locals().items() if v is not None and k not in ("operations")
+        k: v
+        for k, v in locals().items()
+        if v is not None and k not in ("operations", "excludes")
     }
 
     def proc_op(op, parent=None):
@@ -124,7 +99,12 @@ def build_network(
             merge_set.update(proc_op(s, op) for s in op.ops)
         else:
             merge_set.add(proc_op(op))
-    merge_set = iset(i for i in merge_set if not isinstance(i, NULL_OP))
+
+    if excludes is not None:
+        excludes = {op for op in merge_set if op in asset(excludes, "excludes")}
+        if excludes:
+            merge_set = [op for op in merge_set if op not in excludes]
+            log.info("Compose excluded %i operations %s.", len(excludes), excludes)
 
     assert all(bool(n) for n in merge_set)
 
@@ -166,6 +146,7 @@ class Pipeline(Operation):
         marshalled=None,
         node_props=None,
         renamer=None,
+        excludes=None,
     ):
         """
         For arguments, ee :meth:`withset()` & class attributes.
@@ -196,6 +177,7 @@ class Pipeline(Operation):
             marshalled,
             node_props,
             renamer,
+            excludes,
         )
         self.name, self.needs, self.provides, _aliases = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
@@ -513,6 +495,7 @@ def compose(
     name: Union[str, type(...), None],
     op1: Operation,
     *operations: Operation,
+    excludes=None,
     outputs: Items = None,
     rescheduled=None,
     endured=None,
@@ -537,6 +520,9 @@ def compose(
         syntactically force at least 1 operation
     :param operations:
         each argument should be an operation or pipeline instance
+    :param excludes:
+        A single string or list of operation-names to exclude from the final network
+        (particularly useful when composing existing pipelines).
     :param nest:
         a dictionary or callable corresponding to the `renamer` paremater
         of :meth:`.Pipeline.withset()`, but the calable receives a `ren_args`
@@ -617,11 +603,7 @@ def compose(
     operations = (op1,) + operations
     if not all(isinstance(op, Operation) for op in operations):
         bad_ops = [op for op in operations if not isinstance(op, Operation)]
-        op_names = [op.name for op in operations if isinstance(op, Operation)]
-        raise TypeError(
-            f"Received x{len(bad_ops)} non-Operation instances: {bad_ops}"
-            f"\n  out of: {op_names}"
-        )
+        raise TypeError(f"Received x{len(bad_ops)} non-Operation instances: {bad_ops}")
 
     ## Apply default nesting if user asked just a truthy.
     #
@@ -672,4 +654,5 @@ def compose(
         marshalled=marshalled,
         node_props=node_props,
         renamer=renamer,
+        excludes=excludes,
     )

@@ -209,11 +209,9 @@ identically-named operations added later*.
 
 Notice also that the overridden "sleep" operation hasn't got any actual role
 in the schedule.
-We can eliminate "sleep" altogether by pre-registering the special :class:`.NULL_OP`
-operation under the same name, "sleep":
+We can eliminate "sleep" by using the ``excludes`` argument (it accepts also list):
 
-    >>> from graphtik import NULL_OP
-    >>> weekday = compose("weekday", NULL_OP("sleep"), weekday)
+    >>> weekday = compose("weekday", weekday, excludes="sleep")
 
 .. graphtik::
     :graphvar: weekday

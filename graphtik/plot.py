@@ -41,6 +41,7 @@ import jinja2
 import networkx as nx
 import pydot
 from boltons.iterutils import default_enter, default_exit, get_path, remap
+from boltons.setutils import IndexedSet as iset
 from jinja2.filters import do_truncate
 
 from . import __version__
