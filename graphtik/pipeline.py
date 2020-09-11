@@ -424,10 +424,6 @@ class Pipeline(Operation):
                 predicate = self.predicate
 
             log.info("=== Compiling pipeline(%s) ...", self.name)
-            # # Discover nested inputs given.
-            # plan = net.compile(
-            #     self._nested_inputs_given(named_inputs), outputs, predicate
-            # )
             plan = net.compile(named_inputs.keys(), outputs, predicate)
 
             # Restore `abort` flag for next run.
