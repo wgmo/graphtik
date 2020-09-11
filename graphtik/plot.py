@@ -495,7 +495,7 @@ class Theme:
 
     #: Attributes applying to all nodes with ``node [...]`` graphviz construct,
     #: append in graph only if non-empty.
-    node_defaults = {}
+    node_defaults = {"style": ["filled"], "fillcolor": "white"}
     #: Attributes applying to all edges with ``edge [...]`` graphviz construct,
     #: appended in graph only if non-empty.
     edge_defaults = {}
@@ -532,7 +532,7 @@ class Theme:
     kw_data_sideffected = {}
     kw_data_to_evict = {
         "color": Ref("evicted_color"),
-        "style": ["dashed"],
+        "style": ["filled", "dashed"],
         "tooltip": ["(to evict)"],
     }
     ##

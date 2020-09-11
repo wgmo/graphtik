@@ -600,6 +600,7 @@ class Plottable(abc.ABC):
             digraph pipeline {
             fontname=italic;
             label=<pipeline>;
+            node [fillcolor=white, style=filled];
             <a> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
             ...
 

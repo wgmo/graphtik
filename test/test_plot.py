@@ -553,6 +553,7 @@ def test_node_dot_str0(dot_str_pipeline):
         digraph graph_ {
         fontname=italic;
         label=<graph>;
+        node [fillcolor=white, style=filled];
         <edge> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
                     <TR><TD>edge</TD></TR>
                 </TABLE>>, shape=invhouse, tooltip="(input)"];
@@ -610,6 +611,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
         digraph solution_x5_nodes {
         fontname=italic;
         splines=ortho;
+        node [fillcolor=white, style=filled];
         subgraph "cluster_after pruning" {
         label=<after pruning>;
         <edge> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
@@ -688,6 +690,7 @@ def test_step_badge():
     exp = r"""
     digraph solution_x4_nodes {
     fontname=italic;
+    node [fillcolor=white, style=filled];
     <0> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
         <TR>
             <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;0&#x27;, provides=[&#x27;b&#x27;], fn=&#x27;str&#x27;)" TARGET="_top"
@@ -706,7 +709,7 @@ def test_step_badge():
                 <TR><TD>b</TD>
                 <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"
                 ><FONT FACE="monospace" COLOR="white"><B>2</B></FONT></TD></TR>
-            </TABLE>>, penwidth=3, shape=rect, style=dashed, tooltip="(to evict)\n(evicted)"];
+            </TABLE>>, penwidth=3, shape=rect, style="filled,dashed", tooltip="(to evict)\n(evicted)"];
     <1> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
         <TR>
             <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;1&#x27;, needs=[&#x27;b&#x27;], provides=[&#x27;c&#x27;], fn=&#x27;str&#x27;)" TARGET="_top"
