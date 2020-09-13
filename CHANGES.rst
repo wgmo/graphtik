@@ -18,13 +18,17 @@ Graphtik Changelog
 
   Tasks
   =====
+  - [+] ENH: planning reports unsatisfied node modus, for plotting
+  - [ ] DROP PARALLEL: always produce a list of "parallelizable batches",
+        to hook with other executors, and keep here just the single-process implementation.
   - [ ] DROP accessors
   - [ ] DROP/ENH: Solution updates GivenInputs only, layers jsonp-refer to its values
   - [ ] FEAT: break cycles with dijkstra; weights
   - [ ] FEAT: Config DEBUG flags:
     - [ ] skip - evictions(drop config)
     - [ ] keep SFX in outputs
-  - [ ] ENH: virtual graph roots for inputs & outputs, for visiting algos (eg prune by outs)
+  - [ ] ENH: virtual graph roots for inputs & outputs, for networks visiting algos
+        (eg prune by outs)
   - [ ] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
   - [ ] ENH: varargs for Outs collect all outs to the very end
   - [ ] ENH: use Signature.Param from `inspect` module to match needs & zip provides
@@ -34,7 +38,8 @@ Graphtik Changelog
     - [ ] TCs: Test DEBUG
   - [ ] ENH: Plan accepts previous solutions
     - [ ] refact: named_inputs --> sol
-  - [ ] ENH: planning reports unsatisfied node modus, for plotting
+    - [ ] FEAT: ``compute(solution, recompute_from=["input_1"], recompute_till="output_1"])``
+      - [ ] fix: FnOp.compute() should (or should not?) accept Pipeline.compute() args.
   - [ ] REFACT/FEAT/ENH: Autograph functions by annotating
 
   - plot:
@@ -84,6 +89,43 @@ https://github.com/pygraphkit/graphtik/releases
 
 Changelog
 %%%%%%%%%
+
+
+v10.2.0 (14 Sep 2020, @ankostis): pre-callback, drop `op_xxx`, ops-eq-op.name, drop NULL_OP, deprecate parallel/task_context
+----------------------------------------------------------------------------------------------------------------------------
+Should have been a "major" release, but x2 breaks are that important.
+
++ FEAT(pipeline+execution): add :term:`pre_callback` to be invoked prior to computing
+  each operation (see ``pre_callback`` arg in :meth:`.Pipeline.compute()`).
+
++ REFACT/break(OP): replace badly-specified public attributes ``op_needs`` & ``op_provides``
+  with private :attr:`.FnOp._user_needs` & :attr:`.FnOp._user_provides` -- now
+  it must be easier to inherit :class:`.Operation` anew (but) UNTESTED :-().
+
+  + refact: don't crash of operations lacking ``rescheduled``, ``marshalled``
+    etc attributes.
+
++ ENH(OP):``Operation.name`` and ``name`` string compare *equal* -- that is,
+  dictionaries of operations, such as :attr:`.Solution.executed`, can be indexed
+  with their names (note, they didn't equal by accident).
+
+  +  REFACT: move ``FnOp.__hash__()/__eq__()`` up, to Operation class.
+
++ FEAT/break(pipeline): replace ``NULL_OP`` operation a new ``compose(excludes=..)`` argument,
+  in order to delete existing operations when merging pipelines.
+
++ ENH(plot): make all nodes "filled" to facilitate hovering for tooltips.
+
++ FIX(TEST): ``exemethod`` fixture's ``exe_method`` was always empty when interrogated
+  for deciding "xfails".
+
++ enh(build): pin ``black`` version, changes in format affect commits.
+
++ doc(parallel): Deprecate(!), but just in docs, in favor of always producing
+  a list of "parallelizable batches", to fed to 3rdp parallelizing executors.
+
++ doc(execution+fnop): Mark mark :data:`.execution.task_context` as *unstable API*,
+  in favor of supporting a specially-named function argument to receive the same instances.
 
 
 v10.1.0 (5 Aug 2020, @ankostis): rename return-dict outs; step number badges
@@ -356,7 +398,7 @@ v8.0.2 (7 May 2020, @ankostis): re-MODULE; sideffect --> sfx; all DIACRITIC Modi
 + BREAK/ENH: invert ":term:`merge <operation merging>`" meaning with (newly introduced)
   ":term:"nest <operation nesting>`"; default is now is merge:
 
-  + FEAT: introduce the :class:`NULL_OP` operation that can "erase" an existing
+  + FEAT: introduce the ``NULL_OP`` operation that can "erase" an existing
     operation when merging pipelines.
   + ENH: ``compose(..., nest=nest_cb)`` where the callback accepts class ``.RenArgs``
     and can perform any kind of renaming on data + operations before :term:`combining
