@@ -216,21 +216,20 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
         (
             lambda: fnt.partial(
                 Pipeline([operation(str)], "name").compute,
-                named_inputs=None,
-                outputs="bad",
+                named_inputs="BOO",
             ),
             "network plan solution pipeline outputs plot_fpath".split(),
         ),
     ]
 )
 def failing_jetsam(request):
-    return request.param
+    acallable, expected_jetsam = request.param
+    return acallable(), expected_jetsam
 
 
 def test_jetsam_sites_scream(failing_jetsam):
     # Check jetsams when the site fails.
     acallable, expected_jetsam = failing_jetsam
-    acallable = acallable()
     with pytest.raises(Exception) as excinfo:
         acallable()
 
@@ -245,7 +244,6 @@ def test_jetsam_sites_scream(failing_jetsam):
 def test_jetsam_saves_plot(failing_jetsam):
     acallable, expected_jetsam = failing_jetsam
     if "plot_fpath" in expected_jetsam:
-        acallable = acallable()
         with debug_enabled(True), pytest.raises(Exception) as excinfo:
             acallable()
 

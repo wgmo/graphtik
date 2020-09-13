@@ -346,16 +346,19 @@ class Pipeline(Operation):
             *Unreachable outputs...*
                 if net cannot produce asked `outputs`.
         """
-        outputs = self.outputs if outputs == UNSET else outputs
-        predicate = self.predicate if predicate == UNSET else predicate
+        if outputs == UNSET:
+            outputs = self.outputs
+        if predicate == UNSET:
+            predicate = self.predicate
 
         return self.net.compile(inputs, outputs, predicate)
 
     def compute(
         self,
-        named_inputs: Mapping = UNSET,
+        named_inputs: Mapping = None,
         outputs: Items = UNSET,
-        predicate: "NodePredicate" = None,
+        *,
+        predicate: "NodePredicate" = UNSET,
         solution_class: "Type[Solution]" = None,
         layered_solution=None,
     ) -> "Solution":
@@ -370,10 +373,12 @@ class Pipeline(Operation):
             A mapping of names --> values that will be fed to the `needs` of all operations.
             Cloned, not modified.
         :param outputs:
-            A string or a list of strings with all data asked to compute.
-            If ``None``, all intermediate data will be kept.
+            A string or a list of dependencies with all data asked to compute.
+            If ``None``, all possible intermediate outputs will be kept.
+            If not given, those set by a previous call to :meth:`withset()` or cstor are used.
         :param predicate:
             filter-out nodes before compiling
+            If not given, those set by a previous call to :meth:`withset()` or cstor are used.
         :param solution_class:
             a custom solution factory to use
         :param layered_solution:
@@ -415,12 +420,13 @@ class Pipeline(Operation):
 
         ok = False
         try:
-            if named_inputs is UNSET:
+            if named_inputs is None:
                 named_inputs = {}
 
             net = self.net  # jetsam
-            outputs = self.outputs if outputs == UNSET else outputs
-            if not predicate:
+            if outputs == UNSET:
+                outputs = self.outputs
+            if predicate == UNSET:
                 predicate = self.predicate
 
             log.info("=== Compiling pipeline(%s) ...", self.name)
