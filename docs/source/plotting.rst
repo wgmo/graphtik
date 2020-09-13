@@ -509,6 +509,7 @@ important for when running pipelines in :term:`parallel`::
 
    --------------------- Captured log call ---------------------
    INFO    === Compiling pipeline(t)...
+   INFO    ... pruned step #4 due to unsatisfied-needs['d'] ...
    DEBUG   ... adding evict-1 for not-to-be-used NEED-chain{'a'} of topo-sorted #1 OpTask(FnOp|(name='...
    DEBUG    ... cache-updated key: ((), None, None)
    INFO    === (3C40) Executing pipeline(t), in parallel, on inputs[], according to ExecutionPlan(needs=[], provides=['b'], x2 steps: op1, op2)...
@@ -532,6 +533,8 @@ important for when running pipelines in :term:`parallel`::
    INFO    ... (8697) evicting 'sfx: 'b'' from solution[sfx: 'b', 'b'].
    INFO    === (8697) Completed pipeline(t) in 0.229ms.
 
+Particularly usefull are the the "pruned step #..." logs, where they explain why
+the network does not behave as expected.
 
 .. _debug:
 
@@ -665,16 +668,28 @@ unnecessary.  But since the state of the annotated values might be incomplete,
 you may not always avoid one.
 
 You may to enable "`post mortem debugging
-<https://docs.python.org/3/library/pdb.html>`_".
+<https://docs.python.org/3/library/pdb.html>`_" on any program,
+but a lot of utilities have a special ``--pdb`` option for it, like `pytest`
+(or `scrapy`).
 
-If you set a :func:`breakpoint()` in one of your functions, *move up a few frames*
-to find the :meth:`.ExecutionPlan._handle_task()` method, where the "live"
-:class:`.ExecutionPlan` & :class:`.Solution` instances live, useful when investigating
-problems with computed values.
+* For instance, if you are extending this project, to enter the debugger
+  when a test-case breaks, call ``pytest --pdb -k <test-case>`` from the console.
 
-If you are extending this project, to enter the debugger when a test-case breaks,
-call ``pytest --pdb -k <test-case>`` from the console.
+* Alternatively, you may set a :func:`breakpoint()` anywhere in your (or 3rd-party) code.
 
+As soon as you arrive in the debugger-prompt, *move up a few frames* until you locate
+either the :class:`.Solution`, or the :class:`.ExecutionPlan` instances,
+and plot them.
+
+It takes some practice to familiarize yourself with the internals of *graphtik*,
+for instance:
+
+* in :meth:`.ExecutionPlan._handle_task()` method, the ``solution`` argument
+  contains the "live" instance, while
+* in :meth:`.FnOp._match_inputs_with_fn_needs()` method, the the solution is found
+  in the ``named_inputs`` argument.
+* The :class:`.ExecutionPlan` is contained in the :attr:`.Solution.plan`, or
+* the *plan* is the ``self`` argument, if arrived in the :meth:`.Network.compile()` method.
 
 .. _task-context:
 
