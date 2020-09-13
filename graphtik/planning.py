@@ -239,6 +239,81 @@ def _topo_sort_nodes(dag) -> iset:
         raise nx.NetworkXUnfeasible(msg).with_traceback(tb)
 
 
+def recompute_inputs(
+    graph, inputs, recompute_from, recompute_till
+) -> Tuple[iset, iset]:
+    """
+    Clears the inputs between `recompute_from >--<= recompute_till` to clear.
+
+    :param inputs:
+        None or a sequence
+    :param recompute_from:
+        None or a sequence
+    :param recompute_till:
+        None or a sequence
+
+    :return:
+        a 2-tuple with the reduced `inputs` by the dependencies that must
+        be removed from the graph to recompute (along with those dependencies).
+
+    It works by temporarily adding x2 nodes to find and remove the intersection of::
+
+        strict-descendants(recompute_from) & ancestors(recompute_till)
+    """
+    start, stop = "_TMP.RECOMPUTE_FROM", "_TMP.RECOMPUTE_TILL"
+    graph = graph.copy()
+
+    datanodes = iset(yield_datanodes(graph.nodes))
+    if recompute_from is None:
+        downstreams_strict = datanodes
+    else:
+        recompute_from = iset(recompute_from)  # traversed in logs
+        bad = recompute_from - datanodes
+        if bad:
+            log.info(
+                "... ignoring unknown `recompute_from` dependencies: %s", list(bad)
+            )
+            recompute_from &= datanodes
+        graph.add_edges_from((start, i) for i in recompute_from)
+
+        downstreams_strict = (
+            iset(yield_datanodes(nx.descendants(graph, start))) - recompute_from
+        )
+
+    if recompute_till is None:
+        upstreams = datanodes
+    else:
+        recompute_till = iset(recompute_till)  # traversed in logs
+        bad = recompute_till - datanodes
+        if bad:
+            log.info(
+                "... ignoring unknown `recompute_till` dependencies: %s", list(bad)
+            )
+            recompute_till &= datanodes
+        graph.add_edges_from((i, stop) for i in recompute_till)  # edge reversed!
+
+        upstreams = iset(yield_datanodes(nx.ancestors(graph, stop)))
+
+    between = downstreams_strict & upstreams
+    recomputes = [i for i in inputs if i in between]
+    new_inputs = iset(inputs) - between
+
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug(
+            "... recompute x%i data%s means deleting x%i inputs%s, to arrive from x%i %s -> x%i %s.",
+            len(between),
+            list(between),
+            len(recomputes),
+            list(recomputes),
+            len(inputs),
+            list(inputs),
+            len(new_inputs),
+            list(new_inputs),
+        )
+
+    return new_inputs, recomputes
+
+
 def unsatisfied_operations(dag, inputs: Iterable) -> Tuple[OpMap, iset]:
     """
     Traverse topologically sorted dag to collect un-satisfied operations.
@@ -273,7 +348,7 @@ def unsatisfied_operations(dag, inputs: Iterable) -> Tuple[OpMap, iset]:
     sorted_nodes = _topo_sort_nodes(dag)
 
     if log.isEnabledFor(logging.DEBUG):
-        log.debug("Topo-sorted nodes: %s", list(yield_node_names(sorted_nodes)))
+        log.debug("...topo-sorted nodes: %s", list(yield_node_names(sorted_nodes)))
     for i, node in enumerate(sorted_nodes):
         if isinstance(node, Operation):
             if not dag.adj[node]:
@@ -362,13 +437,14 @@ class Network(Plottable):
         self._cached_plans = {}
 
     def __repr__(self):
-        ops = list(yield_ops(self.graph.nodes))
+        nodes = self.graph.nodes
+        ops = list(yield_ops(nodes))
         steps = (
-            [f"\n  +--{s}" for s in self.graph.nodes]
+            [f"\n  +--{s}" for s in nodes]
             if is_debug()
             else ", ".join(n.name for n in ops)
         )
-        return f"Network(x{len(self.graph.nodes)} nodes, x{len(ops)} ops: {''.join(steps)})"
+        return f"Network(x{len(nodes)} nodes, x{len(ops)} ops: {''.join(steps)})"
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
         plot_args = plot_args.clone_or_merge_graph(self.graph)
@@ -714,7 +790,7 @@ class Network(Plottable):
                 if log.isEnabledFor(logging.DEBUG) and dep in steps:
                     # Happens by rule-2 if multiple Ops produce
                     # the same pruned out.
-                    log.debug("Re-evicting %r @ #%i.", dep, len(steps))
+                    log.debug("... re-evicting %r @ #%i.", dep, len(steps))
             steps.append(dep)
 
         steps = []
@@ -784,7 +860,13 @@ class Network(Plottable):
         return deps, tuple(d for d in deps if d in data_nodes)
 
     def compile(
-        self, inputs: Items = None, outputs: Items = None, predicate=None
+        self,
+        inputs: Items = None,
+        outputs: Items = None,
+        recompute_from=None,
+        recompute_till=None,
+        *,
+        predicate=None,
     ) -> "ExecutionPlan":
         """
         Create or get from cache an execution-plan for the given inputs/outputs.
@@ -800,6 +882,10 @@ class Network(Plottable):
             A collection or the name of the output name(s).
             If `None``, all reachable nodes from the given `inputs` are assumed.
             If string, it is converted to a single-element collection.
+        :param recompute_from:
+            Described in :meth:`.Pipeline.compute()`.
+        :param recompute_till:
+            Described in :meth:`.Pipeline.compute()`.
         :param predicate:
             the :term:`node predicate` is a 2-argument callable(op, node-data)
             that should return true for nodes to include; if None, all nodes included.
@@ -825,9 +911,11 @@ class Network(Plottable):
             #
             inputs, k1 = self._deps_tuplized(inputs, "inputs")
             outputs, k2 = self._deps_tuplized(outputs, "outputs")
+            recompute_from, k3 = self._deps_tuplized(recompute_from, "recompute_from")
+            recompute_till, k4 = self._deps_tuplized(recompute_till, "recompute_till")
             if not predicate:
                 predicate = None
-            cache_key = (k1, k2, predicate)
+            cache_key = (k1, k2, k3, k4, predicate)
 
             ## Build (or retrieve from cache) execution plan
             #  for the given dep-lists (excluding any unknown node-names).
@@ -836,13 +924,14 @@ class Network(Plottable):
                 log.debug("... compile cache-hit key: %s", cache_key)
                 plan = self._cached_plans[cache_key]
             else:
-                (
-                    pruned_dag,
-                    sorted_nodes,
-                    needs,
-                    provides,
-                    op_comments,
-                ) = self._prune_graph(inputs, outputs, predicate)
+                if recompute_from is not None or recompute_till is not None:
+                    inputs, recomputes = recompute_inputs(
+                        self.graph, inputs, recompute_from, recompute_till
+                    )
+
+                _prune_results = self._prune_graph(inputs, outputs, predicate)
+                pruned_dag, sorted_nodes, needs, provides, op_comments = _prune_results
+
                 steps = self._build_execution_steps(
                     pruned_dag, sorted_nodes, needs, outputs or ()
                 )

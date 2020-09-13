@@ -779,7 +779,14 @@ class Operation(Plottable, abc.ABC):
         return hash(self.name)
 
     @abc.abstractmethod
-    def compute(self, named_inputs, outputs=None):
+    def compute(
+        self,
+        named_inputs,
+        outputs=None,
+        recompute_from=None,
+        recompute_till=None,
+        *kw,
+    ):
         """
         Compute (optional) asked `outputs` for the given `named_inputs`.
 
@@ -788,6 +795,16 @@ class Operation(Plottable, abc.ABC):
 
         :param named_inputs:
             the input values with which to feed the computation.
+        :param outputs:
+            what results to compute,
+            see :meth:`.Pipeline.compute()`.
+        :param recompute_from:
+            recompute all downstream from those dependencies,
+            see :meth:`.Pipeline.compute()`.
+        :param recompute_till:
+            recompute all upstream from those dependencies,
+            see :meth:`.Pipeline.compute()`.
+
         :returns list:
             Should return a list values representing
             the results of running the feed-forward computation on

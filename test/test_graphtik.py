@@ -13,20 +13,18 @@ from graphtik import (
     NO_RESULT,
     compose,
     modify,
-    planning,
     operation,
     optional,
+    planning,
+    sfx,
+    sfxed,
     vararg,
     varargs,
-    sfxed,
-    sfx,
 )
 from graphtik.base import IncompleteExecutionError
 from graphtik.config import debug_enabled, evictions_skipped, operations_endured
-from graphtik.planning import yield_ops
 
 from .helpers import addall, exe_params
-
 
 pytestmark = pytest.mark.usefixtures("log_levels")
 
@@ -962,3 +960,22 @@ def test_pre_callback(quarantine_pipeline, exemethod):
         assert called_ops == []
     else:
         assert called_ops == ["get_out_or_stay_home", "read_book"]
+
+
+def test_recompute(quarantine_pipeline):
+    pipeline = quarantine_pipeline
+    inp = {"quarantine": True}
+    sol = pipeline.compute(inp)
+    exp = dict(sol)
+
+    sol = pipeline.compute(exp)
+    assert sol == exp
+    assert [op.name for op in sol.executed] == ["get_out_or_stay_home"]
+
+    sol = pipeline.compute(exp, recompute_from="quarantine")
+    assert sol == exp
+    assert [op.name for op in sol.executed] == ["get_out_or_stay_home", "read_book"]
+
+    sol = pipeline.compute(exp, recompute_from=["space", "time"])
+    assert sol == exp
+    assert [op.name for op in sol.executed] == ["get_out_or_stay_home", "read_book"]

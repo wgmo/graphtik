@@ -811,7 +811,15 @@ class FnOp(Operation):
 
         return results
 
-    def compute(self, named_inputs=None, outputs: Items = None) -> dict:
+    def compute(self, named_inputs=None, outputs: Items = None, *args, **kw) -> dict:
+        """
+        :param named_inputs:
+            a :class:`.Solution` instance
+        :param args:
+            ignored -- to comply with superclass contract
+        :param kw:
+            ignored -- to comply with superclass contract
+        """
         ok = False
         try:
             self.validate_fn_name()

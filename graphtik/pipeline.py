@@ -318,7 +318,13 @@ class Pipeline(Operation):
         return plot_args
 
     def compile(
-        self, inputs=None, outputs=UNSET, predicate: "NodePredicate" = UNSET
+        self,
+        inputs=None,
+        outputs=UNSET,
+        recompute_from=None,
+        recompute_till=None,
+        *,
+        predicate: "NodePredicate" = UNSET,
     ) -> "ExecutionPlan":
         """
         Produce a :term:`plan` for the given args or `outputs`/`predicate` narrowed earlier.
@@ -329,6 +335,10 @@ class Pipeline(Operation):
             A string or a list of strings with all data asked to compute.
             If ``None``, all possible intermediate outputs will be kept.
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
+        :param recompute_from:
+            Described in :meth:`.Pipeline.compute()`.
+        :param recompute_till:
+            Described in :meth:`.Pipeline.compute()`.
         :param predicate:
             Will be stored and applied on the next :meth:`compute()` or :meth:`compile()`.
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
@@ -351,12 +361,16 @@ class Pipeline(Operation):
         if predicate == UNSET:
             predicate = self.predicate
 
-        return self.net.compile(inputs, outputs, predicate)
+        return self.net.compile(
+            inputs, outputs, recompute_from, recompute_till, predicate=predicate
+        )
 
     def compute(
         self,
         named_inputs: Mapping = None,
         outputs: Items = UNSET,
+        recompute_from: Items = None,
+        recompute_till: Items = None,
         *,
         predicate: "NodePredicate" = UNSET,
         pre_callback=None,
@@ -377,6 +391,24 @@ class Pipeline(Operation):
             A string or a list of dependencies with all data asked to compute.
             If ``None``, all possible intermediate outputs will be kept.
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
+        :param recompute_from:
+            Refresh all computations reachable from these (string or list) dependencies.
+            In effect, it clears all values in `named_inputs` reachable strictly DOWNstreams
+            from those dependencies.
+
+            * If also `recompute_till` is given, traversing downstream stops
+              when arriving in any dependency contained in that list.
+            * Any dependencies here unreachable downstreams from values in `named_inputs`
+              are ignored, but logged.
+            * Any dependencies here unreachable upstreams from `outputs` (if given)
+              are ignored, but logged.
+            * Results may differ even if graph is unchanged, in the presence
+              of :term:`overwrite`\\s.
+        :param recompute_till:
+            Refresh all computations arriving to these (string or list) dependencies.
+            In effect, it clears all values in `named_inputs` reachable UPstreams.
+
+            * See bullet notes in `recompute_from`, above.
         :param predicate:
             filter-out nodes before compiling
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
@@ -434,7 +466,13 @@ class Pipeline(Operation):
                 predicate = self.predicate
 
             log.info("=== Compiling pipeline(%s) ...", self.name)
-            plan = net.compile(named_inputs.keys(), outputs, predicate)
+            plan = net.compile(
+                named_inputs.keys(),
+                outputs,
+                recompute_from,
+                recompute_till,
+                predicate=predicate,
+            )
 
             # Restore `abort` flag for next run.
             reset_abort()
