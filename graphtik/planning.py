@@ -705,7 +705,7 @@ class Network(Plottable):
                 if steps[-1] == dep:
                     # Functions with redundant SFXEDs like ['a', sfxed('a', ...)]??
                     log.warning(
-                        "Skipped dupe step %r @ #%i."
+                        "Skipped adding dupe eviction step %r @ #%i."
                         "\n  (hint: do you have redundant SFXEDs like ['a', sfxed('a', ...)]??)",
                         dep,
                         len(steps),
