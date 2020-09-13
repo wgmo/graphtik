@@ -473,9 +473,17 @@ def keyword(
     """
     Annotate a :term:`dependency` that maps to a different name in the underlying function.
 
-    - The value of a *keyword* `needs` dependency is passed in as *keyword argument*
-      to the underlying function.
-    - For *keyword* to work in `provides`, the operation must be a :term:`returns dictionary`.
+    When used on :term:`needs` dependencies:
+
+    * The value of the ``name`` dependency is read from the `solution`, and then
+    * that value is passed in the function as a *keyword-argument* named ``keyword``.
+
+    When used on :term:`provides` dependencies:
+
+    * The operation must be a :term:`returns dictionary`.
+    * The value keyed with ``keyword`` is read from function's returned dictionary,
+      and then
+    * that value is placed into `solution` named as ``name``.
 
     :param keyword:
         The argument-name corresponding to this named-input.
