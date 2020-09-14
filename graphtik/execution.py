@@ -403,7 +403,7 @@ class _OpTask:
         return f"OpTask({self.op}, sol_keys={sol_items!r})"
 
 
-#: Populated with the :class:`_OpTask` for the currently executing operation.
+#: (unstable API) Populated with the :class:`_OpTask` for the currently executing operation.
 #: It does not work for (deprecated) :term:`parallel execution`.
 #:
 #: .. seealso::

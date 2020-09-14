@@ -52,7 +52,7 @@ positional parameters are not supported:
       {'a_plus_b': 7}
 
 .. tip::
-   In case your function needs to access the :mod:`.execution` machinery
+   (unstable API) In case your function needs to access the :mod:`.execution` machinery
    or its wrapping operation, it can do that through the :data:`.task_context`
    (unstable API, not working during (deprecated) :term:`parallel execution`,
    see :ref:`task-context`)

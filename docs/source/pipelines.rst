@@ -415,7 +415,7 @@ and the TODOs -- this time we're going to:
    :term:`sideffected` dependencies to modify the original stack of tasks in-place,
    while the workflow is running,
 2. exemplify further the use of :term:`operation nesting` & renaming, and
-3. access the wrapping operation and :mod:`.execution` machinery
+3. (unstable API) access the wrapping operation and :mod:`.execution` machinery
    from within the function by using :data:`.task_context`, and finally
 4. store the input backlog, the work done, and the TODOs from the tasks in
    this data-tree::

@@ -695,6 +695,10 @@ for instance:
 
 Accessing wrapper operation from task-context
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. Attention::
+   Unstable API, in favor of supporting a specially-named function argument
+   to receive the same instances.
+
 Alternatively, when the debugger is stopped inside an underlying function,
 you may access the wrapper :class:`.FnOp` and the :class:`.Solution`
 through the :data:`graphtik.execution.task_context` context-var.
