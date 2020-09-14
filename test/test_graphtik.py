@@ -23,6 +23,7 @@ from graphtik import (
 )
 from graphtik.base import IncompleteExecutionError
 from graphtik.config import debug_enabled, evictions_skipped, operations_endured
+from graphtik.planning import yield_ops
 
 from .helpers import addall, exe_params
 
@@ -606,7 +607,7 @@ def test_narrow_and_optionality(reverse):
 
 
 @pytest.fixture
-def quarantine_pipeline(exemethod):
+def quarantine_pipeline():
     @operation(
         rescheduled=1, needs="quarantine", provides=["space", "time"], returns_dict=True
     )
@@ -624,14 +625,13 @@ def quarantine_pipeline(exemethod):
     def read_book(for_how_long):
         return "relaxed", "popular physics"
 
-    pipeline = compose(
-        "covid19", get_out_or_stay_home, exercise, read_book, parallel=exemethod
-    )
+    pipeline = compose("covid19", get_out_or_stay_home, exercise, read_book)
     return pipeline
 
 
-def test_rescheduled_quarantine_doctest(quarantine_pipeline):
-    pipeline = quarantine_pipeline
+def test_rescheduled_quarantine_doctest(quarantine_pipeline, exemethod):
+    pipeline = compose("covid19", quarantine_pipeline, parallel=exemethod)
+
     sol = pipeline.compute({"quarantine": True})
     assert sol == {
         "quarantine": True,
@@ -649,10 +649,15 @@ def test_rescheduled_quarantine_doctest(quarantine_pipeline):
     }
 
 
-def test_rescheduled_quarantine_with_overwrites(quarantine_pipeline):
+def test_rescheduled_quarantine_with_overwrites(quarantine_pipeline, exemethod):
     friendly_garden = operation(lambda: "garden", name="friends", provides="space")
 
-    pipeline = compose("quarantine with friends", friendly_garden, quarantine_pipeline)
+    pipeline = compose(
+        "quarantine with friends",
+        friendly_garden,
+        quarantine_pipeline,
+        parallel=exemethod,
+    )
     fun_overwrites = ["relaxed", "refreshed"]
     space_overwrites = ["around the block", "garden"]
 
@@ -937,14 +942,14 @@ def test_rescheduling_NO_RESULT(exemethod):
         assert sol.scream_if_incomplete()
 
 
-def test_pre_callback(quarantine_pipeline):
+def test_pre_callback(quarantine_pipeline, exemethod):
+    pipeline = compose("covid19", quarantine_pipeline, parallel=exemethod)
     called_ops = []
 
     def op_called(op_cb):
         assert op_cb.sol["quarantine"]
         called_ops.append(op_cb.op.name)
 
-    pipeline = quarantine_pipeline
     sol = pipeline.compute({"quarantine": True}, pre_callback=op_called)
     assert sol == {
         "quarantine": True,
