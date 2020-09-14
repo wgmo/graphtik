@@ -61,7 +61,7 @@ dev_deps = test_deps + ["black==20.8b1", "pylint", "mypy"]
 setup(
     name="graphtik",
     version=version,
-    description="A lightweight Python-3.6+ lib for solving & executing graphs of functions",
+    description="A Python lib for solving & executing graphs of functions, with `pandas` in mind",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Kostis Anagnostopoulos, Huy Nguyen, Arel Cordero, Pierre Garrigues, Rob Hess, "

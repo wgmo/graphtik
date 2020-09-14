@@ -20,7 +20,7 @@ Lightweight computation graphs for Python
 (a.k.a :term:`pipeline`\s) that consume and populate (possibly :term:`nested
 <hierarchical data>`) named data (a.k.a :term:`dependencies <dependency>`),
 based on whether values for those dependencies exist in the inputs
-or have been calculated earlier.
+or have been calculated earlier, with *pandas* in mind.
 
 - Its primary use case is building flexible algorithms for data science/machine learning projects.
 - It should be extendable to implement the following:

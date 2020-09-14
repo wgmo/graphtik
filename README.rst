@@ -19,7 +19,7 @@ Lightweight computation graphs for Python
 **Graphtik** is a library to compose, plot & execute *graphs of python functions*
 (a.k.a pipelines) that consume and populate (possibly nested) named data
 (a.k.a dependencies), based on whether values for those dependencies exist in the inputs
-or have been calculated earlier.
+or have been calculated earlier, with *pandas* in mind.
 
 - Its primary use case is building flexible algorithms for data science/machine learning projects.
 - It should be extendable to implement the following:
@@ -40,25 +40,24 @@ but has diverged significantly with enhancements ever since.
 Features
 --------
 
+- Deterministic pre-decided `execution plan` (excepting *partial-outputs* or
+  *endured operations*, see below).
 - Can assemble existing functions without modifications into `pipeline`\s.
 - `dependency` resolution can bypass calculation cycles based on data given and asked.
 - Support functions with `optional <optionals>` input args and/or `varargs <varargish>`.
 - Support functions with `partial outputs`; keep working even if certain `endured` operations fail.
-- Support `alias` of function `provides` to avoid the need for trivial conveyor operations.
-- Default `conveyor operation` to easily pass (possibly *nested*) dependencies around.
-- `Merge <operation merging>` or `nest <operation nesting>` sub-pipelines.
+- Facilitate trivial `conveyor operation`\s and `alias` on `provides`.
+- Support cycles, by annotating repeated updates of `dependency` values as `sideffects`,
+  (e.g. to add columns into :class:`pandas.DataFrame`\s).
 - `Hierarchical dependencies <subdoc>` may access data values deep in `solution`
   with `json pointer path` expressions.
 - Hierarchical dependencies annotated as `implicit` imply which subdoc dependency
   the function reads or writes in the parent-doc.
-- Denote and schedule `sideffects` on `dependency` values, to update them repeatedly,
-  avoiding cycles (e.g. to add columns into :class:`pandas.DataFrame`\s).
-- Deterministic pre-decided `execution plan`  (excepting *partial-outputs* or
-  *endured operations*).
+- `Merge <operation merging>` or `nest <operation nesting>` sub-pipelines.
 - Early `eviction` of intermediate results from `solution`, to optimize memory footprint.
 - Solution tracks all intermediate `overwritten <overwrite>` values for the same dependency.
 - Parallel execution (but underdeveloped).
-- Elaborate plotting with configurable `plot theme`\s.
+- Elaborate `Graphviz`_ plotting with configurable `plot theme`\s.
 - Integration with Sphinx sites with the new :rst:dir:`graphtik` directive.
 - Authored with :ref:`debugging <debugging>` in mind.
 - Parallel execution (but underdeveloped & deprecated).
