@@ -505,7 +505,7 @@ Logging statements have been melticulously placed to describe the :term:`pruning
 while :term:`planning` and subsequent :term:`execution` flow;
 *execution flow* log-statements are accompanied by the unique :attr:`solution id
 <.Solution.solid>` of each flow, like the ``(3C40)`` & ``(8697)`` below,
-important for when running pipelines in :term:`parallel`::
+important for when running pipelines in (deprecated) :term:`parallel`::
 
    --------------------- Captured log call ---------------------
    INFO    === Compiling pipeline(t)...

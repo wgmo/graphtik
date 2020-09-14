@@ -105,7 +105,7 @@ Architecture
         Currently there are 2 ways to execute:
 
         - *sequential*
-        - (unstable) *parallel*, with a :class:`multiprocessing.pool.ProcessPool`
+        - (deprecated) `parallel`, with a :class:`multiprocessing.pool.ProcessPool`
 
         Plans may abort their execution by setting the `abort run` global flag.
 
@@ -554,6 +554,12 @@ Architecture
     parallel execution
     execution pool
     task
+        .. attention::
+            Deprecated, in favor of always producing a list of "parallelizable batches",
+            to hook with other executors (e.g. *Dask*, Apache's *airflow*, *Celery*).
+            *In the future*, just the single-process implementation will be kept,
+            and `marshalling` should be handled externally.
+
         `execute` `operation`\s *in parallel*, with a `thread pool` or `process pool`
         (instead of `sequential`).
         Operations and `pipeline` are marked as such on construction, or enabled globally
@@ -563,7 +569,7 @@ Architecture
         certainly not when `marshalling` is enabled.
 
     process pool
-        When the :class:`multiprocessing.pool.Pool` class is used for `parallel` execution,
+        When the :class:`multiprocessing.pool.Pool` class is used for (deprecated) `parallel` execution,
         the `task`\s  must be communicated to/from the worker process, which requires
         `pickling <https://docs.python.org/library/pickle.html>`_, and that may fail.
         With pickling failures you may try `marshalling` with *dill* library,
@@ -573,11 +579,11 @@ Architecture
         certainly not when `marshalling` is enabled.
 
     thread pool
-        When the :func:`multiprocessing.dummy.Pool` class is used for `parallel` execution,
+        When the :func:`multiprocessing.dummy.Pool` class is used for (deprecated) `parallel` execution,
         the `task`\s are run *in process*, so no `marshalling` is needed.
 
     marshalling
-        Pickling `parallel` `operation`\s and their `inputs`/`outputs` using
+        (deprecated) Pickling `parallel` `operation`\s and their `inputs`/`outputs` using
         the :mod:`dill` module. It is `configured <configurations>` either globally
         with :func:`.set_marshal_tasks()` or set with a flag on each
         operation / `pipeline`.

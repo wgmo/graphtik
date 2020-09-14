@@ -243,10 +243,10 @@ class Pipeline(Operation):
         :param endured:
             applies :term:`endurance` to all contained `operations`
         :param parallel:
-            mark all contained `operations` to be executed in :term:`parallel`
+            (deprecated) mark all contained `operations` to be executed in :term:`parallel`
         :param marshalled:
             mark all contained `operations` to be :term:`marshalled <marshalling>`
-            (usefull when run in `parallel` with a :term:`process pool`).
+            (usefull when run in (deprecated) `parallel` with a :term:`process pool`).
         :param renamer:
             see respective parameter in :meth:`.FnOp.withset()`.
 
@@ -577,10 +577,10 @@ def compose(
     :param endured:
         applies :term:`endurance` to all contained `operations`
     :param parallel:
-        mark all contained `operations` to be executed in :term:`parallel`
+        (deprecated) mark all contained `operations` to be executed in :term:`parallel`
     :param marshalled:
         mark all contained `operations` to be :term:`marshalled <marshalling>`
-        (usefull when run in `parallel` with a :term:`process pool`).
+        (usefull when run in (deprecated) `parallel` with a :term:`process pool`).
     :param node_props:
         Added as-is into NetworkX graph, to provide for filtering
         by :meth:`.Pipeline.withset()`.

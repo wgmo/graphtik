@@ -397,11 +397,11 @@ class FnOp(Operation):
         #: If true, even if *callable* fails, solution will :term:`reschedule`;
         #: ignored if :term:`endurance` enabled globally.
         self.endured = endured
-        #: execute in :term:`parallel`
+        #: execute in (deprecated) :term:`parallel`
         self.parallel = parallel
         #: If true, operation will be :term:`marshalled <marshalling>` while computed,
         #: along with its `inputs` & `outputs`.
-        #: (usefull when run in `parallel` with a :term:`process pool`).
+        #: (usefull when run in (deprecated) `parallel` with a :term:`process pool`).
         self.marshalled = marshalled
         #: If true, it means the underlying function :term:`returns dictionary` ,
         #: and no further processing is done on its results,
@@ -976,10 +976,10 @@ def operation(
         If true, even if *callable* fails, solution will :term:`reschedule`.
         ignored if :term:`endurance` enabled globally.
     :param parallel:
-        execute in :term:`parallel`
+        (deprecated) execute in :term:`parallel`
     :param marshalled:
         If true, operation will be :term:`marshalled <marshalling>` while computed,        along with its `inputs` & `outputs`.
-        (usefull when run in `parallel` with a :term:`process pool`).
+        (usefull when run in (deprecated) `parallel` with a :term:`process pool`).
     :param returns_dict:
         if true, it means the `fn` :term:`returns dictionary` with all `provides`,
         and no further processing is done on them

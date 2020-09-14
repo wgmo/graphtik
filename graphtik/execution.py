@@ -404,7 +404,7 @@ class _OpTask:
 
 
 #: Populated with the :class:`_OpTask` for the currently executing operation.
-#: It does not work for :term:`parallel execution`.
+#: It does not work for (deprecated) :term:`parallel execution`.
 #:
 #: .. seealso::
 #:     The elaborate example in :ref:`hierarchical-data` section
@@ -673,7 +673,7 @@ class ExecutionPlan(
 
     def _execute_thread_pool_barrier_method(self, solution: Solution):
         """
-        This method runs the graph using a parallel pool of thread executors.
+        (deprecated)  This method runs the graph using a parallel pool of thread executors.
         You may achieve lower total latency if your graph is sufficiently
         sub divided into operations using this method.
 

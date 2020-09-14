@@ -89,7 +89,7 @@ setup(
         "matplot": matplot_deps,
         "sphinx": sphinx_deps,
         "test": test_deps,
-        # May help for pickling `parallel` tasks.
+        # May help for pickling (deprecated) `parallel` tasks.
         # See :term:`marshalling` and :func:`set_marshal_tasks()` configuration.
         "dill": ["dill"],
         "all": dev_deps,

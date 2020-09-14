@@ -195,7 +195,7 @@ def execution_pool_plugged(pool: "Optional[Pool]"):
 
 def set_execution_pool(pool: "Optional[Pool]"):
     """
-    Set the process-pool for :term:`parallel` plan executions.
+    (deprecated) Set the process-pool for :term:`parallel` plan executions.
 
     You may have to :also func:`set_marshal_tasks()` to resolve
     pickling issues.
@@ -204,13 +204,13 @@ def set_execution_pool(pool: "Optional[Pool]"):
 
 
 def get_execution_pool() -> "Optional[Pool]":
-    """Get the process-pool for :term:`parallel` plan executions."""
+    """(deprecated) Get the process-pool for :term:`parallel` plan executions."""
     return _execution_pool.get()
 
 
 tasks_in_parallel = partial(_tristate_armed, _parallel_tasks)
 """
-Like :func:`set_parallel_tasks()` as a context-manager, resetting back to old value.
+(deprecated) Like :func:`set_parallel_tasks()` as a context-manager, resetting back to old value.
 
 .. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
@@ -231,15 +231,15 @@ Enable/disable globally :term:`parallel` execution of operations.
 
 tasks_marshalled = partial(_tristate_armed, _marshal_tasks)
 """
-Like :func:`set_marshal_tasks()` as a context-manager, resetting back to old value.
+(deprecated) Like :func:`set_marshal_tasks()` as a context-manager, resetting back to old value.
 
 .. seealso:: disclaimer about context-managers the top of this :mod:`.config` module.
 """
 is_marshal_tasks = partial(_getter, _marshal_tasks)
-"""see :func:`set_marshal_tasks()`"""
+"""(deprecated) see :func:`set_marshal_tasks()`"""
 set_marshal_tasks = partial(_tristate_set, _marshal_tasks)
 """
-Enable/disable globally :term:`marshalling` of :term:`parallel` operations, ...
+(deprecated) Enable/disable globally :term:`marshalling` of :term:`parallel` operations, ...
 
 inputs & outputs with :mod:`dill`,  which might help for pickling problems.
 

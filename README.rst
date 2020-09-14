@@ -61,6 +61,7 @@ Features
 - Elaborate plotting with configurable `plot theme`\s.
 - Integration with Sphinx sites with the new :rst:dir:`graphtik` directive.
 - Authored with :ref:`debugging <debugging>` in mind.
+- Parallel execution (but underdeveloped & deprecated).
 
 Anti-features
 ^^^^^^^^^^^^^
