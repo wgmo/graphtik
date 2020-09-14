@@ -691,6 +691,28 @@ for instance:
 * The :class:`.ExecutionPlan` is contained in the :attr:`.Solution.plan`, or
 * the *plan* is the ``self`` argument, if arrived in the :meth:`.Network.compile()` method.
 
+
+.. _break_with_pre_callback:
+
+Setting a breakpoint on a specific operation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You may take advantage of the :term:`pre_callback` facility and install a breakpoint
+for a specific operation before calling the pipeline.
+
+Add this code (interactively, or somewhere in your sources)::
+
+    def break_on_my_op(op_cb):
+       if op_cb.op.name == "buggy_operation":
+             breakpoint()
+
+And then call you pipeline with the ``pre_callback`` argument::
+
+    pipe.compute({...}, pre_callback=break_on_my_op)
+
+And that way you may single-step and inspect the inputs & outputs
+of the ``buggy_operation``.
+
+
 .. _task-context:
 
 Accessing wrapper operation from task-context

@@ -24,7 +24,7 @@ from graphtik import (
 from graphtik.base import IncompleteExecutionError
 from graphtik.config import debug_enabled, evictions_skipped, operations_endured
 
-from .helpers import addall
+from .helpers import addall, exe_params
 
 
 pytestmark = pytest.mark.usefixtures("log_levels")
@@ -632,13 +632,14 @@ def quarantine_pipeline(exemethod):
 
 def test_rescheduled_quarantine_doctest(quarantine_pipeline):
     pipeline = quarantine_pipeline
-    sol = pipeline(quarantine=True)
+    sol = pipeline.compute({"quarantine": True})
     assert sol == {
         "quarantine": True,
         "time": "1h",
         "fun": "relaxed",
         "brain": "popular physics",
     }
+
     sol = pipeline(quarantine=False)
     assert sol == {
         "quarantine": False,
@@ -934,6 +935,28 @@ def test_rescheduling_NO_RESULT(exemethod):
     assert "x1 partial-ops" in str(sol.check_if_incomplete())
     with pytest.raises(IncompleteExecutionError, match="x1 partial-ops"):
         assert sol.scream_if_incomplete()
+
+
+def test_pre_callback(quarantine_pipeline):
+    called_ops = []
+
+    def op_called(op_cb):
+        assert op_cb.sol["quarantine"]
+        called_ops.append(op_cb.op.name)
+
+    pipeline = quarantine_pipeline
+    sol = pipeline.compute({"quarantine": True}, pre_callback=op_called)
+    assert sol == {
+        "quarantine": True,
+        "time": "1h",
+        "fun": "relaxed",
+        "brain": "popular physics",
+    }
+    if exe_params.marshal == 1:
+        # Marshaled `called_ops` is not itself :-)
+        assert called_ops == []
+    else:
+        assert called_ops == ["get_out_or_stay_home", "read_book"]
 
 
 def test_jetsam_n_plot_with_DEBUG():

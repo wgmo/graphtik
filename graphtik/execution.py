@@ -9,7 +9,7 @@ from collections import ChainMap, abc, defaultdict, namedtuple
 from contextvars import ContextVar, copy_context
 from functools import partial
 from itertools import chain
-from typing import Any, Collection, List, Mapping, Optional, Tuple, Union
+from typing import Any, Callable, Collection, List, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 from boltons.setutils import IndexedSet as iset
@@ -75,7 +75,14 @@ class Solution(ChainMap, Plottable):
     for each operation executed, +1 for the user inputs.
     """
 
-    def __init__(self, plan, input_values: dict, layered_solution=None):
+    def __init__(
+        self,
+        plan,
+        input_values: dict,
+        pre_callback: Callable[["OpCb"], None] = None,
+        layered_solution=None,
+    ):
+        self.pre_callback = pre_callback
         layered_solution = first_solid(is_layered_solution(), layered_solution)
         if layered_solution is None:
             layered_solution = not any(get_jsonp(d) for d in plan.net.data)
@@ -366,13 +373,14 @@ class _OpTask:
     This intermediate class is needed to solve pickling issue with process executor.
     """
 
-    __slots__ = ("op", "sol", "solid", "result")
+    __slots__ = ("op", "sol", "solid", "pre_callback", "result")
     logname = __name__
 
-    def __init__(self, op, sol, solid, result=UNSET):
+    def __init__(self, op, sol, solid, pre_callback=None, result=UNSET):
         self.op = op
         self.sol = sol
         self.solid = solid
+        self.pre_callback = pre_callback
         self.result = result
 
     def marshalled(self):
@@ -387,6 +395,8 @@ class _OpTask:
             log.debug("+++ (%s) Executing %s...", self.solid, self)
             token = task_context.set(self)
             try:
+                if self.pre_callback:
+                    self.pre_callback(OpCb(self.op, self.sol, self.solid))
                 self.result = self.op.compute(self.sol)
             finally:
                 task_context.reset(token)
@@ -430,6 +440,15 @@ def _do_task(task):
         result = task()
 
     return result
+
+
+#: Argument passed in a :term:`pre_callback` callable before executing each operation,
+#: and contains fields to identify the operation call:
+#:
+#: :param op: the operation about to be computed;
+#: :param sol: the slution (might be just a plain dict if it has been marshalled);
+#: :param solid: the operation identity, needed if `sol` is a plain dict,
+OpCb = namedtuple("OpCb", "op, sol, solid")
 
 
 class ExecutionPlan(
@@ -589,7 +608,7 @@ class ExecutionPlan(
                 # Mark start time here, to include also marshalling overhead.
                 solution.elapsed_ms[op] = time.time()
 
-                task = _OpTask(op, input_values, solution.solid)
+                task = _OpTask(op, input_values, solution.solid, solution.pre_callback)
                 if first_solid(global_marshal, getattr(op, "marshalled", None)):
                     task = task.marshalled()
 
@@ -773,7 +792,7 @@ class ExecutionPlan(
                 if step in solution.canceled:
                     continue
 
-                task = _OpTask(step, solution, solution.solid)
+                task = _OpTask(step, solution, solution.solid, solution.pre_callback)
                 self._handle_task(task, step, solution)
 
             elif isinstance(step, str):
@@ -796,6 +815,7 @@ class ExecutionPlan(
         outputs=None,
         *,
         name="",
+        pre_callback: Callable[[OpCb], None] = None,
         solution_class=None,
         layered_solution=None,
     ) -> Solution:
@@ -810,6 +830,9 @@ class ExecutionPlan(
             and scream if not.
         :param name:
             name of the pipeline used for logging
+        :param pre_callback:
+            If given, the :term:`pre_callback` is called before each operation,
+            with that as argument and solution.
         :param solution_class:
             a custom solution factory to use
         :param layered_solution:
@@ -865,6 +888,7 @@ class ExecutionPlan(
                 {k: v for k, v in named_inputs.items() if k in dag.nodes}
                 if evict
                 else named_inputs,
+                pre_callback,
                 layered_solution=layered_solution,
             )
 

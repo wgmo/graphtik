@@ -668,6 +668,18 @@ Architecture
         allowing to "force" all operations, when they are not set to the ``None``
         value.  All of them default to ``None`` (false).
 
+    pre_callback
+        A user-defined callable that will be called prior to each operation,
+        installed on :meth:`.Pipeline.compute()`, which must have this signature::
+
+            pre_callback(op_cb) -> None
+
+        ... where ``op_cb`` is an instance of the :class:`.OpCb`
+        :func:`~collections.namedtuple`.
+
+        One use case is to :ref:`set a breakpoint to specific operation
+        <break_with_pre_callback>`.
+
     jetsam
         When a pipeline or an operation fails, the original exception gets annotated
         with salvaged values from ``locals()`` and raised intact, and optionally
