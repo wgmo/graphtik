@@ -12,7 +12,6 @@ from graphtik import compose, operation
 from graphtik.config import debug_enabled, execution_pool_plugged, tasks_marshalled
 
 from .helpers import (
-    _exe_params,
     _ExeParams,
     _marshal,
     _parallel,
@@ -20,6 +19,7 @@ from .helpers import (
     _slow,
     _thread,
     dilled,
+    exe_params,
     pickled,
 )
 
@@ -93,9 +93,9 @@ def ser_method(request):
 )
 def exemethod(request):
     """Returns (exemethod, marshal) combinations"""
-    global _exe_params
+    global exe_params
     parallel, proc_pool, marshal = request.param
-    _exe_params = _ExeParams(*request.param)
+    exe_params = _ExeParams(*request.param)
 
     nsharks = None  # number of pool swimmers....
 

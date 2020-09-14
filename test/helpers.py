@@ -19,7 +19,7 @@ _marshal = pytest.mark.marshal
 
 
 _ExeParams = namedtuple("_ExeParams", "parallel, proc, marshal")
-_exe_params = _ExeParams(None, None, None)
+exe_params = _ExeParams(None, None, None)
 
 
 def oneliner(s) -> str:

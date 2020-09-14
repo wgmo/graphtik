@@ -14,7 +14,7 @@ from graphtik import AbortedException, compose, operation, optional
 from graphtik.config import abort_run, execution_pool_plugged
 from graphtik.execution import _OpTask, task_context
 
-from .helpers import _exe_params, abspow
+from .helpers import exe_params, abspow
 
 
 @pytest.mark.xfail(reason="Spurious passes when threading with on low-cores?")
@@ -34,13 +34,13 @@ def test_task_context(exemethod, request):
     )
     iop = iter(pipe.ops)
 
-    print(_exe_params, cpu_count())
+    print(exe_params, cpu_count())
     err = None
-    if _exe_params.proc and _exe_params.marshal:
+    if exe_params.proc and exe_params.marshal:
         err = Exception("^Error sending result")
-    elif _exe_params.parallel and _exe_params.marshal:
+    elif exe_params.parallel and exe_params.marshal:
         err = AssertionError("^Corrupted task-context")
-    elif _exe_params.parallel and not os.environ.get("TRAVIS"):
+    elif exe_params.parallel and not os.environ.get("TRAVIS"):
         # Travis has low parallelism and error does not surface
         err = AssertionError("^Corrupted task-context")
 
