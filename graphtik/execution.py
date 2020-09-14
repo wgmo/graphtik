@@ -136,16 +136,29 @@ class Solution(ChainMap, Plottable):
         self.dag = plan.dag.copy()
         # assert next(iter(dag.edges))[0] == next(iter(plan.dag.edges))[0]:
 
-    def __copy__(self):
-        clone = type(self)(self.plan, {})
+    def copy(self):
+        """Deep-copy user's `input_data` and pass the rest intoa new Solution. """
+        named_inputs = dict(self.maps[-1])
+        clone = type(self)(
+            self.plan,
+            named_inputs,
+            self.pre_callback,
+            # Specially handled below bc user's `layered_solution` arg is lost.
+            layered_solution=None,
+        )
+        if self._layers is None:
+            clone._layers = None
+
         props = (
-            "maps executed canceled elapsed_ms solid _layers"
+            "maps executed canceled elapsed_ms solid"
             " is_endurance is_reschedule is_parallel is_marshal dag"
         ).split()
         for p in props:
             setattr(clone, p, getattr(self, p))
 
         return clone
+
+    __copy__ = copy
 
     def __repr__(self):
         if is_debug():

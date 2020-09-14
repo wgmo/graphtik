@@ -199,3 +199,8 @@ def test_abort(exemethod):
         parallel=exemethod,
     )
     assert pipeline.compute({"a": 1}) == {"a": 1, "b": 1}
+
+
+def test_solution_copy(samplenet):
+    sol = samplenet(a=1, b=2)
+    assert sol == sol.copy()
