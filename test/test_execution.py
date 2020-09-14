@@ -3,9 +3,9 @@
 """Test :term:`parallel`, :term:`marshalling` and other :term:`execution` related stuff. """
 import os
 from functools import partial
-from operator import mul, sub
 from multiprocessing import cpu_count
 from multiprocessing import dummy as mp_dummy
+from operator import mul, sub
 from time import sleep, time
 
 import pytest
@@ -14,7 +14,7 @@ from graphtik import AbortedException, compose, operation, optional
 from graphtik.config import abort_run, execution_pool_plugged
 from graphtik.execution import _OpTask, task_context
 
-from .helpers import exe_params, abspow
+from .helpers import abspow, exe_params
 
 
 @pytest.mark.xfail(reason="Spurious passes when threading with on low-cores?")

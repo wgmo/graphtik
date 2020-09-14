@@ -79,6 +79,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "contextvars; python_version < '3.7'",
+        "dataclasses; python_version < '3.7'",
         "networkx; python_version >= '3.5'",
         "networkx == 2.2; python_version < '3.5'",
         "boltons",  # for IndexSet

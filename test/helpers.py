@@ -1,9 +1,10 @@
 import pickle
 import re
 from collections import namedtuple
+from dataclasses import dataclass
 from itertools import chain, cycle
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 import dill
 import pytest
@@ -18,8 +19,14 @@ _parallel = pytest.mark.parallel
 _marshal = pytest.mark.marshal
 
 
-_ExeParams = namedtuple("_ExeParams", "parallel, proc, marshal")
-exe_params = _ExeParams(None, None, None)
+@dataclass
+class ExeParams:
+    parallel: Any = "-"
+    proc: Any = "-"
+    marshal: Any = "-"
+
+
+exe_params = ExeParams()
 
 
 def oneliner(s) -> str:

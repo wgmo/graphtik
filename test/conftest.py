@@ -12,7 +12,6 @@ from graphtik import compose, operation
 from graphtik.config import debug_enabled, execution_pool_plugged, tasks_marshalled
 
 from .helpers import (
-    _ExeParams,
     _marshal,
     _parallel,
     _proc,
@@ -92,10 +91,9 @@ def ser_method(request):
     ]
 )
 def exemethod(request):
-    """Returns (exemethod, marshal) combinations"""
-    global exe_params
+    """Returns exe-method combinations, and store them globally, for xfail checks."""
     parallel, proc_pool, marshal = request.param
-    exe_params = _ExeParams(*request.param)
+    exe_params.parallel, exe_params.proc, exe_params.marshal = request.param
 
     nsharks = None  # number of pool swimmers....
 
