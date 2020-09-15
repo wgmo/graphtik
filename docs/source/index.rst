@@ -96,8 +96,8 @@ out of 2 :term:`inputs` `a` and `b`:
    >>> from operator import mul, sub
 
    >>> @operation(name="abs qubed",
-   ...            needs=["a_minus_ab"],
-   ...            provides=["abs_a_minus_ab_cubed"])
+   ...            needs=["a-ab"],
+   ...            provides=["|a-ab|³"])
    ... def abs_qubed(a):
    ...    return abs(a) ** 3
 
@@ -106,12 +106,12 @@ into a computation :term:`graph`:
 
    >>> graphop = compose("graphop",
    ...    operation(mul, needs=["a", "b"], provides=["ab"]),
-   ...    operation(sub, needs=["a", "ab"], provides=["a_minus_ab"]),
+   ...    operation(sub, needs=["a", "ab"], provides=["a-ab"]),
    ...    abs_qubed,
    ... )
    >>> graphop
-   Pipeline('graphop', needs=['a', 'b', 'ab', 'a_minus_ab'],
-                     provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed'],
+   Pipeline('graphop', needs=['a', 'b', 'ab', 'a-ab'],
+                     provides=['ab', 'a-ab', '|a-ab|³'],
                      x3 ops: mul, sub, abs qubed)
 
 You may plot the function graph in a file like this
@@ -128,7 +128,7 @@ Run the graph-operation and request all of the outputs:
 
    >>> sol = graphop(**{'a': 2, 'b': 5})
    >>> sol
-   {'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
+   {'a': 2, 'b': 5, 'ab': 10, 'a-ab': -8, '|a-ab|³': 512}
 
 :term:`Solutions <solution>` are :term:`plottable` as well:
 
@@ -138,9 +138,9 @@ Run the graph-operation and request all of the outputs:
 
 Run the graph-operation and request a subset of the outputs:
 
-   >>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+   >>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a-ab"])
    >>> solution
-   {'a_minus_ab': -8}
+   {'a-ab': -8}
 
 .. graphtik::
 

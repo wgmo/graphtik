@@ -287,21 +287,19 @@ def test_combine_networks(exemethod, bools):
     graphop = compose(
         "graphop",
         operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-        operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
-        operation(
-            name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"]
-        )(partial(abspow, p=3)),
+        operation(name="sub1", needs=["a", "ab"], provides=["a-ab"])(sub),
+        operation(name="abspow1", needs=["a-ab"], provides=["|a-ab|³"])(
+            partial(abspow, p=3)
+        ),
         parallel=parallel1,
     )
 
-    assert graphop(a_minus_ab=-8) == {"a_minus_ab": -8, "abs_a_minus_ab_cubed": 512}
+    assert graphop.compute({"a-ab": -8}) == {"a-ab": -8, "|a-ab|³": 512}
 
     bigger_graph = compose(
         "bigger_graph",
         graphop,
-        operation(
-            name="sub2", needs=["a_minus_ab", "c"], provides="a_minus_ab_minus_c"
-        )(sub),
+        operation(name="sub2", needs=["a-ab", "c"], provides="a-ab_minus_c")(sub),
         parallel=parallel2,
         nest=lambda ren_args: ren_args.typ == "op",
     )
@@ -315,8 +313,8 @@ def test_combine_networks(exemethod, bools):
         else:
             assert old_node in new_nodes
 
-    sol = bigger_graph.compute({"a": 2, "b": 5, "c": 5}, ["a_minus_ab_minus_c"])
-    assert sol == {"a_minus_ab_minus_c": -13}
+    sol = bigger_graph.compute({"a": 2, "b": 5, "c": 5}, ["a-ab_minus_c"])
+    assert sol == {"a-ab_minus_c": -13}
 
     ## Test Plots
 

@@ -63,18 +63,16 @@ def test_multithreading_plan_execution():
     graph = compose(
         "graph",
         operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-        operation(name="sub1", needs=["a", "ab"], provides=["a_minus_ab"])(sub),
-        operation(
-            name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"]
-        )(partial(abspow, p=3)),
+        operation(name="sub1", needs=["a", "ab"], provides=["a-ab"])(sub),
+        operation(name="abspow1", needs=["a-ab"], provides=["|a-ab|³"])(
+            partial(abspow, p=3)
+        ),
     )
 
     with mp_dummy.Pool(int(2 * cpu_count())) as pool, execution_pool_plugged(pool):
         pool.map(
             # lambda i: graph.withset(name='graph').compute(
-            lambda i: graph.compute(
-                {"a": 2, "b": 5}, ["a_minus_ab", "abs_a_minus_ab_cubed"]
-            ),
+            lambda i: graph.compute({"a": 2, "b": 5}, ["a-ab", "|a-ab|³"]),
             range(300),
         )
 

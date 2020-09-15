@@ -120,8 +120,8 @@ out of 2 inputs `a` and `b`:
 >>> from operator import mul, sub
 
 >>> @operation(name="abs qubed",
-...            needs=["a_minus_ab"],
-...            provides=["abs_a_minus_ab_cubed"])
+...            needs=["a-ab"],
+...            provides=["|a-ab|³"])
 ... def abs_qubed(a):
 ...     return abs(a) ** 3
 
@@ -130,24 +130,24 @@ into a computation graph:
 
 >>> graphop = compose("graphop",
 ...     operation(needs=["a", "b"], provides=["ab"])(mul),
-...     operation(needs=["a", "ab"], provides=["a_minus_ab"])(sub),
+...     operation(needs=["a", "ab"], provides=["a-ab"])(sub),
 ...     abs_qubed,
 ... )
 >>> graphop
-Pipeline('graphop', needs=['a', 'b', 'ab', 'a_minus_ab'],
-                    provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed'],
+Pipeline('graphop', needs=['a', 'b', 'ab', 'a-ab'],
+                    provides=['ab', 'a-ab', '|a-ab|³'],
                     x3 ops: mul, sub, abs qubed)
 
 Run the graph and request all of the outputs:
 
 >>> graphop(a=2, b=5)
-{'a': 2, 'b': 5, 'ab': 10, 'a_minus_ab': -8, 'abs_a_minus_ab_cubed': 512}
+{'a': 2, 'b': 5, 'ab': 10, 'a-ab': -8, '|a-ab|³': 512}
 
 ... or request a subset of outputs:
 
->>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a_minus_ab"])
+>>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a-ab"])
 >>> solution
-{'a_minus_ab': -8}
+{'a-ab': -8}
 
 ... and plot the results (if in *jupyter*, no need to create the file):
 

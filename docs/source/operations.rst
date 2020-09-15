@@ -246,14 +246,14 @@ in :ref:`quick-start`:
    >>> # Compose the mul, sub, and abspow operations into a computation graph.
    >>> graphop = compose("graphop",
    ...    operation(mul, needs=["a", "b"], provides=["ab"]),
-   ...    operation(sub, needs=["a", "ab"], provides=["a_minus_ab"]),
-   ...    operation(name="abspow1", needs=["a_minus_ab"], provides=["abs_a_minus_ab_cubed"])
+   ...    operation(sub, needs=["a", "ab"], provides=["a-ab"]),
+   ...    operation(name="abspow1", needs=["a-ab"], provides=["|a-ab|³"])
    ...    (partial(abspow, p=3))
    ... )
    >>> graphop
    Pipeline('graphop',
-                    needs=['a', 'b', 'ab', 'a_minus_ab'],
-                    provides=['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed'],
+                    needs=['a', 'b', 'ab', 'a-ab'],
+                    provides=['ab', 'a-ab', '|a-ab|³'],
                     x3 ops: mul, sub, abspow1)
 
 
