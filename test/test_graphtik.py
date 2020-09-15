@@ -1129,3 +1129,44 @@ def test_recompute_resched_false(quarantine_pipeline, recompute, exp_ops):
     sol = pipe.compute(inp, recompute_from=recompute)
     assert sol == inp
     assert exe_ops(sol) == exp_ops
+
+
+def test_recompute_NEEDS_FIX():
+    pipe = compose(
+        ...,
+        operation(str, "f1", "a", "aa"),
+        operation(str, "f2", "b", "bb"),
+        operation(lambda a, b: a + b, "ff", ["aa", "bb"], "c"),
+    )
+
+    ## Produce sample solution
+    #
+    sol = pipe.compute({"a": "a", "b": "b"})
+    assert sol == {"a": "a", "b": "b", "aa": "a", "bb": "b", "c": "ab"}
+    assert exe_ops(sol) == ["f1", "f2", "ff"]
+    exp = sol.copy()
+
+    del exp["b"]
+    exp["a"] = "A"
+
+    ## Correct results
+    #
+    ok_sol = {"a": "A", "aa": "A", "bb": "b", "c": "Ab"}
+    ok_ops = ["f1", "ff"]
+    sol = pipe.compute(exp, recompute_from="a")
+    assert sol == ok_sol
+    assert exe_ops(sol) == ok_ops
+
+    ## ...but when recomputing also `b`: boom!
+    #
+    sol = pipe.compute(exp, recompute_from=["a", "b"])
+    assert sol == {"a": "A", "aa": "A", "bb": "b", "c": "ab"}
+    assert exe_ops(sol) == ["f1"]
+    ## FIXME: these are the correct recompute results!!
+    #  `bb` already in inputs, `ff` should run to calc `c`.
+    #
+    assert sol != ok_sol
+    assert exe_ops(sol) != ok_ops
+    pytest.xfail(
+        reason="recompute must be incorporated into `unsatisfied_operations()`"
+    )

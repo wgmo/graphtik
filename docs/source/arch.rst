@@ -70,7 +70,8 @@ Architecture
         as described in :ref:`recompute` tutorial section.
 
         .. attention::
-            This feature has not been thoroughly tested.
+            This feature is not well implemented (e.g. ``test_recompute_NEEDS_FIX()``),
+            neither thoroughly tested.
 
     combine pipelines
         When `operation`\s and/or `pipeline`\s are `compose`\d together, there are
