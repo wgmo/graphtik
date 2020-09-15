@@ -622,7 +622,7 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
                 </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(int) 2"];
         <&lt;graph&gt;> [fillcolor=SkyBlue, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
                     <TR><TD><graph></TD></TR>
-                </TABLE>>, shape=house, style=filled, tooltip="(output)\n(None)\n(overridden)"];
+                </TABLE>>, shape=house, style=filled, tooltip="(output)\n(None)\n(overwritten)"];
         <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
             <TR>
                 <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"

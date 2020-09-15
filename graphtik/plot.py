@@ -553,7 +553,7 @@ class Theme:
     kw_data_overwritten = {
         "style": ["filled"],
         "fillcolor": Ref("overwrite_color"),
-        "tooltip": ["(overridden)"],
+        "tooltip": ["(overwritten)"],
     }
     kw_data_missing = {
         "fontcolor": Ref("canceled_color"),
