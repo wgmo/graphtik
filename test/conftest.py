@@ -116,8 +116,7 @@ def exemethod(request):
 
 @pytest.fixture
 def samplenet():
-    # Set up a network such that we don't need to provide a or b d if we only
-    # request sum3 as output and if we provide sum2.
+    """sum1 = (a + b), sum2 = (c + d), sum3 = c + (c + d)"""
     sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum1")(add)
     sum_op2 = operation(name="sum_op2", needs=["c", "d"], provides="sum2")(add)
     sum_op3 = operation(name="sum_op3", needs=["c", "sum2"], provides="sum3")(add)

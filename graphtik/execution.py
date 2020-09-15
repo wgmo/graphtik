@@ -465,7 +465,7 @@ OpCb = namedtuple("OpCb", "op, sol, solid")
 
 
 class ExecutionPlan(
-    namedtuple("ExecPlan", "net needs provides dag steps asked_outs comments"),
+    namedtuple("ExecPlan", "net needs provides dag steps asked_outs comments"),  # noqa
     Plottable,
 ):
     """
