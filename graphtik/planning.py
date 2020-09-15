@@ -774,6 +774,15 @@ class Network(Plottable):
 
         return list(steps)
 
+    def _deps_tuplized(self, deps, arg_name):
+        """Stabilize None, ``UNSET`` or string/list-of-strings deps in `graph`."""
+        if deps is None:
+            return None, None
+
+        data_nodes = set(yield_datanodes(self.graph.nodes))
+        deps = tuple(sorted(astuple(deps, arg_name, allowed_types=abc.Collection)))
+        return deps, tuple(d for d in deps if d in data_nodes)
+
     def compile(
         self, inputs: Items = None, outputs: Items = None, predicate=None
     ) -> "ExecutionPlan":
@@ -814,21 +823,14 @@ class Network(Plottable):
         try:
             ## Make a stable cache-key.
             #
-            if inputs is not None:
-                inputs = tuple(
-                    sorted(astuple(inputs, "inputs", allowed_types=abc.Collection))
-                )
-            if outputs is not None:
-                outputs = tuple(
-                    sorted(astuple(outputs, "outputs", allowed_types=abc.Collection))
-                )
+            inputs, k1 = self._deps_tuplized(inputs, "inputs")
+            outputs, k2 = self._deps_tuplized(outputs, "outputs")
             if not predicate:
                 predicate = None
-
-            cache_key = (inputs, outputs, predicate)
+            cache_key = (k1, k2, predicate)
 
             ## Build (or retrieve from cache) execution plan
-            #  for the given inputs & outputs.
+            #  for the given dep-lists (excluding any unknown node-names).
             #
             if cache_key in self._cached_plans:
                 log.debug("... compile cache-hit key: %s", cache_key)
