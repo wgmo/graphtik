@@ -8,7 +8,7 @@ instances into a runnable computation graph.
 
 The simplest use case is to assemble a collection of individual operations
 into a runnable computation graph.
-The example script from :ref:`quick-start` illustrates this well:
+The sample formula :eq:`sample-formula` from :ref:`quick-start` section illustrates this well:
 
     >>> from operator import mul, sub
     >>> from functools import partial
@@ -34,7 +34,7 @@ The call here to ``compose()`` yields a runnable computation graph that looks li
 This yields a graph which looks like this (see :ref:`plotting`):
 
 .. graphtik::
-    :name: formula
+    :name: sample formula :eq:`sample-formula`
 
     >>> formula.plot('calc_power.svg')  # doctest: +SKIP
 

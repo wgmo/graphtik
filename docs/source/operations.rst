@@ -231,8 +231,8 @@ Considerations for when building pipelines
 ------------------------------------------
 When many operations are composed into a computation graph, Graphtik matches up
 the values in their *needs* and *provides* to form the edges of that graph
-(see :ref:`graph-composition` for more on that), like the operations from the script
-in :ref:`quick-start`:
+(see :ref:`graph-composition` for more on that), like the operations from
+the sample formula :eq:`sample-formula` in :ref:`quick-start` section:
 
    >>> from operator import mul, sub
    >>> from functools import partial

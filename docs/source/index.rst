@@ -79,10 +79,11 @@ separately with your OS tools)::
    pip install graphtik[plot]
 
 
-Let's build a *graphtik* computation :term:`pipeline` that produces x3 :term:`outputs`
-out of 2 :term:`inputs` `a` and `b`:
+Let's build a *graphtik* computation :term:`pipeline` that produces the following
+x3 :term:`outputs` out of x2 :term:`inputs` (`a` and `b`):
 
 .. math::
+   :label: sample-formula
 
    a \times b
 
