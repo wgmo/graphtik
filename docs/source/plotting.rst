@@ -442,7 +442,7 @@ The following directive renders a diagram of its doctest code, beneath it:
       >>> from graphtik import compose, operation
       >>> addmul = compose(
       ...       "addmul",
-      ...       operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
+      ...       operation(name="add", needs="abc".split(), provides="(a+b)×c")(lambda a, b, c: (a + b) * c)
       ... )
 
 .. graphtik::
@@ -454,7 +454,7 @@ The following directive renders a diagram of its doctest code, beneath it:
 
    >>> addmul = compose(
    ...    "addmul",
-   ...    operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
+   ...    operation(name="add", needs="abc".split(), provides="(a+b)×c")(lambda a, b, c: (a + b) * c)
    ... )
 
 which you may :graphtik:`reference <addmul-operation>` with this syntax:
@@ -478,7 +478,7 @@ which you may :graphtik:`reference <addmul-operation>` with this syntax:
       >>> from graphtik import compose, operation
       >>> addmul = compose(
       ...       "addmul",
-      ...       operation(name="add", needs="abc".split(), provides="ab")(lambda a, b, c: (a + b) * c)
+      ...       operation(name="add", needs="abc".split(), provides="(a+b)×c")(lambda a, b, c: (a + b) * c)
       ... )
 
       .. graphtik::

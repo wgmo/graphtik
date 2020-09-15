@@ -25,9 +25,9 @@ The call here to ``compose()`` yields a runnable computation graph that looks li
 
     >>> # Compose the mul, sub, and abspow operations into a computation graph.
     >>> formula = compose("maths",
-    ...    operation(name="mul1", needs=["a", "b"], provides=["ab"])(mul),
-    ...    operation(name="sub1", needs=["a", "ab"], provides=["a-ab"])(sub),
-    ...    operation(name="abspow1", needs=["a-ab"], provides=["|a-ab|³"])
+    ...    operation(name="mul1", needs=["α", "β"], provides=["α×β"])(mul),
+    ...    operation(name="sub1", needs=["α", "α×β"], provides=["α-α×β"])(sub),
+    ...    operation(name="abspow1", needs=["α-α×β"], provides=["|α-α×β|³"])
     ...    (partial(abspow, p=3))
     ... )
 
@@ -49,9 +49,9 @@ with keys corresponding to the named :term:`dependencies <dependency>` (`needs` 
 `provides`):
 
     >>> # Run the graph and request all of the outputs.
-    >>> out = formula(a=2, b=5)
+    >>> out = formula(α=2, β=5)
     >>> out
-    {'a': 2, 'b': 5, 'ab': 10, 'a-ab': -8, '|a-ab|³': 512}
+    {'α': 2, 'β': 5, 'α×β': 10, 'α-α×β': -8, '|α-α×β|³': 512}
 
 You may plot the solution:
 
@@ -66,11 +66,11 @@ the pipeline, to see which operations will be included in the :term:`graph`
 (assuming the graph is solvable at all), based on the given :term:`inputs`/:term:`outputs`
 combination:
 
-    >>> plan = formula.compile(inputs=['a', 'b'], outputs='a-ab')
+    >>> plan = formula.compile(inputs=['α', 'β'], outputs='α-α×β')
     >>> plan
-    ExecutionPlan(needs=['a', 'b'],
-                  provides=['a-ab'],
-                  x5 steps: mul1, b, sub1, a, ab)
+    ExecutionPlan(needs=['α', 'β'],
+                  provides=['α-α×β'],
+                  x5 steps: mul1, β, sub1, α, α×β)
     >>> plan.validate()  # all fine
 
 .. _pruned-explanations:
@@ -91,15 +91,15 @@ of execution:
 But if an impossible combination of `inputs` & `outputs`
 is asked, the plan comes out empty:
 
-    >>> plan = formula.compile(inputs='a', outputs="a-ab")
+    >>> plan = formula.compile(inputs='α', outputs="α-α×β")
     >>> plan
     ExecutionPlan(needs=[], provides=[], x0 steps: )
     >>> plan.validate()
     Traceback (most recent call last):
     ValueError: Unsolvable graph:
       +--Network(x8 nodes, x3 ops: mul1, sub1, abspow1)
-      +--possible inputs: ['a', 'b', 'ab', 'a-ab']
-      +--possible outputs: ['ab', 'a-ab', '|a-ab|³']
+      +--possible inputs: ['α', 'β', 'α×β', 'α-α×β']
+      +--possible outputs: ['α×β', 'α-α×β', '|α-α×β|³']
 
 Evictions: producing a subset of outputs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -110,9 +110,9 @@ You can use the ``outputs`` parameter to request only a subset.
 For example, if ``formula`` is as above:
 
     >>> # Run the graph-operation and request a subset of the outputs.
-    >>> out = formula.compute({'a': 2, 'b': 5}, outputs="a-ab")
+    >>> out = formula.compute({'α': 2, 'β': 5}, outputs="α-α×β")
     >>> out
-    {'a-ab': -8}
+    {'α-α×β': -8}
 
 .. graphtik::
 
@@ -141,12 +141,12 @@ Short-circuiting a pipeline
 You can short-circuit a graph computation, making certain inputs unnecessary,
 by providing a value in the graph that is further downstream in the graph than those inputs.
 For example, in the graph-operation we've been working with, you could provide
-the value of ``a-ab`` to make the inputs ``a`` and ``b`` unnecessary:
+the value of ``α-α×β`` to make the inputs ``α`` and ``β`` unnecessary:
 
     >>> # Run the graph-operation and request a subset of the outputs.
-    >>> out = formula.compute({"a-ab": -8})
+    >>> out = formula.compute({"α-α×β": -8})
     >>> out
-    {'a-ab': -8, '|a-ab|³': 512}
+    {'α-α×β': -8, '|α-α×β|³': 512}
 
 .. graphtik::
 
@@ -172,14 +172,14 @@ unexpectedly, fail with ``Unsolvable graph`` error -- all :term:`dependencies <d
 have already values, therefore any operations producing them are :term:`prune`\d out,
 till no operation remains:
 
-    >>> new_inp = formula.compute({"a": 2, "b": 5})
-    >>> new_inp["a"] = 20
+    >>> new_inp = formula.compute({"α": 2, "β": 5})
+    >>> new_inp["α"] = 20
     >>> formula.compute(new_inp)
     Traceback (most recent call last):
     ValueError: Unsolvable graph:
     +--Network(x8 nodes, x3 ops: mul1, sub1, abspow1)
-    +--possible inputs: ['a', 'b', 'ab', 'a-ab']
-    +--possible outputs: ['ab', 'a-ab', '|a-ab|³']
+    +--possible inputs: ['α', 'β', 'α×β', 'α-α×β']
+    +--possible outputs: ['α×β', 'α-α×β', '|α-α×β|³']
 
 
 One way to proceed is to avoid recompiling, by executing directly the pre-compiled
@@ -187,7 +187,7 @@ One way to proceed is to avoid recompiling, by executing directly the pre-compil
 
     >>> sol = new_inp.plan.execute(new_inp)
     >>> sol
-    {'a': 20, 'b': 5, 'ab': 100, 'a-ab': -80, '|a-ab|³': 512000}
+    {'α': 20, 'β': 5, 'α×β': 100, 'α-α×β': -80, '|α-α×β|³': 512000}
     >>> [op.name for op in sol.executed]
     ['mul1', 'sub1', 'abspow1']
 
@@ -198,17 +198,17 @@ One way to proceed is to avoid recompiling, by executing directly the pre-compil
 But that trick wouldn't work if the modified value is an inner dependency
 of the :term:`graph` -- in that case, the operations upstream would simply overwrite it:
 
-    >>> new_inp["a-ab"] = 123
+    >>> new_inp["α-α×β"] = 123
     >>> sol = new_inp.plan.execute(new_inp)
-    >>> sol["a-ab"]  # should have been 123!
+    >>> sol["α-α×β"]  # should have been 123!
     -80
 
 You can  still do that using the ``recompute_from`` argument of :meth:`.Pipeline.compute()`.
 It accepts a string/list of dependencies to :term:`recompute`, *downstream*:
 
-    >>> sol = formula.compute(new_inp, recompute_from="a-ab")
+    >>> sol = formula.compute(new_inp, recompute_from="α-α×β")
     >>> sol
-    {'a': 20, 'b': 5, 'ab': 10, 'a-ab': 123, '|a-ab|³': 1860867}
+    {'α': 20, 'β': 5, 'α×β': 10, 'α-α×β': 123, '|α-α×β|³': 1860867}
     >>> [op.name for op in sol.executed]
     ['abspow1']
 
@@ -218,7 +218,7 @@ The old values are retained, although the operations producing them
 have been pruned from the plan.
 
 .. Note::
-    The value of ``a-ab`` is no longer *the correct result* of ``sub1`` operation,
+    The value of ``α-α×β`` is no longer *the correct result* of ``sub1`` operation,
     above it (hover to see ``sub1`` inputs & output).
 
 

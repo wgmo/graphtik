@@ -80,16 +80,16 @@ separately with your OS tools)::
 
 
 Let's build a *graphtik* computation :term:`pipeline` that produces the following
-x3 :term:`outputs` out of x2 :term:`inputs` (`a` and `b`):
+x3 :term:`outputs` out of x2 :term:`inputs` (`α` and `β`):
 
 .. math::
    :label: sample-formula
 
-   a \times b
+   α \times β
 
-   a - a \times b
+   α - α \times β
 
-   |a - a \times b| ^ 3
+   |α - α \times β| ^ 3
 
 ..
 
@@ -97,23 +97,27 @@ x3 :term:`outputs` out of x2 :term:`inputs` (`a` and `b`):
    >>> from operator import mul, sub
 
    >>> @operation(name="abs qubed",
-   ...            needs=["a-ab"],
-   ...            provides=["|a-ab|³"])
+   ...            needs=["α-α×β"],
+   ...            provides=["|α-α×β|³"])
    ... def abs_qubed(a):
    ...    return abs(a) ** 3
+
+.. hint::
+   Notice that *graphtik* has not problem working in unicode chars
+   for :term:`dependency` names.
 
 Compose the ``abspow`` function along with ``mul`` & ``sub``  built-ins
 into a computation :term:`graph`:
 
    >>> graphop = compose("graphop",
-   ...    operation(mul, needs=["a", "b"], provides=["ab"]),
-   ...    operation(sub, needs=["a", "ab"], provides=["a-ab"]),
+   ...    operation(mul, needs=["α", "β"], provides=["α×β"]),
+   ...    operation(sub, needs=["α", "α×β"], provides=["α-α×β"]),
    ...    abs_qubed,
    ... )
    >>> graphop
-   Pipeline('graphop', needs=['a', 'b', 'ab', 'a-ab'],
-                     provides=['ab', 'a-ab', '|a-ab|³'],
-                     x3 ops: mul, sub, abs qubed)
+   Pipeline('graphop', needs=['α', 'β', 'α×β', 'α-α×β'],
+            provides=['α×β', 'α-α×β', '|α-α×β|³'],
+            x3 ops: mul, sub, abs qubed)
 
 You may plot the function graph in a file like this
 (if in *jupyter*, no need to specify the file, see :ref:`jupyter_rendering`):
@@ -127,9 +131,9 @@ even ones imported from system modules.
 
 Run the graph-operation and request all of the outputs:
 
-   >>> sol = graphop(**{'a': 2, 'b': 5})
+   >>> sol = graphop(**{'α': 2, 'β': 5})
    >>> sol
-   {'a': 2, 'b': 5, 'ab': 10, 'a-ab': -8, '|a-ab|³': 512}
+   {'α': 2, 'β': 5, 'α×β': 10, 'α-α×β': -8, '|α-α×β|³': 512}
 
 :term:`Solutions <solution>` are :term:`plottable` as well:
 
@@ -139,9 +143,9 @@ Run the graph-operation and request all of the outputs:
 
 Run the graph-operation and request a subset of the outputs:
 
-   >>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a-ab"])
+   >>> solution = graphop.compute({'α': 2, 'β': 5}, outputs=["α-α×β"])
    >>> solution
-   {'a-ab': -8}
+   {'α-α×β': -8}
 
 .. graphtik::
 

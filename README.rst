@@ -108,11 +108,11 @@ OR with various "extras" dependencies, such as, for plotting::
         like *all*
 
 Let's build a *graphtik* computation graph that produces x3 outputs
-out of 2 inputs `a` and `b`:
+out of 2 inputs `α` and `β`:
 
-- `a x b`
-- `a - a x b`
-- `|a - a x b| ^ 3`
+- `α x β`
+- `α - αxβ`
+- `|α - αxβ| ^ 3`
 
 ..
 
@@ -120,8 +120,8 @@ out of 2 inputs `a` and `b`:
 >>> from operator import mul, sub
 
 >>> @operation(name="abs qubed",
-...            needs=["a-ab"],
-...            provides=["|a-ab|³"])
+...            needs=["α-α×β"],
+...            provides=["|α-α×β|³"])
 ... def abs_qubed(a):
 ...     return abs(a) ** 3
 
@@ -129,25 +129,26 @@ Compose the ``abspow`` function along the ``mul`` & ``sub``  built-ins
 into a computation graph:
 
 >>> graphop = compose("graphop",
-...     operation(needs=["a", "b"], provides=["ab"])(mul),
-...     operation(needs=["a", "ab"], provides=["a-ab"])(sub),
+...     operation(needs=["α", "β"], provides=["α×β"])(mul),
+...     operation(needs=["α", "α×β"], provides=["α-α×β"])(sub),
 ...     abs_qubed,
 ... )
 >>> graphop
-Pipeline('graphop', needs=['a', 'b', 'ab', 'a-ab'],
-                    provides=['ab', 'a-ab', '|a-ab|³'],
+Pipeline('graphop', needs=['α', 'β', 'α×β', 'α-α×β'],
+                    provides=['α×β', 'α-α×β', '|α-α×β|³'],
                     x3 ops: mul, sub, abs qubed)
 
-Run the graph and request all of the outputs:
+Run the graph and request all of the outputs
+(notice that unicode characters work also as Python identifiers):
 
->>> graphop(a=2, b=5)
-{'a': 2, 'b': 5, 'ab': 10, 'a-ab': -8, '|a-ab|³': 512}
+>>> graphop(α=2, β=5)
+{'α': 2, 'β': 5, 'α×β': 10, 'α-α×β': -8, '|α-α×β|³': 512}
 
 ... or request a subset of outputs:
 
->>> solution = graphop.compute({'a': 2, 'b': 5}, outputs=["a-ab"])
+>>> solution = graphop.compute({'α': 2, 'β': 5}, outputs=["α-α×β"])
 >>> solution
-{'a-ab': -8}
+{'α-α×β': -8}
 
 ... and plot the results (if in *jupyter*, no need to create the file):
 

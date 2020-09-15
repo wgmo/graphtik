@@ -245,21 +245,21 @@ the sample formula :eq:`sample-formula` in :ref:`quick-start` section:
 
    >>> # Compose the mul, sub, and abspow operations into a computation graph.
    >>> graphop = compose("graphop",
-   ...    operation(mul, needs=["a", "b"], provides=["ab"]),
-   ...    operation(sub, needs=["a", "ab"], provides=["a-ab"]),
-   ...    operation(name="abspow1", needs=["a-ab"], provides=["|a-ab|³"])
+   ...    operation(mul, needs=["α", "β"], provides=["α×β"]),
+   ...    operation(sub, needs=["α", "α×β"], provides=["α-α×β"]),
+   ...    operation(name="abspow1", needs=["α-α×β"], provides=["|α-α×β|³"])
    ...    (partial(abspow, p=3))
    ... )
    >>> graphop
    Pipeline('graphop',
-                    needs=['a', 'b', 'ab', 'a-ab'],
-                    provides=['ab', 'a-ab', '|a-ab|³'],
+                    needs=['α', 'β', 'α×β', 'α-α×β'],
+                    provides=['α×β', 'α-α×β', '|α-α×β|³'],
                     x3 ops: mul, sub, abspow1)
 
 
 - Notice the use of :func:`functools.partial()` to set parameter ``p`` to a constant value.
-- And this is done by calling once more the returned "decorator* from :func:`operation()`,
-  when called without a functions.
+- And this is done by calling once more the returned "decorator" from :func:`operation()`,
+  when called without a function.
 
 The ``needs`` and ``provides`` arguments to the operations in this script define
 a computation graph that looks like this:
