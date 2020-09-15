@@ -10,11 +10,22 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from graphtik import base, operation, pipeline, planning
+from graphtik import (
+    base,
+    compose,
+    modify,
+    operation,
+    pipeline,
+    planning,
+    sfx,
+    sfxed,
+    vararg,
+    varargs,
+)
 from graphtik.base import Operation
-from graphtik.jetsam import save_jetsam
 from graphtik.config import debug_enabled
 from graphtik.execution import ExecutionPlan, Solution, _OpTask
+from graphtik.jetsam import save_jetsam
 from graphtik.pipeline import Pipeline
 
 
@@ -251,6 +262,50 @@ def test_jetsam_saves_plot(failing_jetsam):
         fp = Path(ex.jetsam["plot_fpath"])
         assert fp.exists()
         fp.unlink(missing_ok=True)
+
+
+def test_jetsam_n_plot_with_DEBUG():
+    pipe = compose(
+        "mix",
+        operation(
+            str,
+            "FUNC",
+            needs=[
+                "a",
+                sfxed("b", "foo", keyword="bb"),
+                modify("c", implicit=1),
+                sfxed("d", "bar", implicit=1),
+                vararg("e"),
+                varargs("f"),
+            ],
+            provides=[
+                "A",
+                sfxed("b", "FOO", keyword="bb"),
+                modify("C", implicit=1),
+                sfxed("d", "BAR", implicit=1),
+                sfx("FOOBAR"),
+            ],
+            aliases={"A": "aaa", "b": "bbb", "C": "ccc", "d": "ddd"},
+        ),
+    )
+
+    with debug_enabled(True), pytest.raises(ValueError, match="^Unsolvable"):
+        pipe.compute()
+    with debug_enabled(True), pytest.raises(
+        ValueError, match="^Failed matching inputs <=> needs"
+    ) as exc:
+        pipe.compute(
+            {
+                "a": 1,
+                sfxed("b", "foo"): 2,
+                "c": 3,
+                sfxed("d", "bar"): 4,
+                "e": 5,
+                "f": [6, 7],
+            }
+        )
+
+    exc.value.jetsam.plot_fpath.unlink()
 
 
 ###############
