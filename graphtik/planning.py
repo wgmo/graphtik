@@ -259,26 +259,28 @@ def recompute_inputs(
     It works by temporarily adding x2 nodes to find and remove the intersection of::
 
         strict-descendants(recompute_from) & ancestors(recompute_till)
+
+    FIXME: Should recompute() while travesing unsatisfied?  Is `till` relevant??
     """
     start, stop = "_TMP.RECOMPUTE_FROM", "_TMP.RECOMPUTE_TILL"
     graph = graph.copy()
 
     datanodes = iset(yield_datanodes(graph.nodes))
-    if recompute_from is None:
-        downstreams_strict = datanodes
-    else:
+    downstreams_strict = datanodes
+    if recompute_from is not None:
         recompute_from = iset(recompute_from)  # traversed in logs
         bad = recompute_from - datanodes
         if bad:
             log.info(
                 "... ignoring unknown `recompute_from` dependencies: %s", list(bad)
             )
-            recompute_from &= datanodes
-        graph.add_edges_from((start, i) for i in recompute_from)
+            recompute_from = recompute_from & datanodes
+        if recompute_from:
+            graph.add_edges_from((start, i) for i in recompute_from)
 
-        downstreams_strict = (
-            iset(yield_datanodes(nx.descendants(graph, start))) - recompute_from
-        )
+            downstreams_strict = (
+                iset(yield_datanodes(nx.descendants(graph, start))) - recompute_from
+            )
 
     if recompute_till is None:
         upstreams = datanodes
@@ -289,7 +291,7 @@ def recompute_inputs(
             log.info(
                 "... ignoring unknown `recompute_till` dependencies: %s", list(bad)
             )
-            recompute_till &= datanodes
+            recompute_till = recompute_till & datanodes
         graph.add_edges_from((i, stop) for i in recompute_till)  # edge reversed!
 
         upstreams = iset(yield_datanodes(nx.ancestors(graph, stop)))

@@ -29,6 +29,10 @@ from .helpers import addall, exe_params
 pytestmark = pytest.mark.usefixtures("log_levels")
 
 
+def exe_ops(sol):
+    return [op.name for op in sol.executed]
+
+
 def scream(*args, **kwargs):
     raise AssertionError(f"Must not have run!\n    args: {args}\n  kwargs: {kwargs}")
 
@@ -962,20 +966,166 @@ def test_pre_callback(quarantine_pipeline, exemethod):
         assert called_ops == ["get_out_or_stay_home", "read_book"]
 
 
-def test_recompute(quarantine_pipeline):
-    pipeline = quarantine_pipeline
-    inp = {"quarantine": True}
-    sol = pipeline.compute(inp)
+##########
+## Rerun, Replan, Recompute
+##
+
+
+def test_rerun(samplenet):
+    pipe = compose(..., samplenet, excludes="sum_op1")
+    sol = pipe.compute({"c": 3, "d": 4})
+    assert sol == {"c": 3, "d": 4, "sum2": 7, "sum3": 10}
+    exp = sol.copy()
+    assert exe_ops(sol) == ["sum_op2", "sum_op3"]
+
+    ## No recomputes, just sol as input.
+    #
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        pipe.compute(exp)
+
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        pipe.compute(exp, recompute_from="sum3")  # It's an output/
+
+    ## Recompute on an output does nothing.
+    #
+    with pytest.raises(ValueError, match="Unsolvable graph"):
+        pipe.compute(exp, recompute_from="sum3")
+
+
+def test_rerun_resched(quarantine_pipeline):
+    ## Produce sample solutions
+    #
+    pipe = quarantine_pipeline
+    sol = pipe.compute({"quarantine": True})
+    assert exe_ops(sol) == ["get_out_or_stay_home", "read_book"]
+    exp_t = sol.copy()
+
+    sol = pipe.compute({"quarantine": False})
+    assert exe_ops(sol) == ["get_out_or_stay_home", "exercise"]
+    exp_f = dict(sol)
+
+    ## No recomputes, just sol as input.
+    #
+    sol = pipe.compute(exp_t)
+    assert sol == exp_t
+    assert exe_ops(sol) == ["get_out_or_stay_home"]
+    sol = pipe.compute({**exp_t, "quarantine": False})
+    assert sol == {**exp_t, **exp_f}
+    assert exe_ops(sol) == ["get_out_or_stay_home", "exercise"]
+
+
+@pytest.mark.xfail(reason="Badly-specified `recompute` empties AND algorithm!")
+def test_recompute_empties(samplenet):
+    pipe = compose(..., samplenet, excludes="sum_op1")
+    sol = pipe.compute({"c": 3, "d": 4}, recompute_from=())
+    assert sol == {"c": 3, "d": 4, "sum2": 7, "sum3": 10}
+    assert exe_ops(sol) == ["sum_op2", "sum_op3"]
     exp = dict(sol)
 
-    sol = pipeline.compute(exp)
+    sol = pipe.compute(sol, recompute_from=())
     assert sol == exp
-    assert [op.name for op in sol.executed] == ["get_out_or_stay_home"]
+    assert exe_ops(sol) == ["sum_op2", "sum_op3"]
 
-    sol = pipeline.compute(exp, recompute_from="quarantine")
-    assert sol == exp
-    assert [op.name for op in sol.executed] == ["get_out_or_stay_home", "read_book"]
 
-    sol = pipeline.compute(exp, recompute_from=["space", "time"])
+@pytest.mark.parametrize(
+    "recompute, ops",
+    [
+        ("sum2", ["sum_op3"]),
+        ("c", ["sum_op2", "sum_op3"]),
+        ("d", ["sum_op2", "sum_op3"]),
+    ],
+)
+def test_recompute(samplenet, recompute, ops):
+    pipe = compose(..., samplenet, excludes="sum_op1")
+    sol = pipe.compute({"c": 3, "d": 4})
+    assert sol == {"c": 3, "d": 4, "sum2": 7, "sum3": 10}
+    plan = sol.plan
+    exp = dict(sol)
+    assert exe_ops(sol) == ["sum_op2", "sum_op3"]
+
+    ## Recompute
+    #
+    sol = pipe.compute(exp, recompute_from=recompute)
     assert sol == exp
-    assert [op.name for op in sol.executed] == ["get_out_or_stay_home", "read_book"]
+    exp = dict(sol)
+    assert exe_ops(sol) == ops
+
+    ## Replan
+    #
+    sol = plan.execute(exp)
+    assert sol == exp
+    assert exe_ops(sol) == ["sum_op2", "sum_op3"]
+    sol = plan.execute(exp, plan.asked_outs)
+    assert sol == exp
+    assert exe_ops(sol) == ["sum_op2", "sum_op3"]
+
+
+@pytest.mark.parametrize(
+    "recompute, exp_ops",
+    [
+        ("quarantine", ["get_out_or_stay_home", "read_book"]),
+        ("time", ["get_out_or_stay_home", "read_book"]),
+        ("space", ["get_out_or_stay_home", "read_book"]),
+        (
+            ["quarantine", "time", "space"],
+            ["get_out_or_stay_home", "read_book"],
+        ),
+    ],
+)
+def test_recompute_resched_true(quarantine_pipeline, recompute, exp_ops):
+    ## Produce sample solutions
+    #
+    pipe = quarantine_pipeline
+    sol = pipe.compute({"quarantine": True})
+    assert exe_ops(sol) == ["get_out_or_stay_home", "read_book"]
+    inp = sol.copy()
+
+    ## Recompute
+    #
+    sol = pipe.compute(inp, recompute_from=recompute)
+    assert sol == inp
+    assert exe_ops(sol) == exp_ops
+
+
+@pytest.mark.parametrize(
+    "recompute, exp_ops",
+    [
+        (
+            "quarantine",
+            ["get_out_or_stay_home", "exercise"],
+        ),
+        (
+            "space",
+            ["get_out_or_stay_home", "exercise"],
+        ),
+        (
+            "time",
+            ["get_out_or_stay_home", "exercise"],
+        ),
+        (
+            ["quarantine", "time"],
+            ["get_out_or_stay_home", "exercise"],
+        ),
+        (
+            ["quarantine", "space"],
+            ["get_out_or_stay_home", "exercise"],
+        ),
+        (
+            ["quarantine", "time", "space"],
+            ["get_out_or_stay_home", "exercise"],
+        ),
+    ],
+)
+def test_recompute_resched_false(quarantine_pipeline, recompute, exp_ops):
+    ## Produce sample solutions
+    #
+    pipe = quarantine_pipeline
+    sol = pipe.compute({"quarantine": False})
+    assert exe_ops(sol) == ["get_out_or_stay_home", "exercise"]
+    inp = sol.copy()
+
+    ## Recompute
+    #
+    sol = pipe.compute(inp, recompute_from=recompute)
+    assert sol == inp
+    assert exe_ops(sol) == exp_ops
