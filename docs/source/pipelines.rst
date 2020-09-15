@@ -99,8 +99,7 @@ is asked, the plan comes out empty:
     ValueError: Unsolvable graph:
       +--Network(x8 nodes, x3 ops: mul1, sub1, abspow1)
       +--possible inputs: ['a', 'b', 'ab', 'a_minus_ab']
-      +--possible outputs: {list(self.net.provides)}
-
+      +--possible outputs: ['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed']
 
 Evictions: producing a subset of outputs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -136,8 +135,6 @@ into the plot:
    Read :ref:`plot-customizations` to understand the trick with
    the :term:`plot theme`, above.
 
-
-
 Short-circuiting a pipeline
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -163,6 +160,66 @@ allow your graph to be run in an API server by adding an earlier ``operation``
 that accepts as input a string of raw image data and converts that data into the needed ``PIL.Image``.
 Then, you can either provide the raw image data string as input, or you can provide
 the ``PIL.Image`` if you have it and skip providing the image data string.
+
+
+.. _recompute:
+
+Re-computations
+^^^^^^^^^^^^^^^
+If you take the :term:`solution` from a :term:`pipeline`, change some values in it,
+and feed it back into the same pipeline as :term:`inputs`, the recomputation will,
+unexpectedly, fail with ``Unsolvable graph`` error -- all :term:`dependencies <dependency>`
+have already values, therefore any operations producing them are :term:`prune`\d out,
+till no operation remains:
+
+    >>> new_inp = formula.compute({"a": 2, "b": 5})
+    >>> new_inp["a"] = 20
+    >>> formula.compute(new_inp)
+    Traceback (most recent call last):
+    ValueError: Unsolvable graph:
+    +--Network(x8 nodes, x3 ops: mul1, sub1, abspow1)
+    +--possible inputs: ['a', 'b', 'ab', 'a_minus_ab']
+    +--possible outputs: ['ab', 'a_minus_ab', 'abs_a_minus_ab_cubed']
+
+
+One way to proceed is to avoid recompiling, by executing directly the pre-compiled
+:term:`plan`, which will run all the original operations on the new values:
+
+    >>> sol = new_inp.plan.execute(new_inp)
+    >>> sol
+    {'a': 20, 'b': 5, 'ab': 100, 'a_minus_ab': -80, 'abs_a_minus_ab_cubed': 512000}
+    >>> [op.name for op in sol.executed]
+    ['mul1', 'sub1', 'abspow1']
+
+.. graphtik::
+.. hint::
+    Notice that all values have been marked as :term:`overwrite`\s.
+
+But that trick wouldn't work if the modified value is an inner dependency
+of the :term:`graph` -- in that case, the operations upstream would simply overwrite it:
+
+    >>> new_inp["a_minus_ab"] = 123
+    >>> sol = new_inp.plan.execute(new_inp)
+    >>> sol["a_minus_ab"]  # should have been 123!
+    -80
+
+You can  still do that using the ``recompute_from`` argument of :meth:`.Pipeline.compute()`.
+It accepts a string/list of dependencies to :term:`recompute`, *downstream*:
+
+    >>> sol = formula.compute(new_inp, recompute_from="a_minus_ab")
+    >>> sol
+    {'a': 20, 'b': 5, 'ab': 10, 'a_minus_ab': 123, 'abs_a_minus_ab_cubed': 1860867}
+    >>> [op.name for op in sol.executed]
+    ['abspow1']
+
+.. graphtik::
+
+The old values are retained, although the operations producing them
+have been pruned from the plan.
+
+.. Note::
+    The value of ``a_minus_ab`` is no longer *the correct result* of ``sub1`` operation,
+    above it (hover to see ``sub1`` inputs & output).
 
 
 Extending pipelines

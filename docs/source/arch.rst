@@ -61,6 +61,17 @@ Architecture
             - Use :func:`.compose()` factory to build :class:`.Pipeline`
               instances (a.k.a. pipelines).
 
+    recompute
+        There are 2 ways to feed the `solution` back into the same `pipeline`:
+
+        * by reusing the pre-compiled `plan` (coarse-grained), or
+        * by using the ``compute(recalculate_from=...)`` argument (fine-grained),
+
+        as described in :ref:`recompute` tutorial section.
+
+        .. attention::
+            This feature has not been thoroughly tested.
+
     combine pipelines
         When `operation`\s and/or `pipeline`\s are `compose`\d together, there are
         two ways to combine the operations contained into the new pipeline:
@@ -90,6 +101,7 @@ Architecture
             :ref:`hierarchical-data` (example).
 
     compile
+    compilation
     planning
         The `phase` where the :class:`.Network` creates a new `execution plan`
         by `pruning` all `graph` nodes into a subgraph `dag`, and  deriving

@@ -250,7 +250,7 @@ def recompute_inputs(
     :param recompute_from:
         None or a sequence
     :param recompute_till:
-        None or a sequence
+        (UNSTABLE) None or a sequence
 
     :return:
         a 2-tuple with the reduced `inputs` by the dependencies that must
@@ -887,7 +887,7 @@ class Network(Plottable):
         :param recompute_from:
             Described in :meth:`.Pipeline.compute()`.
         :param recompute_till:
-            Described in :meth:`.Pipeline.compute()`.
+            (UNSTABLE) Described in :meth:`.Pipeline.compute()`.
         :param predicate:
             the :term:`node predicate` is a 2-argument callable(op, node-data)
             that should return true for nodes to include; if None, all nodes included.

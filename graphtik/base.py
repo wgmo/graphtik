@@ -802,7 +802,7 @@ class Operation(Plottable, abc.ABC):
             recompute all downstream from those dependencies,
             see :meth:`.Pipeline.compute()`.
         :param recompute_till:
-            recompute all upstream from those dependencies,
+            (UNSTABLE) recompute all upstream from those dependencies,
             see :meth:`.Pipeline.compute()`.
 
         :returns list:

@@ -338,7 +338,7 @@ class Pipeline(Operation):
         :param recompute_from:
             Described in :meth:`.Pipeline.compute()`.
         :param recompute_till:
-            Described in :meth:`.Pipeline.compute()`.
+            (UNSTABLE) Described in :meth:`.Pipeline.compute()`.
         :param predicate:
             Will be stored and applied on the next :meth:`compute()` or :meth:`compile()`.
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
@@ -392,9 +392,10 @@ class Pipeline(Operation):
             If ``None``, all possible intermediate outputs will be kept.
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
         :param recompute_from:
-            Refresh all computations reachable from these (string or list) dependencies.
-            In effect, it clears all values in `named_inputs` reachable strictly DOWNstreams
-            from those dependencies.
+            :term:`recompute` operations downstream from these (string or list) dependencies.
+            In effect, before :term:`compiling <compile>`, it marks all values
+            *strictly downstream (excluding themselves)* from the dependencies
+            listed here, as missing from `named_inputs`.
 
             * If also `recompute_till` is given, traversing downstream stops
               when arriving in any dependency contained in that list.
@@ -405,7 +406,7 @@ class Pipeline(Operation):
             * Results may differ even if graph is unchanged, in the presence
               of :term:`overwrite`\\s.
         :param recompute_till:
-            Refresh all computations arriving to these (string or list) dependencies.
+            (UNSTABLE) Refresh all computations arriving to these (string or list) dependencies.
             In effect, it clears all values in `named_inputs` reachable UPstreams.
 
             * See bullet notes in `recompute_from`, above.
