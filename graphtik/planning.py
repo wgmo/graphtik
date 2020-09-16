@@ -917,7 +917,7 @@ class Network(Plottable):
             recompute_till, k4 = self._deps_tuplized(recompute_till, "recompute_till")
             if not predicate:
                 predicate = None
-            cache_key = (k1, k2, k3, k4, predicate)
+            cache_key = (k1, k2, k3, k4, predicate, is_skip_evictions())
 
             ## Build (or retrieve from cache) execution plan
             #  for the given dep-lists (excluding any unknown node-names).
