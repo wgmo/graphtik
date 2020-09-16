@@ -1164,7 +1164,6 @@ def test_recompute_till():
 
     with evictions_skipped(True):
         sol = pipe.compute(inp, outputs="a3", recompute_from="a1")
-        sol.plot("t.pdf")
         assert exe_ops(sol) == ["f1", "f2"]
         assert sol == {"a0": 1, "a1": 3, "a2": 6, "a3": 12, "a4": 16}
 
