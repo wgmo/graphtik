@@ -21,7 +21,7 @@ from graphtik import (
     vararg,
     varargs,
 )
-from graphtik.base import IncompleteExecutionError
+from graphtik.base import IncompleteExecutionError, UNSET
 from graphtik.config import debug_enabled, evictions_skipped, operations_endured
 
 from .helpers import addall, exe_params
@@ -1014,17 +1014,26 @@ def test_rerun_resched(quarantine_pipeline):
     assert exe_ops(sol) == ["get_out_or_stay_home", "exercise"]
 
 
-@pytest.mark.xfail(reason="Badly-specified `recompute` empties AND algorithm!")
-def test_recompute_empties(samplenet):
+@pytest.fixture
+def recompute_sol(samplenet):
     pipe = compose(..., samplenet, excludes="sum_op1")
     sol = pipe.compute({"c": 3, "d": 4}, recompute_from=())
     assert sol == {"c": 3, "d": 4, "sum2": 7, "sum3": 10}
     assert exe_ops(sol) == ["sum_op2", "sum_op3"]
+
+    return pipe, sol
+
+
+@pytest.mark.parametrize("outs", [None, UNSET, ()])
+@pytest.mark.parametrize("recomputes", [None, ()])
+def test_recompute_empties(recompute_sol, outs, recomputes):
+    pipe, sol = recompute_sol
     exp = dict(sol)
 
-    sol = pipe.compute(sol, recompute_from=())
-    assert sol == exp
-    assert exe_ops(sol) == ["sum_op2", "sum_op3"]
+    with pytest.raises(ValueError, match="^Unsolvable"):
+        pipe.compute(sol, outputs=outs, recompute_from=recomputes)
+    with pytest.raises(ValueError, match="^Unsolvable"):
+        pipe.compute({}, outputs=outs, recompute_from=recomputes)
 
 
 @pytest.mark.parametrize(
@@ -1129,6 +1138,35 @@ def test_recompute_resched_false(quarantine_pipeline, recompute, exp_ops):
     sol = pipe.compute(inp, recompute_from=recompute)
     assert sol == inp
     assert exe_ops(sol) == exp_ops
+
+
+def test_recompute_till():
+    def by2(n):
+        return 2 * n
+
+    pipe = compose(
+        ...,
+        operation(by2, "f0", "a0", "a1"),
+        operation(by2, "f1", "a1", "a2"),
+        operation(by2, "f2", "a2", "a3"),
+        operation(by2, "f3", "a3", "a4"),
+    )
+    sol = pipe(a0=1)
+    assert exe_ops(sol) == ["f0", "f1", "f2", "f3"]
+    assert sol == {"a0": 1, "a1": 2, "a2": 4, "a3": 8, "a4": 16}
+
+    inp = dict(sol)
+    inp["a1"] = 3
+
+    sol = pipe.compute(inp, outputs="a3", recompute_from="a1")
+    assert exe_ops(sol) == ["f1", "f2"]
+    assert sol == {"a3": 12}
+
+    with evictions_skipped(True):
+        sol = pipe.compute(inp, outputs="a3", recompute_from="a1")
+        sol.plot("t.pdf")
+        assert exe_ops(sol) == ["f1", "f2"]
+        assert sol == {"a0": 1, "a1": 3, "a2": 6, "a3": 12, "a4": 16}
 
 
 def test_recompute_NEEDS_FIX():
