@@ -155,6 +155,7 @@ Run the graph and request all of the outputs
 >>> solution.plot('executed_3ops.svg')  # doctest: +SKIP
 
 |sample-sol|
+
 |plot-legend|
 
 .. |sample-plot| image:: docs/source/images/sample.svg
