@@ -403,7 +403,7 @@ def make_op_prune_comment(plot_args: PlotArgs):
     plottable = plot_args.plottable
 
     comments = ()
-    if sol is not None and op in sol.plan.comments:
+    if hasattr(sol, "plan") and op in sol.plan.comments:
         comments = sol.plan.comments
     elif op in getattr(plottable, "comments", ()):
         comments = plottable.comments
@@ -1437,7 +1437,7 @@ class Plotter:
             #
             is_pruned = (
                 hasattr(plottable, "dag") and nx_node not in plottable.dag.nodes
-            ) or (solution is not None and nx_node not in solution.dag.nodes)
+            ) or (hasattr(solution, "dag") and nx_node not in solution.dag.nodes)
             if is_pruned:
                 graph.nodes[nx_node]["_pruned"] = True  # Signal to edge-plotting.
                 styles.add("kw_data_pruned")
@@ -1453,7 +1453,7 @@ class Plotter:
                 if nx_node in solution:
                     styles.add("kw_data_in_solution")
 
-                    if nx_node in solution.overwrites:
+                    if nx_node in getattr(solution, "overwrites", ()):
                         styles.add("kw_data_overwritten")
 
                 elif nx_node in steps:
@@ -1500,11 +1500,11 @@ class Plotter:
             label_styles.add("kw_op_prune_comment")
 
             if solution:
-                if solution.is_failed(nx_node):
+                if hasattr(solution, "is_failed") and solution.is_failed(nx_node):
                     label_styles.add("kw_op_failed")
-                elif nx_node in solution.executed:
+                elif nx_node in getattr(solution, "executed", ()):
                     label_styles.add("kw_op_executed")
-                elif nx_node in solution.canceled:
+                elif nx_node in getattr(solution, "canceled", ()):
                     label_styles.add("kw_op_canceled")
 
             label_styles.stack_user_style(node_attrs)
@@ -1618,7 +1618,8 @@ class Plotter:
         if graph.nodes[src].get("_pruned") or graph.nodes[dst].get("_pruned"):
             styles.add("kw_edge_pruned")
         if (
-            solution is not None
+            hasattr(solution, "dag")
+            and hasattr(solution, "plan")
             and (src, dst) not in solution.dag.edges
             and (src, dst) in solution.plan.dag.edges
         ):
