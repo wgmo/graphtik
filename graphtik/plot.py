@@ -587,7 +587,7 @@ class Theme:
                 {%- endif -%}
 
                 {%- if nx_item | sfxed -%}
-                    <BR/>(<I>sfx:</I> {{ nx_item | sfx_list | join(', ') | eee }})
+                    <BR/>(<I>sfxed:</I> {{ nx_item | sfx_list | join(', ') | eee }})
                 {%- endif -%}
 
             </TD>
