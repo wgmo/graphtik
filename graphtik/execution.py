@@ -379,6 +379,15 @@ class Solution(ChainMap, Plottable):
         return plot_args
 
 
+#: Argument passed in a :term:`pre_callback` callable before executing each operation,
+#: and contains fields to identify the operation call:
+#:
+#: :param op: the operation about to be computed;
+#: :param sol: the slution (might be just a plain dict if it has been marshalled);
+#: :param solid: the operation identity, needed if `sol` is a plain dict,
+OpCb = namedtuple("OpCb", "op, sol, solid")
+
+
 class _OpTask:
     """
     Mimic :class:`concurrent.futures.Future` for :term:`sequential` execution.
@@ -453,15 +462,6 @@ def _do_task(task):
         result = task()
 
     return result
-
-
-#: Argument passed in a :term:`pre_callback` callable before executing each operation,
-#: and contains fields to identify the operation call:
-#:
-#: :param op: the operation about to be computed;
-#: :param sol: the slution (might be just a plain dict if it has been marshalled);
-#: :param solid: the operation identity, needed if `sol` is a plain dict,
-OpCb = namedtuple("OpCb", "op, sol, solid")
 
 
 class ExecutionPlan(
