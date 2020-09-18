@@ -41,6 +41,7 @@ Graphtik Changelog
     - [ ] FEAT: ``compute(solution, recompute_from=["input_1"], recompute_till="output_1"])``
       - [ ] fix: FnOp.compute() should (or should not?) accept Pipeline.compute() args.
   - [ ] REFACT/FEAT/ENH: Autograph functions by annotating
+  - [ ] REFACT: move GitHub organization `pygraphkit --> pygraphtik`
 
   - plot:
 
@@ -89,6 +90,13 @@ https://github.com/pygraphkit/graphtik/releases
 
 Changelog
 %%%%%%%%%
+
+
+v10.2.1 (18 Sep 2020, @ankostis): plot sol bugfix
+-------------------------------------------------
++ FIX(PLOT): passing simple dictionaries into ``plot(solution=...)``` were crashing.
+
++ enh(plot): use also a different label (not only format) to distinguish sfx/sfxed in plots.
 
 
 v10.2.0 (16 Sep 2020, @ankostis): RECOMPUTE, pre-callback, drop `op_xxx`, ops-eq-op.name, drop NULL_OP
