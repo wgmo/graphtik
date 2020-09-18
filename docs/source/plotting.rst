@@ -684,10 +684,14 @@ and plot them.
 It takes some practice to familiarize yourself with the internals of *graphtik*,
 for instance:
 
+* in :meth:`.FnOp._match_inputs_with_fn_needs()` method, the the solution is found
+  in the ``named_inputs`` argument.  For instance, to index with the 1st `needs`
+  into the solution::
+
+      named_inputs[self.needs[0]]
+
 * in :meth:`.ExecutionPlan._handle_task()` method, the ``solution`` argument
   contains the "live" instance, while
-* in :meth:`.FnOp._match_inputs_with_fn_needs()` method, the the solution is found
-  in the ``named_inputs`` argument.
 * The :class:`.ExecutionPlan` is contained in the :attr:`.Solution.plan`, or
 * the *plan* is the ``self`` argument, if arrived in the :meth:`.Network.compile()` method.
 
