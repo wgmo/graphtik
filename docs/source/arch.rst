@@ -157,7 +157,7 @@ Architecture
 
         The class inherits :class:`collections.ChainMap`, to keep the results of
         each operation executed in a separate `solution layer` dictionary
-        (+1 for user-inputs).
+        (+1 for user-inputs), unless *layering* disabled.
 
         The results of the last operation executed "win" in the *outputs* produced,
         and the base (least precedence) is the user-inputs given when the execution
@@ -167,13 +167,17 @@ Architecture
 
     layer
     solution layer
-        By default, the `solution` class keeps the `outputs` of each executed `operation`
-        (and given `inputs`) in separate dictionaries (*layers*).
+        When disabled, `solution` stores in *layers* just the `provides` keys of executed `operation`\s.
 
-        This layering is disabled if a `jsonp` `dependency` exists in the `network`,
+        By default, the `solution` class keeps the `outputs` (and given `inputs`)
+        of executed operations in separate dictionaries (*layers*).
+
+        The layering is disabled if a `jsonp` `dependency` exists in the `network`,
         assuming that :func:`.set_layered_solution` `configurations` has not been
         called with a ``True/False``, nor has the respective parameter been given
         to methods :meth:`~.FnOp.compute()`/:meth:`~.ExecutionPlan.execute()`.
+
+        In any case, `overwrite`\s work in both cases.
 
         .. hint::
 
@@ -185,7 +189,8 @@ Architecture
     overwrite
         `solution` values written by more than one `operation`\s in the respective `layer`,
         accessed by :attr:`.Solution.overwrites` attribute
-        (assuming that *layers* have not been disabled e.g. due to `hierarchical data`).
+        (assuming that *layers* have not been disabled e.g. due to `hierarchical data`,
+        in which case, just those `provides` actually produces in the `outputs` are stored).
 
         Note that `sideffected` `outputs` always produce an *overwrite*.
 

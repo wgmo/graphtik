@@ -75,33 +75,41 @@ class Solution(ChainMap, Plottable):
     for each operation executed, +1 for the user inputs.
     """
 
+    #: The :term:`layer` map of operations to their results
+    #: (initially empty dicts).
+    #:
+    #: The result dictionaries pre-populate this (self) chainmap,
+    #: with the 1st map (wins all reads) the last operation executed,
+    #: and the last one the `input_values` dict,
+    #: unless layering disabled, in which case, `input_values` is the 1st.
+    _layers: Mapping[Operation, Any]
+    #: Command :term:`solution layer`, default, false if not any jsonp in dependencies.
+    is_layered: bool
+
     def __init__(
         self,
         plan,
         input_values: dict,
         pre_callback: Callable[["OpCb"], None] = None,
-        layered_solution=None,
+        is_layered=None,
     ):
         self.pre_callback = pre_callback
-        layered_solution = first_solid(is_layered_solution(), layered_solution)
-        if layered_solution is None:
-            layered_solution = not any(get_jsonp(d) for d in plan.net.data)
+        self._layers = {op: {} for op in yield_ops(reversed(plan.steps))}
+        is_layered = first_solid(is_layered_solution(), is_layered)
 
-        #: :term:`layer` map of operations to their results
-        #: (initially empty dicts).
-        #: The result dictionaries pre-populate this (self) chainmap,
-        #: with the 1st map (wins all reads) the last operation executed,
-        #: the last one the `input_values` dict.
-        #:
-        #: If network contains :term:`jsonp` dependencies, by default
-        #: layers are disabled, and this is None.
-        self._layers: Optional[Mapping] = (
-            {op: {} for op in yield_ops(reversed(plan.steps))}
-            if layered_solution
-            else None
-        )
-        maps = self._layers.values() if self._layers else ()
-        super().__init__(*maps, input_values)
+        ##: By default, disable layers if network contains :term:`jsonp` dependencies.
+        #
+        if is_layered is None:
+            is_layered = not any(get_jsonp(d) for d in plan.net.data)
+        self.is_layered = is_layered
+
+        ## see :attr:`_layers`
+        #
+        maps = self._layers.values()
+        if is_layered:
+            super().__init__(*maps, input_values)
+        else:
+            super().__init__(input_values, *maps)
 
         #: the plan that produced this solution
         self.plan = plan
@@ -138,16 +146,14 @@ class Solution(ChainMap, Plottable):
 
     def copy(self):
         """Deep-copy user's `input_data` and pass the rest intoa new Solution. """
-        named_inputs = dict(self.maps[-1])
+        named_inputs = dict(self.maps[-1 if self.is_layered else 0])
         clone = type(self)(
             self.plan,
             named_inputs,
             self.pre_callback,
             # Specially handled below bc user's `layered_solution` arg is lost.
-            layered_solution=None,
+            is_layered=self.is_layered,
         )
-        if self._layers is None:
-            clone._layers = None
 
         props = (
             "maps executed canceled elapsed_ms solid"
@@ -168,7 +174,10 @@ class Solution(ChainMap, Plottable):
             return f"{{{items}}}"
 
     def debugstr(self):
-        return f"{type(self).__name__}({dict(self)}, {self.plan}, {self.executed}, {self._layers})"
+        return (
+            f"{type(self).__name__}({dict(self)}, {self.plan}, {self.executed}, "
+            f"is_layered={self.is_layered}, {self._layers})"
+        )
 
     def _reschedule(self, dag, reason, op):
         """
@@ -211,31 +220,39 @@ class Solution(ChainMap, Plottable):
         Observes any :term:`accessor`\\s in the k
         A separate method to allow subclasses with custom accessor logic.
         """
-        op_layer = self._layers[op] if self._layers else self.maps[-1]
-        accessors = [get_accessor(o) for o in outputs]
-        if any(accessors):
-            ## Group out-values by their `update` accessor (or None).
-            update_groups = defaultdict(list)
-            for ac, kv in zip(accessors, outputs.items()):
-                update_groups[ac and ac.update].append(kv)
-
-            ## Values without :attr:`._accessor.update` are to be set one-by-one,
-            #  further below.
-            outputs = update_groups.pop(None, None)
-
-            for upd, pairs in update_groups.items():
-                upd(op_layer, pairs)
-
         if outputs:
-            op_layer.update(outputs)
+            if self.is_layered:
+                op_layer = self._layers[op]
+            else:
+                op_layer = self.maps[0]
+                self._layers[op].update((k, None) for k in outputs)
+
+            accessors = [get_accessor(o) for o in outputs]
+            if any(accessors):
+                ## Group out-values by their `update` accessor (or None).
+                update_groups = defaultdict(list)
+                for ac, kv in zip(accessors, outputs.items()):
+                    update_groups[ac and ac.update].append(kv)
+
+                ## Values without :attr:`._accessor.update` are to be set one-by-one,
+                #  further below.
+                outputs = update_groups.pop(None, None)
+
+                for upd, pairs in update_groups.items():
+                    upd(op_layer, pairs)
+
+            if outputs:
+                op_layer.update(outputs)
 
     def __contains__(self, key):
+        maps = self.maps if self.is_layered else self.maps[:1]
         acc = acc_contains(key)
-        return any(acc(m, key) for m in self.maps)
+        return any(acc(m, key) for m in maps)
 
     def __getitem__(self, key):
+        maps = self.maps if self.is_layered else self.maps[:1]
         acc = acc_getitem(key)
-        for mapping in self.maps:
+        for mapping in maps:
             try:
                 return acc(mapping, key)
             except KeyError:
@@ -333,7 +350,9 @@ class Solution(ChainMap, Plottable):
             for k, v in d.items():
                 dd[k].append(v)
 
-        return {k: v for k, v in dd.items() if len(v) > 1}
+        # At least x2 overwrites in non-layered, 1 in `named_inputs`,  1+ in layers
+        dupes_limit = 1 if self.is_layered else 2
+        return {k: v for k, v in dd.items() if len(v) > dupes_limit}
 
     def check_if_incomplete(self) -> Optional[IncompleteExecutionError]:
         """Return a :class:`IncompleteExecutionError` if `pipeline` operations failed/canceled. """
@@ -902,7 +921,7 @@ class ExecutionPlan(
                 if evict
                 else named_inputs,
                 pre_callback,
-                layered_solution=layered_solution,
+                is_layered=layered_solution,
             )
 
             log.info(
