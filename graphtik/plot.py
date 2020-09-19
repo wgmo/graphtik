@@ -391,10 +391,20 @@ def _render_template(tpl: jinja2.Template, **kw) -> str:
 def make_data_value_tooltip(plot_args: PlotArgs):
     """Called on datanodes, when solution exists. """
     node = plot_args.nx_item
-    if node in plot_args.solution:
-        val = plot_args.solution.get(node)
-        tooltip = "(None)" if val is None else f"({type(val).__name__}) {val}"
-        return quote_html_tooltips(tooltip)
+    assert node in plot_args.solution
+    val = plot_args.solution[node]
+    tooltip = "(None)" if val is None else f"({type(val).__name__}) {val}"
+    return quote_html_tooltips(tooltip)
+
+
+def make_overwrite_tooltip(plot_args: PlotArgs):
+    """Called on datanodes, withmultiple overwrite values. """
+    node = plot_args.nx_item
+    assert node in plot_args.solution
+    val = plot_args.solution.overwrites[node]
+    val_str = "\n  ".join(f"{i}. {v}" for i, v in reversed(list(enumerate(val))))
+    tooltip = f"(x{len(val)} overwrites) {val_str}"
+    return quote_html_tooltips(tooltip)
 
 
 def make_op_prune_comment(plot_args: PlotArgs):
@@ -553,7 +563,7 @@ class Theme:
     kw_data_overwritten = {
         "style": ["filled"],
         "fillcolor": Ref("overwrite_color"),
-        "tooltip": ["(overwritten)"],
+        "tooltip": [make_overwrite_tooltip],
     }
     kw_data_missing = {
         "fontcolor": Ref("canceled_color"),
