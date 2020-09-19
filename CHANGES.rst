@@ -15,47 +15,70 @@ Graphtik Changelog
 ..
   TODOs
   %%%%%
+  <hidden from RTD docs, as comment>
 
-  Tasks
-  =====
   - [+] ENH: planning reports unsatisfied node modus, for plotting
-  - [ ] DROP PARALLEL: always produce a list of "parallelizable batches",
-        to hook with other executors, and keep here just the single-process implementation.
-  - [ ] DROP accessors
-  - [ ] DROP/ENH: Solution updates GivenInputs only, layers jsonp-refer to its values
-  - [ ] FEAT: break cycles with dijkstra; weights
-  - [ ] FEAT: Config DEBUG flags:
-    - [ ] skip - evictions(drop config)
-    - [ ] keep SFX in outputs
-  - [ ] ENH: virtual graph roots for inputs & outputs, for networks visiting algos
-        (eg prune by outs)
-  - [ ] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
-  - [ ] ENH: varargs for Outs collect all outs to the very end
-  - [ ] ENH: use Signature.Param from `inspect` module to match needs & zip provides
-  - [ ] FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
+  - [v] ENH: Plan accepts previous solutions
+    - [v] fix: FnOp.compute() should (or should not?) accept Pipeline.compute() args.
+    - [v] FEAT: ``compute(solution, recompute_from=["input_1"])``
 
-  - [ ] DOC: explain Implicits in tutorial
-    - [ ] TCs: Test DEBUG
-  - [ ] ENH: Plan accepts previous solutions
-    - [ ] refact: named_inputs --> sol
-    - [ ] FEAT: ``compute(solution, recompute_from=["input_1"], recompute_till="output_1"])``
-      - [ ] fix: FnOp.compute() should (or should not?) accept Pipeline.compute() args.
-  - [ ] REFACT/FEAT/ENH: Autograph functions by annotating
-  - [ ] REFACT: move GitHub organization `pygraphkit --> pygraphtik`
+  - Configs:
+    - [ ] FEAT: drop MANY contextvars with 1 cfg-dict in contextvars?
+    - [ ] FEAT: drop contextvars, use merging-dicts on (cfg, pipe, op) instead?
+      BUT then cannot change configs amidst run, unless next todo ...
+    - [ ] FEAT: configs & op attributes accept 2-tuples: (flag, priority)
+      default priorities: cfg, fnop
+      (+cat: Compose)
+    - [ ] FEAT: Config DEBUG flags:
+      - [ ] skip - evictions(drop config)
+      - [ ] keep SFX in outputs
+
+  - Compose:
+    - [ ] REFACT/FEAT/ENH: Autograph functions by annotating
+    - [?] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
+    - [ ] FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
+    - [ ] feat: add a real ``implicit`` modifier.
+
+  - Plan:
+    - [ ] FEAT: break cycles with dijkstra; +weights.
+    - [ ] ENH: virtual graph roots for inputs & outputs, to replace custom node-visiting algos
+          (eg unsatisfied-ops, prune-by-outs)
+    - [ ] FEAT: per-operation EVICTs
+      (+cat: Compose)
+    - [ ] DROP PARALLEL: always produce a list of "parallelizable batches",
+          to hook with other executors, and keep here just the single-process implementation.
+      (+cat: Execution)
+
+  - Execute:
+    - [ ] ENH/REFACT: use Signature.Param from `inspect` module to match needs & zip provides
+    - [?] refact: named_inputs --> sol
+    - [ ] FEAT: varargs for Outs collect all outs to the very end
+      (+cat: Compose)
+    - [ ] ???: Should sfxed's sfx-lists become implicits? (to be accessed regularly downstream)
+
+    - **Solution:**
+      - [x] DROP accessors?
+        - [ ] DROP/ENH: Solution updates GivenInputs only, yet still layers jsonp-refer to its values.
+        - [ ] FEAT: VALIDATE (by user) items on Solution-Insert (with a `post_callback`?):
+          - auto-assertions {jsonp--> validators}
+          - compare overwrites while recomputing
+      - [ ] FEAT: ``pd.concat()`` --> modifier+accessor, to avoid sfxed for multi-column updates.
+        (+cat: Compose)
 
   - plot:
-
     - [ ] Badges on Data
     - [ ] update legend (or generate it dynamically)
     - [ ] sphinxext: extend standard `doctest` module (instead of sphinx-builder)
     - [ ] SPHINXEXT: autodoc Pipelines & Ops
 
-  - doc:
-
+  - Docs:
+    - [ ] REFACT: move GitHub organization `pygraphkit --> pygraphtik` (+Travis, +RTD)
     - [ ] Merge tutorial (operations + composition)
+    - [ ] DOC: explain Implicits in tutorial
+      - [ ] TCs: Test DEBUG
+
 
   - DROPPED
-
     - [X] Solution-retriever modifier;
       WONTFIX: easier and more generic to access solution from Op-context.
       REINSTATED to support simple conveyor belts from json-pointer paths.
@@ -83,18 +106,13 @@ Graphtik Changelog
   + See :gg:`1`.
 
 
-GitHub Releases
-%%%%%%%%%%%%%%%
-
-https://github.com/pygraphkit/graphtik/releases
-
 Changelog
 %%%%%%%%%
-
+:GitHub Releases: https://github.com/pygraphkit/graphtik/releases
 
 v10.2.1 (18 Sep 2020, @ankostis): plot sol bugfix
 -------------------------------------------------
-+ FIX(PLOT): passing simple dictionaries into ``plot(solution=...)``` were crashing.
++ FIX(PLOT): passing simple dictionaries into ``plot(solution=...)`` were crashing.
 
 + enh(plot): use also a different label (not only format) to distinguish sfx/sfxed in plots.
 
