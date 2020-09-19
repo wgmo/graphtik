@@ -105,11 +105,8 @@ class Solution(ChainMap, Plottable):
 
         ## see :attr:`_layers`
         #
-        maps = self._layers.values()
-        if is_layered:
-            super().__init__(*maps, input_values)
-        else:
-            super().__init__(input_values, *maps)
+        maps = self._layers.values() if self.is_layered else ()
+        super().__init__(*maps, input_values)
 
         #: the plan that produced this solution
         self.plan = plan
@@ -145,8 +142,8 @@ class Solution(ChainMap, Plottable):
         # assert next(iter(dag.edges))[0] == next(iter(plan.dag.edges))[0]:
 
     def copy(self):
-        """Deep-copy user's `input_data` and pass the rest intoa new Solution. """
-        named_inputs = dict(self.maps[-1 if self.is_layered else 0])
+        """Deep-copy user's `input_data` and pass the rest into a new Solution. """
+        named_inputs = dict(self.maps[-1])
         clone = type(self)(
             self.plan,
             named_inputs,
@@ -224,8 +221,9 @@ class Solution(ChainMap, Plottable):
             if self.is_layered:
                 op_layer = self._layers[op]
             else:
-                op_layer = self.maps[0]
-                self._layers[op].update((k, None) for k in outputs)
+                op_layer = self.maps[-1]
+                # Update just they keys, the values are in `input_values`.
+                self._layers[op].update((o, None) for o in outputs)
 
             accessors = [get_accessor(o) for o in outputs]
             if any(accessors):
@@ -245,14 +243,12 @@ class Solution(ChainMap, Plottable):
                 op_layer.update(outputs)
 
     def __contains__(self, key):
-        maps = self.maps if self.is_layered else self.maps[:1]
         acc = acc_contains(key)
-        return any(acc(m, key) for m in maps)
+        return any(acc(m, key) for m in self.maps)
 
     def __getitem__(self, key):
-        maps = self.maps if self.is_layered else self.maps[:1]
         acc = acc_getitem(key)
-        for mapping in maps:
+        for mapping in self.maps:
             try:
                 return acc(mapping, key)
             except KeyError:
@@ -268,6 +264,9 @@ class Solution(ChainMap, Plottable):
         acc = acc_delitem(key)
         for m in matches:
             acc(m, key)
+        if not self.is_layered:
+            for m in self._layers.values():
+                m.pop(key, None)
 
     def operation_executed(self, op, outputs):
         """
@@ -344,7 +343,9 @@ class Solution(ChainMap, Plottable):
         exist more than once, and values, all those values in a list, ordered
         in reverse compute order (1st is the last one computed).
         """
-        maps = self.maps
+        maps = self.maps[:]
+        if not self.is_layered:
+            maps.extend(self._layers.values())
         dd = defaultdict(list)
         for d in maps:
             for k, v in d.items():

@@ -177,7 +177,7 @@ Architecture
         called with a ``True/False``, nor has the respective parameter been given
         to methods :meth:`~.FnOp.compute()`/:meth:`~.ExecutionPlan.execute()`.
 
-        In any case, `overwrite`\s work in both cases.
+        If disabled, `overwrite`\s are lost, but are marked as such.
 
         .. hint::
 

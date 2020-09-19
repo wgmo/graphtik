@@ -410,7 +410,7 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
         "todos": range(14, 17),
     }
 
-    assert sol.overwrites == {}
+    assert sol.overwrites == {"backlog": [range(14, 17), None, None, None]}
 
     ## -1 tasks for Wednesday to enact
 
@@ -427,7 +427,7 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
         "weekly_tasks": (range(0, 4), range(4, 9)),
         "todos": (),
     }
-    assert sol.overwrites == {}
+    assert sol.overwrites == {"backlog": [range(9, 9), None, None]}
 
     sol = week.compute(
         {"backlog": range(9)},
