@@ -75,6 +75,29 @@ class Solution(ChainMap, Plottable):
     for each operation executed, +1 for the user inputs.
     """
 
+    #: A dictionary with keys the operations executed, and values their status:
+    #:
+    #: - no key:            not executed yet
+    #: - value None:        execution ok
+    #: - value Exception:   execution failed
+    #: - value Collection:  canceled provides
+    executed: OpMap = {}
+    #: A map of {rescheduled operation -> dynamically pruned ops, downstream}.
+    broken: Mapping[Operation, Operation] = {}
+    #: A {op, prune-explanation} dictionary with :term:`canceled operation`\\s
+    #: due to upstream failures.
+    canceled: OpMap = {}
+    elapsed_ms = {}
+    #: A unique identifier to distinguish separate flows in execution logs.
+    solid: str
+    # FIXME: SPURIOUS dag reversals on multi-threaded runs (see below next assertion)!
+    #: Cloned from `plan` will be modified, by removing the downstream edges of:
+    #:
+    #: - any partial outputs not provided, or
+    #: - all `provides` of failed operations.
+    dag: nx.DiGraph
+    #: the plan that produced this solution
+    plan = "ExecutionPlan"
     #: The :term:`layer` map of operations to their results
     #: (initially empty dicts).
     #:
@@ -82,7 +105,7 @@ class Solution(ChainMap, Plottable):
     #: with the 1st map (wins all reads) the last operation executed,
     #: and the last one the `input_values` dict,
     #: unless layering disabled, in which case, `input_values` is the 1st.
-    _layers: Mapping[Operation, Any]
+    _layers: OpMap
     #: Command :term:`solution layer`, default, false if not any jsonp in dependencies.
     is_layered: bool
 
@@ -108,21 +131,10 @@ class Solution(ChainMap, Plottable):
         maps = self._layers.values() if self.is_layered else ()
         super().__init__(*maps, input_values)
 
-        #: the plan that produced this solution
         self.plan = plan
-        #: A dictionary with keys the operations executed, and values their status:
-        #:
-        #: - no key:            not executed yet
-        #: - value None:        execution ok
-        #: - value Exception:   execution failed
-        #: - value Collection:  canceled provides
         self.executed: OpMap = {}
-        # not iterated, order unimportant, but ...
-        #: A {op, prune-explanation} dictionary with :term:`canceled operation`\\s
-        #: due to upstream failures.
-        self.canceled: OpMap = {}
+        self.canceled = {}
         self.elapsed_ms = {}
-        #: A unique identifier to distinguish separate flows in execution logs.
         self.solid = "%X" % random.randint(0, 2 ** 16)
 
         ## Cache context-var flags.
@@ -132,12 +144,7 @@ class Solution(ChainMap, Plottable):
         self.is_parallel = is_parallel_tasks()
         self.is_marshal = is_marshal_tasks()
 
-        #: Cloned from `plan` will be modified, by removing the downstream edges of:
-        #:
-        #: - any partial outputs not provided, or
-        #: - all `provides` of failed operations.
-        #:
-        #: FIXME: SPURIOUS dag reversals on multi-threaded runs (see below next assertion)!
+        # FIXME: SPURIOUS dag reversals on multi-threaded runs (see below next assertion)!
         self.dag = plan.dag.copy()
         # assert next(iter(dag.edges))[0] == next(iter(plan.dag.edges))[0]:
 
