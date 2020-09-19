@@ -80,7 +80,6 @@ class Solution(ChainMap, Plottable):
     #: - no key:            not executed yet
     #: - value None:        execution ok
     #: - value Exception:   execution failed
-    #: - value Collection:  canceled provides
     executed: OpMap = {}
     #: A map of {rescheduled operation -> dynamically pruned ops, downstream}.
     broken: Mapping[Operation, Operation] = {}
@@ -134,6 +133,7 @@ class Solution(ChainMap, Plottable):
         self.plan = plan
         self.executed: OpMap = {}
         self.canceled = {}
+        self.broken = {}
         self.elapsed_ms = {}
         self.solid = "%X" % random.randint(0, 2 ** 16)
 
@@ -324,7 +324,7 @@ class Solution(ChainMap, Plottable):
                 dag.remove_edges_from((op, out) for out in outs_to_break)
                 self._reschedule(dag, "rescheduled", op)
                 # list used by `check_if_incomplete()`
-                self.executed[op] = outs_to_break
+                self.broken[op] = outs_to_break
 
     def operation_failed(self, op, ex):
         """
@@ -371,9 +371,7 @@ class Solution(ChainMap, Plottable):
         if incomplete:
             incomplete = list(yield_node_names(incomplete))
             partial_msgs = {
-                f"\n  +--{op.name}: {list(pouts)}"
-                for op, pouts in self.executed.items()
-                if pouts and isinstance(pouts, abc.Collection)
+                f"\n  +--{op.name}: {list(pouts)}" for op, pouts in self.broken.items()
             }
             err_msgs = [
                 f"\n  +--{op.name}: {type(ex).__name__}('{ex}')"
