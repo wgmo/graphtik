@@ -159,10 +159,19 @@ class Solution(ChainMap, Plottable):
             is_layered=self.is_layered,
         )
 
+        ## replicate maps/_layers machinery.
+        #
+        clone._layers = dict(self._layers)
+        maps = clone._layers.values() if self.is_layered else ()
+        clone.maps = [*maps, named_inputs]
+
+        clone.executed = dict(self.executed)
+        clone.canceled = dict(self.canceled)
+        clone.elapsed_ms = dict(self.elapsed_ms)
+
         props = (
-            "maps executed canceled elapsed_ms solid"
-            " is_endurance is_reschedule is_parallel is_marshal dag"
-        ).split()
+            "is_layered is_endurance is_reschedule is_parallel is_marshal dag".split()
+        )
         for p in props:
             setattr(clone, p, getattr(self, p))
 
