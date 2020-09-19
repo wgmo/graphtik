@@ -168,12 +168,9 @@ set_layered_solution = partial(_tristate_set, _layered_solution)
 whether to store operation results into separate :term:`solution layer`
 
 :param enable:
-    - if None (default), results are layered only if there are NO :term:`jsonp` dependencies
-      in the network.
-    - When True(False), always keep(don't keep) results in a separate layer for each operation,
-      regardless of any *jsonp* dependencies.
-
-    It overrides any param given when executing a pipeline or a plan.
+    If false/true, it overrides any param given when executing a pipeline or a plan.
+    If None (default), results are layered only if there are NO :term:`jsonp` dependencies
+    in the network.
 
 :return:
     a "reset" token (see :meth:`.ContextVar.set`)

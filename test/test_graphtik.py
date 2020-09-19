@@ -866,6 +866,8 @@ def test_execution_endurance(exemethod, endurance, endured):
         sol = graph(**inp)
         assert sol.is_failed(scream1) and sol.is_failed(scream2)
         assert "Must not have run!" in str(sol.executed[scream1])
+        assert sol.is_failed(scream1) == sol.executed[scream1]
+        assert sol.is_failed(scream2) == sol.executed[scream2]
         assert sol == {"a+b": 3, "a+2b": 5, **inp}
         assert "x2 failures" in str(sol.check_if_incomplete())
         with pytest.raises(IncompleteExecutionError, match="x2 failures"):

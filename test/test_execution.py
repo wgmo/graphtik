@@ -188,8 +188,7 @@ def test_abort(exemethod):
     solution = exinfo.value.args[0]
     assert solution == exp
     assert exinfo.value.jetsam["solution"] == exp
-    executed = {op.name: val for op, val in solution.executed.items()}
-    assert executed == {"A": None, "B": None}
+    assert solution.executed == {"A": {"b": 1}, "B": {"c": None}}
 
     pipeline = compose(
         "pipeline",

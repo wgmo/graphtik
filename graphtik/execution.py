@@ -67,6 +67,35 @@ def _isDebugLogging():
     return log.isEnabledFor(logging.DEBUG)
 
 
+def _update_outputs_grouped_by_accessor(op_layer, outputs: Mapping):
+    """
+    Mass update values on the :term:`solution layer` for the given `op`
+
+    ... respecting any :attr:`._accessor.update` term:`accessor`\\s.
+
+    :param op_layer:
+        where to update values
+    :param outputs:
+        what to update
+    """
+    accessors = [get_accessor(o) for o in outputs]
+    if any(accessors):
+        ## Group out-values by their `update` accessor (or None).
+        update_groups = defaultdict(list)
+        for ac, kv in zip(accessors, outputs.items()):
+            update_groups[ac and ac.update].append(kv)
+
+        ## Values without :attr:`._accessor.update` are to be set one-by-one,
+        #  further below.
+        outputs = update_groups.pop(None, None)
+
+        for upd, pairs in update_groups.items():
+            upd(op_layer, pairs)
+
+    if outputs:
+        op_layer.update(outputs)
+
+
 class Solution(ChainMap, Plottable):
     """
     The :term:`solution` chain-map and execution state (e.g. :term:`overwrite` or :term:`canceled operation`)
@@ -75,11 +104,22 @@ class Solution(ChainMap, Plottable):
     for each operation executed, +1 for the user inputs.
     """
 
-    #: A dictionary with keys the operations executed, and values their status:
+    #: Command :term:`solution layer`, by
+    #:  default, false if not any jsonp in dependencies.
     #:
-    #: - no key:            not executed yet
-    #: - value None:        execution ok
-    #: - value Exception:   execution failed
+    #: See :attr:`executed` below
+    is_layered: bool
+    #: A dictionary with keys the operations executed,
+    #: and values their :term:`layer`, or status:
+    #:
+    #: - no key:                not executed yet
+    #: - value == dict:         execution ok, produced those outputs
+    #: - value == Exception:    execution failed
+    #:
+    #: Keys are ordered as operations executed (last, most recently executed).
+    #:
+    #: When :attr:`is_layered`, its value-dicts are inserted, in reverse order,
+    #: into my :attr:`maps` (from chain-map).
     executed: OpMap = {}
     #: A map of {rescheduled operation -> dynamically pruned ops, downstream}.
     broken: Mapping[Operation, Operation] = {}
@@ -97,16 +137,6 @@ class Solution(ChainMap, Plottable):
     dag: nx.DiGraph
     #: the plan that produced this solution
     plan = "ExecutionPlan"
-    #: The :term:`layer` map of operations to their results
-    #: (initially empty dicts).
-    #:
-    #: The result dictionaries pre-populate this (self) chainmap,
-    #: with the 1st map (wins all reads) the last operation executed,
-    #: and the last one the `input_values` dict,
-    #: unless layering disabled, in which case, `input_values` is the 1st.
-    _layers: OpMap
-    #: Command :term:`solution layer`, default, false if not any jsonp in dependencies.
-    is_layered: bool
 
     def __init__(
         self,
@@ -115,8 +145,8 @@ class Solution(ChainMap, Plottable):
         pre_callback: Callable[["OpCb"], None] = None,
         is_layered=None,
     ):
+        super().__init__(input_values)
         self.pre_callback = pre_callback
-        self._layers = {op: {} for op in yield_ops(reversed(plan.steps))}
         is_layered = first_solid(is_layered_solution(), is_layered)
 
         ##: By default, disable layers if network contains :term:`jsonp` dependencies.
@@ -127,11 +157,9 @@ class Solution(ChainMap, Plottable):
 
         ## see :attr:`_layers`
         #
-        maps = self._layers.values() if self.is_layered else ()
-        super().__init__(*maps, input_values)
 
         self.plan = plan
-        self.executed: OpMap = {}
+        self.executed: Mapping[Operation, dict] = {}
         self.canceled = {}
         self.broken = {}
         self.elapsed_ms = {}
@@ -159,14 +187,14 @@ class Solution(ChainMap, Plottable):
             is_layered=self.is_layered,
         )
 
-        ## replicate maps/_layers machinery.
+        ## replicate "layers"" machinery.
         #
-        clone._layers = dict(self._layers)
-        maps = clone._layers.values() if self.is_layered else ()
+        clone.executed = dict(self.executed)
+        maps = reversed(self.layers) if self.is_layered else ()
         clone.maps = [*maps, named_inputs]
 
-        clone.executed = dict(self.executed)
         clone.canceled = dict(self.canceled)
+        clone.broken = dict(self.broken)
         clone.elapsed_ms = dict(self.elapsed_ms)
 
         props = (
@@ -189,8 +217,13 @@ class Solution(ChainMap, Plottable):
     def debugstr(self):
         return (
             f"{type(self).__name__}({dict(self)}, {self.plan}, {self.executed}, "
-            f"is_layered={self.is_layered}, {self._layers})"
+            f"is_layered={self.is_layered})"
         )
+
+    @property
+    def layers(self) -> List[OpMap]:
+        """Outputs by operation, in execution order (last, most recently executed). """
+        return [v for v in self.executed.values() if not isinstance(v, Exception)]
 
     def _reschedule(self, dag, reason, op):
         """
@@ -226,38 +259,6 @@ class Solution(ChainMap, Plottable):
                 op.name,
             )
 
-    def _update_op_outs(self, op, outputs: Mapping):
-        """
-        Mass update values on the :term:`solution layer` for the given `op`.
-
-        Observes any :term:`accessor`\\s in the k
-        A separate method to allow subclasses with custom accessor logic.
-        """
-        if outputs:
-            if self.is_layered:
-                op_layer = self._layers[op]
-            else:
-                op_layer = self.maps[-1]
-                # Update just they keys, the values are in `input_values`.
-                self._layers[op].update((o, None) for o in outputs)
-
-            accessors = [get_accessor(o) for o in outputs]
-            if any(accessors):
-                ## Group out-values by their `update` accessor (or None).
-                update_groups = defaultdict(list)
-                for ac, kv in zip(accessors, outputs.items()):
-                    update_groups[ac and ac.update].append(kv)
-
-                ## Values without :attr:`._accessor.update` are to be set one-by-one,
-                #  further below.
-                outputs = update_groups.pop(None, None)
-
-                for upd, pairs in update_groups.items():
-                    upd(op_layer, pairs)
-
-            if outputs:
-                op_layer.update(outputs)
-
     def __contains__(self, key):
         acc = acc_contains(key)
         return any(acc(m, key) for m in self.maps)
@@ -281,8 +282,24 @@ class Solution(ChainMap, Plottable):
         for m in matches:
             acc(m, key)
         if not self.is_layered:
-            for m in self._layers.values():
+            for m in self.layers:
                 m.pop(key, None)
+
+    def _populate_op_layer_with_outputs(self, op, outputs) -> dict:
+        """
+        Populate a new layer for `op` with `outputs` , or use `named_inputs` (if non-layered).
+        """
+        if self.is_layered:
+            op_layer = {}
+            self.maps.insert(0, op_layer)
+            self.executed[op] = op_layer
+        else:
+            op_layer = self.maps[-1]
+            # Update just they keys, the values are in `input_names`.
+            self.executed[op] = {o: None for o in outputs}  # TODO: JsonpMapView
+
+        if outputs:
+            _update_outputs_grouped_by_accessor(op_layer, outputs)
 
     def operation_executed(self, op, outputs):
         """
@@ -306,9 +323,7 @@ class Solution(ChainMap, Plottable):
                 return ()
             return dep_singularized(dep)
 
-        self._update_op_outs(op, outputs)
-        self.executed[op] = None
-
+        self._populate_op_layer_with_outputs(op, outputs)
         if first_solid(self.is_reschedule, getattr(op, "rescheduled", None)):
             ## Find which provides have been broken?
             #
@@ -348,7 +363,9 @@ class Solution(ChainMap, Plottable):
         self._reschedule(dag, "failure of", op)
 
     def is_failed(self, op):
-        return isinstance(self.executed.get(op), Exception)
+        """returns Non(not executed), False(ok), Exception(failed)"""
+        exe = self.executed.get(op)
+        return exe and isinstance(exe, Exception) and exe
 
     @property
     def overwrites(self) -> Mapping[Any, List]:
@@ -361,7 +378,7 @@ class Solution(ChainMap, Plottable):
         """
         maps = self.maps[:]
         if not self.is_layered:
-            maps.extend(self._layers.values())
+            maps.extend(reversed(self.layers))
         dd = defaultdict(list)
         for d in maps:
             for k, v in d.items():
@@ -725,7 +742,7 @@ class ExecutionPlan(
                 type(ex).__name__,
                 ex,
                 len(solution.executed),
-                solution.executed,
+                list(solution.executed),
                 exc_info=is_debug(),
             )
 

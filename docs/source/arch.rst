@@ -155,11 +155,7 @@ Architecture
         by :meth:`.Pipeline.compute()` and populated with user-inputs, or must be
         created externally with those values and fed into the said method.
 
-        The class inherits :class:`collections.ChainMap`, to keep the results of
-        each operation executed in a separate `solution layer` dictionary
-        (+1 for user-inputs), unless *layering* disabled.
-
-        The results of the last operation executed "win" in the *outputs* produced,
+        The results of the last operation executed "win" in the `layer`\s,
         and the base (least precedence) is the user-inputs given when the execution
         started.
 
@@ -167,15 +163,17 @@ Architecture
 
     layer
     solution layer
-        When disabled, `solution` stores in *layers* just the `provides` keys of executed `operation`\s.
+        The `solution` class inherits :class:`~collections.ChainMap`,
+        to store the actual `outputs` of each  executed `operation` in a separate dictionary
+        (+1 for user-inputs).
 
-        By default, the `solution` class keeps the `outputs` (and given `inputs`)
-        of executed operations in separate dictionaries (*layers*).
+        When layers are disabled, the `solution` stores in *layers* just the keys
+        of `outputs` produced.
 
-        The layering is disabled if a `jsonp` `dependency` exists in the `network`,
-        assuming that :func:`.set_layered_solution` `configurations` has not been
-        called with a ``True/False``, nor has the respective parameter been given
-        to methods :meth:`~.FnOp.compute()`/:meth:`~.ExecutionPlan.execute()`.
+        The layering, by default, is disabled if a `jsonp` `dependency` exists in the `network`,
+        and :func:`.set_layered_solution` `configurations` has not been set,
+        nor has the respective parameter been given to methods
+        :meth:`~.FnOp.compute()`/:meth:`~.ExecutionPlan.execute()`.
 
         If disabled, `overwrite`\s are lost, but are marked as such.
 
@@ -190,9 +188,10 @@ Architecture
         `solution` values written by more than one `operation`\s in the respective `layer`,
         accessed by :attr:`.Solution.overwrites` attribute
         (assuming that *layers* have not been disabled e.g. due to `hierarchical data`,
-        in which case, just those `provides` actually produces in the `outputs` are stored).
+        in which case, just the `dependency` names of the `outputs` actually produced
+        are stored).
 
-        Note that `sideffected` `outputs` always produce an *overwrite*.
+        Note that `sideffected` outputs always produce an *overwrite*.
 
     prune
     pruning
