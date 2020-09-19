@@ -137,6 +137,8 @@ class Solution(ChainMap, Plottable):
     dag: nx.DiGraph
     #: the plan that produced this solution
     plan = "ExecutionPlan"
+    # optimization for the expensive :attr:`.overwrites` dictionary
+    _overwrites_cache = None
 
     def __init__(
         self,
@@ -274,7 +276,13 @@ class Solution(ChainMap, Plottable):
                 pass
         return self.__missing__(key)
 
+    def __setitem__(self, key, val):
+        self._overwrites_cache = None
+        super().__setitem__(key, val)
+
     def __delitem__(self, key):
+        self._overwrites_cache = None
+
         acc = acc_contains(key)
         matches = [m for m in self.maps if acc(m, key)]
         if not matches:
@@ -296,6 +304,8 @@ class Solution(ChainMap, Plottable):
         """
         Populate a new layer for `op` with `outputs` , or use `named_inputs` (if non-layered).
         """
+        self._overwrites_cache = None
+
         if self.is_layered:
             op_layer = {}
             self.maps.insert(0, op_layer)
@@ -389,7 +399,7 @@ class Solution(ChainMap, Plottable):
         if self.is_layered:
             maps = self.maps
         else:
-            maps = [*reversed(self.layers), self._initial_inputs ]
+            maps = [*reversed(self.layers), self._initial_inputs]
         dd = defaultdict(list)
         for d in maps:
             for k, v in d.items():
