@@ -167,8 +167,8 @@ Architecture
         to store the actual `outputs` of each  executed `operation` in a separate dictionary
         (+1 for user-inputs).
 
-        When layers are disabled, the `solution` stores in *layers* just the keys
-        of `outputs` produced.
+        When layers are disabled, the `solution` populates the passed-in `inputs`
+        and stores in *layers* just the keys of *outputs* produced.
 
         The layering, by default, is disabled if a `jsonp` `dependency` exists in the `network`,
         and :func:`.set_layered_solution` `configurations` has not been set,
@@ -192,6 +192,8 @@ Architecture
         are stored).
 
         Note that `sideffected` outputs always produce an *overwrite*.
+
+        *Overwrites* will not work for If `evicted <eviction>` outputs.
 
     prune
     pruning
@@ -239,6 +241,8 @@ Architecture
 
         *Evictions* are pre-calculated during `planning`, denoted with the
         `dependency` inserted in the `steps` of the `execution plan`.
+
+        `Evictions <eviction>` inhibit `overwrite`\s.
 
     inputs
         The named input values that are fed into an `operation` (or `pipeline`)

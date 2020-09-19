@@ -155,8 +155,8 @@ class Solution(ChainMap, Plottable):
             is_layered = not any(get_jsonp(d) for d in plan.net.data)
         self.is_layered = is_layered
 
-        ## see :attr:`_layers`
-        #
+        #: Preserve name-list to account overwrites when non-:term:`layer`\ed`.
+        self._initial_inputs = input_values if self.is_layered else dict(input_values)
 
         self.plan = plan
         self.executed: Mapping[Operation, dict] = {}
@@ -189,19 +189,21 @@ class Solution(ChainMap, Plottable):
 
         ## replicate "layers"" machinery.
         #
-        clone.executed = dict(self.executed)
-        maps = reversed(self.layers) if self.is_layered else ()
-        clone.maps = [*maps, named_inputs]
-
-        clone.canceled = dict(self.canceled)
-        clone.broken = dict(self.broken)
-        clone.elapsed_ms = dict(self.elapsed_ms)
-
         props = (
-            "is_layered is_endurance is_reschedule is_parallel is_marshal dag".split()
-        )
+            "is_layered is_endurance is_reschedule is_parallel is_marshal dag"
+            " _initial_inputs executed canceled broken elapsed_ms"
+        ).split()
+
         for p in props:
-            setattr(clone, p, getattr(self, p))
+            val = getattr(self, p)
+            if isinstance(val, dict):
+                val = dict(val)
+            setattr(clone, p, val)
+
+        ## Replicate layer setup in constructor, here
+        #
+        executed_ok = reversed(self.layers) if self.is_layered else ()
+        clone.maps = [*executed_ok, named_inputs]
 
         return clone
 
@@ -281,9 +283,14 @@ class Solution(ChainMap, Plottable):
         acc = acc_delitem(key)
         for m in matches:
             acc(m, key)
+
+        ## Delete it from extra places when non-layered.
+        #
         if not self.is_layered:
             for m in self.layers:
                 m.pop(key, None)
+
+            self._initial_inputs.pop(key, None)
 
     def _populate_op_layer_with_outputs(self, op, outputs) -> dict:
         """
@@ -296,7 +303,7 @@ class Solution(ChainMap, Plottable):
         else:
             op_layer = self.maps[-1]
             # Update just they keys, the values are in `input_names`.
-            self.executed[op] = {o: None for o in outputs}  # TODO: JsonpMapView
+            self.executed[op] = outputs
 
         if outputs:
             _update_outputs_grouped_by_accessor(op_layer, outputs)
@@ -374,19 +381,27 @@ class Solution(ChainMap, Plottable):
 
         A "virtual" property to a dictionary with keys the names of values that
         exist more than once, and values, all those values in a list, ordered
-        in reverse compute order (1st is the last one computed).
+        in reverse compute order (1st is the last one computed, last (any) given-inputs).
         """
-        maps = self.maps[:]
-        if not self.is_layered:
-            maps.extend(reversed(self.layers))
+        if self._overwrites_cache is not None:
+            return self._overwrites_cache
+
+        if self.is_layered:
+            maps = self.maps
+        else:
+            maps = [*reversed(self.layers), self._initial_inputs ]
         dd = defaultdict(list)
         for d in maps:
             for k, v in d.items():
                 dd[k].append(v)
 
-        # At least x2 overwrites in non-layered, 1 in `named_inputs`,  1+ in layers
-        dupes_limit = 1 if self.is_layered else 2
-        return {k: v for k, v in dd.items() if len(v) > dupes_limit}
+        return {
+            # On a non-layered real dupe-calc (not calcing an input)
+            # overwrites would be +1 due to last `named_inputs` dict.
+            k: v
+            for k, v in dd.items()
+            if len(v) > 1
+        }
 
     def check_if_incomplete(self) -> Optional[IncompleteExecutionError]:
         """Return a :class:`IncompleteExecutionError` if `pipeline` operations failed/canceled. """
