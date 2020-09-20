@@ -337,7 +337,7 @@ def collection_scouter(doc, part, container_factory, overwrite):
     return item
 
 
-def object_scouter(doc, part, value, container_factory, overwrite):
+def object_scouter(doc, part, container_factory, overwrite):
     """Get attribute `part` in `doc` object, or create a new one from `container_factory`."""
     if overwrite and log.isEnabledFor(logging.WARNING) and hasattr(doc, part):
         _log_overwrite(part, doc, getattr(doc, part))
