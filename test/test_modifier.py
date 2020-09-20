@@ -8,7 +8,6 @@ from graphtik.jsonpointer import jsonp_path
 from graphtik.modifier import (
     Accessor,
     _Modifier,
-    accessor,
     dep_renamed,
     dep_singularized,
     dep_stripped,
@@ -48,7 +47,7 @@ def test_serialize_modifier(ser_method):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (lambda: accessor("b", acc), "b"),
+        (lambda: modify("b", accessor=acc), "b"),
         (lambda: keyword("b", None), "b"),
         (lambda: keyword("b", ""), "b"),
         (lambda: keyword("b", "bb"), "b"),
@@ -68,7 +67,7 @@ def test_serialize_modifier(ser_method):
         (lambda: sfxed("f", "ff", optional=1), "sfxed('f', 'ff')"),
         ## Accessor
         #
-        (lambda: accessor("b", acc), "b"),
+        (lambda: modify("b", accessor=acc), "b"),
         (lambda: keyword("b", None, acc), "b"),
         (lambda: keyword("b", "", accessor=acc), "b"),
         (lambda: optional("b", "bb", acc), "b"),
@@ -93,7 +92,7 @@ def test_modifs_str(mod, exp):
 @pytest.mark.parametrize(
     "mod, exp",
     [
-        (lambda: accessor("b", acc), "'b'($)"),
+        (lambda: modify("b", accessor=acc), "'b'($)"),
         (lambda: keyword("b", None), "'b'(>)"),
         (lambda: keyword("b", ""), "'b'(>)"),
         (lambda: keyword("b", "bb"), "'b'(>'bb')"),
@@ -152,7 +151,7 @@ def test_modifs_repr(mod, exp, ser_method):
     "mod, exp",
     [
         (
-            lambda: accessor("b", acc),
+            lambda: modify("b", accessor=acc),
             "accessor('b', accessor=Accessor(contains=<built-in function contains>,"
             " getitem=<built-in function getitem>, setitem=<built-in function setitem>,"
             " delitem=<built-in function delitem>, update=None))",
@@ -234,7 +233,7 @@ def test_sideffected_bad(call, exp):
         (lambda: optional("b"), "'p.b'(?'b')"),
         (lambda: optional("b", "bb"), "'p.b'(?'bb')"),
         (lambda: optional("b/c/d", "bb"), "'p.b/c/d'($?'bb')"),
-        (lambda: accessor("b", acc), "'p.b'($)"),
+        (lambda: modify("b", accessor=acc), "'p.b'($)"),
         (lambda: vararg("c"), "'p.c'(*)"),
         (lambda: varargs("d"), "'p.d'(+)"),
         (lambda: varargs("/d"), "'p./d'($+)"),
@@ -277,7 +276,7 @@ def test_modifs_rename_fn(mod, exp, ser_method):
         (lambda: keyword("b", "bb"), "'D'(>'bb')"),
         (lambda: optional("b"), "'D'(?'b')"),
         (lambda: optional("b", "bb"), "'D'(?'bb')"),
-        (lambda: accessor("b", acc), "'D'($)"),
+        (lambda: modify("b", accessor=acc), "'D'($)"),
         (lambda: vararg("c"), "'D'(*)"),
         (lambda: varargs("d"), "'D'(+)"),
         (lambda: sfx("e"), "sfx('D')"),

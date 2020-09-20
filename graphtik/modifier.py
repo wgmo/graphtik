@@ -669,37 +669,6 @@ def optional(
     )
 
 
-def accessor(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
-    """
-    Annotate a `dependency` with :term:`accessor` functions to read/write `solution`.
-
-    :param accessor:
-        the functions to access values to/from solution (see :class:`Accessor`)
-        (actually a 2-tuple with functions is ok)
-    :param jsonp:
-        If given, it may be some other json-pointer expression, or
-        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
-        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
-        to disable the automatic interpeting of the dependency name as a json pointer path,
-        regardless of any containing slashes.
-
-        If accessing pandas, you may pass an already splitted path with
-        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
-
-        .. include:: pipelines.rst
-            :start-after: .. jsnop-df-concat-syntax-start
-            :end-before: .. jsnop-df-concat-syntax-end
-
-        See example in :ref:`jsnop-df-concat`.
-
-    - Probably not very usefull -- see the :func:`.modify` modifier for an integrated
-      use case.
-    - To combine it with `optional`, `keyword`, etc use the rest modifier factories
-      and pass an argument value to their `accessor` parameter.
-    """
-    return _modifier(name, accessor=accessor, jsonp=jsonp)
-
-
 def vararg(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
     """
     Annotate a :term:`varargish` `needs` to  be fed as function's ``*args``.

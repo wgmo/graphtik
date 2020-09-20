@@ -12,7 +12,7 @@ from graphtik import NO_RESULT, compose, operation, sfxed, vararg
 from graphtik.base import RenArgs
 from graphtik.config import solution_layered
 from graphtik.execution import task_context
-from graphtik.modifier import accessor, dep_renamed, modify
+from graphtik.modifier import dep_renamed, modify
 
 
 pytestmark = pytest.mark.usefixtures("log_levels")
@@ -25,8 +25,8 @@ def test_solution_accessor_simple():
         "copy values in solution: a+b-->A+BB",
         operation(
             (lambda *a: a),
-            needs=[accessor("a", acc), accessor("b", acc)],
-            provides=[accessor("A", acc), accessor("BB", acc)],
+            needs=[modify("a", accessor=acc), modify("b", accessor=acc)],
+            provides=[modify("A", accessor=acc), modify("BB", accessor=acc)],
         ),
     )
     sol = copy_values.compute({"a": 1, "b": 2})
