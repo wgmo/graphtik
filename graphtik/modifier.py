@@ -299,10 +299,11 @@ def _modifier(
     the given inputs with the :data:`_modifier_cstor_matrix`.
 
     :param jsonp:
-        If given, it may be the pre-splitted *parts* of the :term:`jsonp`
-        dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
+        If given, it may be some other json-pointer expression, or
+        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
+        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
+        to disable the automatic interpeting of the dependency name as a json pointer path,
+        regardless of any containing slashes.
     :param kw:
         extra kv pairs assigned as :class:`_Modifier` **private** attributes
         (prefixed with ``_`` if not already) only if values are not null.
@@ -403,15 +404,21 @@ def modify(name: str, jsonp=None, implicit=None) -> _Modifier:
     Generic :term:`modifier` for term:`json pointer path` & :term:`implicit` dependencies.
 
     :param jsonp:
-        If given, it may be the pre-splitted *parts* of the json pointer path
-        for the dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
+        If given, it may be some other json-pointer expression, or
+        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
+        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
+        to disable the automatic interpeting of the dependency name as a json pointer path,
+        regardless of any containing slashes.
 
-        .. Tip::
-            If accessing pandas, you may pass an already splitted path with
-            its last *part* being a `callable indexer
-            <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
+        If accessing pandas, you may pass an already splitted path with
+        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
+
+        .. include:: pipelines.rst
+            :start-after: .. jsnop-df-concat-syntax-start
+            :end-before: .. jsnop-df-concat-syntax-end
+
+        See example in :ref:`jsnop-df-concat`.
+
     :param implicit:
         :term:`implicit` dependencies are not fed into/out of the function.
 
@@ -504,15 +511,20 @@ def keyword(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be the pre-splitted *parts* of the json pointer path
-        for the dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
+        If given, it may be some other json-pointer expression, or
+        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
+        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
+        to disable the automatic interpeting of the dependency name as a json pointer path,
+        regardless of any containing slashes.
 
-        .. Tip::
-            If accessing pandas, you may pass an already splitted path with
-            its last *part* being a `callable indexer
-            <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
+        If accessing pandas, you may pass an already splitted path with
+        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
+
+        .. include:: pipelines.rst
+            :start-after: .. jsnop-df-concat-syntax-start
+            :end-before: .. jsnop-df-concat-syntax-end
+
+        See example in :ref:`jsnop-df-concat`.
 
     :return:
         a :class:`_Modifier` instance, even if no `keyword` is given OR
@@ -589,15 +601,20 @@ def optional(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be the pre-splitted *parts* of the json pointer path
-        for the dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
+        If given, it may be some other json-pointer expression, or
+        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
+        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
+        to disable the automatic interpeting of the dependency name as a json pointer path,
+        regardless of any containing slashes.
 
-        .. Tip::
-            If accessing pandas, you may pass an already splitted path with
-            its last *part* being a `callable indexer
-            <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
+        If accessing pandas, you may pass an already splitted path with
+        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
+
+        .. include:: pipelines.rst
+            :start-after: .. jsnop-df-concat-syntax-start
+            :end-before: .. jsnop-df-concat-syntax-end
+
+        See example in :ref:`jsnop-df-concat`.
 
     **Example:**
 
@@ -656,16 +673,20 @@ def accessor(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be the pre-splitted *parts* of the json pointer path
-        for the dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
+        If given, it may be some other json-pointer expression, or
+        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
+        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
+        to disable the automatic interpeting of the dependency name as a json pointer path,
+        regardless of any containing slashes.
 
-        .. Tip::
-            If accessing pandas, you may pass an already splitted path with
-            its last *part* being a `callable indexer
-            <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
+        If accessing pandas, you may pass an already splitted path with
+        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
 
+        .. include:: pipelines.rst
+            :start-after: .. jsnop-df-concat-syntax-start
+            :end-before: .. jsnop-df-concat-syntax-end
+
+        See example in :ref:`jsnop-df-concat`.
 
     - Probably not very usefull -- see the :func:`.modify` modifier for an integrated
       use case.
@@ -683,16 +704,20 @@ def vararg(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be the pre-splitted *parts* of the json pointer path
-        for the dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
+        If given, it may be some other json-pointer expression, or
+        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
+        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
+        to disable the automatic interpeting of the dependency name as a json pointer path,
+        regardless of any containing slashes.
 
-        .. Tip::
-            If accessing pandas, you may pass an already splitted path with
-            its last *part* being a `callable indexer
-            <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
+        If accessing pandas, you may pass an already splitted path with
+        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
 
+        .. include:: pipelines.rst
+            :start-after: .. jsnop-df-concat-syntax-start
+            :end-before: .. jsnop-df-concat-syntax-end
+
+        See example in :ref:`jsnop-df-concat`.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -742,16 +767,20 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be the pre-splitted *parts* of the json pointer path
-        for the dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
+        If given, it may be some other json-pointer expression, or
+        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
+        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
+        to disable the automatic interpeting of the dependency name as a json pointer path,
+        regardless of any containing slashes.
 
-        .. Tip::
-            If accessing pandas, you may pass an already splitted path with
-            its last *part* being a `callable indexer
-            <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
+        If accessing pandas, you may pass an already splitted path with
+        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
 
+        .. include:: pipelines.rst
+            :start-after: .. jsnop-df-concat-syntax-start
+            :end-before: .. jsnop-df-concat-syntax-end
+
+        See example in :ref:`jsnop-df-concat`.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -917,15 +946,21 @@ def sfxed(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be the pre-splitted *parts* of the json pointer path
-        for the dependency -- in that case, the dependency name is irrelevant -- or
-        a falsy (but not ``None``) value, to disable the automatic interpeting of
-        the dependency name as a json pointer path, regardless of any containing slashes.
+        If given, it may be some other json-pointer expression, or
+        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
+        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
+        to disable the automatic interpeting of the dependency name as a json pointer path,
+        regardless of any containing slashes.
 
-        .. Tip::
-            If accessing pandas, you may pass an already splitted path with
-            its last *part* being a `callable indexer
-            <https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#selection-by-callable>`_.
+        If accessing pandas, you may pass an already splitted path with
+        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
+
+        .. include:: pipelines.rst
+            :start-after: .. jsnop-df-concat-syntax-start
+            :end-before: .. jsnop-df-concat-syntax-end
+
+        See example in :ref:`jsnop-df-concat`.
+
     :param implicit:
         :term:`implicit` dependencies are not fed into/out of the function.
 

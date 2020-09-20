@@ -602,3 +602,48 @@ which is a nested dictionary:
                     'Tuesday': range(4, 9)},
      'weekly_tasks': (range(0, 4), range(4, 9)),
      'todos': ()}
+
+.. _jsnop-df-concat:
+
+Concatenating Pandas
+^^^^^^^^^^^^^^^^^^^^
+.. jsnop-df-concat-syntax-start
+
+You may achieve :term:`pandas concatenation` by annotating `provides`
+like this::
+
+    modify("some/df/new_cols", jsonp="some/df/-")  # append columns
+    modify("some/df/new_rows", jsonp="some/df/.")  # append rows
+
+.. jsnop-df-concat-syntax-end
+
+For instance, assuming an :term:`input document <subdoc>` that contains 2 dataframes
+with the same number of rows:
+
+.. code-block:: yaml
+
+    /data_lake/satellite_data:   pd.DataFrame(...)
+    /db/planet_ephemeris:        pd.DataFrame(...)
+
+... we can copy some columns from ``satellite_data`` --> ``planet_ephemeris``, at once, with something like this::
+
+    @operation(
+        needs="data_lake/satellite_data",
+        provides=modify("db/planet_ephemeris/orbitals",
+                        jsonp="db/planet_ephemeris/-")
+    )
+    def extract_planets_columns(satellite_df):
+        orbitals_df = satellite_df[3:8]  # the orbital columns
+        orbitals_df.columns = pd.MultiIndex.from_product(
+            [["orbitals", orbitals_df.columns]]
+        )
+
+        return orbitals_df
+
+.. Hint::
+    Notice that we used the  *same* ``orbitals`` name,  both
+    for the sub-name in the :term:`jsonp` expression, and as a new level
+    in the multi-index columns of the ``orbitals_df`` dataframe.
+
+    That will help further down the road, when indexing that group of columns
+    with ``/db/planet_ephemeris/orbitals``, and continue building the :term:`network`.

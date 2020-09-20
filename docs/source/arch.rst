@@ -524,6 +524,21 @@ Architecture
         The first step (e.g. ``root``) is the name of a `dependency` in the `solution`
         which becomes the root document for the *jsonp* expression following.
 
+        You may also achieve `pandas concatenation` by annotating `provides` appropriately.
+
+    pandas concatenation
+        A `jsonp` `dependency` in `provides` may `designate <modifier>` its respective
+        :class:`~pandas.DataFrame` / :class:`~pandas.Series` `output value <outputs>`
+        to be concatenated with existing Pandas objects in the `solution`
+        (usefull when working with :ref:`Pandas advanced indexing <pandas:advanced.hierarchical>`.
+        or else, you need to "break cycles" with `sideffected`\s).
+
+        .. include:: pipelines.rst
+            :start-after: .. jsnop-df-concat-syntax-start
+            :end-before: .. jsnop-df-concat-syntax-end
+
+        See example in :ref:`jsnop-df-concat`.
+
     reschedule
     rescheduling
     partial outputs
@@ -537,7 +552,7 @@ Architecture
         - `endurance` is enabled, either globally (in the `configurations`), or
           for a specific *operation*.
 
-        the *solution* must then *reschedule* the remaining operations downstream,
+        The *solution* must then *reschedule* the remaining operations downstream,
         and possibly *cancel* some of those ( assigned in :attr:`.Solution.canceled`).
 
         *Partial operations* are usually declared with `returns dictionary` so that
