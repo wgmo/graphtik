@@ -121,7 +121,7 @@ v10.2.0 (16 Sep 2020, @ankostis): RECOMPUTE, pre-callback, drop `op_xxx`, ops-eq
 ------------------------------------------------------------------------------------------------------
 Should have been a "major" release, but x2 breaks are that important.
 
-+ FEAT(pipeline+execution): add :term:`pre_callback` to be invoked prior to computing
++ FEAT(pipeline+execution): add ``pre_callback`` to be invoked prior to computing
   each operation (see ``pre_callback`` arg in :meth:`.Pipeline.compute()`).
 
 + FEAT(pipeline+plan): can :term:`recompute` modified solutions, partial or complete --

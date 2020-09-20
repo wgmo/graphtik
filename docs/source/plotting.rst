@@ -700,7 +700,7 @@ for instance:
 
 Setting a breakpoint on a specific operation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You may take advantage of the :term:`pre_callback` facility and install a breakpoint
+You may take advantage of the :term:`callbacks` facility and install a breakpoint
 for a specific operation before calling the pipeline.
 
 Add this code (interactively, or somewhere in your sources)::
@@ -709,9 +709,9 @@ Add this code (interactively, or somewhere in your sources)::
        if op_cb.op.name == "buggy_operation":
              breakpoint()
 
-And then call you pipeline with the ``pre_callback`` argument::
+And then call you pipeline with the ``callbacks`` argument::
 
-    pipe.compute({...}, pre_callback=break_on_my_op)
+    pipe.compute({...}, callbacks=break_on_my_op)
 
 And that way you may single-step and inspect the inputs & outputs
 of the ``buggy_operation``.

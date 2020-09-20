@@ -954,7 +954,7 @@ def test_pre_callback(quarantine_pipeline, exemethod):
         assert op_cb.sol["quarantine"]
         called_ops.append(op_cb.op.name)
 
-    sol = pipeline.compute({"quarantine": True}, pre_callback=op_called)
+    sol = pipeline.compute({"quarantine": True}, callbacks=op_called)
     assert sol == {
         "quarantine": True,
         "time": "1h",

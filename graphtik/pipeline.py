@@ -367,7 +367,7 @@ class Pipeline(Operation):
         recompute_from: Items = None,
         *,
         predicate: "NodePredicate" = UNSET,
-        pre_callback=None,
+        callbacks=None,
         solution_class: "Type[Solution]" = None,
         layered_solution=None,
     ) -> "Solution":
@@ -401,9 +401,10 @@ class Pipeline(Operation):
         :param predicate:
             filter-out nodes before compiling
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
-        :param pre_callback:
-            If given, the :term:`pre_callback` is called before each operation,
-            with that as argument and solution.
+        :param callbacks:
+            If given, a 2-tuple with (optional) x2 :term:`callbacks` to call before & after
+            each operation, with :class:`.OpCb` as argument containing the op & solution.
+            Less or no elements accepted.
         :param solution_class:
             a custom solution factory to use
         :param layered_solution:
@@ -469,7 +470,7 @@ class Pipeline(Operation):
                 named_inputs,
                 outputs,
                 name=self.name,
-                pre_callback=pre_callback,
+                callbacks=callbacks,
                 solution_class=solution_class,
                 layered_solution=layered_solution,
             )

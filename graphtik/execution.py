@@ -144,11 +144,11 @@ class Solution(ChainMap, Plottable):
         self,
         plan,
         input_values: dict,
-        pre_callback: Callable[["OpCb"], None] = None,
+        callbacks: Tuple[Callable[["OpCb"], None], Callable[["OpCb"], None]] = None,
         is_layered=None,
     ):
         super().__init__(input_values)
-        self.pre_callback = pre_callback
+        self.callbacks = callbacks
         is_layered = first_solid(is_layered_solution(), is_layered)
 
         ##: By default, disable layers if network contains :term:`jsonp` dependencies.
@@ -184,7 +184,7 @@ class Solution(ChainMap, Plottable):
         clone = type(self)(
             self.plan,
             named_inputs,
-            self.pre_callback,
+            self.callbacks,
             # Specially handled below bc user's `layered_solution` arg is lost.
             is_layered=self.is_layered,
         )
@@ -455,7 +455,7 @@ class Solution(ChainMap, Plottable):
         return plot_args
 
 
-#: Argument passed in a :term:`pre_callback` callable before executing each operation,
+#: Argument passed in a :term:`callbacks` callable before executing each operation,
 #: and contains fields to identify the operation call:
 #:
 #: :param op: the operation about to be computed;
@@ -471,14 +471,25 @@ class _OpTask:
     This intermediate class is needed to solve pickling issue with process executor.
     """
 
-    __slots__ = ("op", "sol", "solid", "pre_callback", "result")
+    __slots__ = ("op", "sol", "solid", "callbacks", "result")
     logname = __name__
 
-    def __init__(self, op, sol, solid, pre_callback=None, result=UNSET):
+    def __init__(self, op, sol, solid, callbacks=None, result=UNSET):
         self.op = op
         self.sol = sol
         self.solid = solid
-        self.pre_callback = pre_callback
+
+        ## Make callbacks a 2-tuple with possible None callables.
+        #
+        if callbacks is None:
+            callbacks = (None, None)
+        elif callable(callbacks):
+            callbacks = (callbacks, None)
+        else:
+            callbacks = tuple(callbacks)
+            if len(callbacks) < 2:
+                callbacks = (*callbacks, None)
+        self.callbacks = callbacks
         self.result = result
 
     def marshalled(self):
@@ -492,10 +503,13 @@ class _OpTask:
             log = logging.getLogger(self.logname)
             log.debug("+++ (%s) Executing %s...", self.solid, self)
             token = task_context.set(self)
+            callbacks = self.callbacks
             try:
-                if self.pre_callback:
-                    self.pre_callback(OpCb(self.op, self.sol, self.solid))
+                if callbacks[0]:
+                    callbacks[0](OpCb(self.op, self.sol, self.solid))
                 self.result = self.op.compute(self.sol)
+                if callbacks[1]:
+                    callbacks[1](OpCb(self.op, self.sol, self.solid))
             finally:
                 task_context.reset(token)
 
@@ -697,7 +711,7 @@ class ExecutionPlan(
                 # Mark start time here, to include also marshalling overhead.
                 solution.elapsed_ms[op] = time.time()
 
-                task = _OpTask(op, input_values, solution.solid, solution.pre_callback)
+                task = _OpTask(op, input_values, solution.solid, solution.callbacks)
                 if first_solid(global_marshal, getattr(op, "marshalled", None)):
                     task = task.marshalled()
 
@@ -881,7 +895,7 @@ class ExecutionPlan(
                 if step in solution.canceled:
                     continue
 
-                task = _OpTask(step, solution, solution.solid, solution.pre_callback)
+                task = _OpTask(step, solution, solution.solid, solution.callbacks)
                 self._handle_task(task, step, solution)
 
             elif isinstance(step, str):
@@ -904,7 +918,7 @@ class ExecutionPlan(
         outputs=None,
         *,
         name="",
-        pre_callback: Callable[[OpCb], None] = None,
+        callbacks: Callable[[OpCb], None] = None,
         solution_class=None,
         layered_solution=None,
     ) -> Solution:
@@ -919,9 +933,10 @@ class ExecutionPlan(
             and scream if not.
         :param name:
             name of the pipeline used for logging
-        :param pre_callback:
-            If given, the :term:`pre_callback` is called before each operation,
-            with that as argument and solution.
+        :param callbacks:
+            If given, a 2-tuple with (optional) x2 :term:`callbacks` to call before & after
+            each operation, with :class:`.OpCb` as argument containing the op & solution.
+            Less or no elements accepted.
         :param solution_class:
             a custom solution factory to use
         :param layered_solution:
@@ -977,7 +992,7 @@ class ExecutionPlan(
                 {k: v for k, v in named_inputs.items() if k in dag.nodes}
                 if evict
                 else named_inputs,
-                pre_callback,
+                callbacks,
                 is_layered=layered_solution,
             )
 
