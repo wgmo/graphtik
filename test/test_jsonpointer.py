@@ -428,7 +428,7 @@ def test_set_path_df_root_nothing(path):
     check_dfs_eq(doc, exp)
 
 
-@pytest.fixture(params=["-", "/-", "|", "/|"])
+@pytest.fixture(params=["-", "/-", ".", "/."])
 def root_df_paths(request):
     return request.param
 
@@ -453,7 +453,7 @@ def test_set_path_df_concat_ok():
     check_dfs_eq(got, exp)
 
     doc = orig_doc.copy()
-    path = "a/|"
+    path = "a/."
     set_path_value(doc, path, val)
     got = doc["a"]
     exp = pd.concat((df, val), axis=0)

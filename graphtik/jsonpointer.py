@@ -299,8 +299,8 @@ def set_or_concatenate_dataframe(doc: Doc, key, value) -> Optional[Doc]:
         `doc` is not None only if it has changed, due to concatanation,
         and needs to be replaced in its parent container.
     """
-    if key in "-|" and isinstance(doc, NDFrame) and isinstance(value, NDFrame):
-        return pd.concat((doc, value), axis=1 if key == "-" else 0)
+    if key in "-." and isinstance(doc, NDFrame) and isinstance(value, NDFrame):
+        return pd.concat((doc, value), axis=0 if key == "." else 1)
     else:
         doc[key] = value
 
@@ -415,7 +415,8 @@ def set_path_value(
     """
     Set `value` into a :term:`jsonp` `path` within the referenced `doc`.
 
-    Special treatment (i.e. concat) if must set a DataFrame into a DataFrame.
+    Special treatment (i.e. concat) if must insert a DataFrame into a DataFrame
+    with steps ``.``(vertical) and ``-``(horizontal) denoting concatanation axis.
 
     :param doc:
         the document to extend & insert `value`
