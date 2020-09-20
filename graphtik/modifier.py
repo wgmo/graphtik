@@ -309,6 +309,10 @@ def _modifier(
         Here used for :term:`implicit`, and client code may extend its own modifiers.
     """
     if jsonp is not None:
+        if isinstance(jsonp, str):
+            from .jsonpointer import jsonp_path
+
+            jsonp = jsonp_path(jsonp)
         kw["_jsonp"] = jsonp  # WARN: must be False or a collection for jsonp-accessors!
     # Prevent sfx-jsonp.
     elif "/" in name and jsonp is None and (sideffected is None or sfx_list):
