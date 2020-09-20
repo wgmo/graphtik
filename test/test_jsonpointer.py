@@ -8,6 +8,7 @@ Copied from pypi/pandalone.
 from copy import deepcopy
 from random import shuffle
 
+import pandas as pd
 import pytest
 
 from graphtik.jsonpointer import (
@@ -270,12 +271,25 @@ def test_set_path_empty_doc():
     value = "value"
     set_path_value(doc, path, value)
     assert resolve_path(doc, path) == value
+    assert doc == {"foo": "value"}
 
     doc = {}
     path = "/foo/bar"
     value = "value"
     set_path_value(doc, path, value)
     assert resolve_path(doc, path) == value
+
+
+@pytest.mark.parametrize("path", ["", "/"])
+def test_set_path_root_nothing(path):
+    """Changing root simply don't work."""
+    doc = {"a": 1}
+    exp = doc.copy()
+    set_path_value(doc, path, 1)
+    assert doc == exp
+
+    set_path_value(doc, path, {"b": 2})
+    assert doc == exp
 
 
 def test_set_path_replace_value():
@@ -391,6 +405,59 @@ def test_set_path_sequence_with_str_screams():
     value = "value"
     with pytest.raises(ValueError):
         set_path_value(doc, path, value)
+
+
+def _mutate_df(df):
+    col = df.columns[0]
+    return (df * 2).rename({col: 2 * col}, axis=1)
+
+
+def check_dfs_eq(got, exp):
+    assert (got.fillna(0) == exp.fillna(0)).all(axis=None)
+
+
+@pytest.mark.parametrize("path", ["", "/"])
+def test_set_path_df_root_nothing(path):
+    """Changing root simply don't work."""
+    doc = pd.DataFrame({"A": [1, 2]})
+    exp = doc.copy()
+    set_path_value(doc, path, 1)
+    check_dfs_eq(doc, exp)
+
+    set_path_value(doc, path, _mutate_df(doc))
+    check_dfs_eq(doc, exp)
+
+
+@pytest.fixture(params=["-", "/-", "|", "/|"])
+def root_df_paths(request):
+    return request.param
+
+
+def test_set_path_df_root_scream(root_df_paths):
+    path = root_df_paths
+    doc = pd.DataFrame({"A": [1, 2]})
+    with pytest.raises(ValueError, match="^Cannot modify given doc/root"):
+        set_path_value(doc, path, _mutate_df(doc))
+
+
+def test_set_path_df_concat_ok():
+    df = pd.DataFrame({"A": [1, 2]})
+    orig_doc = {"a": df}
+    val = _mutate_df(df)
+
+    doc = orig_doc.copy()
+    path = "a/-"
+    set_path_value(doc, path, val)
+    got = doc["a"]
+    exp = pd.concat((df, val), axis=1)
+    check_dfs_eq(got, exp)
+
+    doc = orig_doc.copy()
+    path = "a/|"
+    set_path_value(doc, path, val)
+    got = doc["a"]
+    exp = pd.concat((df, val), axis=0)
+    check_dfs_eq(got, exp)
 
 
 def test_pop_path_examples_from_spec(std_doc, std_case):

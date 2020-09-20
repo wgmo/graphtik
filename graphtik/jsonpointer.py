@@ -35,6 +35,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
+from pandas.core.generic import NDFrame
 
 
 log = logging.getLogger(__name__)
@@ -290,16 +291,38 @@ def is_collection(item):
     )
 
 
-def list_scouter(doc: Doc, part, container_factory, overwrite):
+def set_or_concatenate_dataframe(doc: Doc, key, value) -> Optional[Doc]:
+    """
+    Set item or if both `doc` & `value` are dataframes, concat and return `doc`.
+
+    :return:
+        `doc` is not None only if it has changed, due to concatanation,
+        and needs to be replaced in its parent container.
+    """
+    if key in "-|" and isinstance(doc, NDFrame) and isinstance(value, NDFrame):
+        return pd.concat((doc, value), axis=1 if key == "-" else 0)
+    else:
+        doc[key] = value
+
+
+def list_scouter(
+    doc: Doc, part, container_factory, overwrite
+) -> Tuple[Any, Optional[Doc]]:
     """
     Get `doc `list item  by (int) `part`, or create a new one from `container_factory`.
 
-    NOTE: must kick before collection-scouter to handle special non-integer ``.`` index.
+    :param container_factory:
+        when called may return an intermediate container or the "value"
+
+    :return:
+        a 2-tuple (child, ``None``)
+
+    NOTE: must come after collection-scouter due to special ``-`` index collision.
     """
     if part == "-":  # It means the position after the last item.
         item = container_factory()
         doc.append(item)
-        return item
+        return item, None
 
     part = int(part)  # Let it bubble, to try next (as key-item).
     if overwrite and log.isEnabledFor(logging.WARNING):
@@ -314,50 +337,71 @@ def list_scouter(doc: Doc, part, container_factory, overwrite):
         try:
             child = doc[part]
             if is_collection(child):
-                return child
+                return child, None
         except LookupError:
             # Ignore resolve errors, assignment errors below are more important.
             pass
 
     item = container_factory()
     doc[part] = item
-    return item
+    return item, None
 
 
-def collection_scouter(doc: Doc, part, container_factory, overwrite):
-    """Get item `part` from `doc` collection, or create a new ome from `container_factory`."""
+def collection_scouter(
+    doc: Doc, part, container_factory: Callable[[], Any], overwrite
+) -> Tuple[Any, Optional[Doc]]:
+    """
+    Get item `part` from `doc` collection, or create a new ome from `container_factory`.
+
+    :param container_factory:
+        when called may return an intermediate container or the "value"
+
+    :return:
+        a 2-tuple (child, doc) where `doc` is not None if it needs to be replaced
+        in its parent container (e.g. due to df-concat with value).
+    """
     if overwrite and log.isEnabledFor(logging.WARNING) and part in doc:
         _log_overwrite(part, doc, doc[part])
     elif not overwrite:
         try:
             child = doc[part]
             if is_collection(child):
-                return child
+                return child, None
         except LookupError:
             # Ignore resolve errors, assignment errors below are more important.
             pass
 
     item = container_factory()
-    doc[part] = item
-    return item
+    doc = set_or_concatenate_dataframe(doc, part, item)
+    return item, doc
 
 
-def object_scouter(doc: Doc, part, container_factory, overwrite):
-    """Get attribute `part` in `doc` object, or create a new one from `container_factory`."""
+def object_scouter(
+    doc: Doc, part, container_factory, overwrite
+) -> Tuple[Any, Optional[Doc]]:
+    """
+    Get attribute `part` in `doc` object, or create a new one from `container_factory`.
+
+    :param container_factory:
+        when called may return an intermediate container or the "value"
+
+    :return:
+        a 2-tuple (child, ``None``)
+    """
     if overwrite and log.isEnabledFor(logging.WARNING) and hasattr(doc, part):
         _log_overwrite(part, doc, getattr(doc, part))
     elif not overwrite:
         try:
             child = getattr(doc, part)
             if is_collection(child):
-                return child
+                return child, None
         except AttributeError:
             # Ignore resolve errors, assignment errors below are more important.
             pass
 
     item = container_factory()
     setattr(doc, part, item)
-    return item
+    return item, None
 
 
 def set_path_value(
@@ -369,7 +413,9 @@ def set_path_value(
     descend_objects=True,
 ):
     """
-    Resolve a ``jsonpointer`` within the referenced ``doc``.
+    Set `value` into a :term:`jsonp` `path` within the referenced `doc`.
+
+    Special treatment (i.e. concat) if must set a DataFrame into a DataFrame.
 
     :param doc:
         the document to extend & insert `value`
@@ -377,7 +423,7 @@ def set_path_value(
         An absolute or relative json-pointer expression to resolve within `doc` document
         (or just the unescaped steps).
 
-        For sequences (arrays), it supports the special index dahs(``-``) char,
+        For sequences (arrays), it supports the special index dash(``-``) char,
         to refer to the position beyond the last item, as by the spec, BUT
         it does not raise - it always add a new item.
 
@@ -397,20 +443,25 @@ def set_path_value(
         If true, a last ditch effort is made for each part, whether it matches
         the name of an attribute of the parent item.
 
-    :raises: ValueError (if jsonpointer empty, missing, invalid-content)
+    :raises ValueError:
+        - if jsonpointer empty, missing, invalid-content
+        - changed given `doc`/`root` (e.g due to concat-ed with value)
 
     See :func:`resolve_path()` for departures from the json-pointer standard
     """
 
     part_scouters = [
-        list_scouter,
         collection_scouter,
+        list_scouter,
         *((object_scouter,) if descend_objects else ()),
     ]
 
     if root is UNSET:
         root = doc
 
+    given_doc: Doc = doc  # Keep user input, to scream if must change (e.g. concat-ed).
+    parent: Doc = None
+    parent_part = None
     parts = jsonp_path(path) if isinstance(path, str) else list(path)
     last_part = len(parts) - 1
     for i, part in enumerate(parts):
@@ -420,6 +471,7 @@ def set_path_value(
                     f"Absolute step #{i} of json-pointer {path!r} without `root`!"
                 )
             doc = root
+            parent = parent_part = None
             continue
 
         if i == last_part:
@@ -431,9 +483,33 @@ def set_path_value(
 
         for ii, scouter in enumerate(part_scouters):
             try:
-                doc = scouter(doc, part, fact, overwrite)
+                child, changed_doc = scouter(doc, part, fact, overwrite)
+
+                ## Replace doc/root upstream if changed
+                #  (e.g. df concat-ed with value).
+                #
+                if changed_doc is not None:
+                    if doc is root or doc is given_doc:
+                        # Changed-doc would be lost in vain...
+                        raise ValueError(
+                            f'Cannot modify given doc/root @ step (#{i}) "{part}" of path {path!r}:'
+                            f"\n  +--doc: {doc}"
+                            f"\n  +--root: {root}"
+                        )
+                    assert parent is not None and parent_part is not None, locals()
+
+                    parent[  # pylint: disable=unsupported-assignment-operation
+                        parent_part
+                    ] = changed_doc
+                    parent = changed_doc
+                else:
+                    parent = doc
+                parent_part = part
+                doc = child
                 break
             except Exception as ex:
+                if isinstance(ex, ValueError) and str(ex).startswith("Cannot modify"):
+                    raise
                 if ii > 0:  # ignore int-indexing
                     log.debug(
                         "scouter %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s",
