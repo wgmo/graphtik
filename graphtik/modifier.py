@@ -133,8 +133,8 @@ class Accessor(NamedTuple):
 
 
 @lru_cache()
-def JsonpAccessor():
-    """Get/Set paths found on modifier's "extra' attribute `jsonpath` """
+def JsonpAcc():
+    """Read/write `jsonp` paths found on modifier's "extra' attribute `jsonpath` """
     from . import jsonpointer as jsp
 
     return Accessor(
@@ -323,7 +323,7 @@ def _modifier(
     # Don't override user's accessor.
     #
     if not accessor and kw.get("_jsonp"):
-        accessor = JsonpAccessor()
+        accessor = JsonpAcc()
 
     args = (name, keyword, optional, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
