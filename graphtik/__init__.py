@@ -14,6 +14,7 @@ __author__ = "hnguyen, ankostis"  # chronologically ordered
 from .base import AbortedException, IncompleteExecutionError
 from .modifier import (
     modify,
+    implicit,
     keyword,
     optional,
     sfx,

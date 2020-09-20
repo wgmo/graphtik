@@ -15,6 +15,7 @@ from graphtik import (
     NO_RESULT,
     NO_RESULT_BUT_SFX,
     compose,
+    implicit,
     modify,
     operation,
     sfx,
@@ -442,7 +443,7 @@ def test_sideffected_canceled(sideffected_resched):
 
 
 def test_implicit_inp():
-    op = operation(str, needs=["A", modify("a", implicit=1)], provides="b")
+    op = operation(str, needs=["A", implicit("a")], provides="b")
 
     pipe = compose(..., op)
     got = pipe.compute({"A": "val", "a": 1})
@@ -455,7 +456,7 @@ def test_implicit_inp():
 
 
 def test_implicit_out():
-    op = operation(str, "hh", provides=["A", modify("a", implicit=1)])
+    op = operation(str, "hh", provides=["A", implicit("a")])
 
     pipe = compose(..., op)
     got = pipe.compute()

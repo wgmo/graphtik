@@ -420,6 +420,7 @@ def modify(
         (see example in :ref:`jsnop-df-concat`).
     :param implicit:
         :term:`implicit` dependencies are not fed into/out of the function.
+        You may use directly :func:`implicit`.
     :param accessor:
         Annotate the `dependency` with :term:`accessor` functions to read/write
         `solution` (actually a 2-tuple with functions is ok)
@@ -479,6 +480,13 @@ def modify(
     """
     return _modifier(
         name, keyword=keyword, jsonp=jsonp, implicit=implicit, accessor=accessor
+    )
+
+
+def implicit(name, *, keyword: str = None, jsonp=None, accessor: Accessor = None):
+    """see :term:`implicit` & generic :func:`.modify` modifier. """
+    return _modifier(
+        name, implicit=True, keyword=keyword, jsonp=jsonp, accessor=accessor
     )
 
 

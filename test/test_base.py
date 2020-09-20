@@ -13,6 +13,7 @@ import pytest
 from graphtik import (
     base,
     compose,
+    implicit,
     modify,
     operation,
     pipeline,
@@ -273,7 +274,7 @@ def test_jetsam_n_plot_with_DEBUG():
             needs=[
                 "a",
                 sfxed("b", "foo", keyword="bb"),
-                modify("c", implicit=1),
+                implicit("c"),
                 sfxed("d", "bar", implicit=1),
                 vararg("e"),
                 varargs("f"),
@@ -281,7 +282,7 @@ def test_jetsam_n_plot_with_DEBUG():
             provides=[
                 "A",
                 sfxed("b", "FOO", keyword="bb"),
-                modify("C", implicit=1),
+                implicit("C"),
                 sfxed("d", "BAR", implicit=1),
                 sfx("FOOBAR"),
             ],
