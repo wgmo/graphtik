@@ -21,13 +21,15 @@ from collections import abc as cabc
 from functools import partial
 from typing import (
     Any,
+    Callable,
     Collection,
     Iterable,
     List,
-    Mapping,
+    MutableMapping,
     Optional,
-    Sequence,
+    MutableSequence,
     Tuple,
+    TypeVar,
     Union,
 )
 
@@ -130,7 +132,10 @@ class ResolveError(KeyError):
         return self.args[2]
 
 
-def _log_overwrite(part, doc, child):
+Doc = TypeVar("Doc", MutableMapping, MutableSequence)
+
+
+def _log_overwrite(part, doc: Doc, child):
     log.warning(
         "Overwritting json-pointer part %r in a %i-len subdoc over scalar %r.",
         part,
@@ -140,10 +145,10 @@ def _log_overwrite(part, doc, child):
 
 
 def resolve_path(
-    doc: Union[Sequence, Mapping],
+    doc: Doc,
     path: Union[str, Iterable[str]],
     default=UNSET,
-    root=UNSET,
+    root: Doc = UNSET,
     descend_objects=True,
 ):
     """
@@ -266,9 +271,9 @@ def resolve_path(
 
 
 def contains_path(
-    doc: Union[Sequence, Mapping],
+    doc: Doc,
     path: Union[str, Iterable[str]],
-    root=UNSET,
+    root: Doc = UNSET,
     descend_objects=True,
 ) -> bool:
     """Test if `doc` has a value for json-pointer path by calling :func:`.resolve_path()`. """
@@ -285,7 +290,7 @@ def is_collection(item):
     )
 
 
-def list_scouter(doc, part, container_factory, overwrite):
+def list_scouter(doc: Doc, part, container_factory, overwrite):
     """
     Get `doc `list item  by (int) `part`, or create a new one from `container_factory`.
 
@@ -319,7 +324,7 @@ def list_scouter(doc, part, container_factory, overwrite):
     return item
 
 
-def collection_scouter(doc, part, container_factory, overwrite):
+def collection_scouter(doc: Doc, part, container_factory, overwrite):
     """Get item `part` from `doc` collection, or create a new ome from `container_factory`."""
     if overwrite and log.isEnabledFor(logging.WARNING) and part in doc:
         _log_overwrite(part, doc, doc[part])
@@ -337,7 +342,7 @@ def collection_scouter(doc, part, container_factory, overwrite):
     return item
 
 
-def object_scouter(doc, part, container_factory, overwrite):
+def object_scouter(doc: Doc, part, container_factory, overwrite):
     """Get attribute `part` in `doc` object, or create a new one from `container_factory`."""
     if overwrite and log.isEnabledFor(logging.WARNING) and hasattr(doc, part):
         _log_overwrite(part, doc, getattr(doc, part))
@@ -356,11 +361,11 @@ def object_scouter(doc, part, container_factory, overwrite):
 
 
 def set_path_value(
-    doc: Union[Sequence, Mapping],
+    doc: Doc,
     path: Union[str, Iterable[str]],
     value,
     container_factory=dict,
-    root=UNSET,
+    root: Doc = UNSET,
     descend_objects=True,
 ):
     """
@@ -450,12 +455,15 @@ def set_path_value(
 
 
 def _update_paths(
-    doc,
+    doc: Doc,
     paths_vals: Collection[Tuple[List[str], Any]],
     container_factory=dict,
-    root=UNSET,
+    root: Doc = UNSET,
     descend_objects=True,
 ) -> None:
+    """
+    (recursive) mass-update `path_vals` (jsonp, value) pairs into doc.
+    """
     # The `group` is a list of paths with common prefix (root)
     # currently being built.
     group_prefix, group = None, ()
@@ -491,12 +499,17 @@ def _update_paths(
 
 
 def update_paths(
-    doc,
+    doc: Doc,
     paths_vals: Collection[Tuple[str, Any]],
     container_factory=dict,
-    root=UNSET,
+    root: Doc = UNSET,
     descend_objects=True,
 ) -> None:
+    """
+    Mass-update `path_vals` (jsonp, value) pairs into doc.
+
+    Group jsonp-keys by nesting level,to optimize.
+    """
     paths_vals = sorted(paths_vals)
     _update_paths(
         doc,
@@ -507,7 +520,7 @@ def update_paths(
     )
 
 
-def list_popper(doc: Sequence, part, do_pop):
+def list_popper(doc: MutableSequence, part, do_pop):
     """Call :func:`collection_popper()` with integer `part`."""
     return collection_popper(doc, int(part), do_pop)
 
@@ -526,10 +539,10 @@ def object_popper(doc: Collection, part, do_pop):
 
 
 def pop_path(
-    doc: Union[Sequence, Mapping],
+    doc: Doc,
     path: Union[str, Iterable[str]],
     default=UNSET,
-    root=UNSET,
+    root: Doc = UNSET,
     descend_objects=True,
 ):
     """
