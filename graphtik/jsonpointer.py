@@ -537,23 +537,32 @@ def _update_paths(
     container_factory=dict,
     root: Doc = UNSET,
     descend_objects=True,
-) -> None:
+) -> Optional[Doc]:
     """
     (recursive) mass-update `path_vals` (jsonp, value) pairs into doc.
-    """
-    # The `group` is a list of paths with common prefix (root)
-    # currently being built.
-    group_prefix, group = None, ()
-    for p, v in paths_vals + [((UNSET,), UNSET)]:
-        assert len(p) >= 1 or v is UNSET, locals()
 
-        next_prefix = p[0]
+    Special treatment (i.e. concat) if must insert a DataFrame into a DataFrame
+    with steps ``.``(vertical) and ``-``(horizontal) denoting concatanation axis.
+
+    FIXME: ROOT in mass-update_paths NOT IMPLEMENTED
+    """
+    ret_doc = None  # Collect here any changed dataframe, ro return.
+    # The `group` is a list of paths with common prefix (root)
+    # currently being built.  `group_prefix` is the 1st step.
+    group_prefix = None
+    group: List[Tuple[str, Any]] = ()  # Begin with a blocker value.
+    for i, (path, value) in enumerate((*paths_vals, ((UNSET,), UNSET))):
+        assert len(path) >= 1 or value is UNSET, locals()
+
+        next_prefix = path[0]
         if next_prefix != group_prefix:
-            if len(p) == 1 and v is not UNSET:
+            if len(path) == 1 and value is not UNSET:
                 # Assign value and proceed to the next one,
                 # THOUGH if a deeper path with this same prefix follows,
                 # it will overwrite the value just written.
-                doc[next_prefix] = v
+                new_doc = set_or_concatenate_dataframe(doc, next_prefix, value)
+                if new_doc is not None:
+                    doc = ret_doc = new_doc
             else:
                 if group_prefix:  # Is it past the 1st loop?
                     ## Recurse into sub-group.
@@ -562,17 +571,27 @@ def _update_paths(
                     if group_prefix in doc:
                         child = doc[group_prefix]
                         if not is_collection(child):
-                            child = None
                             _log_overwrite(group_prefix, doc, child)
+                            child = None
 
                     if child is None:
                         child = doc[group_prefix] = container_factory()
-                    _update_paths(child, [(p[1:], v) for p, v in group])
 
-                group_prefix, group = (next_prefix, [(p, v)])  # prepare the next group
+                    new_child = _update_paths(
+                        child, [(path[1:], value) for path, value in group]
+                    )
+                    if new_child is not None:
+                        doc[group_prefix] = new_child
+
+                group_prefix, group = (
+                    next_prefix,
+                    [(path, value)],
+                )  # prepare the next group
         else:
-            assert len(p) > 1, locals()  # shortest path switches group.
-            group.append((p, v))
+            assert len(path) > 1, locals()  # shortest path switches group.
+            group.append((path, value))  # pylint: disable=no-member
+
+    return ret_doc
 
 
 def update_paths(
@@ -586,15 +605,23 @@ def update_paths(
     Mass-update `path_vals` (jsonp, value) pairs into doc.
 
     Group jsonp-keys by nesting level,to optimize.
+
+    :return:
+        the updated doc (if it was a dataframe and ``pd.concact`` needed)
     """
-    paths_vals = sorted(paths_vals)
-    _update_paths(
-        doc,
-        [(jsonp_path(p), v) for p, v in paths_vals],
-        container_factory,
-        root,
-        descend_objects,
-    )
+    if root is UNSET:
+        root = doc
+    pvs = [(jsonp_path(p), v) for p, v in sorted(paths_vals, key=lambda pv: pv[0])]
+    new_doc = _update_paths(doc, pvs, container_factory, root, descend_objects)
+    if new_doc is not None:
+        # Changed-doc would be lost in vain...
+        raise ValueError(
+            f"Cannot mass-update given doc:"
+            f"\n  +--(path, values): {pvs}"
+            f"\n  +--doc: {doc}"
+            f"\n  +--new_doc: {new_doc}"
+            + ("" if root is doc else f"\n  +--root: {root}")
+        )
 
 
 def list_popper(doc: MutableSequence, part, do_pop):

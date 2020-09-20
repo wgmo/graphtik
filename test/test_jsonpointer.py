@@ -575,3 +575,39 @@ def test_update_paths_overwrites():
         update_paths(doc, pv)
         print(doc)
         assert doc == dict(list(exp.items())[:-i])
+
+
+def test_update_paths_df_concat():
+    df = pd.DataFrame({"A": [1, 2]})
+    _orig_doc = {  # for when debugging
+        "a": {
+            "aa": df,
+            "ab": 2,
+            "ac": {"aca": df},
+        },
+    }
+    doc = {
+        "a": {
+            "aa": df,
+            "ab": 2,
+            "ac": {"aca": df},
+        },
+    }
+    val1 = _mutate_df(df)
+    val2 = _mutate_df(val1)
+
+    path_values = [
+        ("a/aa/-", val1),
+        ("a/ac/aca/.", val2),
+        ("a/aa/.", val2),  #  double setting
+        ("a/ab", val2),
+    ]
+    exp_aa = pd.concat((df, val1), axis=1)
+    exp_aa = pd.concat((exp_aa, val2), axis=0)
+    exp_aca = pd.concat((df, val2), axis=0)
+
+    update_paths(doc, path_values)
+    print(doc)
+    check_dfs_eq(resolve_path(doc, "a/ab"), val2)
+    check_dfs_eq(resolve_path(doc, "/a/ac/aca"), exp_aca)
+    check_dfs_eq(resolve_path(doc, "a/aa"), exp_aa)
