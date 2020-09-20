@@ -298,12 +298,6 @@ def _modifier(
     It decides the final `name` and `_repr` for the new modifier by matching
     the given inputs with the :data:`_modifier_cstor_matrix`.
 
-    :param jsonp:
-        If given, it may be some other json-pointer expression, or
-        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
-        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
-        to disable the automatic interpeting of the dependency name as a json pointer path,
-        regardless of any containing slashes.
     :param kw:
         extra kv pairs assigned as :class:`_Modifier` **private** attributes
         (prefixed with ``_`` if not already) only if values are not null.
@@ -523,20 +517,8 @@ def keyword(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be some other json-pointer expression, or
-        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
-        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
-        to disable the automatic interpeting of the dependency name as a json pointer path,
-        regardless of any containing slashes.
-
-        If accessing pandas, you may pass an already splitted path with
-        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
-
-        .. include:: pipelines.rst
-            :start-after: .. jsnop-df-concat-syntax-start
-            :end-before: .. jsnop-df-concat-syntax-end
-
-        See example in :ref:`jsnop-df-concat`.
+        None (derrived from `name`), ``False``, str, collection of str/callable (last one)
+        See generic :func:`.modify` modifier.
 
     :return:
         a :class:`_Modifier` instance, even if no `keyword` is given OR
@@ -613,20 +595,8 @@ def optional(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be some other json-pointer expression, or
-        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
-        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
-        to disable the automatic interpeting of the dependency name as a json pointer path,
-        regardless of any containing slashes.
-
-        If accessing pandas, you may pass an already splitted path with
-        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
-
-        .. include:: pipelines.rst
-            :start-after: .. jsnop-df-concat-syntax-start
-            :end-before: .. jsnop-df-concat-syntax-end
-
-        See example in :ref:`jsnop-df-concat`.
+        None (derrived from `name`), ``False``, str, collection of str/callable (last one)
+        See generic :func:`.modify` modifier.
 
     **Example:**
 
@@ -685,20 +655,8 @@ def vararg(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be some other json-pointer expression, or
-        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
-        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
-        to disable the automatic interpeting of the dependency name as a json pointer path,
-        regardless of any containing slashes.
-
-        If accessing pandas, you may pass an already splitted path with
-        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
-
-        .. include:: pipelines.rst
-            :start-after: .. jsnop-df-concat-syntax-start
-            :end-before: .. jsnop-df-concat-syntax-end
-
-        See example in :ref:`jsnop-df-concat`.
+        None (derrived from `name`), ``False``, str, collection of str/callable (last one)
+        See generic :func:`.modify` modifier.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -748,20 +706,8 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be some other json-pointer expression, or
-        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
-        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
-        to disable the automatic interpeting of the dependency name as a json pointer path,
-        regardless of any containing slashes.
-
-        If accessing pandas, you may pass an already splitted path with
-        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
-
-        .. include:: pipelines.rst
-            :start-after: .. jsnop-df-concat-syntax-start
-            :end-before: .. jsnop-df-concat-syntax-end
-
-        See example in :ref:`jsnop-df-concat`.
+        None (derrived from `name`), ``False``, str, collection of str/callable (last one)
+        See generic :func:`.modify` modifier.
 
     .. seealso::
         Consult also the example test-case in: :file:`test/test_op.py:test_varargs()`,
@@ -927,21 +873,8 @@ def sfxed(
         the functions to access values to/from solution (see :class:`Accessor`)
         (actually a 2-tuple with functions is ok)
     :param jsonp:
-        If given, it may be some other json-pointer expression, or
-        the pre-splitted *parts* of the :term:`jsonp` dependency -- in that case,
-        the dependency name is irrelevant -- or a falsy (but not ``None``) value,
-        to disable the automatic interpeting of the dependency name as a json pointer path,
-        regardless of any containing slashes.
-
-        If accessing pandas, you may pass an already splitted path with
-        its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
-
-        .. include:: pipelines.rst
-            :start-after: .. jsnop-df-concat-syntax-start
-            :end-before: .. jsnop-df-concat-syntax-end
-
-        See example in :ref:`jsnop-df-concat`.
-
+        None (derrived from `name`), ``False``, str, collection of str/callable (last one)
+        See generic :func:`.modify` modifier.
     :param implicit:
         :term:`implicit` dependencies are not fed into/out of the function.
 
