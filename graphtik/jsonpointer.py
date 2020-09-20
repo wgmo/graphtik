@@ -291,7 +291,7 @@ def is_collection(item):
     )
 
 
-def set_or_concatenate_dataframe(doc: Doc, key, value) -> Optional[Doc]:
+def set_or_concatenate_dataframe(doc: Doc, key, value, concat_axis) -> Optional[Doc]:
     """
     Set item or if both `doc` & `value` are dataframes, concat and return `doc`.
 
@@ -299,8 +299,12 @@ def set_or_concatenate_dataframe(doc: Doc, key, value) -> Optional[Doc]:
         `doc` is not None only if it has changed, due to concatanation,
         and needs to be replaced in its parent container.
     """
-    if key in "-." and isinstance(doc, NDFrame) and isinstance(value, NDFrame):
-        return pd.concat((doc, value), axis=0 if key == "." else 1)
+    if (
+        concat_axis is not None
+        and isinstance(doc, NDFrame)
+        and isinstance(value, NDFrame)
+    ):
+        return pd.concat((doc, value), axis=concat_axis)
     else:
         doc[key] = value
 
@@ -332,7 +336,8 @@ def list_scouter(
             # Out of bounds, but ok for now, will break also on assignment, below.
             pass
         else:
-            _log_overwrite(part, doc, child)
+            if not is_collection(child):
+                _log_overwrite(part, doc, child)
     elif not overwrite:
         try:
             child = doc[part]
@@ -348,7 +353,7 @@ def list_scouter(
 
 
 def collection_scouter(
-    doc: Doc, part, container_factory: Callable[[], Any], overwrite
+    doc: Doc, part, container_factory: Callable[[], Any], overwrite, concat_axis
 ) -> Tuple[Any, Optional[Doc]]:
     """
     Get item `part` from `doc` collection, or create a new ome from `container_factory`.
@@ -360,7 +365,12 @@ def collection_scouter(
         a 2-tuple (child, doc) where `doc` is not None if it needs to be replaced
         in its parent container (e.g. due to df-concat with value).
     """
-    if overwrite and log.isEnabledFor(logging.WARNING) and part in doc:
+    if (
+        overwrite
+        and log.isEnabledFor(logging.WARNING)
+        and part in doc
+        and not is_collection(doc[part])
+    ):
         _log_overwrite(part, doc, doc[part])
     elif not overwrite:
         try:
@@ -372,7 +382,7 @@ def collection_scouter(
             pass
 
     item = container_factory()
-    doc = set_or_concatenate_dataframe(doc, part, item)
+    doc = set_or_concatenate_dataframe(doc, part, item, concat_axis)
     return item, doc
 
 
@@ -411,6 +421,7 @@ def set_path_value(
     container_factory=dict,
     root: Doc = UNSET,
     descend_objects=True,
+    concat_axis: int = None,
 ):
     """
     Set `value` into a :term:`jsonp` `path` within the referenced `doc`.
@@ -443,6 +454,9 @@ def set_path_value(
     :param descend_objects:
         If true, a last ditch effort is made for each part, whether it matches
         the name of an attribute of the parent item.
+    :param concat_axis:
+        if 0 or 1, applies :term:'pandas concatanation` vertically or horizontally,
+        by clipping last step when traversing it and doc & value are both Pandas objects.
 
     :raises ValueError:
         - if jsonpointer empty, missing, invalid-content
@@ -452,7 +466,7 @@ def set_path_value(
     """
 
     part_scouters = [
-        collection_scouter,
+        partial(collection_scouter, concat_axis=concat_axis),
         list_scouter,
         *((object_scouter,) if descend_objects else ()),
     ]
@@ -478,6 +492,9 @@ def set_path_value(
         if i == last_part:
             fact = lambda: value
             overwrite = True
+            if concat_axis is not None:
+                ## Only the last part supports concatenation.
+                part_scouters = part_scouters[:1]
         else:
             fact = container_factory
             overwrite = False
@@ -534,9 +551,10 @@ def set_path_value(
 def _update_paths(
     doc: Doc,
     paths_vals: Collection[Tuple[List[str], Any]],
-    container_factory=dict,
-    root: Doc = UNSET,
-    descend_objects=True,
+    container_factory,
+    root: Doc,
+    descend_objects,
+    concat_axis,
 ) -> Optional[Doc]:
     """
     (recursive) mass-update `path_vals` (jsonp, value) pairs into doc.
@@ -560,7 +578,9 @@ def _update_paths(
                 # Assign value and proceed to the next one,
                 # THOUGH if a deeper path with this same prefix follows,
                 # it will overwrite the value just written.
-                new_doc = set_or_concatenate_dataframe(doc, next_prefix, value)
+                new_doc = set_or_concatenate_dataframe(
+                    doc, next_prefix, value, concat_axis
+                )
                 if new_doc is not None:
                     doc = ret_doc = new_doc
             else:
@@ -578,7 +598,12 @@ def _update_paths(
                         child = doc[group_prefix] = container_factory()
 
                     new_child = _update_paths(
-                        child, [(path[1:], value) for path, value in group]
+                        child,
+                        [(path[1:], value) for path, value in group],
+                        container_factory,
+                        root,
+                        descend_objects,
+                        concat_axis,
                     )
                     if new_child is not None:
                         doc[group_prefix] = new_child
@@ -600,19 +625,24 @@ def update_paths(
     container_factory=dict,
     root: Doc = UNSET,
     descend_objects=True,
+    concat_axis: int = None,
 ) -> None:
     """
-    Mass-update `path_vals` (jsonp, value) pairs into doc.
+        Mass-update `path_vals` (jsonp, value) pairs into doc.
 
-    Group jsonp-keys by nesting level,to optimize.
+        Group jsonp-keys by nesting level,to optimize.
 
+        :param concat_axis:
+            None, 0 or 1, see :func:`.set_path_value()`.
     :return:
-        the updated doc (if it was a dataframe and ``pd.concact`` needed)
+            the updated doc (if it was a dataframe and ``pd.concact`` needed)
     """
     if root is UNSET:
         root = doc
     pvs = [(jsonp_path(p), v) for p, v in sorted(paths_vals, key=lambda pv: pv[0])]
-    new_doc = _update_paths(doc, pvs, container_factory, root, descend_objects)
+    new_doc = _update_paths(
+        doc, pvs, container_factory, root, descend_objects, concat_axis
+    )
     if new_doc is not None:
         # Changed-doc would be lost in vain...
         raise ValueError(

@@ -517,25 +517,19 @@ Architecture
 
     json pointer path
     jsonp
-        A `modifier` containing slashes(``/``) `accessing <accessor>` `subdoc` values
-        with `json pointer <https://tools.ietf.org/html/rfc6901>`_ expressions,
-        like ``root/parent/child/1/item``.
+        A `dependency` containing slashes(``/``) & `accessor`\s that can
+        read and write `subdoc` values with `json pointer <https://tools.ietf.org/html/rfc6901>`_
+        expressions, like ``root/parent/child/1/item``, resolved from `solution`.
 
-        The first step (e.g. ``root``) is the name of a `dependency` in the `solution`
-        which becomes the root document for the *jsonp* expression following.
-
-        You may also achieve `pandas concatenation` by annotating `provides` appropriately.
+        In addition to writing values, the :func:`.vcat` or :func:`.hcat` modifiers
+        (& respective accessors) support also `pandas concatenation` for `provides`.
 
     pandas concatenation
         A `jsonp` `dependency` in `provides` may `designate <modifier>` its respective
-        :class:`~pandas.DataFrame` / :class:`~pandas.Series` `output value <outputs>`
+        :class:`~pandas.DataFrame` and/or :class:`~pandas.Series` `output value <outputs>`
         to be concatenated with existing Pandas objects in the `solution`
-        (usefull when working with :ref:`Pandas advanced indexing <pandas:advanced.hierarchical>`.
-        or else, you need to "break cycles" with `sideffected`\s).
-
-        .. include:: pipelines.rst
-            :start-after: .. jsnop-df-concat-syntax-start
-            :end-before: .. jsnop-df-concat-syntax-end
+        (usefull for when working with :ref:`Pandas advanced indexing <pandas:advanced.hierarchical>`.
+        or else, `sideffected`\s are needed to break read-update cycles on dataframes).
 
         See example in :ref:`jsnop-df-concat`.
 

@@ -29,7 +29,7 @@ utilize a combination of these **diacritics**:
 .. diacritics-end
 """
 import enum
-from functools import lru_cache
+from functools import lru_cache, partial
 import operator
 from typing import (
     Any,
@@ -143,6 +143,34 @@ def JsonpAcc():
         setitem=jsp.set_path_value,
         delitem=jsp.pop_path,
         update=jsp.update_paths,
+    )
+
+
+@lru_cache()
+def VCatAcc():
+    """Read/write `jsonp` and concat columns (axis=1) if both doc & value are Pandas. """
+    from . import jsonpointer as jsp
+
+    return Accessor(
+        contains=jsp.contains_path,
+        getitem=jsp.resolve_path,
+        setitem=partial(jsp.set_path_value, concat_axis=0),
+        delitem=jsp.pop_path,
+        update=partial(jsp.update_paths, concat_axis=0),
+    )
+
+
+@lru_cache()
+def HCatAcc():
+    """Read/write `jsonp` and concat columns (axis=1) if both doc & value are Pandas. """
+    from . import jsonpointer as jsp
+
+    return Accessor(
+        contains=jsp.contains_path,
+        getitem=jsp.resolve_path,
+        setitem=partial(jsp.set_path_value, concat_axis=1),
+        delitem=jsp.pop_path,
+        update=partial(jsp.update_paths, concat_axis=1),
     )
 
 
@@ -481,6 +509,20 @@ def implicit(name, *, keyword: str = None, jsonp=None, accessor: Accessor = None
     """see :term:`implicit` & generic :func:`.modify` modifier. """
     return _modifier(
         name, implicit=True, keyword=keyword, jsonp=jsonp, accessor=accessor
+    )
+
+
+def vcat(name, *, keyword: str = None, jsonp=None, implicit=None):
+    """see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
+    return _modifier(
+        name, accessor=VCatAcc(), keyword=keyword, jsonp=jsonp, implicit=implicit
+    )
+
+
+def hcat(name, *, keyword: str = None, jsonp=None, implicit=None):
+    """see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
+    return _modifier(
+        name, accessor=HCatAcc(), keyword=keyword, jsonp=jsonp, implicit=implicit
     )
 
 

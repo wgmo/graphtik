@@ -421,14 +421,18 @@ def test_set_path_df_root_nothing(path):
     """Changing root simply don't work."""
     doc = pd.DataFrame({"A": [1, 2]})
     exp = doc.copy()
-    set_path_value(doc, path, 1)
+
+    set_path_value(doc, path, 7, concat_axis=1)
     check_dfs_eq(doc, exp)
 
-    set_path_value(doc, path, _mutate_df(doc))
+    set_path_value(doc, path, _mutate_df(doc), concat_axis=0)
+    check_dfs_eq(doc, exp)
+
+    set_path_value(doc, path, _mutate_df(doc), concat_axis=1)
     check_dfs_eq(doc, exp)
 
 
-@pytest.fixture(params=["-", "/-", ".", "/."])
+@pytest.fixture(params=["a", "/a"])
 def root_df_paths(request):
     return request.param
 
@@ -437,7 +441,9 @@ def test_set_path_df_root_scream(root_df_paths):
     path = root_df_paths
     doc = pd.DataFrame({"A": [1, 2]})
     with pytest.raises(ValueError, match="^Cannot modify given doc/root"):
-        set_path_value(doc, path, _mutate_df(doc))
+        set_path_value(doc, path, _mutate_df(doc), concat_axis=0)
+    with pytest.raises(ValueError, match="^Cannot modify given doc/root"):
+        set_path_value(doc, path, _mutate_df(doc), concat_axis=1)
 
 
 def test_set_path_df_concat_ok():
@@ -446,15 +452,15 @@ def test_set_path_df_concat_ok():
     val = _mutate_df(df)
 
     doc = orig_doc.copy()
-    path = "a/-"
-    set_path_value(doc, path, val)
+    path = "a/Hf"
+    set_path_value(doc, path, val, concat_axis=1)
     got = doc["a"]
     exp = pd.concat((df, val), axis=1)
     check_dfs_eq(got, exp)
 
     doc = orig_doc.copy()
-    path = "a/."
-    set_path_value(doc, path, val)
+    path = "a/V"
+    set_path_value(doc, path, val, concat_axis=0)
     got = doc["a"]
     exp = pd.concat((df, val), axis=0)
     check_dfs_eq(got, exp)
@@ -577,7 +583,8 @@ def test_update_paths_overwrites():
         assert doc == dict(list(exp.items())[:-i])
 
 
-def test_update_paths_df_concat():
+@pytest.mark.parametrize("axis", [0, 1])
+def test_update_paths_df_concat(axis):
     df = pd.DataFrame({"A": [1, 2]})
     _orig_doc = {  # for when debugging
         "a": {
@@ -597,16 +604,16 @@ def test_update_paths_df_concat():
     val2 = _mutate_df(val1)
 
     path_values = [
-        ("a/aa/-", val1),
+        ("a/aa/H", val1),
         ("a/ac/aca/.", val2),
-        ("a/aa/.", val2),  #  double setting
+        ("a/aa/H", val2),  #  double setting
         ("a/ab", val2),
     ]
-    exp_aa = pd.concat((df, val1), axis=1)
-    exp_aa = pd.concat((exp_aa, val2), axis=0)
-    exp_aca = pd.concat((df, val2), axis=0)
+    exp_aa = pd.concat((df, val1), axis=axis)
+    exp_aa = pd.concat((exp_aa, val2), axis=axis)
+    exp_aca = pd.concat((df, val2), axis=axis)
 
-    update_paths(doc, path_values)
+    update_paths(doc, path_values, concat_axis=axis)
     print(doc)
     check_dfs_eq(resolve_path(doc, "a/ab"), val2)
     check_dfs_eq(resolve_path(doc, "/a/ac/aca"), exp_aca)

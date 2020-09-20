@@ -607,15 +607,13 @@ which is a nested dictionary:
 
 Concatenating Pandas
 ^^^^^^^^^^^^^^^^^^^^
-.. jsnop-df-concat-syntax-start
+Writing output values into :term:`jsonp` paths wotks fine for dictionaries,
+but it is not always possible to modify pandas objects that way
+(e.g. multi-indexed objects).
+In that case you may :term:`concatenate <pandas concatenation>` the output pandas
+with those in solution, by annotating `provides` with :func:`.hcat` or :mod:`.vcat`
+:term:`modifier`\s (which eventually select different :term:`accessor`\s).
 
-You may achieve :term:`pandas concatenation` by annotating `provides`
-like this::
-
-    modify("some/df/new_cols", jsonp="some/df/-")  # append columns
-    modify("some/df/new_rows", jsonp="some/df/.")  # append rows
-
-.. jsnop-df-concat-syntax-end
 
 For instance, assuming an :term:`input document <subdoc>` that contains 2 dataframes
 with the same number of rows:
@@ -625,12 +623,12 @@ with the same number of rows:
     /data_lake/satellite_data:   pd.DataFrame(...)
     /db/planet_ephemeris:        pd.DataFrame(...)
 
-... we can copy some columns from ``satellite_data`` --> ``planet_ephemeris``, at once, with something like this::
+... we can copy multiple columns from ``satellite_data`` --> ``planet_ephemeris``,
+at once, with something like this::
 
     @operation(
         needs="data_lake/satellite_data",
-        provides=modify("db/planet_ephemeris/orbitals",
-                        jsonp="db/planet_ephemeris/-")
+        provides=hcat("db/planet_ephemeris/orbitals")
     )
     def extract_planets_columns(satellite_df):
         orbitals_df = satellite_df[3:8]  # the orbital columns
@@ -645,5 +643,6 @@ with the same number of rows:
     for the sub-name in the :term:`jsonp` expression, and as a new level
     in the multi-index columns of the ``orbitals_df`` dataframe.
 
-    That will help further down the road, when indexing that group of columns
-    with ``/db/planet_ephemeris/orbitals``, and continue building the :term:`network`.
+    That will help further down the road, to index and extract that group of columns
+    with ``/db/planet_ephemeris/orbitals`` dependency, and continue building
+    the :term:`network`.
