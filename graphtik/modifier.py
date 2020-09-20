@@ -399,7 +399,9 @@ def modifier_withset(
     return _modifier(name=name, **kw)
 
 
-def modify(name: str, jsonp=None, implicit=None) -> _Modifier:
+def modify(
+    name: str, *, keyword=None, jsonp=None, implicit=None, accessor: Accessor = None
+) -> _Modifier:
     """
     Generic :term:`modifier` for term:`json pointer path` & :term:`implicit` dependencies.
 
@@ -413,14 +415,14 @@ def modify(name: str, jsonp=None, implicit=None) -> _Modifier:
         If accessing pandas, you may pass an already splitted path with
         its last *part* being a callable indexer (:ref:`pandas:indexing.callable`).
 
-        .. include:: pipelines.rst
-            :start-after: .. jsnop-df-concat-syntax-start
-            :end-before: .. jsnop-df-concat-syntax-end
-
-        See example in :ref:`jsnop-df-concat`.
-
+        In addition to writing values, the :func:`.vcat` or :func:`.hcat` modifiers
+        (& respective accessors) support also `pandas concatenation` for `provides`
+        (see example in :ref:`jsnop-df-concat`).
     :param implicit:
         :term:`implicit` dependencies are not fed into/out of the function.
+    :param accessor:
+        Annotate the `dependency` with :term:`accessor` functions to read/write
+        `solution` (actually a 2-tuple with functions is ok)
 
     **Example:**
 
@@ -475,7 +477,9 @@ def modify(name: str, jsonp=None, implicit=None) -> _Modifier:
 
     .. graphtik::
     """
-    return _modifier(name, jsonp=jsonp, implicit=implicit)
+    return _modifier(
+        name, keyword=keyword, jsonp=jsonp, implicit=implicit, accessor=accessor
+    )
 
 
 def keyword(

@@ -38,7 +38,7 @@ def test_jsonp_disabled():
         fn=None,
         name="copy a+b-->A+BB",
         needs=[modify("inputs/a"), modify("inputs/b")],
-        provides=["RESULTS/A", modify("RESULTS/BB", False)],
+        provides=["RESULTS/A", modify("RESULTS/BB", jsonp=False)],
     )
     assert "provides=['RESULTS/A'($), RESULTS/BB" in str(no_jsonp_res)
     res = compose("", no_jsonp_res).compute({"inputs": {"a": 1, "b": 2}})
@@ -46,7 +46,7 @@ def test_jsonp_disabled():
 
     no_jsonp_inp = operation(
         name="copy a+b-->A+BB",
-        needs=["inputs/a", modify("inputs/b", False)],
+        needs=["inputs/a", modify("inputs/b", jsonp=False)],
         provides=["RESULTS/A", "RESULTS/BB"],
     )()
     assert "needs=['inputs/a'($), inputs/b]" in str(no_jsonp_inp)
