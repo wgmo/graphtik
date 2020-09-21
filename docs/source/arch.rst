@@ -312,6 +312,7 @@ Architecture
 
     needs
     fn_needs
+    matching inputs
         The list of `dependency` names an `operation` requires from `solution` as `inputs`,
 
         roughly corresponding to underlying function's arguments (**fn_needs**).
@@ -325,6 +326,7 @@ Architecture
     provides
     user_provides
     fn_provides
+    zipping outputs
         The list of `dependency` names an `operation` writes to the `solution` as `outputs`,
 
         roughly corresponding to underlying function's results (**fn_provides**).
@@ -699,18 +701,22 @@ Architecture
         value.  All of them default to ``None`` (false).
 
     callbacks
-        x2 user-defined callables that will be optionally called before & after each operation,
-        installed on :meth:`.Pipeline.compute()`, which must have this signature::
+        x2 user-defined optional callables called before & after each function,
+        installed on :meth:`.Pipeline.compute()`, that they must have this signature::
 
             callbacks(op_cb) -> None
 
-        ... where ``op_cb`` is an instance of the :class:`.OpCb`
-        :func:`~collections.namedtuple`.
+        ... where ``op_cb`` is an instance of the :class:`.OpCb` :func:`~collections.namedtuple`.
 
-        * A use case for the "pre" callback is to :ref:`set a breakpoint to specific operation
-          <break_with_pre_callback>`.
-        * A use case for the "post" callback is validate the solution and scream
-          immediately on errors.
+        pre-callback
+            Called after :term:`marshalling` and before `matching inputs`.
+            A use case would be to :ref:`a breakpoint triggered by some condition
+            <break_with_pre_callback>`.
+
+        post-callback:
+            Called after :term:`zipping outputs` and before :term:`marshalling` results
+            back into `solution`.
+            A use case would be to validate the solution and scream immediately on errors.
 
     jetsam
         When a pipeline or an operation fails, the original exception gets annotated
