@@ -505,25 +505,19 @@ def modify(
     )
 
 
-def implicit(name, *, keyword: str = None, jsonp=None, accessor: Accessor = None):
+def implicit(name, *, jsonp=None):
     """see :term:`implicit` & generic :func:`.modify` modifier. """
-    return _modifier(
-        name, implicit=True, keyword=keyword, jsonp=jsonp, accessor=accessor
-    )
+    return _modifier(name, implicit=True, jsonp=jsonp)
 
 
-def vcat(name, *, keyword: str = None, jsonp=None, implicit=None):
-    """see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
-    return _modifier(
-        name, accessor=VCatAcc(), keyword=keyword, jsonp=jsonp, implicit=implicit
-    )
+def vcat(name, *, keyword: str = None, jsonp=None):
+    """Provides-only, see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
+    return _modifier(name, accessor=VCatAcc(), keyword=keyword, jsonp=jsonp)
 
 
-def hcat(name, *, keyword: str = None, jsonp=None, implicit=None):
-    """see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
-    return _modifier(
-        name, accessor=HCatAcc(), keyword=keyword, jsonp=jsonp, implicit=implicit
-    )
+def hcat(name, *, keyword: str = None, jsonp=None):
+    """Provides-only, see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
+    return _modifier(name, accessor=HCatAcc(), keyword=keyword, jsonp=jsonp)
 
 
 def keyword(
