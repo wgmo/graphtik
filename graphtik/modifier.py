@@ -693,17 +693,17 @@ def modify(
     )
 
 
-def implicit(name, *, jsonp=None):
+def implicit(name, *, jsonp=None) -> _Modifier:
     """see :term:`implicit` & generic :func:`.modify` modifier. """
     return _modifier(name, implicit=True, jsonp=jsonp)
 
 
-def vcat(name, *, keyword: str = None, jsonp=None):
+def vcat(name, *, keyword: str = None, jsonp=None) -> _Modifier:
     """Provides-only, see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
     return _modifier(name, accessor=VCatAcc(), keyword=keyword, jsonp=jsonp)
 
 
-def hcat(name, *, keyword: str = None, jsonp=None):
+def hcat(name, *, keyword: str = None, jsonp=None) -> _Modifier:
     """Provides-only, see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
     return _modifier(name, accessor=HCatAcc(), keyword=keyword, jsonp=jsonp)
 
