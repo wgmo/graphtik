@@ -51,6 +51,7 @@ from .modifier import (
     is_sfxed,
     is_vararg,
     is_varargs,
+    jsonp_ize,
     modify,
     optional,
 )
@@ -117,10 +118,6 @@ def as_renames(i, argname):
             raise ValueError(f"Cannot dict-ize {argname}({i!r}) due to: {ex}") from None
 
     return i
-
-
-def jsonp_ize(dep):
-    return modify(dep) if "/" in dep and type(dep) is str else dep
 
 
 def jsonp_ize_all(deps):

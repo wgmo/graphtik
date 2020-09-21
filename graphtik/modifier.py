@@ -1043,7 +1043,7 @@ def sfxed_varargs(
 
 def get_keyword(dep) -> Optional[str]:
     """
-    Check if a :term:`dependency` is keyword (and get it).
+    Check if a :term:`dependency` is keyword (and get it, last step if `jsonp`).
 
     All non-varargish optionals are "keyword" (including sideffected ones).
 
@@ -1080,9 +1080,14 @@ def is_varargish(dep) -> bool:
     return dep._optional in (_Optionals.vararg, _Optionals.vararg)
 
 
+def jsonp_ize(dep):
+    """Parse dep as :term:`jsonp` (unless it has been modified with ``jsnop=False``). """
+    return modify(dep) if "/" in dep and type(dep) is str else dep
+
+
 def get_jsonp(dep) -> Union[List[str], None]:
-    """Check if the dependency is :term:`json pointer path` and return steps."""
-    return getattr(dep, "_jsonp", None)
+    """Check if dependency is :term:`json pointer path` and return its steps."""
+    return getattr(jsonp_ize(dep), "_jsonp", None)
 
 
 def is_sfx(dep) -> Optional[str]:
