@@ -404,10 +404,31 @@ def test_keyword_jsonp():
     assert sol == {"a": "ciaociao"}
 
 
-def test_provides_aliases():
-    op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})
-    assert op.provides == {"a", "aa"}
-    assert op.compute({"s": "k"}) == {"a": "k", "aa": "k"}
+@pytest.mark.parametrize(
+    "provide, aliases, exp",
+    [
+        ("a", {"a": "aa"}, {"a": "k", "aa": "k"}),
+        (
+            sfxed("a", "1"),
+            {sfxed("a", "1"): "aa"},
+            {"a": "k", "aa": "k"},
+        ),
+        (
+            "a",
+            {"a": sfxed("a", "1")},
+            {"a": "k"},
+        ),
+        (
+            sfxed("a", "1"),
+            {sfxed("a", "1"): sfxed("b", "1")},
+            {"a": "k", "b": "k"},
+        ),
+    ],
+)
+def test_provides_aliases(provide, aliases, exp):
+    op = operation(str, name="t", needs="s", provides=provide, aliases=aliases)
+    assert op.provides == aliases.keys() | aliases.values()
+    assert op.compute({"s": "k"}) == exp
 
 
 def test_sfxed_needs_in_pipeline():

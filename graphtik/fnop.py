@@ -161,19 +161,23 @@ def reparse_operation_data(
                 f"The `aliases` [{bad}] clash with existing provides in {list(provides)}!"
             )
 
+        # XXX: Why jsonp_ize here? (and not everywhere, or nowhere in fnop?)
         aliases = [(jsonp_ize(src), jsonp_ize(dst)) for src, dst in aliases]
-        alias_src = iset(src for src, _dst in aliases)
-        stripped_provides = iset(dep_stripped(d) for d in provides)
-        if not alias_src <= stripped_provides:
-            bad_alias_sources = alias_src - provides
+        aliases_src = iset(src for src, _dst in aliases)
+        all_provides = iset(provides) | (dep_stripped(d) for d in provides)
+
+        if not aliases_src <= all_provides:
+            bad_alias_sources = aliases_src - all_provides
             bad_aliases = ", ".join(
                 f"{src!r}-->{dst!r}" for src, dst in aliases if src in bad_alias_sources
             )
             raise ValueError(
-                f"The `aliases` [{bad_aliases}] rename non-existent provides in {list(stripped_provides)}!"
+                f"The `aliases` [{bad_aliases}] rename non-existent provides in {list(all_provides)}!"
             )
         sfx_aliases = [
-            f"{src} -> {dst}" for src, dst in aliases if is_sfx(src) or is_sfx(dst)
+            f"{src!r} -> {dst!r}"
+            for src, dst in aliases
+            if is_pure_sfx(src) or is_pure_sfx(dst)
         ]
         if sfx_aliases:
             raise ValueError(
@@ -802,7 +806,10 @@ class FnOp(Operation):
 
         if self.aliases:
             alias_values = [
-                (dst, results[src]) for src, dst in self.aliases if src in results
+                (dep_stripped(dst), results[stripped_src])
+                for src, dst in self.aliases
+                for stripped_src in [dep_stripped(src)]
+                if stripped_src in results
             ]
             results.update(alias_values)
 
