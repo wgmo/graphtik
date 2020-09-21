@@ -421,6 +421,194 @@ def modifier_withset(
     return _modifier(name=name, **kw)
 
 
+def get_keyword(dep) -> Optional[str]:
+    """
+    Check if a :term:`dependency` is keyword (and get it, last step if `jsonp`).
+
+    All non-varargish optionals are "keyword" (including sideffected ones).
+
+    :return:
+        the :attr:`._keyword`
+    """
+    return getattr(dep, "_keyword", None)
+
+
+def is_optional(dep) -> Optional[_Optionals]:
+    """
+    Check if a :term:`dependency` is optional.
+
+    Varargish & optional sideffects are included.
+
+    :return:
+        the :attr:`._optional`
+    """
+    return getattr(dep, "_optional", None)
+
+
+def is_vararg(dep) -> bool:
+    """Check if an :term:`optionals` dependency is `vararg`."""
+    return getattr(dep, "_optional", None) == _Optionals.vararg
+
+
+def is_varargs(dep) -> bool:
+    """Check if an :term:`optionals` dependency is `varargs`."""
+    return getattr(dep, "_optional", None) == _Optionals.varargs
+
+
+def is_varargish(dep) -> bool:
+    """Check if an :term:`optionals` dependency is :term:`varargish`."""
+    return dep._optional in (_Optionals.vararg, _Optionals.vararg)
+
+
+def jsonp_ize(dep):
+    """Parse dep as :term:`jsonp` (unless it has been modified with ``jsnop=False``). """
+    return modify(dep) if "/" in dep and type(dep) is str else dep
+
+
+def get_jsonp(dep) -> Union[List[str], None]:
+    """Check if dependency is :term:`json pointer path` and return its steps."""
+    return getattr(jsonp_ize(dep), "_jsonp", None)
+
+
+def is_sfx(dep) -> Optional[str]:
+    """
+    Check if a dependency is :term:`sideffects` or :term:`sideffected`.
+
+    :return:
+        the :attr:`._sideffected`
+    """
+    return getattr(dep, "_sideffected", None)
+
+
+def is_pure_sfx(dep) -> bool:
+    """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
+    return getattr(dep, "_sideffected", None) and not getattr(dep, "_sfx_list", None)
+
+
+def is_sfxed(dep) -> bool:
+    """
+    Check if it is :term:`sideffected`.
+
+    :return:
+        the :attr:`._sfx_list` if it is  a *sideffected* dep, None/empty-tuple otherwise
+    """
+    return getattr(dep, "_sideffected", None) and getattr(dep, "_sfx_list", None)
+
+
+def is_implicit(dep) -> bool:
+    """Return if it is a :term:`implicit` dependency. """
+    return getattr(dep, "_implicit", None)
+
+
+def get_accessor(dep) -> bool:
+    """
+    Check if dependency has an :term:`accessor`, and get it (if funcs below are unfit)
+
+    :return:
+        the :attr:`._accessor`
+    """
+    return getattr(dep, "_accessor", None)
+
+
+def acc_contains(dep) -> Callable[[Collection, str], Any]:
+    """
+    A fn like :func:`operator.contains` for any `dep` (with-or-without :term:`accessor`)
+    """
+    acc = getattr(dep, "_accessor", None)
+    return acc.contains if acc else operator.contains
+
+
+def acc_getitem(dep) -> Callable[[Collection, str], Any]:
+    """
+    A fn like :func:`operator.getitem` for any `dep` (with-or-without :term:`accessor`)
+    """
+    acc = getattr(dep, "_accessor", None)
+    return acc.getitem if acc else operator.getitem
+
+
+def acc_setitem(dep) -> Callable[[Collection, str, Any], None]:
+    """
+    A fn like :func:`operator.setitem` for any `dep` (with-or-without :term:`accessor`)
+    """
+    acc = getattr(dep, "_accessor", None)
+    return acc.setitem if acc else operator.setitem
+
+
+def acc_delitem(dep) -> Callable[[Collection, str], None]:
+    """
+    A fn like :func:`operator.delitem` for any `dep` (with-or-without :term:`accessor`)
+    """
+    acc = getattr(dep, "_accessor", None)
+    return acc.delitem if acc else operator.delitem
+
+
+def dependency(dep) -> str:
+    """
+    Returns the underlying dependency name (just str)
+
+    For non-sideffects, it coincides with str(), otherwise,
+    the the pure-sideffect string or the existing :term:`sideffected` dependency
+    stored in :attr:`._sideffected`.
+    """
+    return str(dep) if is_sfx(dep) else dep._sideffected
+
+
+def dep_renamed(dep, ren) -> Union[_Modifier, str]:
+    """
+    Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
+
+    preserving any :func:`keyword` to old-name.
+
+    For :term:`sideffected` it renames the dependency (not the *sfx-list*) --
+    you have to do it that manually with a custom renamer-function, if ever
+    the need arise.
+    """
+    if callable(ren):
+        renamer = ren
+    else:
+        renamer = lambda n: ren
+
+    if isinstance(dep, _Modifier):
+        if is_sfx(dep):
+            new_name = renamer(dep._sideffected)
+            dep = modifier_withset(dep, name=new_name, sideffected=new_name)
+        else:
+            dep = modifier_withset(dep, name=renamer(str(dep)))
+    else:  # plain string
+        dep = renamer(dep)
+
+    return dep
+
+
+def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
+    """
+    Return one sideffected for each sfx in :attr:`._sfx_list`, or iterate `dep` in other cases.
+    """
+    sfx_list = is_sfxed(dep)
+    return (
+        [modifier_withset(dep, sfx_list=(s,)) for s in sfx_list] if sfx_list else (dep,)
+    )
+
+
+def dep_stripped(dep) -> Union[str, _Modifier]:
+    """
+    Return the :attr:`._sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
+
+    conveying all other properties of the original modifier to the stripped dependency.
+    """
+    if is_sfxed(dep):
+        dep = modifier_withset(
+            dep, name=dep._sideffected, sideffected=None, sfx_list=()
+        )
+    return dep
+
+
+############
+## Announced API
+## (exported with "*" in package.__init___)
+##
+
+
 def modify(
     name: str, *, keyword=None, jsonp=None, implicit=None, accessor: Accessor = None
 ) -> _Modifier:
@@ -1033,185 +1221,3 @@ def sfxed_varargs(
         accessor=accessor,
         jsonp=jsonp,
     )
-
-
-def get_keyword(dep) -> Optional[str]:
-    """
-    Check if a :term:`dependency` is keyword (and get it, last step if `jsonp`).
-
-    All non-varargish optionals are "keyword" (including sideffected ones).
-
-    :return:
-        the :attr:`._keyword`
-    """
-    return getattr(dep, "_keyword", None)
-
-
-def is_optional(dep) -> Optional[_Optionals]:
-    """
-    Check if a :term:`dependency` is optional.
-
-    Varargish & optional sideffects are included.
-
-    :return:
-        the :attr:`._optional`
-    """
-    return getattr(dep, "_optional", None)
-
-
-def is_vararg(dep) -> bool:
-    """Check if an :term:`optionals` dependency is `vararg`."""
-    return getattr(dep, "_optional", None) == _Optionals.vararg
-
-
-def is_varargs(dep) -> bool:
-    """Check if an :term:`optionals` dependency is `varargs`."""
-    return getattr(dep, "_optional", None) == _Optionals.varargs
-
-
-def is_varargish(dep) -> bool:
-    """Check if an :term:`optionals` dependency is :term:`varargish`."""
-    return dep._optional in (_Optionals.vararg, _Optionals.vararg)
-
-
-def jsonp_ize(dep):
-    """Parse dep as :term:`jsonp` (unless it has been modified with ``jsnop=False``). """
-    return modify(dep) if "/" in dep and type(dep) is str else dep
-
-
-def get_jsonp(dep) -> Union[List[str], None]:
-    """Check if dependency is :term:`json pointer path` and return its steps."""
-    return getattr(jsonp_ize(dep), "_jsonp", None)
-
-
-def is_sfx(dep) -> Optional[str]:
-    """
-    Check if a dependency is :term:`sideffects` or :term:`sideffected`.
-
-    :return:
-        the :attr:`._sideffected`
-    """
-    return getattr(dep, "_sideffected", None)
-
-
-def is_pure_sfx(dep) -> bool:
-    """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
-    return getattr(dep, "_sideffected", None) and not getattr(dep, "_sfx_list", None)
-
-
-def is_sfxed(dep) -> bool:
-    """
-    Check if it is :term:`sideffected`.
-
-    :return:
-        the :attr:`._sfx_list` if it is  a *sideffected* dep, None/empty-tuple otherwise
-    """
-    return getattr(dep, "_sideffected", None) and getattr(dep, "_sfx_list", None)
-
-
-def is_implicit(dep) -> bool:
-    """Return if it is a :term:`implicit` dependency. """
-    return getattr(dep, "_implicit", None)
-
-
-def get_accessor(dep) -> bool:
-    """
-    Check if dependency has an :term:`accessor`, and get it (if funcs below are unfit)
-
-    :return:
-        the :attr:`._accessor`
-    """
-    return getattr(dep, "_accessor", None)
-
-
-def acc_contains(dep) -> Callable[[Collection, str], Any]:
-    """
-    A fn like :func:`operator.contains` for any `dep` (with-or-without :term:`accessor`)
-    """
-    acc = getattr(dep, "_accessor", None)
-    return acc.contains if acc else operator.contains
-
-
-def acc_getitem(dep) -> Callable[[Collection, str], Any]:
-    """
-    A fn like :func:`operator.getitem` for any `dep` (with-or-without :term:`accessor`)
-    """
-    acc = getattr(dep, "_accessor", None)
-    return acc.getitem if acc else operator.getitem
-
-
-def acc_setitem(dep) -> Callable[[Collection, str, Any], None]:
-    """
-    A fn like :func:`operator.setitem` for any `dep` (with-or-without :term:`accessor`)
-    """
-    acc = getattr(dep, "_accessor", None)
-    return acc.setitem if acc else operator.setitem
-
-
-def acc_delitem(dep) -> Callable[[Collection, str], None]:
-    """
-    A fn like :func:`operator.delitem` for any `dep` (with-or-without :term:`accessor`)
-    """
-    acc = getattr(dep, "_accessor", None)
-    return acc.delitem if acc else operator.delitem
-
-
-def dependency(dep) -> str:
-    """
-    Returns the underlying dependency name (just str)
-
-    For non-sideffects, it coincides with str(), otherwise,
-    the the pure-sideffect string or the existing :term:`sideffected` dependency
-    stored in :attr:`._sideffected`.
-    """
-    return str(dep) if is_sfx(dep) else dep._sideffected
-
-
-def dep_renamed(dep, ren) -> Union[_Modifier, str]:
-    """
-    Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
-
-    preserving any :func:`keyword` to old-name.
-
-    For :term:`sideffected` it renames the dependency (not the *sfx-list*) --
-    you have to do it that manually with a custom renamer-function, if ever
-    the need arise.
-    """
-    if callable(ren):
-        renamer = ren
-    else:
-        renamer = lambda n: ren
-
-    if isinstance(dep, _Modifier):
-        if is_sfx(dep):
-            new_name = renamer(dep._sideffected)
-            dep = modifier_withset(dep, name=new_name, sideffected=new_name)
-        else:
-            dep = modifier_withset(dep, name=renamer(str(dep)))
-    else:  # plain string
-        dep = renamer(dep)
-
-    return dep
-
-
-def dep_singularized(dep) -> Iterable[Union[str, _Modifier]]:
-    """
-    Return one sideffected for each sfx in :attr:`._sfx_list`, or iterate `dep` in other cases.
-    """
-    sfx_list = is_sfxed(dep)
-    return (
-        [modifier_withset(dep, sfx_list=(s,)) for s in sfx_list] if sfx_list else (dep,)
-    )
-
-
-def dep_stripped(dep) -> Union[str, _Modifier]:
-    """
-    Return the :attr:`._sideffected` if `dep` is :term:`sideffected`, `dep` otherwise,
-
-    conveying all other properties of the original modifier to the stripped dependency.
-    """
-    if is_sfxed(dep):
-        dep = modifier_withset(
-            dep, name=dep._sideffected, sideffected=None, sfx_list=()
-        )
-    return dep
