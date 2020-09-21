@@ -398,6 +398,12 @@ def test_func_op_validation_aliases_BAD(prov_aliases, ex):
         reparse_operation_data("t", None, *prov_aliases)
 
 
+def test_keyword_jsonp():
+    op = operation(lambda *, bar: bar * 2, "kw", needs=keyword("foo/bar"), provides="a")
+    sol = op.compute({"foo/bar": "ciao"})
+    assert sol == {"a": "ciaociao"}
+
+
 def test_provides_aliases():
     op = operation(str, name="t", needs="s", provides="a", aliases={"a": "aa"})
     assert op.provides == {"a", "aa"}

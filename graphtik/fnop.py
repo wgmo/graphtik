@@ -10,18 +10,11 @@
 """
 
 import logging
-import textwrap
 import sys
+import textwrap
 from collections import abc as cabc
 from functools import update_wrapper, wraps
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    List,
-    Mapping,
-    Tuple,
-)
+from typing import Any, Callable, Collection, List, Mapping, Tuple
 
 from boltons.setutils import IndexedSet as iset
 
@@ -43,6 +36,7 @@ from .modifier import (
     dep_renamed,
     dep_singularized,
     dep_stripped,
+    get_jsonp,
     get_keyword,
     is_implicit,
     is_optional,
@@ -625,6 +619,12 @@ class FnOp(Operation):
 
                 keyword = get_keyword(n)
                 if keyword:
+                    ## Keep jsut the last part from `jsonp`s.
+                    #
+                    steps = get_jsonp(keyword)
+                    if steps:
+                        keyword = steps[-1]
+
                     kwargs[keyword] = inp_value
 
                 elif is_vararg(n):
