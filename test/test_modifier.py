@@ -12,6 +12,7 @@ from graphtik.modifier import (
     dep_singularized,
     dep_stripped,
     is_implicit,
+    implicit,
     keyword,
     modify,
     optional,
@@ -336,6 +337,10 @@ def test_sideffected_singularized(mod, exp):
 
 def test_implicit(ser_method):
     assert is_implicit("a") is None
+    m = implicit("a")
+    assert is_implicit(m) is True
+    m = optional("a", implicit=1)
+    assert is_implicit(m) is 1
     m = sfxed("a", "b")
     assert is_implicit(m) is None
     m = sfxed("a", "b", implicit=1)

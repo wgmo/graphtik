@@ -800,7 +800,7 @@ def keyword(
 
 
 def optional(
-    name: str, keyword: str = None, accessor: Accessor = None, jsonp=None
+    name: str, keyword: str = None, accessor: Accessor = None, jsonp=None, implicit=None
 ) -> _Modifier:
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
@@ -821,6 +821,9 @@ def optional(
     :param jsonp:
         None (derrived from `name`), ``False``, str, collection of str/callable (last one)
         See generic :func:`.modify` modifier.
+    :param implicit:
+        :term:`implicit` dependencies are not fed into/out of the function.
+        You may use directly :func:`implicit`.
 
     **Example:**
 
@@ -868,6 +871,7 @@ def optional(
         optional=_Optionals.keyword,
         accessor=accessor,
         jsonp=jsonp,
+        implicit=implicit,
     )
 
 
