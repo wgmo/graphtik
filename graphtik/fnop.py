@@ -212,16 +212,16 @@ def _spread_sideffects(
     #: The dedupe  any `sideffected`.
     seen_sideffecteds = set()
 
-    def strip_unique(dep):
+    def as_fn_deps(dep):
         """Strip and dedupe any sfxed, drop any sfx and implicit. """
-        if is_implicit(dep):
+        if is_implicit(dep):  # must ignore also `sfxed`s
             pass
         elif is_sfxed(dep):
             dep = dep_stripped(dep)
             if not dep in seen_sideffecteds:
                 seen_sideffecteds.add(dep)
                 return (dep,)
-        elif not is_sfx(dep):
+        elif not is_sfx(dep):  # must kick after `sfxed`
             return (dep,)
         return ()
 
@@ -229,7 +229,7 @@ def _spread_sideffects(
 
     if deps:
         op_deps = iset(nn for n in deps for nn in dep_singularized(n))
-        fn_deps = tuple(nn for n in deps for nn in strip_unique(n))
+        fn_deps = tuple(nn for n in deps for nn in as_fn_deps(n))
         return op_deps, fn_deps
     else:
         return deps, deps
