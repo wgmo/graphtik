@@ -47,6 +47,7 @@ from typing import (
 #: Arguments-presence patterns for :class:`_Modifier` constructor.
 #: Combinations missing raise errors.
 _modifier_cstor_matrix = {
+# TODO: Add `implicit` in the table, to augment REPR & forbid implicit sfxed.
 # (7, kw, opt, accessors, sfxed, sfx): (STR, REPR, FUNC) OR None
 700000: None,
 710000: (       "%(dep)s",                  "'%(dep)s'(%(acs)s>%(kw)s)",    "keyword"),
@@ -248,7 +249,14 @@ class _Modifier(str):
             accessor.validate()
         if sideffected and is_sfx(sideffected):
             raise ValueError(
-                f"`sideffected` cannot be sideffect, got {sideffected!r}"
+                f"`sideffected` cannot be `sfx`, got {sideffected!r}"
+                f"\n  locals={locals()}"
+            )
+
+        # TODO: Add `implicit` in the table, to augment REPR & forbid implicit sfxed.
+        if sideffected and kw.get("_implicit"):
+            raise ValueError(
+                f"`sideffected` cannot be `implicit`, got {sideffected!r}"
                 f"\n  locals={locals()}"
             )
         double_sideffects = [
@@ -1080,14 +1088,13 @@ def sfxed(
     optional: bool = None,
     accessor: Accessor = None,
     jsonp=None,
-    implicit=None,
 ) -> _Modifier:
     r"""
     Annotates a :term:`sideffected` dependency in the solution sustaining side-effects.
 
     :param dependency:
         the actual dependency receiving the sideffect, which will be fed into/out
-        of the function (unless marked as :term:`implicit`).
+        of the function.
     :param sfx0:
         the 1st (arbitrary object) sideffect marked as "acting" on the `dependency`.
     :param sfx0:
@@ -1103,8 +1110,6 @@ def sfxed(
     :param jsonp:
         None (derrived from `name`), ``False``, str, collection of str/callable (last one)
         See generic :func:`.modify` modifier.
-    :param implicit:
-        :term:`implicit` dependencies are not fed into/out of the function.
 
     Like :func:`.sfx` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
@@ -1195,7 +1200,6 @@ def sfxed(
         sfx_list=(sfx0, *sfx_list),
         accessor=accessor,
         jsonp=jsonp,
-        implicit=implicit,
     )
 
 

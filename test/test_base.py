@@ -275,7 +275,7 @@ def test_jetsam_n_plot_with_DEBUG():
                 "a",
                 sfxed("b", "foo", keyword="bb"),
                 implicit("c"),
-                sfxed("d", "bar", implicit=1),
+                sfxed("d", "bar"),
                 vararg("e"),
                 varargs("f"),
             ],
@@ -283,7 +283,7 @@ def test_jetsam_n_plot_with_DEBUG():
                 "A",
                 sfxed("b", "FOO", keyword="bb"),
                 implicit("C"),
-                sfxed("d", "BAR", implicit=1),
+                sfxed("d", "BAR", optional=True),
                 sfx("FOOBAR"),
             ],
             aliases={"A": "aaa", "b": "bbb", "d": "ddd"},  # FIXME: "D" is implicit!

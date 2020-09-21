@@ -463,23 +463,3 @@ def test_implicit_out():
     assert got == {"A": ""}
 
     assert "(implicit)" in str(op.plot())
-
-
-def test_sfxed_implicit_inp():
-    op = operation(str, needs=["A", sfxed("a", "b", implicit=1)], provides="a")
-
-    pipe = compose(..., op)
-    got = pipe.compute({"A": "val", sfxed("a", "b"): 1}, "a")
-    assert got == {"a": "val"}
-
-    assert "(implicit)" in str(op.plot())
-
-
-def test_sfxed_implicit_out():
-    op = operation(str, "hh", provides=["A", sfxed("a", "b", implicit=1)])
-
-    pipe = compose(..., op)
-    got = pipe.compute()
-    assert got == {"A": ""}
-
-    assert "(implicit)" in str(op.plot())

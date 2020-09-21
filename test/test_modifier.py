@@ -341,12 +341,6 @@ def test_implicit(ser_method):
     assert is_implicit(m) is True
     m = optional("a", implicit=1)
     assert is_implicit(m) is 1
-    m = sfxed("a", "b")
-    assert is_implicit(m) is None
-    m = sfxed("a", "b", implicit=1)
-    assert is_implicit(m) == 1
-    m = sfxed("a", "b", "c", implicit=0)
-    assert is_implicit(m) == 0
 
     assert dep_renamed(m, "R")._implicit == m._implicit
     assert ser_method(m)._implicit == m._implicit

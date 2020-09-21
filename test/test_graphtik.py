@@ -12,6 +12,7 @@ import pytest
 from graphtik import (
     NO_RESULT,
     compose,
+    implicit,
     modify,
     operation,
     optional,
@@ -136,22 +137,20 @@ def test_cycle_tip():
         pipe.compute()
 
 
-def test_aliases(exemethod):
-    provides = ("a", sfxed("s1", "foo"), sfxed("s2", "foo", implicit=1))
+def test_aliases_pipeline(exemethod):
+    provides = ("a", sfxed("s", "foo"))
     aliased = operation(
         lambda: ("A", "B"),
         name="op1",
         provides=provides,
-        aliases={"a": "b", "s1": "S1", "s2": "S2"},
+        aliases={"a": "b", "s": "S1"},
     )
     assert aliased._user_provides == provides
     assert tuple(aliased.provides) == (
         "a",
-        sfxed("s1", "foo"),
-        sfxed("s2", "foo"),
+        sfxed("s", "foo"),
         "b",
         "S1",
-        "S2",
     )
 
     pipe = compose(
@@ -160,7 +159,7 @@ def test_aliases(exemethod):
         operation(lambda x: x * 2, name="op2", needs="b", provides="c"),
         parallel=exemethod,
     )
-    assert pipe() == {"a": "A", "s1": "B", "b": "A", "S1": "B", "c": "AA"}
+    assert pipe() == {"a": "A", "s": "B", "b": "A", "S1": "B", "c": "AA"}
     assert list(pipe.provides) == [*aliased.provides, "c"]
 
 
