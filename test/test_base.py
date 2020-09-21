@@ -286,7 +286,7 @@ def test_jetsam_n_plot_with_DEBUG():
                 sfxed("d", "BAR", implicit=1),
                 sfx("FOOBAR"),
             ],
-            aliases={"A": "aaa", "b": "bbb", "C": "ccc", "d": "ddd"},
+            aliases={"A": "aaa", "b": "bbb", "d": "ddd"},  # FIXME: "D" is implicit!
         ),
     )
 

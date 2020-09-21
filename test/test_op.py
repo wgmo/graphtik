@@ -15,6 +15,7 @@ from graphtik import (
     NO_RESULT,
     NO_RESULT_BUT_SFX,
     compose,
+    implicit,
     keyword,
     operation,
     optional,
@@ -390,6 +391,40 @@ def test_as_renames(inp, exp):
         (
             (["a", "b"], {"a": "b"}),
             ValueError(r"clash with existing provides in \['a', 'b'\]"),
+        ),
+        ## Implicits
+        #
+        (
+            ([implicit("i")], {implicit("i"): "II"}),
+            ValueError("must not contain `implicits"),
+        ),
+        (
+            (["i"], {"i": implicit("II")}),
+            ValueError("must not contain `implicits"),
+        ),
+        ## Implicit SFXEDs
+        (
+            ([sfxed("i", "1", implicit=1)], {sfxed("i", "1", implicit=1): "II"}),
+            ValueError("must not contain `implicits"),
+        ),
+        (
+            ([sfxed("i", "1")], {sfxed("i", "1", implicit=1): "II"}),
+            ValueError("must not contain `implicits"),
+        ),
+        (
+            ([sfxed("i", "1", implicit=1)], {sfxed("i", "1"): "II"}),
+            ValueError("must not contain `implicits"),
+        ),
+        pytest.param(
+            ([sfxed("i", "1", implicit=1)], {"i": "II"}),
+            ValueError("must not contain `implicits"),
+            marks=pytest.mark.xfail(
+                reason="Would eliminate implicit sfxeds in the next commit"
+            ),
+        ),
+        (
+            (["i"], {"i": sfxed("II", "1", implicit=1)}),
+            ValueError("must not contain `implicits"),
         ),
     ],
 )

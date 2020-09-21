@@ -184,6 +184,21 @@ def reparse_operation_data(
                 f"The `aliases` must not contain `sideffects` {sfx_aliases}"
                 "\n  Simply add any extra `sideffects` in the `provides`."
             )
+        implicit_aliases = [
+            f"{'<implicit>' if bad_src else ''}{src!r} -> "
+            f"{dst!r}{'<implicit>' if bad_dst else ''}"
+            for src, dst in aliases
+            for bad_src in [
+                is_implicit(src) or any(is_implicit(i) for i in provides if i == src)
+            ]
+            for bad_dst in [is_implicit(dst)]
+            if bad_src or bad_dst
+        ]
+        if implicit_aliases:
+            raise ValueError(
+                f"The `aliases` must not contain `implicits`: {implicit_aliases}"
+                "\n  Simply add any extra `implicits` in the `provides`."
+            )
 
     return name, jsonp_ize_all(needs), jsonp_ize_all(provides), aliases
 
