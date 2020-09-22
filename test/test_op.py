@@ -302,7 +302,10 @@ def test_pipeline_node_props():
     op2 = operation(lambda: None, name="b", node_props={"a": 3, "c": 4})
     pipeline = compose("n", op1, op2, node_props={"bb": 22, "c": 44})
 
-    exp = {"a": {"a": 11, "b": 0, "bb": 22, "c": 44}, "b": {"a": 3, "bb": 22, "c": 44}}
+    exp = {
+        "a": {"typ": 1, "a": 11, "b": 0, "bb": 22, "c": 44},
+        "b": {"typ": 1, "a": 3, "bb": 22, "c": 44},
+    }
     node_props = _collect_op_props(pipeline)
     assert node_props == exp
 
@@ -322,7 +325,10 @@ def test_pipeline_merge_node_props():
     pipeline = compose(
         "n", pipeline1, pipeline2, node_props={"bb": 22, "c": 44}, nest=False
     )
-    exp = {"a": {"a": 1, "bb": 22, "c": 44}, "b": {"a": 3, "bb": 22, "c": 44}}
+    exp = {
+        "a": {"typ": 1, "a": 1, "bb": 22, "c": 44},
+        "b": {"typ": 1, "a": 3, "bb": 22, "c": 44},
+    }
     node_props = _collect_op_props(pipeline)
     assert node_props == exp
 
@@ -330,9 +336,9 @@ def test_pipeline_merge_node_props():
         "n", pipeline1, pipeline2, node_props={"bb": 22, "c": 44}, nest=True
     )
     exp = {
-        "n1.a": {"a": 1, "bb": 22, "c": 44},
-        "n2.a": {"a": 11, "b": 0, "bb": 22, "c": 44},
-        "n2.b": {"a": 3, "bb": 22, "c": 44},
+        "n1.a": {"typ": 1, "a": 1, "bb": 22, "c": 44},
+        "n2.a": {"typ": 1, "a": 11, "b": 0, "bb": 22, "c": 44},
+        "n2.b": {"typ": 1, "a": 3, "bb": 22, "c": 44},
     }
     node_props = _collect_op_props(pipeline)
     assert node_props == exp

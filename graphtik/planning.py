@@ -51,6 +51,8 @@ OpMap = Mapping[Operation, Any]
 #: is augmented with children's details.
 log = logging.getLogger(__name__)
 
+NODE_TYPE = {0: "dependency", 1: "operation"}
+
 
 def yield_datanodes(nodes) -> List[str]:
     """May scan dag nodes."""
@@ -497,16 +499,34 @@ class Network(Plottable):
             doc_chain = [p for p in doc_chain if p]
             graph.add_edges_from(unseen_subdoc_edges(pairwise(doc_chain)))
 
+        node_types = graph.nodes(data="typ")  # a view to check for collisions
+
+        def check_node_collision(
+            node, node_type: int, dep_op=None, dep_kind: str = None
+        ):
+            """The dep_op/dep_kind are given only for data-nodes."""
+            if node in node_types and node_types[node] != node_type:
+                assert not (bool(dep_op) ^ bool(dep_kind)), locals()
+                graph_type = NODE_TYPE[node_types[node]]
+                given_node = (
+                    f"{dep_kind}({node!r})" if dep_op else f"operation({node.name})"
+                )
+                dep_op = f"\n  +--owning op: {dep_op}" if dep_op else ""
+                raise ValueError(
+                    f"Name of {given_node} clashed with a same-named {graph_type} in graph!{dep_op}"
+                )
+
         ## Needs
         #
         needs = []
         needs_edges = []
         for n in operation.needs:
             json_path = get_jsonp(n)
+            check_node_collision(n, 0, operation, "needs")
             if json_path:
                 append_subdoc_chain(json_path)
 
-            nkw, ekw = {}, {}  # node, edge props
+            nkw, ekw = {"typ": 0}, {}  # node, edge props
             if is_optional(n):
                 ekw["optional"] = True
             if is_sfx(n):
@@ -520,7 +540,8 @@ class Network(Plottable):
             needs_edges.append((n, operation, ekw))
         graph.add_nodes_from(needs)
         node_props = getattr(operation, "node_props", None) or {}
-        graph.add_node(operation, **node_props)
+        check_node_collision(operation, 1)
+        graph.add_node(operation, typ=1, **node_props)
         graph.add_edges_from(needs_edges)
 
         ## Prepare inversed-aliases index, used
@@ -533,20 +554,21 @@ class Network(Plottable):
         #
         for n in operation.provides:
             json_path = get_jsonp(n)
+            check_node_collision(n, 0, operation, "provides")
             if json_path:
                 append_subdoc_chain(json_path)
 
-            kw = {}
+            nkw, ekw = {"typ": 0}, {}
             if is_sfx(n):
-                kw["sideffect"] = True
-                graph.add_node(n, sideffect=True)
+                ekw["sideffect"] = nkw["sideffect"] = True
             if is_implicit(n):
-                kw["implicit"] = True
+                ekw["implicit"] = True
 
             if n in alias_destinations:
-                kw["alias_of"] = alias_destinations[n]
+                ekw["alias_of"] = alias_destinations[n]
 
-            graph.add_edge(operation, n, **kw)
+            graph.add_node(n, **nkw)
+            graph.add_edge(operation, n, **ekw)
 
     def _apply_graph_predicate(self, graph, predicate):
         to_del = []

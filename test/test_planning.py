@@ -6,6 +6,7 @@ import networkx as nx
 import pytest
 from networkx.readwrite.edgelist import parse_edgelist
 
+from graphtik import operation
 from graphtik.planning import (
     yield_also_chaindocs,
     yield_also_subdocs,
@@ -13,6 +14,7 @@ from graphtik.planning import (
     yield_chaindocs,
     yield_subdocs,
     yield_superdocs,
+    Network,
 )
 
 
@@ -142,3 +144,45 @@ def test_yield_chained_docs_root(g):
         "d21",
         "d211",
     ]
+
+
+@pytest.mark.parametrize(
+    "ops, err",
+    [
+        (
+            [operation(str, "BOOM", provides="BOOM")],
+            r"Name of provides\('BOOM'\) clashed with a same-named operation",
+        ),
+        (
+            [operation(str, "BOOM", needs="BOOM")],
+            r"Name of operation\(BOOM\) clashed with a same-named dependency",
+        ),
+        (
+            [operation(str, "BOOM", provides="a", aliases=("a", "BOOM"))],
+            r"Name of provides\('BOOM'\) clashed with a same-named operation",
+        ),
+        (
+            [operation(str, "op1", provides="BOOM"), operation(str, "BOOM")],
+            r"Name of operation\(BOOM\) clashed with a same-named dependency",
+        ),
+        ## x2 ops
+        (
+            [operation(str, "BOOM"), operation(str, "op2", "BOOM")],
+            r"Name of needs\('BOOM'\) clashed with a same-named operation",
+        ),
+        (
+            [operation(str, "op1", needs="BOOM"), operation(str, "BOOM")],
+            r"Name of operation\(BOOM\) clashed with a same-named dependency",
+        ),
+        (
+            [
+                operation(str, "op1", provides="a", aliases=("a", "BOOM")),
+                operation(str, "BOOM"),
+            ],
+            r"Name of operation\(BOOM\) clashed with a same-named dependency",
+        ),
+    ],
+)
+def test_node_clashes(ops, err):
+    with pytest.raises(ValueError, match=err):
+        Network(*ops)
