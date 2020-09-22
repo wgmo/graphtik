@@ -66,35 +66,6 @@ def _isDebugLogging():
     return log.isEnabledFor(logging.DEBUG)
 
 
-def update_kwds_by_accessors(op_layer, **items):
-    """
-    Mass update values on the :term:`solution layer` for the given `op`
-
-    ... respecting any :attr:`._accessor.update` term:`accessor`\\s.
-
-    :param op_layer:
-        where to update values
-    :param items:
-        what to update
-    """
-    accessors = [get_accessor(o) for o in items]
-    if any(accessors):
-        ## Group out-values by their `update` accessor (or None).
-        update_groups = defaultdict(list)
-        for ac, kv in zip(accessors, items.items()):
-            update_groups[ac and ac.update].append(kv)
-
-        ## Values without :attr:`._accessor.update` are to be set one-by-one,
-        #  further below.
-        items = update_groups.pop(None, None)
-
-        for upd, pairs in update_groups.items():
-            upd(op_layer, pairs)
-
-    if items:
-        op_layer.update(items)
-
-
 class Solution(ChainMap, Plottable):
     """
     The :term:`solution` chain-map and execution state (e.g. :term:`overwrite` or :term:`canceled operation`)
@@ -305,14 +276,35 @@ class Solution(ChainMap, Plottable):
         # /,  PY3.8+ positional-only
         **kwds,
     ):
+        """
+        Respect dupes and any :attr:`._accessor.update` :term:`accessor`\\s.
+        """
+        ## Adapted from ``ChainMap.update()``.
+        #
         if isinstance(other, Mapping):
-            items = {key: other[key] for key in other}
+            acc_kvs = [(get_accessor(k), (k, other[k])) for k in other]
         elif hasattr(other, "keys"):
-            items = {key: other[key] for key in other.keys()}
+            acc_kvs = [(get_accessor(k), (k, other[k])) for k in other.keys()]
         else:
-            items = {key: value for key, value in other}
-        items.update(kwds)
-        update_kwds_by_accessors(self.maps[0], **items)
+            acc_kvs = [(get_accessor(k), (k, v)) for k, v in other]
+        acc_kvs.extend((get_accessor(k), (k, v)) for k, v in kwds)
+
+        ## Group keys by their `update` accessor (or None).
+        #
+        update_groups = defaultdict(list)
+        for acc, kv in acc_kvs:
+            update_groups[acc and acc.update].append(kv)
+
+        target_map = self.maps[0]
+
+        # First update keys without any :attr:`._accessor.update`,
+        # to install any container-values in the "root" level.
+        target_map.update(update_groups.pop(None, ()))
+
+        ## Then update accessor (e.g. deeper nested `jsonp` keys).
+        #
+        for upd, pairs in update_groups.items():
+            upd(target_map, pairs)
 
     def _populate_op_layer_with_outputs(self, op, outputs) -> dict:
         """
@@ -325,12 +317,12 @@ class Solution(ChainMap, Plottable):
             self.maps.insert(0, op_layer)
             self.executed[op] = op_layer
         else:
-            op_layer = self.maps[-1]
+            assert len(self.maps) == 1, f"Broken non-layered sol? {locals()}"
             # Update just they keys, the values are in `input_names`.
             self.executed[op] = outputs
 
         if outputs:
-            update_kwds_by_accessors(op_layer, **outputs)
+            self.update(outputs)
 
     def operation_executed(self, op, outputs):
         """
