@@ -21,7 +21,6 @@ from collections import abc as cabc
 from functools import partial
 from typing import (
     Any,
-    Callable,
     Collection,
     Iterable,
     List,
@@ -291,75 +290,57 @@ def is_collection(item):
     )
 
 
-def set_or_concatenate_dataframe(doc: Doc, key, value, concat_axis) -> Optional[Doc]:
+def list_scouter(doc: Doc, idx, mother, overwrite) -> Tuple[Any, Optional[Doc]]:
     """
-    Set item or if both `doc` & `value` are dataframes, concat and return `doc`.
+    Get `doc `list item  by (int) `idx`, or create a new one from `mother`.
 
-    :return:
-        `doc` is not None only if it has changed, due to concatanation,
-        and needs to be replaced in its parent container.
-    """
-    if (
-        concat_axis is not None
-        and isinstance(doc, NDFrame)
-        and isinstance(value, NDFrame)
-    ):
-        return pd.concat((doc, value), axis=concat_axis)
-    else:
-        doc[key] = value
-
-
-def list_scouter(
-    doc: Doc, part, container_factory, overwrite
-) -> Tuple[Any, Optional[Doc]]:
-    """
-    Get `doc `list item  by (int) `part`, or create a new one from `container_factory`.
-
-    :param container_factory:
-        when called may return an intermediate container or the "value"
+    :param mother:
+        factory producing the child containers to extend missing steps,
+        or the "child" value (when `overwrite` is true).
 
     :return:
         a 2-tuple (child, ``None``)
 
     NOTE: must come after collection-scouter due to special ``-`` index collision.
     """
-    if part == "-":  # It means the position after the last item.
-        item = container_factory()
+    if idx == "-":  # It means the position after the last item.
+        item = mother()
         doc.append(item)
         return item, None
 
-    part = int(part)  # Let it bubble, to try next (as key-item).
+    idx = int(idx)  # Let it bubble, to try next (as key-item).
     if overwrite and log.isEnabledFor(logging.WARNING):
         try:
-            child = doc[part]
+            child = doc[idx]
         except LookupError:
             # Out of bounds, but ok for now, will break also on assignment, below.
             pass
         else:
             if not is_collection(child):
-                _log_overwrite(part, doc, child)
+                _log_overwrite(idx, doc, child)
     elif not overwrite:
         try:
-            child = doc[part]
+            child = doc[idx]
             if is_collection(child):
                 return child, None
         except LookupError:
             # Ignore resolve errors, assignment errors below are more important.
             pass
 
-    item = container_factory()
-    doc[part] = item
+    item = mother()
+    doc[idx] = item
     return item, None
 
 
 def collection_scouter(
-    doc: Doc, part, container_factory: Callable[[], Any], overwrite, concat_axis
+    doc: Doc, key, mother, overwrite, concat_axis
 ) -> Tuple[Any, Optional[Doc]]:
     """
-    Get item `part` from `doc` collection, or create a new ome from `container_factory`.
+    Get item `key` from `doc` collection, or create a new ome from `mother`.
 
-    :param container_factory:
-        when called may return an intermediate container or the "value"
+    :param mother:
+        factory producing the child containers to extend missing steps,
+        or the "child" value (when `overwrite` is true).
 
     :return:
         a 2-tuple (child, doc) where `doc` is not None if it needs to be replaced
@@ -368,49 +349,58 @@ def collection_scouter(
     if (
         overwrite
         and log.isEnabledFor(logging.WARNING)
-        and part in doc
-        and not is_collection(doc[part])
+        and key in doc
+        and not is_collection(doc[key])
     ):
-        _log_overwrite(part, doc, doc[part])
+        _log_overwrite(key, doc, doc[key])
     elif not overwrite:
         try:
-            child = doc[part]
+            child = doc[key]
             if is_collection(child):
                 return child, None
         except LookupError:
             # Ignore resolve errors, assignment errors below are more important.
             pass
 
-    item = container_factory()
-    doc = set_or_concatenate_dataframe(doc, part, item, concat_axis)
-    return item, doc
+    new_doc = None
+    value = mother()
+
+    if (
+        concat_axis is not None
+        and isinstance(doc, NDFrame)
+        and isinstance(value, NDFrame)
+    ):
+        new_doc = pd.concat((doc, value), axis=concat_axis)
+    else:
+        doc[key] = value
+
+    return value, new_doc
 
 
-def object_scouter(
-    doc: Doc, part, container_factory, overwrite
-) -> Tuple[Any, Optional[Doc]]:
+def object_scouter(doc: Doc, attr, mother, overwrite) -> Tuple[Any, Optional[Doc]]:
     """
-    Get attribute `part` in `doc` object, or create a new one from `container_factory`.
+    Get attribute `attr` in `doc` object, or create a new one from `mother`.
 
-    :param container_factory:
-        when called may return an intermediate container or the "value"
+    :param mother:
+        factory producing the child containers to extend missing steps,
+        or the "child" value (when `overwrite` is true).
 
     :return:
         a 2-tuple (child, ``None``)
     """
-    if overwrite and log.isEnabledFor(logging.WARNING) and hasattr(doc, part):
-        _log_overwrite(part, doc, getattr(doc, part))
+    if overwrite and log.isEnabledFor(logging.WARNING) and hasattr(doc, attr):
+        _log_overwrite(attr, doc, getattr(doc, attr))
     elif not overwrite:
         try:
-            child = getattr(doc, part)
+            child = getattr(doc, attr)
             if is_collection(child):
                 return child, None
         except AttributeError:
             # Ignore resolve errors, assignment errors below are more important.
             pass
 
-    item = container_factory()
-    setattr(doc, part, item)
+    item = mother()
+    setattr(doc, attr, item)
     return item, None
 
 
@@ -427,7 +417,7 @@ def set_path_value(
     Set `value` into a :term:`jsonp` `path` within the referenced `doc`.
 
     Special treatment (i.e. concat) if must insert a DataFrame into a DataFrame
-    with steps ``.``(vertical) and ``-``(horizontal) denoting concatanation axis.
+    with steps ``.``(vertical) and ``-``(horizontal) denoting concatenation axis.
 
     :param doc:
         the document to extend & insert `value`
@@ -444,8 +434,8 @@ def set_path_value(
             https://tools.ietf.org/id/draft-handrews-relative-json-pointer-00.html
 
     :param container_factory:
-        a factory producing the collection instances to extend missing steps,
-        (usually a mapping or a sequence)
+        a factory producing the container to extend missing steps
+        (usually a mapping or a sequence).
     :param root:
         From where to start resolving absolute paths, double-slashes(``//``) or
         final slashes.
@@ -455,7 +445,7 @@ def set_path_value(
         If true, a last ditch effort is made for each part, whether it matches
         the name of an attribute of the parent item.
     :param concat_axis:
-        if 0 or 1, applies :term:'pandas concatanation` vertically or horizontally,
+        if 0 or 1, applies :term:'pandas concatenation` vertically or horizontally,
         by clipping last step when traversing it and doc & value are both Pandas objects.
 
     :raises ValueError:
