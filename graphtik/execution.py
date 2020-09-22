@@ -66,7 +66,7 @@ def _isDebugLogging():
     return log.isEnabledFor(logging.DEBUG)
 
 
-def _update_outputs_grouped_by_accessor(op_layer, outputs: Mapping):
+def update_kwds_by_accessors(op_layer, **items):
     """
     Mass update values on the :term:`solution layer` for the given `op`
 
@@ -74,25 +74,25 @@ def _update_outputs_grouped_by_accessor(op_layer, outputs: Mapping):
 
     :param op_layer:
         where to update values
-    :param outputs:
+    :param items:
         what to update
     """
-    accessors = [get_accessor(o) for o in outputs]
+    accessors = [get_accessor(o) for o in items]
     if any(accessors):
         ## Group out-values by their `update` accessor (or None).
         update_groups = defaultdict(list)
-        for ac, kv in zip(accessors, outputs.items()):
+        for ac, kv in zip(accessors, items.items()):
             update_groups[ac and ac.update].append(kv)
 
         ## Values without :attr:`._accessor.update` are to be set one-by-one,
         #  further below.
-        outputs = update_groups.pop(None, None)
+        items = update_groups.pop(None, None)
 
         for upd, pairs in update_groups.items():
             upd(op_layer, pairs)
 
-    if outputs:
-        op_layer.update(outputs)
+    if items:
+        op_layer.update(items)
 
 
 class Solution(ChainMap, Plottable):
@@ -299,9 +299,24 @@ class Solution(ChainMap, Plottable):
 
             self._initial_inputs.pop(key, None)
 
+    def update(
+        self,
+        other,
+        # /,  PY3.8+ positional-only
+        **kwds,
+    ):
+        if isinstance(other, Mapping):
+            items = {key: other[key] for key in other}
+        elif hasattr(other, "keys"):
+            items = {key: other[key] for key in other.keys()}
+        else:
+            items = {key: value for key, value in other}
+        items.update(kwds)
+        update_kwds_by_accessors(self.maps[0], **items)
+
     def _populate_op_layer_with_outputs(self, op, outputs) -> dict:
         """
-        Populate a new layer for `op` with `outputs` , or use `named_inputs` (if non-layered).
+        Installs & populates a new 1st chained-map, if layered, or use `named_inputs`.
         """
         self._overwrites_cache = None
 
@@ -315,7 +330,7 @@ class Solution(ChainMap, Plottable):
             self.executed[op] = outputs
 
         if outputs:
-            _update_outputs_grouped_by_accessor(op_layer, outputs)
+            update_kwds_by_accessors(op_layer, **outputs)
 
     def operation_executed(self, op, outputs):
         """
