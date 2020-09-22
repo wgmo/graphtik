@@ -564,18 +564,20 @@ def _update_paths(
 
     FIXME: ROOT in mass-update_paths NOT IMPLEMENTED
     """
-    ret_doc = None  # Collect here any changed dataframe, ro return.
-    # The `group` is a list of paths with common prefix (root)
-    # currently being built.  `group_prefix` is the 1st step.
-    group_prefix = None
+    ret_doc = None  # Collect here any changed dataframe, to return.
+    # A `group` is a list of paths with common prefix (root)
+    # currently being built.
+    # The `last_prefix` & `next_prefix` detect when group's 1st step
+    # has changed (proceeded to the next `group)`.
     group: List[Tuple[str, Any]] = ()  # Begin with a blocker value.
+    last_prefix = None
     for i, (path, value) in enumerate((*paths_vals, ((UNSET,), UNSET))):
         assert len(path) >= 1 or value is UNSET, locals()
 
         next_prefix = path[0]
-        if next_prefix != group_prefix:
+        if next_prefix != last_prefix:
             if len(path) == 1 and value is not UNSET:
-                # Assign value and proceed to the next one,
+                # Assign "tip" value before proceeding to the next group,
                 # THOUGH if a deeper path with this same prefix follows,
                 # it will overwrite the value just written.
                 new_doc = set_or_concatenate_dataframe(
@@ -584,19 +586,19 @@ def _update_paths(
                 if new_doc is not None:
                     doc = ret_doc = new_doc
             else:
-                if group_prefix:  # Is it past the 1st loop?
-                    ## Recurse into sub-group.
-                    #
+                if last_prefix:  # Is it past the 1st loop?
                     child = None
-                    if group_prefix in doc:
-                        child = doc[group_prefix]
+                    if last_prefix in doc:
+                        child = doc[last_prefix]
                         if not is_collection(child):
-                            _log_overwrite(group_prefix, doc, child)
+                            _log_overwrite(last_prefix, doc, child)
                             child = None
 
                     if child is None:
-                        child = doc[group_prefix] = container_factory()
+                        child = doc[last_prefix] = container_factory()
 
+                    ## Recurse into sub-group.
+                    #
                     new_child = _update_paths(
                         child,
                         [(path[1:], value) for path, value in group],
@@ -606,12 +608,10 @@ def _update_paths(
                         concat_axis,
                     )
                     if new_child is not None:
-                        doc[group_prefix] = new_child
+                        doc[last_prefix] = new_child
 
-                group_prefix, group = (
-                    next_prefix,
-                    [(path, value)],
-                )  # prepare the next group
+                # prepare the next group
+                last_prefix, group = (next_prefix, [(path, value)])
         else:
             assert len(path) > 1, locals()  # shortest path switches group.
             group.append((path, value))  # pylint: disable=no-member
