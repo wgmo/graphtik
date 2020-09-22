@@ -225,8 +225,8 @@ def resolve_path(
     :author: Julian Berman, ankostis
     """
     part_indexers = [
-        lambda doc, part: doc[int(part)],
         operator.getitem,
+        lambda doc, part: doc[int(part)],
         *((getattr,) if descend_objects else ()),
     ]
 
