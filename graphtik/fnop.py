@@ -829,7 +829,7 @@ class FnOp(Operation):
 
         return results
 
-    def compute(self, named_inputs=None, outputs: Items = None, *args, **kw) -> dict:
+    def compute(self, named_inputs=None, /, outputs: Items = None, *args, **kw) -> dict:
         """
         :param named_inputs:
             a :class:`.Solution` instance

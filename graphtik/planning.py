@@ -890,6 +890,7 @@ class Network(Plottable):
     def compile(
         self,
         inputs: Items = None,
+        /,
         outputs: Items = None,
         recompute_from=None,
         *,

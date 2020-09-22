@@ -598,7 +598,7 @@ def test_narrow_and_optionality(reverse):
     ## Narrow by BOTH
     #
     pipeline = compose("t", *ops, outputs=["sum1"])
-    assert repr(pipeline.compile(inputs="a")).startswith(
+    assert repr(pipeline.compile("a")).startswith(
         "ExecutionPlan(needs=['a'(?)], provides=['sum1'], x3 steps:"
     )
 

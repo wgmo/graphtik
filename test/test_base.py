@@ -174,7 +174,7 @@ class _ScreamingOperation(Operation):
         (
             lambda: fnt.partial(
                 operation(name="test", needs=["a"], provides=["b"])(_scream).compute,
-                named_inputs={"a": 1},
+                {"a": 1},
             ),
             "outputs aliases results_fn results_op operation args".split(),
         ),
@@ -205,9 +205,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
     params=[
         # NO old-stuff Operation(fn=_jetsamed_fn, name="test", needs="['a']", provides=[]),
         (
-            lambda: fnt.partial(
-                operation(_scream, name="test").compute, named_inputs=None
-            ),
+            lambda: fnt.partial(operation(_scream, name="test").compute, None),
             "outputs aliases results_fn results_op operation args".split(),
         ),
         (
@@ -220,15 +218,13 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
             "plan solution task".split(),
         ),
         (
-            lambda: fnt.partial(
-                ExecutionPlan(*([None] * 7)).execute, named_inputs=None
-            ),
+            lambda: fnt.partial(ExecutionPlan(*([None] * 7)).execute, None),
             ["solution"],
         ),
         (
             lambda: fnt.partial(
                 Pipeline([operation(str)], "name").compute,
-                named_inputs="BOO",
+                "BOO",
             ),
             "network plan solution pipeline outputs plot_fpath".split(),
         ),

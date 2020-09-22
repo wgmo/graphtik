@@ -66,7 +66,7 @@ the pipeline, to see which operations will be included in the :term:`graph`
 (assuming the graph is solvable at all), based on the given :term:`inputs`/:term:`outputs`
 combination:
 
-    >>> plan = formula.compile(inputs=['α', 'β'], outputs='α-α×β')
+    >>> plan = formula.compile(['α', 'β'], outputs='α-α×β')
     >>> plan
     ExecutionPlan(needs=['α', 'β'],
                   provides=['α-α×β'],
@@ -91,7 +91,7 @@ of execution:
 But if an impossible combination of `inputs` & `outputs`
 is asked, the plan comes out empty:
 
-    >>> plan = formula.compile(inputs='α', outputs="α-α×β")
+    >>> plan = formula.compile('α', outputs="α-α×β")
     >>> plan
     ExecutionPlan(needs=[], provides=[], x0 steps: )
     >>> plan.validate()
@@ -589,7 +589,7 @@ Or we can reduce the workload, and see that *Wednesday* is left without any work
 to do:
 
     >>> sol = week.compute(
-    ...     named_inputs={"backlog": range(9)},
+    ...     {"backlog": range(9)},
     ...     outputs=["daily_tasks", "weekly_tasks", "todos"])
 
 .. graphtik::
