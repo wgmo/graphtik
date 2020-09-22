@@ -528,19 +528,18 @@ def set_path_value(
             except Exception as ex:
                 if isinstance(ex, ValueError) and str(ex).startswith("Cannot modify"):
                     raise
-                if ii > 0:  # ignore int-indexing
-                    log.debug(
-                        "scouter %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s",
-                        scouter,
-                        i,
-                        part,
-                        path,
-                        doc,
-                        ex,
-                        # Don't log int(part) stack-traces.
-                        exc_info=type(ex) is not ValueError
-                        or not str(ex).startswith("invalid literal for int()"),
-                    )
+                log.debug(
+                    "scouter %s failed on step (#%i)%s of json-pointer(%r) with doc(%s), due to: %s",
+                    scouter,
+                    i,
+                    part,
+                    path,
+                    doc,
+                    ex,
+                    # Don't log int(part) stack-traces.
+                    exc_info=type(ex) is not ValueError
+                    or not str(ex).startswith("invalid literal for int()"),
+                )
         else:
             raise ValueError(
                 f'Failed setting step (#{i}) "{part}" of path {path!r}!'
