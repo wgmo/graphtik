@@ -548,6 +548,29 @@ def set_path_value(
             )
 
 
+def _index_or_delay_concat(
+    doc: Doc, key: str, value, delayed_concats: Optional[list]
+) -> None:
+    """
+    Set Indexed value, or delay :term:`pandas concatenation`, for the recurse parent to do it.
+
+    :param delayed_concats:
+        if given (not ``None``), pandas-concats are enabled and
+        should add further values into it
+        (may contain past values to be mass-concatenated by the caller)
+    """
+    if delayed_concats is None or not isinstance(doc, NDFrame):
+        doc[key] = value
+    else:
+        ## Delay further concats or Index non-pandas value.
+        #
+        if isinstance(value, NDFrame):
+            delayed_concats.append(value)
+        else:
+            assert not delayed_concats, f"Parent left delayed_concats? {locals()}"
+            doc[key] = value
+
+
 def _update_paths(
     doc: Doc,
     paths_vals: Collection[Tuple[List[str], Any]],
@@ -557,34 +580,45 @@ def _update_paths(
     concat_axis,
 ) -> Optional[Doc]:
     """
-    (recursive) mass-update `path_vals` (jsonp, value) pairs into doc.
+    (recursive) mass-update `path_vals` (jsonp, value) pairs into doc, with ..
 
-    Special treatment (i.e. concat) if must insert a DataFrame into a DataFrame
-    with steps ``.``(vertical) and ``-``(horizontal) denoting concatanation axis.
+    special treatment for :term:`pandas concatenation`.
+
+    :return:
+        `doc` which might have changed, if it as a pandas concatenated.
 
     FIXME: ROOT in mass-update_paths NOT IMPLEMENTED
+    FIXME: SET_OBJECT_ATTR in mass-update_paths NOT IMPLEMENTED
     """
-    ret_doc = None  # Collect here any changed dataframe, to return.
-    # A `group` is a list of paths with common prefix (root)
-    # currently being built.
-    # The `last_prefix` & `next_prefix` detect when group's 1st step
-    # has changed (proceeded to the next `group)`.
+    #: A `group` is a subset of the paths iterated below
+    #: that have a common "prefix", i.e. their 1st step,
+    #: seen as "root" for each recursed call.
     group: List[Tuple[str, Any]] = ()  # Begin with a blocker value.
+    #: The `last_prefix` & `next_prefix` detect when group's 1st step
+    #: has changed while iterating (path, value) pairs
+    #: (meaning we have proceeded to the next `group)`.
     last_prefix = None
+    #: Consecutive Pandas values to mass-concat.
+    delayed_concats: list = None if concat_axis is None else []
     for i, (path, value) in enumerate((*paths_vals, ((UNSET,), UNSET))):
         assert len(path) >= 1 or value is UNSET, locals()
+
+        ## Concate any delayed values.
+        #
+        if delayed_concats and (len(path) > 1 or not isinstance(value, NDFrame)):
+            assert concat_axis is not None and isinstance(
+                doc, NDFrame
+            ), f"Delayed without permission? {locals}"
+            doc = pd.concat((doc, *delayed_concats), axis=concat_axis)
+            delayed_concats = None
 
         next_prefix = path[0]
         if next_prefix != last_prefix:
             if len(path) == 1 and value is not UNSET:
-                # Assign "tip" value before proceeding to the next group,
+                # Assign "tip" value of the before proceeding to the next group,
                 # THOUGH if a deeper path with this same prefix follows,
                 # it will overwrite the value just written.
-                new_doc = set_or_concatenate_dataframe(
-                    doc, next_prefix, value, concat_axis
-                )
-                if new_doc is not None:
-                    doc = ret_doc = new_doc
+                _index_or_delay_concat(doc, next_prefix, value, delayed_concats)
             else:
                 if last_prefix:  # Is it past the 1st loop?
                     child = None
@@ -597,11 +631,12 @@ def _update_paths(
                     if child is None:
                         child = doc[last_prefix] = container_factory()
 
-                    ## Recurse into sub-group.
+                    ## Recurse into collected sub-group.
                     #
+                    sub_group = [(path[1:], value) for path, value in group]
                     new_child = _update_paths(
                         child,
-                        [(path[1:], value) for path, value in group],
+                        sub_group,
                         container_factory,
                         root,
                         descend_objects,
@@ -616,7 +651,7 @@ def _update_paths(
             assert len(path) > 1, locals()  # shortest path switches group.
             group.append((path, value))  # pylint: disable=no-member
 
-    return ret_doc
+    return doc
 
 
 def update_paths(
@@ -643,10 +678,10 @@ def update_paths(
     new_doc = _update_paths(
         doc, pvs, container_factory, root, descend_objects, concat_axis
     )
-    if new_doc is not None:
+    if new_doc is not doc:
         # Changed-doc would be lost in vain...
         raise ValueError(
-            f"Cannot mass-update given doc:"
+            f"Cannot mass-update Pandas @ ROOT:"
             f"\n  +--(path, values): {pvs}"
             f"\n  +--doc: {doc}"
             f"\n  +--new_doc: {new_doc}"
