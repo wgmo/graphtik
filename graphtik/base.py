@@ -779,7 +779,14 @@ class Operation(Plottable, abc.ABC):
         return hash(self.name)
 
     @abc.abstractmethod
-    def compute(self, named_inputs, /, outputs=None, recompute_from=None, *kw):
+    def compute(
+        self,
+        named_inputs,
+        # /,  PY3.8+ positional-only
+        outputs=None,
+        recompute_from=None,
+        *kw,
+    ):
         """
         Compute (optional) asked `outputs` for the given `named_inputs`.
 

@@ -890,7 +890,7 @@ class Network(Plottable):
     def compile(
         self,
         inputs: Items = None,
-        /,
+        # /,  PY3.8+ positional-only
         outputs: Items = None,
         recompute_from=None,
         *,

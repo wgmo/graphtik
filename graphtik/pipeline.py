@@ -319,7 +319,7 @@ class Pipeline(Operation):
     def compile(
         self,
         inputs=None,
-        /,
+        # /,  PY3.8+ positional-only
         outputs=UNSET,
         recompute_from=None,
         *,
@@ -363,7 +363,7 @@ class Pipeline(Operation):
     def compute(
         self,
         named_inputs: Mapping = None,
-        /,
+        # /,  PY3.8+ positional-only
         outputs: Items = UNSET,
         recompute_from: Items = None,
         *,
