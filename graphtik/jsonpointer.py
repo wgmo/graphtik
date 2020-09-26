@@ -417,7 +417,7 @@ def set_path_value(
     Set `value` into a :term:`jsonp` `path` within the referenced `doc`.
 
     Special treatment (i.e. concat) if must insert a DataFrame into a DataFrame
-    with steps ``.``(vertical) and ``-``(horizontal) denoting concatenation axis.
+    with steps ``.`` (vertical) and ``-`` (horizontal) denoting concatenation axis.
 
     :param doc:
         the document to extend & insert `value`
@@ -573,6 +573,9 @@ def _update_paths(
 
     special treatment for :term:`pandas concatenation`.
 
+    :param concat_axis:
+        either 0, 1 or None, in which case, it concatenates only when
+        both doc & value are DataFrames
     :return:
         `doc` which might have changed, if it as a pandas concatenated.
 
@@ -652,14 +655,15 @@ def update_paths(
     concat_axis: int = None,
 ) -> None:
     """
-        Mass-update `path_vals` (jsonp, value) pairs into doc.
+    Mass-update `path_vals` (jsonp, value) pairs into doc.
 
-        Group jsonp-keys by nesting level,to optimize.
+    Group jsonp-keys by nesting level,to optimize.
 
-        :param concat_axis:
-            None, 0 or 1, see :func:`.set_path_value()`.
+    :param concat_axis:
+        None, 0 or 1, see :func:`.set_path_value()`.
+
     :return:
-            the updated doc (if it was a dataframe and ``pd.concact`` needed)
+        the updated doc (if it was a dataframe and ``pd.concact`` needed)
     """
     if root is UNSET:
         root = doc

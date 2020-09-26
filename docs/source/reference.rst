@@ -14,6 +14,7 @@ API Reference
      graphtik.config
      graphtik.base
      graphtik.jetsam
+     graphtik.jsonpointer
      graphtik.sphinxext
 
 .. graphviz::
@@ -89,6 +90,12 @@ Module: `jetsam`
 .. automodule:: graphtik.jetsam
      :members:
      :undoc-members:
+
+Module: `jsonpointer`
+=====================
+
+.. automodule:: graphtik.jsonpointer
+     :members:
 
 Module: `sphinxext`
 ===================
