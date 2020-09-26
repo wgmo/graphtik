@@ -28,7 +28,6 @@ from .base import (
     aslist,
     asset,
 )
-from .jetsam import save_jetsam
 from .modifier import dep_renamed
 
 log = logging.getLogger(__name__)
@@ -479,6 +478,8 @@ class Pipeline(Operation):
             return solution
         finally:
             if not ok:
+                from .jetsam import save_jetsam
+
                 ex = sys.exc_info()[1]
                 jetsam = save_jetsam(
                     ex,

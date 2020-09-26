@@ -31,7 +31,6 @@ from .base import (
     first_solid,
     func_name,
 )
-from .jetsam import save_jetsam
 from .modifier import (
     dep_renamed,
     dep_singularized,
@@ -866,6 +865,8 @@ class FnOp(Operation):
             return results_op
         finally:
             if not ok:
+                from .jetsam import save_jetsam
+
                 ex = sys.exc_info()[1]
                 save_jetsam(
                     ex,

@@ -37,7 +37,6 @@ from .config import (
     is_reschedule_operations,
     is_skip_evictions,
 )
-from .jetsam import save_jetsam
 from .modifier import (
     acc_contains,
     acc_delitem,
@@ -731,6 +730,8 @@ class ExecutionPlan(
                 return task
             finally:
                 if not ok:
+                    from .jetsam import save_jetsam
+
                     ex = sys.exc_info()[1]
                     save_jetsam(ex, locals(), "task", plan="self")
 
@@ -788,6 +789,8 @@ class ExecutionPlan(
             if is_endured:
                 solution.operation_failed(op, ex)
             else:
+                from .jetsam import save_jetsam
+
                 # Although `plan` have added to jetsam in `compute()``,
                 # add it again, in case compile()/execute() is called separately.
                 save_jetsam(ex, locals(), "solution", task="future", plan="self")
@@ -1042,5 +1045,7 @@ class ExecutionPlan(
             return solution
         finally:
             if not ok:
+                from .jetsam import save_jetsam
+
                 ex = sys.exc_info()[1]
                 save_jetsam(ex, locals(), "solution")

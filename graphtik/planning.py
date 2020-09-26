@@ -28,7 +28,6 @@ from boltons.setutils import IndexedSet as iset
 
 from .base import Items, Operation, PlotArgs, Plottable, astuple
 from .config import is_debug, is_skip_evictions
-from .jetsam import save_jetsam
 from .modifier import (
     dep_renamed,
     dep_stripped,
@@ -978,6 +977,8 @@ class Network(Plottable):
             return plan
         finally:
             if not ok:
+                from .jetsam import save_jetsam
+
                 ex = sys.exc_info()[1]
                 save_jetsam(
                     ex,
