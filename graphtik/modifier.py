@@ -119,7 +119,7 @@ class Accessor(NamedTuple):
     #: the deleter, like: ``delitem(sol, dep)``
     delitem: Callable[[dict, str], None]
     #: mass updater, like: ``update(sol, item_values)``,
-    update: Callable[[dict, str, Any], None] = None
+    update: Callable[[dict, Collection[Tuple[str, Any]]], None] = None
 
     def validate(self):
         """Call me early to fail asap (if it must); returns self instance. """
