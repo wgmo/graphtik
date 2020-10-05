@@ -7,7 +7,6 @@ from multiprocessing import get_context
 from operator import add
 
 import pytest
-
 from graphtik import compose, operation
 from graphtik.config import debug_enabled, execution_pool_plugged, tasks_marshalled
 

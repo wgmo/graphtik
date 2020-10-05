@@ -1,20 +1,23 @@
 # Copyright 2020-2020, Kostis Anagnostopoulos;
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """Test :term:`parallel`, :term:`marshalling` and other :term:`execution` related stuff. """
+import io
 import os
 from functools import partial
 from multiprocessing import cpu_count
 from multiprocessing import dummy as mp_dummy
 from operator import mul, sub
+from textwrap import dedent
 from time import sleep, time
 
+import pandas as pd
 import pytest
-
-from graphtik import AbortedException, compose, operation, optional
+from graphtik import AbortedException, compose, hcat, modify, operation, optional, vcat
 from graphtik.config import abort_run, execution_pool_plugged
 from graphtik.execution import _OpTask, task_context
+from pandas.testing import assert_frame_equal
 
-from .helpers import abspow, exe_params
+from .helpers import abspow, dummy_sol, exe_params
 
 
 @pytest.mark.xfail(reason="Spurious passes when threading with on low-cores?")
@@ -201,3 +204,66 @@ def test_abort(exemethod):
 def test_solution_copy(samplenet):
     sol = samplenet(a=1, b=2)
     assert sol == sol.copy()
+
+
+def test_solution_df_concat_delay_groups(monkeypatch):
+    concat_args = []
+
+    def my_concat(dfs, *args, **kwds):
+        concat_args.append(dfs)
+        return orig_concat(dfs, *args, **kwds)
+
+    orig_concat = pd.concat
+    monkeypatch.setattr(pd, "concat", my_concat)
+
+    df = pd.DataFrame({"doc": [1, 2]})
+    axis_names = ["l1"]
+    df.index.names = df.columns.names = axis_names
+    # for when debugging
+    _orig_doc = {"a": df}
+    sol = dummy_sol(_orig_doc.copy())
+
+    val1 = pd.Series([3, 4], name="val1")
+    val11 = val1.copy()
+    val11.name = "val11"
+    val111 = val1.copy()
+    val111.name = "val111"
+    val2 = (
+        pd.Series([11, 22, 33, 44], index=["doc", "val1", "val11", "val111"])
+        .to_frame()
+        .T
+    )
+    val3 = pd.Series([5, 6, 7, 8], name="val3")
+    val4 = pd.Series([44, 55, 66], index=["doc", "val1", "val3"]).to_frame().T
+
+    path_values = [
+        (hcat("a/H1"), val1),
+        (hcat("a/H"), val11),
+        (hcat("a/H3"), val111),
+        (vcat("a/V2"), val2),
+        (vcat("a/V"), val2),
+        (hcat("a/H"), val3),
+        (vcat("a/H"), val4),
+        (modify("a/INT"), 0),
+        (vcat("a/H"), val4),
+    ]
+    sol.update(path_values)
+
+    df = sol["a"]
+    exp_csv = """
+        ,doc,val11,val3,val1,val111,INT
+        0,1.0,3.0,5.0,3.0,3.0,0
+        1,2.0,4.0,6.0,4.0,4.0,0
+        2,,,7.0,,,0
+        3,,,8.0,,,0
+        0,44.0,,66.0,55.0,,0
+        0,44.0,,66.0,55.0,,0
+        0,11.0,33.0,,22.0,44.0,0
+        0,11.0,33.0,,22.0,44.0,0
+        """
+
+    exp = pd.read_csv(io.StringIO(dedent(exp_csv)), index_col=0)
+
+    print(df.to_csv())
+    assert [len(i) for i in concat_args] == [5, 5]
+    assert_frame_equal(df, exp)

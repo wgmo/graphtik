@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from itertools import chain, cycle
 from pathlib import Path
 from typing import Any, Union
+from unittest.mock import MagicMock
 
 import dill
 import pytest
@@ -131,3 +132,10 @@ def addall(*a, **kw):
 def abspow(a, p):
     c = abs(a) ** p
     return c
+
+
+def dummy_sol(named_inputs):
+    from graphtik.execution import Solution
+
+    plan = MagicMock()
+    return Solution(plan, named_inputs)
