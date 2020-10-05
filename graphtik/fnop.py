@@ -860,7 +860,7 @@ class FnOp(Operation):
 
             ## Keep only outputs asked.
             #  Note that plan's executors do not ask outputs
-            #  (see `_OpTask.__call__`).
+            #  (see `OpTask.__call__`).
             #
             if outputs:
                 outputs = set(n for n in outputs)

@@ -25,7 +25,7 @@ from graphtik import (
 )
 from graphtik.base import Operation
 from graphtik.config import debug_enabled
-from graphtik.execution import ExecutionPlan, Solution, _OpTask
+from graphtik.execution import ExecutionPlan, Solution, OpTask
 from graphtik.jetsam import save_jetsam
 from graphtik.pipeline import Pipeline
 
@@ -183,7 +183,7 @@ class _ScreamingOperation(Operation):
                 ExecutionPlan(*([None] * 7))._handle_task,
                 op=_ScreamingOperation(),
                 solution=Solution(MagicMock(), {}),
-                future=_OpTask(_ScreamingOperation(), {}, "solid"),
+                future=OpTask(_ScreamingOperation(), {}, "solid"),
             ),
             "plan solution task".split(),
         ),
@@ -213,7 +213,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
                 ExecutionPlan(*([None] * 7))._handle_task,
                 op=operation(_scream, name="Ah!"),
                 solution=Solution(MagicMock(), {}),
-                future=_OpTask(_ScreamingOperation(), {}, "solid"),
+                future=OpTask(_ScreamingOperation(), {}, "solid"),
             ),
             "plan solution task".split(),
         ),

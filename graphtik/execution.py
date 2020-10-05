@@ -114,9 +114,7 @@ class Solution(ChainMap, Plottable):
         self,
         plan,
         input_values: dict,
-        callbacks: Tuple[
-            Callable[["_OpTask"], None], Callable[["_OpTask"], None]
-        ] = None,
+        callbacks: Tuple[Callable[["OpTask"], None], Callable[["OpTask"], None]] = None,
         is_layered=None,
     ):
         super().__init__(input_values)
@@ -463,7 +461,7 @@ class Solution(ChainMap, Plottable):
         return plot_args
 
 
-class _OpTask:
+class OpTask:
     """
     Mimic :class:`concurrent.futures.Future` for :term:`sequential` execution.
 
@@ -532,22 +530,22 @@ class _OpTask:
         return f"OpTask({self.op}, sol_keys={sol_items!r})"
 
 
-#: (unstable API) Populated with the :class:`_OpTask` for the currently executing operation.
+#: (unstable API) Populated with the :class:`OpTask` for the currently executing operation.
 #: It does not work for (deprecated) :term:`parallel execution`.
 #:
 #: .. seealso::
 #:     The elaborate example in :ref:`hierarchical-data` section
-task_context: ContextVar[_OpTask] = ContextVar("task_context")
+task_context: ContextVar[OpTask] = ContextVar("task_context")
 
 
 def _do_task(task):
     """
-    Un-dill the *simpler* :class:`_OpTask` & Dill the results, to pass through pool-processes.
+    Un-dill the *simpler* :class:`OpTask` & Dill the results, to pass through pool-processes.
 
     See https://stackoverflow.com/a/24673524/548792
     """
     ## Note, the "else" case is only for debugging aid,
-    #  by skipping `_OpTask.marshal()`` call.
+    #  by skipping `OpTask.marshal()`` call.
     #
     if isinstance(task, bytes):
         import dill
@@ -699,13 +697,13 @@ class ExecutionPlan(
 
     def _prepare_tasks(
         self, operations, solution, pool, global_parallel, global_marshal
-    ) -> Union["Future", _OpTask, bytes]:
+    ) -> Union["Future", OpTask, bytes]:
         """
         Combine ops+inputs, apply :term:`marshalling`, and submit to :term:`execution pool` (or not) ...
 
          based on global/pre-op configs.
         """
-        ## Selectively DILL the *simpler* _OpTask & `sol` dict
+        ## Selectively DILL the *simpler* OpTask & `sol` dict
         #  so as to pass through pool-processes,
         #  (s)ee https://stackoverflow.com/a/24673524/548792)
         #  and handle results in this thread, to evade Solution locks.
@@ -718,7 +716,7 @@ class ExecutionPlan(
                 # Mark start time here, to include also marshalling overhead.
                 solution.elapsed_ms[op] = time.time()
 
-                task = _OpTask(op, input_values, solution.solid, solution.callbacks)
+                task = OpTask(op, input_values, solution.solid, solution.callbacks)
                 if first_solid(global_marshal, getattr(op, "marshalled", None)):
                     task = task.marshalled()
 
@@ -758,7 +756,7 @@ class ExecutionPlan(
             ## Reset start time for Sequential tasks
             #  (bummer, they will miss marshalling overhead).
             #
-            if isinstance(future, _OpTask):
+            if isinstance(future, OpTask):
                 solution.elapsed_ms[op] = time.time()
 
             outputs = future.get()
@@ -906,7 +904,7 @@ class ExecutionPlan(
                 if step in solution.canceled:
                     continue
 
-                task = _OpTask(step, solution, solution.solid, solution.callbacks)
+                task = OpTask(step, solution, solution.solid, solution.callbacks)
                 self._handle_task(task, step, solution)
 
             elif isinstance(step, str):
@@ -929,7 +927,7 @@ class ExecutionPlan(
         outputs=None,
         *,
         name="",
-        callbacks: Callable[[_OpTask], None] = None,
+        callbacks: Callable[[OpTask], None] = None,
         solution_class=None,
         layered_solution=None,
     ) -> Solution:
@@ -946,7 +944,7 @@ class ExecutionPlan(
             name of the pipeline used for logging
         :param callbacks:
             If given, a 2-tuple with (optional) x2 :term:`callbacks` to call before & after
-            each operation, with :class:`._OpTask` as argument containing the op & solution.
+            each operation, with :class:`.OpTask` as argument containing the op & solution.
             Less or no elements accepted.
         :param solution_class:
             a custom solution factory to use

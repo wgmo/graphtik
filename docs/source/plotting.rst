@@ -728,7 +728,7 @@ Accessing wrapper operation from task-context
 Alternatively, when the debugger is stopped inside an underlying function,
 you may access the wrapper :class:`.FnOp` and the :class:`.Solution`
 through the :data:`graphtik.execution.task_context` context-var.
-This is populated with the :class:`._OpTask` instance of the currently executing operation,
+This is populated with the :class:`.OpTask` instance of the currently executing operation,
 as shown in the :mod:`pdb` session printout, below::
 
    (Pdb) from graphtik.execution import task_context

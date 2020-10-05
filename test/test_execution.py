@@ -14,7 +14,7 @@ import pandas as pd
 import pytest
 from graphtik import AbortedException, compose, hcat, modify, operation, optional, vcat
 from graphtik.config import abort_run, execution_pool_plugged
-from graphtik.execution import _OpTask, task_context
+from graphtik.execution import OpTask, task_context
 from pandas.testing import assert_frame_equal
 
 from .helpers import abspow, dummy_sol, exe_params
