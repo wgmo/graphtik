@@ -601,7 +601,20 @@ def _update_paths(
             assert concat_axis is not None and isinstance(
                 doc, NDFrame
             ), f"Delayed without permission? {locals}"
-            doc = pd.concat((doc, *delayed_concats), axis=concat_axis)
+            delayed_concats = (doc, *delayed_concats)
+            doc = pd.concat(delayed_concats, axis=concat_axis)
+
+            ## Convey index/column level names from the LAST named df-to-concat
+            #  having as many levels as the result.
+            #
+            doc_axis = doc.axes[concat_axis]
+            if not any(doc_axis.names):
+                for df in reversed(delayed_concats):
+                    ax = df.axes[0 if isinstance(df, pd.Series) else concat_axis]
+                    if any(ax.names) and len(ax.names) == len(doc_axis.names):
+                        doc_axis.names = ax.names
+                        break
+
             delayed_concats = None
 
         next_prefix = path[0]

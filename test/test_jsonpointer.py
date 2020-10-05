@@ -414,6 +414,8 @@ def _mutate_df(df):
 
 def check_dfs_eq(got, exp):
     assert (got.fillna(0) == exp.fillna(0)).all(axis=None)
+    assert got.index.names == exp.index.names
+    assert got.columns.names == exp.columns.names
 
 
 @pytest.mark.parametrize("path", ["", "/"])
@@ -586,22 +588,26 @@ def test_update_paths_overwrites():
 @pytest.mark.parametrize("axis", [0, 1])
 def test_update_paths_df_concat(axis):
     df = pd.DataFrame({"A": [1, 2]})
+    df_ax_named = df.copy()
+    axis_names = ["l1"]
+    df_ax_named.axes[axis].names = axis_names
     _orig_doc = {  # for when debugging
         "a": {
             "aa": df,
             "ab": 2,
-            "ac": {"aca": df},
+            "ac": {"aca": df_ax_named},
         },
     }
     doc = {
         "a": {
             "aa": df,
             "ab": 2,
-            "ac": {"aca": df},
+            "ac": {"aca": df_ax_named},
         },
     }
     val1 = _mutate_df(df)
     val2 = _mutate_df(val1)
+    val1.axes[axis].names = axis_names
 
     path_values = [
         ("a/aa/H", val1),
@@ -609,9 +615,10 @@ def test_update_paths_df_concat(axis):
         ("a/aa/H", val2),  #  double setting
         ("a/ab", val2),
     ]
-    exp_aa = pd.concat((df, val1), axis=axis)
-    exp_aa = pd.concat((exp_aa, val2), axis=axis)
+    exp_aa = pd.concat((df, val1, val2), axis=axis)
+    exp_aa.axes[axis].names = axis_names
     exp_aca = pd.concat((df, val2), axis=axis)
+    exp_aca.axes[axis].names = axis_names
 
     update_paths(doc, path_values, concat_axis=axis)
     print(doc)
