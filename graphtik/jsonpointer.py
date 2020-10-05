@@ -560,6 +560,23 @@ def _index_or_delay_concat(
             doc[key] = value
 
 
+def _convey_axes_names(doc, dfs_to_convey):
+    """
+    Preserve index/column level names by conveying LAST named lavels from `dfs_to_convey`
+
+    TODO: WORKAROUND pandas drop other index-names when concat with unequal axes!
+    e.g. pandas#13475, 21629, 27053, 27230
+    """
+    for axis in (0, 1):
+        doc_axis = doc.axes[axis]
+        if not any(doc_axis.names):
+            for df in reversed(dfs_to_convey):
+                ax = df.axes[0 if isinstance(df, pd.Series) else axis]
+                if any(ax.names) and len(ax.names) == len(doc_axis.names):
+                    doc_axis.names = ax.names
+                    return
+
+
 def _update_paths(
     doc: Doc,
     paths_vals: Collection[Tuple[List[str], Any]],
@@ -603,17 +620,7 @@ def _update_paths(
             ), f"Delayed without permission? {locals}"
             delayed_concats = (doc, *delayed_concats)
             doc = pd.concat(delayed_concats, axis=concat_axis)
-
-            ## Convey index/column level names from the LAST named df-to-concat
-            #  having as many levels as the result.
-            #
-            doc_axis = doc.axes[concat_axis]
-            if not any(doc_axis.names):
-                for df in reversed(delayed_concats):
-                    ax = df.axes[0 if isinstance(df, pd.Series) else concat_axis]
-                    if any(ax.names) and len(ax.names) == len(doc_axis.names):
-                        doc_axis.names = ax.names
-                        break
+            _convey_axes_names(doc, delayed_concats)
 
             delayed_concats = None
 

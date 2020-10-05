@@ -251,7 +251,7 @@ def test_solution_df_concat_delay_groups(monkeypatch):
 
     df = sol["a"]
     exp_csv = """
-        ,doc,val11,val3,val1,val111,INT
+        l1,doc,val11,val3,val1,val111,INT
         0,1.0,3.0,5.0,3.0,3.0,0
         1,2.0,4.0,6.0,4.0,4.0,0
         2,,,7.0,,,0
