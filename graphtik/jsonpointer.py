@@ -27,6 +27,7 @@ from typing import (
     MutableMapping,
     Optional,
     MutableSequence,
+    Sequence,
     Tuple,
     TypeVar,
     Union,
@@ -43,7 +44,71 @@ UNSET = "%%UNSET%%"  # Change this in case of troubles...
 
 def escape_jsonpointer_part(part: str) -> str:
     """convert path-part according to the json-pointer standard"""
-    return part.replace("~", "~0").replace("/", "~1")
+    return str(part).replace("~", "~0").replace("/", "~1")
+
+
+def json_pointer(parts: Sequence[str]) -> str:
+    """
+    Escape & join `parts` into a jsonpointer path (inverse of :func:`.jsonp_path()`).
+
+    **Examples:**
+
+        >>> json_pointer(["a", "b"])
+        'a/b'
+        >>> json_pointer(['', "a", "b"])
+        '/a/b'
+
+        >>> json_pointer([1, "a", 2])
+        '1/a/2'
+
+        >>> json_pointer([""])
+        ''
+        >>> json_pointer(["a", ""])
+        ''
+        >>> json_pointer(["", "a", "", "b"])
+        '/b'
+
+        >>> json_pointer([])
+        ''
+
+        >>> json_pointer(["/", "~"])
+        '~1/~0'
+    """
+    try:
+        last_idx = len(parts) - 1 - parts[::-1].index("")
+        parts = parts[last_idx:]
+    except ValueError:
+        pass  # no root after 1st step.
+    return "/".join(escape_jsonpointer_part(i) for i in parts)
+
+
+def prepend_parts(prefix_parts: Sequence[str], parts: Sequence[str]) -> Sequence[str]:
+    """
+    Prepend `prefix_parts` before given `parts` (unless they are rooted).
+
+    Both `parts` & `prefix_parts` must have been produced by :meth:`.json_path()`
+    so that any root(``""``) must come first, and must not be empty
+    (except `prefix-parts`).
+
+    **Examples:**
+
+        >>> prepend_parts(["prefix"], ["b"])
+        ['prefix', 'b']
+
+        >>> prepend_parts(("", "prefix"), ["b"])
+        ['', 'prefix', 'b']
+        >>> prepend_parts(["prefix ignored due to rooted"], ("", "b"))
+        ('', 'b')
+
+        >>> prepend_parts([], ["b"])
+        ['b']
+        >>> prepend_parts(["prefix irrelevant"], [])
+        Traceback (most recent call last):
+        IndexError: list index out of range
+    """
+    if "" != parts[0]:
+        parts = [*prefix_parts, *parts]
+    return parts
 
 
 def unescape_jsonpointer_part(part: str) -> str:
@@ -81,12 +146,16 @@ def jsonp_path(jsonpointer: str) -> List[str]:
 
         >>> jsonp_path('/a')
         ['', 'a']
+
         >>> jsonp_path('/')
         ['']
-
-        >>> jsonp_path('')
+        >>> jsonp_path('')  # this becomes also root!
         ['']
 
+        >>> jsonp_path('a/b//c')
+        ['', 'c']
+        >>> jsonp_path('a//b////c')
+        ['', 'c']
     """
     # Optimization: modifier caches splitted parts as a "_jsonp" attribute.
     parts = getattr(jsonpointer, "_jsonp", None)
