@@ -77,10 +77,6 @@ Graphtik Changelog
           - auto-assertions {jsonp--> validators}
           - compare overwrites while recomputing
           - check implicits exist
-        - [ ] FEAT: teach FnOps about ROOT(full solution) and CWD(cw-document)
-          to resolve also any NON-jsonp dependencies from
-          (needs to finalize jsonp-ROOT implementation)
-          (+cat: Compose)
 
   - plot:
     - [ ] Badges on Data
@@ -125,6 +121,26 @@ Graphtik Changelog
 Changelog
 %%%%%%%%%
 :GitHub Releases: https://github.com/pygraphkit/graphtik/releases
+
+
+v10.4.0 (6 Oct 2020, @ankostis): CWD, preserve concat index-names
+-----------------------------------------------------------------
++ FEAT(compose): a :term:`current-working-document` given when defining operation
+  prefixes all non-root its dependencies as `jsonp` expressions.
++ feat(plot): color as "pink" any ``None``\s in the results, to facilitate identification
+  of operations returning nothing, by mistake, or non-produced :term:`implicit`\s.
++ refact/feat(exe): the argument to :term:`callback`\s now contains the results;
+  replace ``OpCb` class with pre-existing ``_OpTask``  (now publicized).
++ ENH(solution): preserve index/column names when concatenating pandas
+  (workaround https://github.com/pandas-dev/pandas/issues/13475, to be fixed with pandas-v1.2).
+
+  + feat: ``sol.update()`` supports jsonps, and applies them grouped,
+    to avoid resolving paths repeatedly.
+
++ doc(api): add forgotten `jsonpointer` module; updated module-dependencies diagram
+
+|v1040-module_deps|
+
 
 v10.3.0 (21 Sep 2020, @ankostis): CONCAT pandas, Hierarchical overwrites, implicit(), post-cb
 ---------------------------------------------------------------------------------------------
@@ -1488,11 +1504,12 @@ First public release in PyPi & GitHub.
 
 .. _substitutions:
 
-
 .. |sample-plot| image:: docs/source/images/sample.svg
     :alt: sample graphkit plot
     :width: 120px
     :align: bottom
+.. |v1040-module_deps| raw:: html
+    :file: docs/source/images/graphtik-module_deps-v10.4.0.svg
 .. |v410-flowchart| raw:: html
     :file: docs/source/images/GraphtikFlowchart-v4.1.0.svg
 .. |v130-flowchart| image:: docs/source/images/GraphkitFlowchart-v1.3.0.svg
