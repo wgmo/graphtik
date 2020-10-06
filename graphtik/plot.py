@@ -466,6 +466,7 @@ class Theme:
     #: args for jinja2 patched `truncate` filter, above.
     truncate_args = ((23, True), {"reverse": True})
     fill_color = "wheat"
+    null_color = "#ffa9cd"
     sideffect_color = "blue"
     subdoc_color = "#8B4513"  # SaddleBrown
     pruned_color = "#d3d3d3"  # LightGrey
@@ -558,6 +559,10 @@ class Theme:
         "style": ["filled"],
         "fillcolor": Ref("fill_color"),
         "tooltip": [make_data_value_tooltip],
+    }
+    kw_data_in_solution_null = {
+        "fillcolor": Ref("null_color"),
+        "tooltip": ["(null-result)"],
     }
     kw_data_evicted = {"penwidth": "3", "tooltip": ["(evicted)"]}
     kw_data_overwritten = {
@@ -841,6 +846,7 @@ class Theme:
     kw_edge_rescheduled = {"style": ["dashed"]}
     kw_edge_endured = {"style": ["dashed"]}
     kw_edge_broken = {"tooltip": ["(partial-broken)"], "color": Ref("broken_color")}
+    kw_edge_null_result = {"color": Ref("null_color"), "tooltip": ["(null-result)"]}
 
     ##########
     ## Other
@@ -1462,6 +1468,8 @@ class Plotter:
             if solution is not None:
                 if nx_node in solution:
                     styles.add("kw_data_in_solution")
+                    if solution[nx_node] is None:
+                        styles.add("kw_data_in_solution_null")
 
                     if nx_node in getattr(solution, "overwrites", ()):
                         styles.add("kw_data_overwritten")
@@ -1634,6 +1642,18 @@ class Plotter:
             and (src, dst) in solution.plan.dag.edges
         ):
             styles.add("kw_edge_broken")
+        if (
+            isinstance(src, Operation)
+            and not is_sfx(dst)
+            and hasattr(solution, "executed")
+            and src in solution.executed
+        ):
+            result = solution.executed.get(src)
+            try:
+                if dst in result and result[dst] is None:
+                    styles.add("kw_edge_null_result")
+            except Exception:
+                pass  # was exception
 
         styles.stack_user_style(edge_attrs)
         edge = pydot.Edge(src=src_name, dst=dst_name, **styles.merge())
@@ -1819,7 +1839,11 @@ class Plotter:
             sideffect   [color=invis
                         tooltip="Fictive data not consumed/produced by operation functions."
                         URL="%(arch_url)s#term-sideffects"];
-            sideffect   -> broken       [color="red" style=dashed]
+            sideffect   -> null [color="%(null_color)s"]
+            null       [color=invis
+                        tooltip="Result for this output was null (probably error)"
+                        URL="#"];
+            null    -> broken       [color="red" style=dashed]
             broken      [color=invis
                         tooltip="Target data was not `provided` by source operation due to failure / partial-outs."
                         URL="%(arch_url)s#term-partial outputs"];
@@ -1852,14 +1876,18 @@ class Plotter:
             evicted %(evicted)s
             sfx %(sfx)s
             sol     [shape=rect fixedsize=shape
-                    style=filled fillcolor=wheat label="with value"
+                    style=filled fillcolor="%(fill_color)s" label="with value"
                     tooltip="Data contained in the solution."
+                    URL="%(arch_url)s#term-solution"];
+            nullval [shape=rect fixedsize=shape
+                    style=filled fillcolor="%(null_color)s" label="null"
+                    tooltip="Data in solution but is None (probable error)."
                     URL="%(arch_url)s#term-solution"];
             overwrite [shape=rect fixedsize=shape
                     style=filled fillcolor=SkyBlue
                     tooltip="More than 1 values exist in solution with this name."
                     URL="%(arch_url)s#term-overwrite"];
-            DataLabel -> data -> input -> output -> inp_out -> sfx -> evicted -> sol -> overwrite [style=invis];
+            DataLabel -> data -> input -> output -> inp_out -> sfx -> evicted -> sol -> nullval -> overwrite [style=invis];
 
 
 
