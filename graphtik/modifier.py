@@ -562,11 +562,15 @@ def dependency(dep) -> str:
     return str(dep) if is_sfx(dep) else dep._sideffected
 
 
-def dep_renamed(dep, ren) -> Union[_Modifier, str]:
+def dep_renamed(dep, ren, jsonp=None) -> Union[_Modifier, str]:
     """
     Renames `dep` as `ren` or call `ren`` (if callable) to decide its name,
 
     preserving any :func:`keyword` to old-name.
+
+    :param jsonp:
+        None (derrived from `name`), ``False``, str, collection of str/callable (last one)
+        See generic :func:`.modify` modifier.
 
     For :term:`sideffected` it renames the dependency (not the *sfx-list*) --
     you have to do it that manually with a custom renamer-function, if ever
@@ -577,12 +581,14 @@ def dep_renamed(dep, ren) -> Union[_Modifier, str]:
     else:
         renamer = lambda n: ren
 
-    if isinstance(dep, _Modifier):
+    if isinstance(dep, _Modifier) or jsonp is not None:
         if is_sfx(dep):
             new_name = renamer(dep._sideffected)
-            dep = modifier_withset(dep, name=new_name, sideffected=new_name)
+            dep = modifier_withset(
+                dep, name=new_name, sideffected=new_name, jsonp=jsonp
+            )
         else:
-            dep = modifier_withset(dep, name=renamer(str(dep)))
+            dep = modifier_withset(dep, name=renamer(str(dep)), jsonp=jsonp)
     else:  # plain string
         dep = renamer(dep)
 
