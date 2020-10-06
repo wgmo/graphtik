@@ -424,7 +424,8 @@ def modifier_withset(
         if name is ...:
             name = dep._sideffected or str(dep)
     else:
-        name = dep
+        if name is ...:
+            name = dep
 
     return _modifier(name=name, **kw)
 
