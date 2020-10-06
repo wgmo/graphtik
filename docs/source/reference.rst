@@ -20,6 +20,14 @@ API Reference
 .. graphviz::
      GraphtikModuleDependencies.dot
 
+Package: `graphtik`
+===================
+.. automodule:: graphtik
+     :members:
+     :undoc-members:
+     :private-members:
+     :special-members:
+
 Module: `fnop`
 ==============
 
@@ -97,8 +105,8 @@ Module: `jsonpointer`
 .. automodule:: graphtik.jsonpointer
      :members:
 
-Module: `sphinxext`
-===================
+Package: `sphinxext`
+====================
 
 .. automodule:: graphtik.sphinxext
      :members:
