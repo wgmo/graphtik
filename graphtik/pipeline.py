@@ -542,9 +542,11 @@ def compose(
     node_props=None,
 ) -> Pipeline:
     """
-    Merge or :term:`nest <operation nesting>` operations & pipelines into a new pipeline,
+    Merge or :term:`nest <operation nesting>` operations & pipelines into a new pipeline.
 
-    based on the ``nest`` parameter (read below)
+    .. include:: ../../graphtik/__init__.py
+      :start-after: .. import-speeds-start
+      :end-before: .. import-speeds-stop
 
     Operations given earlier (further to the left) override those following
     (further to the right), similar to `set` behavior (and contrary to `dict`).
