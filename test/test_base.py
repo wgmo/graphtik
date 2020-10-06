@@ -6,10 +6,8 @@ import logging
 import sys
 import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
-
 from graphtik import (
     base,
     compose,
@@ -25,9 +23,11 @@ from graphtik import (
 )
 from graphtik.base import Operation
 from graphtik.config import debug_enabled
-from graphtik.execution import ExecutionPlan, Solution, OpTask
+from graphtik.execution import ExecutionPlan, OpTask, Solution
 from graphtik.jetsam import save_jetsam
 from graphtik.pipeline import Pipeline
+
+from .helpers import dummy_sol
 
 
 def test_serialize_Token(ser_method):
@@ -182,7 +182,7 @@ class _ScreamingOperation(Operation):
             lambda: fnt.partial(
                 ExecutionPlan(*([None] * 7))._handle_task,
                 op=_ScreamingOperation(),
-                solution=Solution(MagicMock(), {}),
+                solution=dummy_sol({}),
                 future=OpTask(_ScreamingOperation(), {}, "solid"),
             ),
             "plan solution task".split(),
@@ -212,7 +212,7 @@ def test_jetsam_sites_screaming_func(acallable, expected_jetsam):
             lambda: fnt.partial(
                 ExecutionPlan(*([None] * 7))._handle_task,
                 op=operation(_scream, name="Ah!"),
-                solution=Solution(MagicMock(), {}),
+                solution=dummy_sol({}),
                 future=OpTask(_ScreamingOperation(), {}, "solid"),
             ),
             "plan solution task".split(),
