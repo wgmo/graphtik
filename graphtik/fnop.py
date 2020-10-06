@@ -14,7 +14,7 @@ import sys
 import textwrap
 from collections import abc as cabc
 from functools import update_wrapper, wraps
-from typing import Any, Callable, Collection, List, Mapping, Tuple
+from typing import Any, Callable, Collection, List, Mapping, Sequence, Tuple
 
 from boltons.setutils import IndexedSet as iset
 
@@ -202,11 +202,15 @@ def reparse_operation_data(
     return name, jsonp_ize_all(needs), jsonp_ize_all(provides), aliases
 
 
-def _spread_sideffects(
-    deps: Collection[str],
+def _process_dependencies(
+    deps: Collection[str], cwd: Sequence[str]
 ) -> Tuple[Collection[str], Collection[str]]:
     """
-    Build fn/op dependencies by stripping/singularizing any :term:`implicit`/:term:`sideffects`.
+    Strip or singularize any :term:`implicit`/:term:`sideffects` and apply CWD.
+
+    :param cwd:
+        the :term:`current-working-document` parts to prepend on each dependency,
+        turning all as :term:`jsonp`\\s.
 
     :return:
         a x2 tuple ``(op_deps, fn_deps)``, where any instances of
@@ -230,6 +234,20 @@ def _spread_sideffects(
     #: The dedupe  any `sideffected`.
     seen_sideffecteds = set()
 
+    def prefixed(dep):
+        """
+        Converts `dep` into a :term:`jsonp` and prepends `prefix` (unless `dep` was rooted).
+
+        TODO: make `prefixed` a TOP_LEVEL `modifier`.
+        """
+        from .jsonpointer import jsonp_path, json_pointer, prepend_parts
+
+        if cwd and not is_pure_sfx(dep):
+            parts = prepend_parts(cwd, jsonp_path(dep_stripped(dep)))
+            dep = dep_renamed(dep, json_pointer(parts), jsonp=parts)
+
+        return dep
+
     def as_fn_deps(dep):
         """Strip and dedupe any sfxed, drop any sfx and implicit. """
         if is_implicit(dep):  # must ignore also `sfxed`s
@@ -246,6 +264,7 @@ def _spread_sideffects(
     assert deps is not None
 
     if deps:
+        deps = [prefixed(d) for d in deps]
         op_deps = iset(nn for n in deps for nn in dep_singularized(n))
         fn_deps = tuple(nn for n in deps for nn in as_fn_deps(n))
         return op_deps, fn_deps
@@ -304,6 +323,7 @@ class FnOp(Operation):
         provides: Items = None,
         aliases: Mapping = None,
         *,
+        cwd=None,
         rescheduled=None,
         endured=None,
         parallel=None,
@@ -317,6 +337,8 @@ class FnOp(Operation):
         See :func:`.operation` for the full documentation of parameters,
         study the code for attributes (or read them from  rendered sphinx site).
         """
+        from .jsonpointer import jsonp_path
+
         super().__init__()
         node_props = node_props = node_props if node_props else {}
 
@@ -333,10 +355,11 @@ class FnOp(Operation):
         name, needs, provides, aliases = reparse_operation_data(
             name, needs, provides, aliases
         )
+        cwd_parts = jsonp_path(cwd) if cwd else ()
 
         user_needs, user_provides = needs, provides
-        needs, _fn_needs = _spread_sideffects(needs)
-        provides, _fn_provides = _spread_sideffects(provides)
+        needs, _fn_needs = _process_dependencies(needs, cwd_parts)
+        provides, _fn_provides = _process_dependencies(provides, cwd_parts)
         alias_dst = aliases and tuple(dst for _src, dst in aliases)
         provides = iset((*provides, *alias_dst))
 
@@ -398,6 +421,9 @@ class FnOp(Operation):
         #:
         #: You cannot alias an :term:`alias`.
         self.aliases = aliases
+        #: The :term:`current-working-document`, when defined, all non-root `dependencies`
+        # become :term:`jsonp` and are prefixed with this.
+        self.cwd = cwd
         #: If true, underlying *callable* may produce a subset of `provides`,
         #: and the :term:`plan` must then :term:`reschedule` after the operation
         #: has executed.  In that case, it makes more sense for the *callable*
@@ -487,6 +513,7 @@ class FnOp(Operation):
         provides: Items = ...,
         aliases: Mapping = ...,
         *,
+        cwd=...,
         rescheduled=...,
         endured=...,
         parallel=...,
@@ -921,6 +948,7 @@ def operation(
     provides: Items = UNSET,
     aliases: Mapping = UNSET,
     *,
+    cwd=UNSET,
     rescheduled=UNSET,
     endured=UNSET,
     parallel=UNSET,
@@ -1002,6 +1030,9 @@ def operation(
 
     :param aliases:
         an optional mapping of `provides` to additional ones
+    :param cwd:
+        The :term:`current-working-document`, when given, all non-root `dependencies`
+        become :term:`jsonp` and are prefixed with this.
     :param rescheduled:
         If true, underlying *callable* may produce a subset of `provides`,
         and the :term:`plan` must then :term:`reschedule` after the operation

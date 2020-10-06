@@ -515,6 +515,9 @@ Architecture
         For instance, if the root has been asked as output, no subdoc can be
         subsequently `evicted <eviction>`.
 
+        Note that `jsonp` are implicitly created on an operation that has
+        a `current-working-document` defined.
+
         :seealso: ::ref:`hierarchical-data` (example)
 
     json pointer path
@@ -525,6 +528,10 @@ Architecture
 
         In addition to writing values, the :func:`.vcat` or :func:`.hcat` modifiers
         (& respective accessors) support also `pandas concatenation` for `provides`.
+
+    cwd
+    current-working-document
+        A `jsonp` prefix of an `operation` to prefix any non-root `dependency` defined for it.
 
     pandas concatenation
         A `jsonp` `dependency` in `provides` may `designate <modifier>` its respective

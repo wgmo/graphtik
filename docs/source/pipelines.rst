@@ -603,6 +603,12 @@ which is a nested dictionary:
      'weekly_tasks': (range(0, 4), range(4, 9)),
      'todos': ()}
 
+.. tip::
+    If an operation works with dependencies only in some sub-document and below,
+    its prefix can be factored-out as a :term:`current-working-document`, an argument
+    given when defining the operation.
+
+
 .. _jsnop-df-concat:
 
 Concatenating Pandas

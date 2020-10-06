@@ -23,6 +23,7 @@ from graphtik import (
     sfxed,
     vararg,
     varargs,
+    vcat,
 )
 from graphtik.config import (
     operations_endured,
@@ -419,6 +420,46 @@ def test_keyword_jsonp():
     op = operation(lambda *, bar: bar * 2, "kw", needs=keyword("foo/bar"), provides="a")
     sol = op.compute({"foo/bar": "ciao"})
     assert sol == {"a": "ciaociao"}
+
+
+def test_cwd():
+    op = operation(
+        str,
+        None,
+        needs=[
+            "a",
+            "a/b",
+            "/r/b",
+            optional("o"),
+            keyword("k"),
+            implicit("i"),
+            vararg("v1"),
+            varargs("v2"),
+            sfx("s1"),
+            sfxed("s2", "s22"),
+            vcat("vc"),
+        ],
+        provides=["A/B", "C", "/R"],
+        cwd="root",
+    )
+    exp = """
+    FnOp(name='str',
+        needs=['root/a'($),
+            'root/a/b'($),
+            '/r/b'($),
+            'root/o'($?'o'),
+            'root/k'($>'k'),
+            'root/i'($),
+            'root/v1'($*),
+            'root/v2'($+),
+            sfx('s1'),
+            sfxed('root/s2'($),
+            's22'),
+            'root/vc'($)],
+        provides=['root/A/B'($), 'root/C'($), '/R'($)],
+        fn='str')
+    """
+    assert oneliner(op) == oneliner(exp)
 
 
 @pytest.mark.parametrize(
