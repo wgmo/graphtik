@@ -404,7 +404,7 @@ class Pipeline(Operation):
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
         :param callbacks:
             If given, a 2-tuple with (optional) x2 :term:`callbacks` to call before & after
-            each operation, with :class:`.OpCb` as argument containing the op & solution.
+            each operation, with :class:`._OpTask` as argument containing the op & solution.
             Less or no elements accepted.
         :param solution_class:
             a custom solution factory to use

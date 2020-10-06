@@ -114,7 +114,9 @@ class Solution(ChainMap, Plottable):
         self,
         plan,
         input_values: dict,
-        callbacks: Tuple[Callable[["OpCb"], None], Callable[["OpCb"], None]] = None,
+        callbacks: Tuple[
+            Callable[["_OpTask"], None], Callable[["_OpTask"], None]
+        ] = None,
         is_layered=None,
     ):
         super().__init__(input_values)
@@ -461,28 +463,26 @@ class Solution(ChainMap, Plottable):
         return plot_args
 
 
-#: Argument passed in a :term:`callbacks` callable before executing each operation,
-#: and contains fields to identify the operation call:
-#:
-#: :param op: the operation about to be computed;
-#: :param sol: the slution (might be just a plain dict if it has been marshalled);
-#: :param solid: the operation identity, needed if `sol` is a plain dict,
-OpCb = namedtuple("OpCb", "op, sol, solid")
-
-
 class _OpTask:
     """
     Mimic :class:`concurrent.futures.Future` for :term:`sequential` execution.
 
     This intermediate class is needed to solve pickling issue with process executor.
+
+    Use also as argument passed in a :term:`callbacks` callable
+    before executing each operation, and contains fields to identify
+    the operation call and results:
     """
 
     __slots__ = ("op", "sol", "solid", "callbacks", "result")
     logname = __name__
 
     def __init__(self, op, sol, solid, callbacks=None, result=UNSET):
+        #: the operation about to be computed.
         self.op = op
+        #: the solution (might be just a plain dict if it has been marshalled).
         self.sol = sol
+        #: the operation identity, needed if `sol` is a plain dict.
         self.solid = solid
 
         ## Make callbacks a 2-tuple with possible None callables.
@@ -496,6 +496,7 @@ class _OpTask:
             if len(callbacks) < 2:
                 callbacks = (*callbacks, None)
         self.callbacks = callbacks
+        #: Initially would :data:`.UNSET`, will be set after execution.
         self.result = result
 
     def marshalled(self):
@@ -512,10 +513,10 @@ class _OpTask:
             callbacks = self.callbacks
             try:
                 if callbacks[0]:
-                    callbacks[0](OpCb(self.op, self.sol, self.solid))
+                    callbacks[0](self)
                 self.result = self.op.compute(self.sol)
                 if callbacks[1]:
-                    callbacks[1](OpCb(self.op, self.sol, self.solid))
+                    callbacks[1](self)
             finally:
                 task_context.reset(token)
 
@@ -928,7 +929,7 @@ class ExecutionPlan(
         outputs=None,
         *,
         name="",
-        callbacks: Callable[[OpCb], None] = None,
+        callbacks: Callable[[_OpTask], None] = None,
         solution_class=None,
         layered_solution=None,
     ) -> Solution:
@@ -945,7 +946,7 @@ class ExecutionPlan(
             name of the pipeline used for logging
         :param callbacks:
             If given, a 2-tuple with (optional) x2 :term:`callbacks` to call before & after
-            each operation, with :class:`.OpCb` as argument containing the op & solution.
+            each operation, with :class:`._OpTask` as argument containing the op & solution.
             Less or no elements accepted.
         :param solution_class:
             a custom solution factory to use

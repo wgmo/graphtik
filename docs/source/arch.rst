@@ -706,7 +706,7 @@ Architecture
 
             callbacks(op_cb) -> None
 
-        ... where ``op_cb`` is an instance of the :class:`.OpCb` :func:`~collections.namedtuple`.
+        ... where ``op_cb`` is an instance of the :class:`._OpTask` :func:`~collections.namedtuple`.
 
         pre-callback
             Called after :term:`marshalling` and before `matching inputs`.
