@@ -13,8 +13,8 @@ Graphtik
 
    |sample-plot|
 
-Lightweight computation graphs for Python
------------------------------------------
+Computation graphs for Python & Pandas
+--------------------------------------
 
 **Graphtik** is a library to compose, plot & execute *graphs of python functions*
 (a.k.a :term:`pipeline`\s) that consume and populate (possibly :term:`nested

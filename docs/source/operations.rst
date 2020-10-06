@@ -25,8 +25,8 @@ to retrofitting existing *functions* unaware of all these, into :term:`operation
 
 Operations from existing functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The :class:`.FnOp` provides a concrete lightweight wrapper
-around any arbitrary function to define and execute within a *pipeline*.
+The :class:`.FnOp` provides a concrete wrapper around any arbitrary function
+to define and execute within a *pipeline*.
 Use the :func:`.operation()` factory to instantiate one:
 
    >>> from operator import add
