@@ -97,7 +97,12 @@ def jsonp_path(jsonpointer: str) -> List[str]:
             unescape_jsonpointer_part(part)
             for part in re.sub(".+(?:/$|/{2})", "/", jsonpointer).split("/")
         ]
-        if parts[1:].count(""):
+        try:
+            last_idx = -parts[::-1].index("") - 1 + len(parts)
+            parts = parts[last_idx:]
+        except ValueError:
+            pass  # no root after 1st step.
+        if "" in parts[1:]:
             last_idx = len(parts) - 1 - parts[::-1].index("")
             parts = parts[last_idx:]
     return parts
