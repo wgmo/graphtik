@@ -149,8 +149,8 @@ def jsonp_path(jsonpointer: str) -> List[str]:
 
         >>> jsonp_path('/')
         ['']
-        >>> jsonp_path('')  # this becomes also root!
-        ['']
+        >>> jsonp_path('')
+        []
 
         >>> jsonp_path('a/b//c')
         ['', 'c']
@@ -162,6 +162,12 @@ def jsonp_path(jsonpointer: str) -> List[str]:
     if parts is False:
         parts = [jsonpointer]
     elif parts is None:
+        ## For empty-paths, the jsonpointer standard specifies
+        #  they must return the whole document (satisfied by `resolve_path()`)
+        #  but not what their *parts* should be.
+        if jsonpointer == "":
+            return []
+
         parts = [
             unescape_jsonpointer_part(part)
             for part in re.sub(".+(?:/$|/{2})", "/", jsonpointer).split("/")

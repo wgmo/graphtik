@@ -38,7 +38,7 @@ def test_jsonpointer_escape_parts():
 
 
 def test_jsonp_path_empty():
-    assert jsonp_path("") == [""]
+    assert jsonp_path("") == []
 
 
 def test_jsonp_path_root():
@@ -92,7 +92,6 @@ def test_jsonp_path_cached():
         ("/a//b", ["a", "", "b"]),
         ("/a/../b", ["a", "..", "b"]),
         ("/", [""]),
-        ("", []),
         ("/ some ", [" some "]),
         ("/ some /", [" some ", ""]),
         ("/ some /  ", [" some ", "  "]),
@@ -118,7 +117,6 @@ def test_jsonp_path_massive(inp, exp):
         ("/a/b/", [""]),
         ("/a//b", ["", "b"]),
         ("/", [""]),
-        ("", [""]),
         ("/ some ", ["", " some "]),
         ("/ some /", [""]),
         ("/ some /  ", ["", " some ", "  "]),
