@@ -43,6 +43,7 @@ def _id_tristate_bool(b):
 
 def build_network(
     operations,
+    cwd=None,
     rescheduled=None,
     endured=None,
     parallel=None,
@@ -139,6 +140,7 @@ class Pipeline(Operation):
         *,
         outputs=None,
         predicate: "NodePredicate" = None,
+        cwd: str = None,
         rescheduled=None,
         endured=None,
         parallel=None,
@@ -170,6 +172,7 @@ class Pipeline(Operation):
         # Prune network
         self.net = build_network(
             operations,
+            cwd,
             rescheduled,
             endured,
             parallel,
@@ -211,6 +214,7 @@ class Pipeline(Operation):
         predicate: "NodePredicate" = UNSET,
         *,
         name=None,
+        cwd=None,
         rescheduled=None,
         endured=None,
         parallel=None,
@@ -238,6 +242,10 @@ class Pipeline(Operation):
             - if ellipses(``...``), the name of the function where this function
               call happened is used,
             - otherwise, the given `name` is applied.
+        :param cwd:
+            The :term:`current-working-document`, when given, all non-root `dependencies`
+            (`needs`, `provides` & `aliases`) on all contained operations become
+            :term:`jsonp`\\s, prefixed with this.
         :param rescheduled:
             applies :term:`reschedule`\\d to all contained `operations`
         :param endured:
@@ -404,9 +412,10 @@ class Pipeline(Operation):
             filter-out nodes before compiling
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
         :param callbacks:
-            If given, a 2-tuple with (optional) x2 :term:`callbacks` to call before & after
-            each operation, with :class:`.OpTask` as argument containing the op & solution.
-            Less or no elements accepted.
+            If given, a 4-tuple with (optional) x2 :term:`callbacks`,
+            2 to call before & after each operation, and another 2 before/after batch,
+            with :class:`.OpTask` as argument containing the op & solution.
+            One (scalar), less than 4, or no elements accepted.
         :param solution_class:
             a custom solution factory to use
         :param layered_solution:
@@ -535,6 +544,7 @@ def compose(
     *operations: Operation,
     excludes=None,
     outputs: Items = None,
+    cwd: str = None,
     rescheduled=None,
     endured=None,
     parallel=None,
@@ -610,6 +620,10 @@ def compose(
             - :ref:`operation-nesting` for examples
             - Default nesting applied by :func:`.nest_any_node()`
 
+    :param cwd:
+        The :term:`current-working-document`, when given, all non-root `dependencies`
+        (`needs`, `provides` & `aliases`) on all contained operations become
+        :term:`jsonp`\\s, prefixed with this.
     :param rescheduled:
         applies :term:`reschedule`\\d to all contained `operations`
     :param endured:
@@ -688,6 +702,7 @@ def compose(
         operations,
         name,
         outputs=outputs,
+        cwd=cwd,
         rescheduled=rescheduled,
         endured=endured,
         parallel=parallel,

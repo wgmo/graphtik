@@ -531,7 +531,7 @@ Architecture
 
     cwd
     current-working-document
-        A `jsonp` prefix of an `operation` to prefix any non-root `dependency` defined for it.
+        A `jsonp` prefix of an `operation` (or `pipeline`) to prefix any non-root `dependency` defined.
 
     pandas concatenation
         A `jsonp` `dependency` in `provides` may `designate <modifier>` its respective

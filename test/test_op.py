@@ -422,7 +422,7 @@ def test_keyword_jsonp():
     assert sol == {"a": "ciaociao"}
 
 
-def test_cwd():
+def test_cwd_fnop():
     op = operation(
         str,
         None,
@@ -467,6 +467,38 @@ def test_cwd():
             ('root/C'($), 'root/CC'($)),
             ('/R'($), 'root/RR'($))],
         fn='str')
+    """
+    assert oneliner(op) == oneliner(exp)
+
+
+def test_cwd_pipeline():
+    op = compose(
+        ...,
+        operation(
+            str,
+            None,
+            needs=[
+                "a",
+                "a/b",
+                "/r/b",
+            ],
+            provides=["A/B", "C", "/R"],
+            aliases=[("A/B", "aa"), ("C", "CC"), ("/R", "RR")],
+        ),
+        cwd="/root",
+    )
+    exp = """
+    Pipeline('test_cwd_pipeline',
+        needs=['/root/a'($),
+            '/root/a/b'($),
+            '/r/b'($)],
+        provides=['/root/A/B'($),
+            '/root/C'($),
+            '/R'($),
+            '/root/aa'($),
+            '/root/CC'($),
+            '/root/RR'($)],
+        x1 ops: str)
     """
     assert oneliner(op) == oneliner(exp)
 
