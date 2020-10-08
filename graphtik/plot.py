@@ -58,6 +58,28 @@ from .planning import yield_node_names
 
 log = logging.getLogger(__name__)
 
+## Gracefully import numpy & pandas to check for null values
+#  (probable mistakes in function definitions).
+#
+_null_checks = []
+try:
+    import numpy as np
+
+    def is_empty_array(val):
+        return isinstance(val, np.ndarray) and not np.any()
+
+    _null_checks.append(is_empty_array)
+except ImportError:
+    pass
+try:
+    from pandas.core.generic import NDFrame
+
+    def is_empty_frame(val):
+        return isinstance(val, NDFrame) and not val.any()
+
+    _null_checks.append(is_empty_frame)
+except ImportError:
+    pass
 
 #: A nested dictionary controlling the rendering of graph-plots in Jupyter cells,
 #:
@@ -1468,8 +1490,16 @@ class Plotter:
             if solution is not None:
                 if nx_node in solution:
                     styles.add("kw_data_in_solution")
-                    if solution[nx_node] is None:
-                        styles.add("kw_data_in_solution_null")
+                    val = solution[nx_node]
+                    for check in _null_checks:
+                        try:
+                            if check(val):
+                                styles.add("kw_data_in_solution_null")
+                                break
+                        except Exception:
+                            log.debug(
+                                "Skipping null-check error on %s", val, exc_info=1
+                            )
 
                     if nx_node in getattr(solution, "overwrites", ()):
                         styles.add("kw_data_overwritten")
