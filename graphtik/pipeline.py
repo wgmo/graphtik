@@ -178,6 +178,7 @@ class Pipeline(Operation):
             renamer,
             excludes,
         )
+        # TODO: implement `cwd` also for whole pipelines.
         self.name, self.needs, self.provides, _aliases = reparse_operation_data(
             self.name, self.net.needs, self.net.provides
         )

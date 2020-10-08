@@ -470,8 +470,8 @@ def is_varargish(dep) -> bool:
 
 
 def jsonp_ize(dep):
-    """Parse dep as :term:`jsonp` (unless it has been modified with ``jsnop=False``). """
-    return modify(dep) if "/" in dep and type(dep) is str else dep
+    """Parse dep as :term:`jsonp` (unless modified with ``jsnop=False``) or is pure sfx. """
+    return modify(dep) if "/" in dep and type(dep) is str else dep  # sfxed-deps already
 
 
 def get_jsonp(dep) -> Union[List[str], None]:

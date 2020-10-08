@@ -113,15 +113,35 @@ def as_renames(i, argname):
     return i
 
 
-def jsonp_ize_all(deps):
+def prefixed(dep, cwd):
+    """
+    Converts `dep` into a :term:`jsonp` and prepends `prefix` (unless `dep` was rooted).
+
+    TODO: make `prefixed` a TOP_LEVEL `modifier`.
+    """
+    from .jsonpointer import json_pointer, jsonp_path, prepend_parts
+    from .modifier import jsonp_ize
+
+    if not dep or is_pure_sfx(dep):
+        pass
+    elif cwd:
+        parts = prepend_parts(cwd, jsonp_path(dep_stripped(dep)))
+        dep = dep_renamed(dep, json_pointer(parts), jsonp=parts)
+    else:
+        dep = jsonp_ize(dep)
+
+    return dep
+
+
+def jsonp_ize_all(deps, cwd: Sequence[str]):
     """Auto-convert deps with slashes as :term:`jsonp` (unless ``no_jsonp``). """
     if deps:
-        deps = tuple(jsonp_ize(dep) for dep in deps)
+        deps = tuple(prefixed(dep, cwd) for dep in deps)
     return deps
 
 
 def reparse_operation_data(
-    name, needs, provides, aliases=()
+    name, needs, provides, aliases=(), cwd: Sequence[str] = None
 ) -> Tuple[str, Collection[str], Collection[str], Collection[Tuple[str, str]]]:
     """
     Validate & reparse operation data as lists.
@@ -132,26 +152,40 @@ def reparse_operation_data(
     As a separate function to be reused by client building operations,
     to detect errors early.
     """
+    from .jsonpointer import jsonp_path
+
     if name is not None and not isinstance(name, str):
         raise TypeError(f"Non-str `name` given: {name}")
+
+    cwd_parts = jsonp_path(cwd) if cwd else ()
 
     # Allow single string-value for needs parameter
     needs = astuple(needs, "needs", allowed_types=cabc.Collection)
     if not all(isinstance(i, str) for i in needs):
         raise TypeError(f"All `needs` must be str, got: {needs!r}")
+    needs = jsonp_ize_all(needs, cwd_parts)
 
     # Allow single value for provides parameter
     provides = astuple(provides, "provides", allowed_types=cabc.Collection)
     if not all(isinstance(i, str) for i in provides):
         raise TypeError(f"All `provides` must be str, got: {provides!r}")
+    provides = jsonp_ize_all(provides, cwd_parts)
 
     aliases = as_renames(aliases, "aliases")
     if aliases:
+        ## Sanity checks, or `jsonp_ize_all()` would fail.
+        #
         if not all(
             src and isinstance(src, str) and dst and isinstance(dst, str)
             for src, dst in aliases
         ):
             raise TypeError(f"All `aliases` must be non-empty str, got: {aliases!r}")
+
+        # XXX: Why jsonp_ize here? (and not everywhere, or nowhere in fnop?)
+        aliases = [
+            (prefixed(src, cwd_parts), prefixed(dst, cwd_parts)) for src, dst in aliases
+        ]
+
         if any(1 for src, dst in aliases if dst in provides):
             bad = ", ".join(
                 f"{src} -> {dst}" for src, dst in aliases if dst in provides
@@ -160,8 +194,6 @@ def reparse_operation_data(
                 f"The `aliases` [{bad}] clash with existing provides in {list(provides)}!"
             )
 
-        # XXX: Why jsonp_ize here? (and not everywhere, or nowhere in fnop?)
-        aliases = [(jsonp_ize(src), jsonp_ize(dst)) for src, dst in aliases]
         aliases_src = iset(src for src, _dst in aliases)
         all_provides = iset(provides) | (dep_stripped(d) for d in provides)
 
@@ -199,18 +231,18 @@ def reparse_operation_data(
                 "\n  Simply add any extra `implicits` in the `provides`."
             )
 
-    return name, jsonp_ize_all(needs), jsonp_ize_all(provides), aliases
+    return name, needs, provides, aliases
 
 
 def _process_dependencies(
-    deps: Collection[str], cwd: Sequence[str]
+    deps: Collection[str],
 ) -> Tuple[Collection[str], Collection[str]]:
     """
     Strip or singularize any :term:`implicit`/:term:`sideffects` and apply CWD.
 
     :param cwd:
-        the :term:`current-working-document` parts to prepend on each dependency,
-        turning all as :term:`jsonp`\\s.
+        The :term:`current-working-document`, when given, all non-root `dependencies`
+        (`needs`, `provides` & `aliases`) become :term:`jsonp`\\s, prefixed with this.
 
     :return:
         a x2 tuple ``(op_deps, fn_deps)``, where any instances of
@@ -234,20 +266,6 @@ def _process_dependencies(
     #: The dedupe  any `sideffected`.
     seen_sideffecteds = set()
 
-    def prefixed(dep):
-        """
-        Converts `dep` into a :term:`jsonp` and prepends `prefix` (unless `dep` was rooted).
-
-        TODO: make `prefixed` a TOP_LEVEL `modifier`.
-        """
-        from .jsonpointer import jsonp_path, json_pointer, prepend_parts
-
-        if cwd and not is_pure_sfx(dep):
-            parts = prepend_parts(cwd, jsonp_path(dep_stripped(dep)))
-            dep = dep_renamed(dep, json_pointer(parts), jsonp=parts)
-
-        return dep
-
     def as_fn_deps(dep):
         """Strip and dedupe any sfxed, drop any sfx and implicit. """
         if is_implicit(dep):  # must ignore also `sfxed`s
@@ -264,7 +282,6 @@ def _process_dependencies(
     assert deps is not None
 
     if deps:
-        deps = [prefixed(d) for d in deps]
         op_deps = iset(nn for n in deps for nn in dep_singularized(n))
         fn_deps = tuple(nn for n in deps for nn in as_fn_deps(n))
         return op_deps, fn_deps
@@ -353,13 +370,12 @@ class FnOp(Operation):
             name = func_name(fn, None, mod=0, fqdn=0, human=0, partials=1)
         ## Overwrite reparsed op-data.
         name, needs, provides, aliases = reparse_operation_data(
-            name, needs, provides, aliases
+            name, needs, provides, aliases, cwd
         )
-        cwd_parts = jsonp_path(cwd) if cwd else ()
 
         user_needs, user_provides = needs, provides
-        needs, _fn_needs = _process_dependencies(needs, cwd_parts)
-        provides, _fn_provides = _process_dependencies(provides, cwd_parts)
+        needs, _fn_needs = _process_dependencies(needs)
+        provides, _fn_provides = _process_dependencies(provides)
         alias_dst = aliases and tuple(dst for _src, dst in aliases)
         provides = iset((*provides, *alias_dst))
 
@@ -1032,7 +1048,7 @@ def operation(
         an optional mapping of `provides` to additional ones
     :param cwd:
         The :term:`current-working-document`, when given, all non-root `dependencies`
-        become :term:`jsonp` and are prefixed with this.
+        (`needs`, `provides` & `aliases`) become :term:`jsonp`\\s, prefixed with this.
     :param rescheduled:
         If true, underlying *callable* may produce a subset of `provides`,
         and the :term:`plan` must then :term:`reschedule` after the operation

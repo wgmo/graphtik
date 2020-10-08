@@ -440,6 +440,7 @@ def test_cwd():
             vcat("vc"),
         ],
         provides=["A/B", "C", "/R"],
+        aliases=[("A/B", "aa"), ("C", "CC"), ("/R", "RR")],
         cwd="root",
     )
     exp = """
@@ -456,7 +457,15 @@ def test_cwd():
             sfxed('root/s2'($),
             's22'),
             'root/vc'($)],
-        provides=['root/A/B'($), 'root/C'($), '/R'($)],
+        provides=['root/A/B'($),
+            'root/C'($),
+            '/R'($),
+            'root/aa'($),
+            'root/CC'($),
+            'root/RR'($)],
+         aliases=[('root/A/B'($), 'root/aa'($)),
+            ('root/C'($), 'root/CC'($)),
+            ('/R'($), 'root/RR'($))],
         fn='str')
     """
     assert oneliner(op) == oneliner(exp)
