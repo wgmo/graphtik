@@ -118,7 +118,19 @@ class Solution(ChainMap, Plottable):
         is_layered=None,
     ):
         super().__init__(input_values)
+        ## Make callbacks a 2-tuple with possible None callables.
+        #
+        if callable(callbacks):
+            callbacks = (callbacks,)
+        elif not callbacks:
+            callbacks = ()
+        else:
+            callbacks = tuple(callbacks)
+        n_cbs = len(callbacks)
+        if n_cbs < 2:
+            callbacks = callbacks + ((None,) * (2 - n_cbs))
         self.callbacks = callbacks
+
         is_layered = first_solid(is_layered_solution(), is_layered)
 
         ##: By default, disable layers if network contains :term:`jsonp` dependencies.
@@ -466,36 +478,23 @@ class OpTask:
     Mimic :class:`concurrent.futures.Future` for :term:`sequential` execution.
 
     This intermediate class is needed to solve pickling issue with process executor.
-
-    Use also as argument passed in a :term:`callbacks` callable
-    before executing each operation, and contains fields to identify
-    the operation call and results:
     """
 
-    __slots__ = ("op", "sol", "solid", "callbacks", "result")
+    __slots__ = ("op", "sol", "solid", "result")
     logname = __name__
 
-    def __init__(self, op, sol, solid, callbacks=None, result=UNSET):
+    def __init__(self, op, sol, solid, result=UNSET):
         #: the operation about to be computed.
         self.op = op
         #: the solution (might be just a plain dict if it has been marshalled).
         self.sol = sol
         #: the operation identity, needed if `sol` is a plain dict.
         self.solid = solid
-
-        ## Make callbacks a 2-tuple with possible None callables.
-        #
-        if callbacks is None:
-            callbacks = (None, None)
-        elif callable(callbacks):
-            callbacks = (callbacks, None)
-        else:
-            callbacks = tuple(callbacks)
-            if len(callbacks) < 2:
-                callbacks = (*callbacks, None)
-        self.callbacks = callbacks
-        #: Initially would :data:`.UNSET`, will be set after execution.
+        #: Initially would :data:`.UNSET`, will be set after execution
+        #: with operation's outputs or exception.
         self.result = result
+
+        # if
 
     def marshalled(self):
         import dill
@@ -508,13 +507,8 @@ class OpTask:
             log = logging.getLogger(self.logname)
             log.debug("+++ (%s) Executing %s...", self.solid, self)
             token = task_context.set(self)
-            callbacks = self.callbacks
             try:
-                if callbacks[0]:
-                    callbacks[0](self)
                 self.result = self.op.compute(self.sol)
-                if callbacks[1]:
-                    callbacks[1](self)
             finally:
                 task_context.reset(token)
 
@@ -716,7 +710,7 @@ class ExecutionPlan(
                 # Mark start time here, to include also marshalling overhead.
                 solution.elapsed_ms[op] = time.time()
 
-                task = OpTask(op, input_values, solution.solid, solution.callbacks)
+                task = OpTask(op, input_values, solution.solid)
                 if first_solid(global_marshal, getattr(op, "marshalled", None)):
                     task = task.marshalled()
 
@@ -743,7 +737,7 @@ class ExecutionPlan(
 
         return [prep_task(op) for op in operations]
 
-    def _handle_task(self, future, op, solution) -> None:
+    def _handle_task(self, future: Union[OpTask, "AsyncResult"], op, solution) -> None:
         """Un-dill parallel task results (if marshalled), and update solution / handle failure."""
 
         def elapsed_ms(op):
@@ -752,6 +746,7 @@ class ExecutionPlan(
 
             return elapsed
 
+        result = UNSET
         try:
             ## Reset start time for Sequential tasks
             #  (bummer, they will miss marshalling overhead).
@@ -759,7 +754,10 @@ class ExecutionPlan(
             if isinstance(future, OpTask):
                 solution.elapsed_ms[op] = time.time()
 
-            outputs = future.get()
+                if solution.callbacks[0]:
+                    solution.callbacks[0](future)
+
+            outputs = result = future.get()
             if isinstance(outputs, bytes):
                 import dill
 
@@ -772,6 +770,7 @@ class ExecutionPlan(
                 "... (%s) op(%s) completed in %sms.", solution.solid, op.name, elapsed
             )
         except Exception as ex:
+            result = ex
             is_endured = first_solid(
                 solution.is_endurance, getattr(op, "endured", None)
             )
@@ -801,6 +800,9 @@ class ExecutionPlan(
                 # add it again, in case compile()/execute() is called separately.
                 save_jetsam(ex, locals(), "solution", task="future", plan="self")
                 raise
+        finally:
+            if isinstance(future, OpTask) and solution.callbacks[1]:
+                solution.callbacks[1](future)
 
     def _execute_thread_pool_barrier_method(self, solution: Solution):
         """
@@ -904,7 +906,7 @@ class ExecutionPlan(
                 if step in solution.canceled:
                     continue
 
-                task = OpTask(step, solution, solution.solid, solution.callbacks)
+                task = OpTask(step, solution, solution.solid)
                 self._handle_task(task, step, solution)
 
             elif isinstance(step, str):
@@ -927,7 +929,7 @@ class ExecutionPlan(
         outputs=None,
         *,
         name="",
-        callbacks: Callable[[OpTask], None] = None,
+        callbacks: Tuple[Callable[[OpTask], None], ...] = None,
         solution_class=None,
         layered_solution=None,
     ) -> Solution:
@@ -943,9 +945,10 @@ class ExecutionPlan(
         :param name:
             name of the pipeline used for logging
         :param callbacks:
-            If given, a 2-tuple with (optional) x2 :term:`callbacks` to call before & after
-            each operation, with :class:`.OpTask` as argument containing the op & solution.
-            Less or no elements accepted.
+            If given, a 2-tuple with (optional) :term:`callbacks` to call
+            before/after computing operation, with :class:`.OpTask` as argument
+            containing the op & solution.
+            Can be one (scalar), less than 2, or nothing/no elements accepted.
         :param solution_class:
             a custom solution factory to use
         :param layered_solution:

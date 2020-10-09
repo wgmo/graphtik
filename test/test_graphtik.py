@@ -945,26 +945,40 @@ def test_rescheduling_NO_RESULT(exemethod):
         assert sol.scream_if_incomplete()
 
 
+@pytest.mark.xfail(
+    sys.version_info < (3, 8), reason="unittest.nock.call.args is trange in PY37-"
+)
 def test_pre_callback(quarantine_pipeline, exemethod):
-    pipeline = compose("covid19", quarantine_pipeline, parallel=exemethod)
-    called_ops = []
+    # Cannot import top-level `unittest.mock.call`, due to
+    # https://bugs.python.org/issue35753
+    from unittest.mock import MagicMock, call
 
-    def op_called(op_cb):
-        assert op_cb.sol["quarantine"]
-        called_ops.append(op_cb.op.name)
+    pipeline = compose("covid19", quarantine_pipeline)
 
-    sol = pipeline.compute({"quarantine": True}, callbacks=op_called)
+    callbacks = [MagicMock() for _ in range(2)]
+    sol = pipeline.compute({"quarantine": True}, callbacks=callbacks)
+
+    cbs_count = [cb.call_count for cb in callbacks]
+    assert cbs_count == [2, 2]
+    ops_called = [[call.args[0].op for call in cb.call_args_list] for cb in callbacks]
+    assert ops_called == [
+        ["get_out_or_stay_home", "read_book"],
+        ["get_out_or_stay_home", "read_book"],
+    ]
+    results_called = [
+        [call.args[0].result for call in cb.call_args_list] for cb in callbacks
+    ]
+    assert results_called == [
+        [{"time": "1h"}, {"fun": "relaxed", "brain": "popular physics"}],
+        [{"time": "1h"}, {"fun": "relaxed", "brain": "popular physics"}],
+    ]
+
     assert sol == {
         "quarantine": True,
         "time": "1h",
         "fun": "relaxed",
         "brain": "popular physics",
     }
-    if exe_params.marshal == 1:
-        # Marshaled `called_ops` is not itself :-)
-        assert called_ops == []
-    else:
-        assert called_ops == ["get_out_or_stay_home", "read_book"]
 
 
 ##########

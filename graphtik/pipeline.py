@@ -412,10 +412,10 @@ class Pipeline(Operation):
             filter-out nodes before compiling
             If not given, those set by a previous call to :meth:`withset()` or cstor are used.
         :param callbacks:
-            If given, a 4-tuple with (optional) x2 :term:`callbacks`,
-            2 to call before & after each operation, and another 2 before/after batch,
-            with :class:`.OpTask` as argument containing the op & solution.
-            One (scalar), less than 4, or no elements accepted.
+            If given, a 2-tuple with (optional) :term:`callbacks` to call
+            before/after computing operation, with :class:`.OpTask` as argument
+            containing the op & solution.
+            Can be one (scalar), less than 2, or nothing/no elements accepted.
         :param solution_class:
             a custom solution factory to use
         :param layered_solution:

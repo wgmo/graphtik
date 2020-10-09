@@ -708,22 +708,24 @@ Architecture
         value.  All of them default to ``None`` (false).
 
     callbacks
-        x2 user-defined optional callables called before & after each function,
-        installed on :meth:`.Pipeline.compute()`, that they must have this signature::
+        x2 optional callables called before/after each `operation` :meth:`.Pipeline.compute()`.
+        Attention, any errors will abort the pipeline execution.
+
+        pre-op-callback
+            Called from solution code before :term:`marshalling`.
+            A use case would be to validate `solution`, or
+            :ref:`trigger a breakpoint by some condition <break_with_pre_callback>`.
+
+        post-op-callback:
+            Called after solution have been populated with `operation` results.
+            A use case would be to validate operation `outputs` and/or
+            solution after results have been populated.
+
+        Callbacks must have this signature::
 
             callbacks(op_cb) -> None
 
-        ... where ``op_cb`` is an instance of the :class:`.OpTask` :func:`~collections.namedtuple`.
-
-        pre-callback
-            Called after :term:`marshalling` and before `matching inputs`.
-            A use case would be to :ref:`a breakpoint triggered by some condition
-            <break_with_pre_callback>`.
-
-        post-callback:
-            Called after :term:`zipping outputs` and before :term:`marshalling` results
-            back into `solution`.
-            A use case would be to validate the solution and scream immediately on errors.
+        ... where ``op_cb`` is an instance of the :class:`.OpTask`.
 
     jetsam
         When a pipeline or an operation fails, the original exception gets annotated
