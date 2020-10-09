@@ -39,7 +39,7 @@ Graphtik Changelog
     - [ ] FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
     - [ ] break/enh(modifier): augment modifier table with `implicits` for REPR.
     - [ ] BREAK(modif): "stuffy" names for `is_xxx(modifier)` funcs returning stuff.
-    - [ ] REFACT/FEAT/ENH: Autograph functions by annotating
+    - [ ] FEAT: Autograph functions by annotating
 
   - Planning:
     - [ ] FEAT: break cycles with dijkstra; +weights?
@@ -52,10 +52,11 @@ Graphtik Changelog
       (+cat: Execution)
 
   - Execute:
-    - [ ] ENH/REFACT: use Signature.Param from `inspect` module to match needs & zip provides
+    - [+] FEAT: +2 callbacks before marshalling: (pre_batch, post_batch) (olds: pre_op, post_op).
+      PARTIAL: moved existing x2 callbacks to be called before marshalling.
     - [?] refact: named_inputs --> sol
+    - [ ] ENH/REFACT: use Signature.Param from `inspect` module to match needs & zip provides
     - [ ] FEAT(fnop): varargs for Outs collect all outs to the very end
-    - [ ] FEAT: +2 callbacks before marshalling: (pre_batch, post_batch) (olds: pre_op, post_op).
     - [ ] BREAK/FEAT: allow marking SFX-LIST items:
       1. Implicits (default), to be checked/resolved downstream (see "FEAT: +2 callbacks"), or
       2. Sfx (pure), as they are now).
@@ -72,7 +73,7 @@ Graphtik Changelog
       - [+] FEAT: + `post_callback` with `pre_callback` --> `callbacks` tuple
         (+cat: Compose)
         - [+] ENH(jsonp): mass-concat (not one-by-one).
-        - [ ] ENH: validate Implicits indeed added (in `post_op_callback`)?
+        - [+] ENH: validate Implicits indeed added (in `post_op_callback`)?
         - [ ] FEAT: VALIDATE (by user) items on Solution-Insert (with a `post_callback`?):
           - auto-assertions {jsonp--> validators}
           - compare overwrites while recomputing
@@ -123,14 +124,18 @@ Changelog
 :GitHub Releases: https://github.com/pygraphkit/graphtik/releases
 
 
-v10.4.0 (6 Oct 2020, @ankostis): CWD, preserve concat index-names
------------------------------------------------------------------
+v10.4.0 (9 Oct 2020, @ankostis): CWD, callbacks non-marshalled, preserve concat index-names
+-------------------------------------------------------------------------------------------
 + FEAT(compose): a :term:`current-working-document` given when defining operation
   prefixes all non-root its dependencies as `jsonp` expressions.
 + feat(plot): color as "pink" any ``None``\s in the results, to facilitate identification
   of operations returning nothing, by mistake, or non-produced :term:`implicit`\s.
+  Include "shape" when printing vectors (np-arrays and data-frames).
 + refact/feat(exe): the argument to :term:`callback`\s now contains the results;
   replace ``OpCb` class with pre-existing ``_OpTask``  (now publicized).
+
+  + Calllbacks are now called from solution context, before :term:`marshalling`.
+
 + ENH(solution): preserve index/column names when concatenating pandas
   (workaround https://github.com/pandas-dev/pandas/issues/13475, to be fixed with pandas-v1.2).
 
