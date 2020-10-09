@@ -415,7 +415,12 @@ def make_data_value_tooltip(plot_args: PlotArgs):
     node = plot_args.nx_item
     assert node in plot_args.solution
     val = plot_args.solution[node]
-    tooltip = "(None)" if val is None else f"({type(val).__name__}) {val}"
+    if val is None:
+        tooltip = "(None)"
+    elif hasattr(val, "shape"):
+        tooltip = f"({type(val).__name__}, shape: {val.shape}) {val}"
+    else:
+        tooltip = f"({type(val).__name__}) {val}"
     return quote_html_tooltips(tooltip)
 
 
