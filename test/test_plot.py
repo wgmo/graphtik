@@ -11,11 +11,9 @@ import dill
 import networkx as nx
 import pydot
 import pytest
-from jinja2 import Template
-
-from graphtik import base, compose, planning, operation, plot
-from graphtik.modifier import optional
+from graphtik import base, compose, operation, planning, plot
 from graphtik.fnop import PlotArgs
+from graphtik.modifier import optional
 from graphtik.pipeline import Pipeline
 from graphtik.plot import (
     Plotter,
@@ -25,6 +23,9 @@ from graphtik.plot import (
     active_plotter_plugged,
     get_active_plotter,
 )
+from jinja2 import Template
+
+from .helpers import oneliner
 
 
 @pytest.fixture
@@ -100,30 +101,31 @@ def test_op_label_template_full():
     got = plot._render_template(plot.Theme.op_template, **kw)
     print(got)
     exp = """
-        <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BORDER="44" COLOR="red" BGCOLOR="wheat">
-            <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
-                ><FONT COLOR="blue"><B>OP:</B> <I>the op</I></FONT></TD>
-                <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
-                        <TR>
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#04277d" TITLE="endured" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-endured" TARGET="_top"
-                            ><FONT FACE="monospace" COLOR="white"><B>!</B></FONT></TD>
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#fc89ac" TITLE="rescheduled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-partial-outputs" TARGET="_top"
-                            ><FONT FACE="monospace" COLOR="white"><B>?</B></FONT></TD>
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#b1ce9a" TITLE="parallel" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-parallel-execution" TARGET="_top"
-                            ><FONT FACE="monospace" COLOR="white"><B>|</B></FONT></TD>
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#4e3165" TITLE="marshalled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-marshalling" TARGET="_top"
-                            ><FONT FACE="monospace" COLOR="white"><B>&amp;</B></FONT></TD>
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dictionary" TARGET="_top"
-                            ><FONT FACE="monospace" COLOR="white"><B>}</B></FONT></TD>
-                        </TR>
-                    </TABLE></TD>
-            </TR><TR>
-                <TD COLSPAN="2" ALIGN="left" TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
-                ><FONT COLOR="blue"><B>FN:</B> the fn</FONT></TD>
-            </TR>
-        </TABLE>>
-        """
+    <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BORDER="44" COLOR="red" BGCOLOR="wheat">
+        <TR>
+            <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="&lt;op &quot; &#9; tooltip&gt;" HREF="http://op_url.com_label_" TARGET="_self"
+            ><FONT COLOR="blue"><B>OP:</B> <I>the op</I></FONT></TD>
+            <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
+                    <TR>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#04277d" TITLE="endured" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-endured" TARGET="_top"
+                        ><FONT FACE="monospace" COLOR="white"><B>!</B></FONT></TD>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#fc89ac" TITLE="rescheduled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-partial-outputs" TARGET="_top"
+                        ><FONT FACE="monospace" COLOR="white"><B>?</B></FONT></TD>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#b1ce9a" TITLE="parallel" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-parallel-execution" TARGET="_top"
+                        ><FONT FACE="monospace" COLOR="white"><B>|</B></FONT></TD>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#4e3165" TITLE="marshalled" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-marshalling" TARGET="_top"
+                        ><FONT FACE="monospace" COLOR="white"><B>&amp;</B></FONT></TD>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="12" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#cc5500" TITLE="returns_dict" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-returns-dictionary" TARGET="_top"
+                        ><FONT FACE="monospace" COLOR="white"><B>}</B></FONT></TD>
+                    </TR>
+                </TABLE></TD>
+        </TR>
+        <TR>
+            <TD COLSPAN="2" ALIGN="left" TOOLTIP="&lt;fn&#10;tooltip&gt;" HREF="http://fn_url.com/quoto_and" TARGET="_top"
+            ><FONT COLOR="blue"><B>FN:</B> the fn</FONT></TD>
+        </TR>
+    </TABLE>>
+    """
 
     assert _striplines(got) == _striplines(exp)
 
@@ -161,17 +163,18 @@ def test_op_label_template_fn_empty():
     )
     print(got)
     exp = """
-        <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
-            <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left"
-                ><B>OP:</B> <I>op</I></TD>
-                <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
-            </TR><TR>
-                <TD COLSPAN="2" ALIGN="left"
-                ><B>FN:</B> fn</TD>
-            </TR>
-        </TABLE>>
-        """
+    <<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
+        <TR>
+            <TD BORDER="1" SIDES="b" ALIGN="left"
+            ><B>OP:</B> <I>op</I></TD>
+            <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
+        </TR>
+        <TR>
+            <TD COLSPAN="2" ALIGN="left"
+            ><B>FN:</B> fn</TD>
+        </TR>
+    </TABLE>>
+    """
     assert _striplines(got) == _striplines(exp)
 
 
@@ -550,48 +553,53 @@ def test_node_dot_str0(dot_str_pipeline):
     dot_str = str(dot_str_pipeline.plot())
     print(dot_str)
     exp = """
-        digraph graph_ {
-        fontname=italic;
-        label=<graph>;
-        node [fillcolor=white, style=filled];
-        <edge> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-                    <TR><TD>edge</TD></TR>
-                </TABLE>>, shape=invhouse, tooltip="(input)"];
-        <digraph&#58; strict> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-                    <TR><TD>digraph: strict</TD></TR>
-                </TABLE>>, shape=invhouse, tooltip="(input)"];
-        <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
-            <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET="_top"
-                ><B>OP:</B> <I>node</I></TD>
-                <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
-            </TR><TR>
-                <TD COLSPAN="2" ALIGN="left" TOOLTIP="Same as a + b." TARGET="_top"
-                ><B>FN:</B> &lt;built-in function add&gt;</TD>
-            </TR>
-        </TABLE>>, shape=plain, tooltip=<node>];
-        <&lt;graph&gt;> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-                    <TR><TD><graph></TD></TR>
-                </TABLE>>, shape=house, tooltip="(output)"];
-        <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
-            <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
-                ><B>OP:</B> <I>cu:sto:m</I></TD>
-                <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
-            </TR><TR>
-                <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET="_top"
-                ><B>FN:</B> test.test_plot.func</TD>
-            </TR>
-        </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
-        <edge> -> <node>  [arrowtail=inv, dir=back, headport=n, tailport=s];
-        <edge> -> <cu&#58;sto&#58;m>  [arrowtail=inv, dir=back, headport=n, tailport=s];
-        <digraph&#58; strict> -> <node>  [arrowtail=inv, dir=back, headport=n, tailport=s];
-        <digraph&#58; strict> -> <cu&#58;sto&#58;m>  [arrowtail=inv, dir=back, headport=n, tailport=s];
-        <node> -> <&lt;graph&gt;>  [headport=n, tailport=s];
-        <cu&#58;sto&#58;m> -> <&lt;graph&gt;>  [headport=n, tailport=s];
-        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
-        }
-        """
+    digraph graph_ {
+    fontname=italic;
+    label=<graph>;
+    node [fillcolor=white, style=filled];
+    <edge> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR><TD>edge</TD>
+                </TR>
+            </TABLE>>, shape=invhouse, tooltip="(input)"];
+    <digraph&#58; strict> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR><TD>digraph: strict</TD>
+                </TR>
+            </TABLE>>, shape=invhouse, tooltip="(input)"];
+    <node> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
+        <TR>
+            <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;node&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;add&#x27;)" TARGET="_top"
+            ><B>OP:</B> <I>node</I></TD>
+            <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
+        </TR>
+        <TR>
+            <TD COLSPAN="2" ALIGN="left" TOOLTIP="Same as a + b." TARGET="_top"
+            ><B>FN:</B> &lt;built-in function add&gt;</TD>
+        </TR>
+    </TABLE>>, shape=plain, tooltip=<node>];
+    <&lt;graph&gt;> [fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR><TD><graph></TD>
+                </TR>
+            </TABLE>>, shape=house, tooltip="(output)"];
+    <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded">
+        <TR>
+            <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
+            ><B>OP:</B> <I>cu:sto:m</I></TD>
+            <TD BORDER="1" SIDES="b" ALIGN="right"></TD>
+        </TR>
+        <TR>
+            <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET="_top"
+            ><B>FN:</B> test.test_plot.func</TD>
+        </TR>
+    </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
+    <edge> -> <node>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <edge> -> <cu&#58;sto&#58;m>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <digraph&#58; strict> -> <node>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <digraph&#58; strict> -> <cu&#58;sto&#58;m>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <node> -> <&lt;graph&gt;>  [headport=n, tailport=s];
+    <cu&#58;sto&#58;m> -> <&lt;graph&gt;>  [headport=n, tailport=s];
+    legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
+    }
+    """
 
     assert _striplines(dot_str) == _striplines(exp)
 
@@ -608,43 +616,47 @@ def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     overlay.graph["graphviz.splines"] = "ortho"
 
     exp = r"""
-        digraph solution_x5_nodes {
-        fontname=italic;
-        splines=ortho;
-        node [fillcolor=white, style=filled];
-        subgraph "cluster_after pruning" {
-        label=<after pruning>;
-        <edge> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-                    <TR><TD>edge</TD></TR>
-                </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(int) 1"];
-        <digraph&#58; strict> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-                    <TR><TD>digraph: strict</TD></TR>
-                </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(int) 2"];
-        <&lt;graph&gt;> [fillcolor=SkyBlue, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-                    <TR><TD><graph></TD></TR>
-                </TABLE>>, shape=house, style=filled, tooltip="(output)\n(None)\n(x2 overwrites) 1. 3&#10;  0. None"];
-        <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
-            <TR>
-                <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
-                ><B>OP:</B> <I>cu:sto:m</I></TD>
-                <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
-                        <TR>
-                            <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD>
-                        </TR>
-                    </TABLE></TD>
-            </TR><TR>
-                <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET="_top"
-                ><B>FN:</B> test.test_plot.func</TD>
-            </TR>
-        </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
-        }
+    digraph solution_x5_nodes {
+    fontname=italic;
+    splines=ortho;
+    node [fillcolor=white, style=filled];
+    subgraph "cluster_after pruning" {
+    label=<after pruning>;
+    <edge> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR><TD>edge</TD>
+                </TR>
+            </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(int) 1"];
+    <digraph&#58; strict> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR><TD>digraph: strict</TD>
+                </TR>
+            </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(int) 2"];
+    <&lt;graph&gt;> [fillcolor=SkyBlue, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR><TD><graph></TD>
+                </TR>
+            </TABLE>>, shape=house, style=filled, tooltip="(output)\n(None)\n(x2 overwrites) 1. 3&#10;  0. None"];
+    <cu&#58;sto&#58;m> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
+        <TR>
+            <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;cu:sto:m&#x27;, needs=[&#x27;edge&#x27;, &#x27;digraph: strict&#x27;], provides=[&#x27;&lt;graph&gt;&#x27;], fn=&#x27;func&#x27;)" TARGET="_top"
+            ><B>OP:</B> <I>cu:sto:m</I></TD>
+            <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
+                    <TR>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD>
+                    </TR>
+                </TABLE></TD>
+        </TR>
+        <TR>
+            <TD COLSPAN="2" ALIGN="left" TOOLTIP="def func(a, b):&#10;    pass" TARGET="_top"
+            ><B>FN:</B> test.test_plot.func</TD>
+        </TR>
+    </TABLE>>, shape=plain, tooltip=<cu:sto:m>];
+    }
 
-        <edge> -> <cu&#58;sto&#58;m>  [arrowtail=inv, dir=back, headport=n, tailport=s];
-        <digraph&#58; strict> -> <cu&#58;sto&#58;m>  [arrowtail=inv, dir=back, headport=n, tailport=s];
-        <cu&#58;sto&#58;m> -> <&lt;graph&gt;>  [color="#ffa9cd", headport=n, tailport=s, tooltip="(null-result)"];
-        legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
-        }
-        """
+    <edge> -> <cu&#58;sto&#58;m>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <digraph&#58; strict> -> <cu&#58;sto&#58;m>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <cu&#58;sto&#58;m> -> <&lt;graph&gt;>  [color="#ffa9cd", headport=n, tailport=s, tooltip="(null-result)"];
+    legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
+    }
+    """
 
     ## Theme-param.
     #
@@ -700,15 +712,17 @@ def test_step_badge():
                         <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD>
                     </TR>
                 </TABLE></TD>
-        </TR><TR>
+        </TR>
+        <TR>
             <TD COLSPAN="2" ALIGN="left" TARGET="_top"
             ><B>FN:</B> builtins.str</TD>
         </TR>
     </TABLE>>, shape=plain, tooltip=<0>];
     <b> [color="#006666", fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-                <TR><TD>b</TD>
-                <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"
-                ><FONT FACE="monospace" COLOR="white"><B>2</B></FONT></TD></TR>
+                <TR>
+                    <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"
+                    ><FONT FACE="monospace" COLOR="white"><B>2</B></FONT></TD><TD>b</TD>
+                </TR>
             </TABLE>>, penwidth=3, shape=rect, style="filled,dashed", tooltip="(to evict)\n(evicted)"];
     <1> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
         <TR>
@@ -719,13 +733,15 @@ def test_step_badge():
                         <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>1</B></FONT></TD>
                     </TR>
                 </TABLE></TD>
-        </TR><TR>
+        </TR>
+        <TR>
             <TD COLSPAN="2" ALIGN="left" TARGET="_top"
             ><B>FN:</B> builtins.str</TD>
         </TR>
     </TABLE>>, shape=plain, tooltip=<1>];
     <c> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-                <TR><TD>c</TD></TR>
+                <TR><TD>c</TD>
+                </TR>
             </TABLE>>, shape=house, style=filled, tooltip="(output)\n(str)"];
     <0> -> <b>  [headport=n, tailport=s];
     <b> -> <1>  [arrowtail=inv, dir=back, headport=n, tailport=s];
@@ -770,3 +786,89 @@ def test_combine_clusters():
 
 def test_degenerate_pipeline():
     compose("defs", operation(str, "a")).plot()
+
+
+def test_plot_pandas_numpy():
+    import numpy as np
+    import pandas as pd
+
+    pipe = compose(
+        "a", operation(lambda a, c: np.array([1.0, 2]), "A", ["i1", "i2"], "o")
+    )
+    sol = pipe.compute(
+        {
+            "i1": pd.DataFrame(
+                [1, 2],
+                columns=pd.Index(["A"], name="hi"),
+                index=pd.Index(["r1", "r2"], name="n0"),
+            ),
+            "i2": pd.Series(
+                [1],
+                index=pd.MultiIndex.from_arrays([["a"], ["b"]], names=["l1", "l2"]),
+            ),
+        }
+    )
+    got = str(sol.plot())
+    print(got)
+    exp = r"""
+    digraph solution_x4_nodes {
+    fontname=italic;
+    node [fillcolor=white, style=filled];
+    <i1> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR>
+                    <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                        TITLE="&lt;class &#x27;pandas.core.frame.DataFrame&#x27;&gt;&#10;Index: 2 entries, r1 to r2&#10;Data columns (total 1 columns):&#10; #   Column  Non-Null Count  Dtype&#10;---  ------  --------------  -----&#10; 0   A       2 non-null      int64&#10;dtypes: int64(1)&#10;memory usage: 32.0+ bytes"
+                        TARGET="_top"
+                    ><FONT FACE="monospace" COLOR="#7193ff"><B>#</B></FONT></TD>
+                    <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                        TITLE="Index([&#x27;r1&#x27;, &#x27;r2&#x27;], dtype=&#x27;object&#x27;, name=&#x27;n0&#x27;)"
+                        TARGET="_top"
+                    ><FONT FACE="monospace" COLOR="#7193ff"><B>R</B></FONT></TD>
+                    <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                        TITLE="Index([&#x27;A&#x27;], dtype=&#x27;object&#x27;, name=&#x27;hi&#x27;)"
+                        TARGET="_top"
+                    ><FONT FACE="monospace" COLOR="#7193ff"><B>C</B></FONT></TD><TD>i1</TD>
+                </TR>
+            </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(DataFrame, shape: (2, 1)) hi  A&#10;n0   &#10;r1  1&#10;r2  2"];
+    <i2> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR>
+                    <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                        TITLE="shape: (1,), dtype: int64"
+                        TARGET="_top"
+                    ><FONT FACE="monospace" COLOR="#7193ff"><B>#</B></FONT></TD>
+                    <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                        TITLE="MultiIndex([(&#x27;a&#x27;, &#x27;b&#x27;)],&#10;           names=[&#x27;l1&#x27;, &#x27;l2&#x27;])"
+                        TARGET="_top"
+                    ><FONT FACE="monospace" COLOR="#7193ff"><B>R</B></FONT></TD><TD>i2</TD>
+                </TR>
+            </TABLE>>, shape=invhouse, style=filled, tooltip="(input)\n(Series, shape: (1,), dtype: int64) l1  l2&#10;a   b     1&#10;dtype: int64"];
+    <A> [label=<<TABLE CELLBORDER="0" CELLSPACING="0" STYLE="rounded" BGCOLOR="wheat">
+        <TR>
+            <TD BORDER="1" SIDES="b" ALIGN="left" TOOLTIP="FnOp(name=&#x27;A&#x27;, needs=[&#x27;i1&#x27;, &#x27;i2&#x27;], provides=[&#x27;o&#x27;], fn=&#x27;&lt;lambda&gt;&#x27;)" TARGET="_top"
+            ><B>OP:</B> <I>A</I></TD>
+            <TD BORDER="1" SIDES="b" ALIGN="right"><TABLE BORDER="0" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" ALIGN="right">
+                    <TR>
+                        <TD STYLE="rounded" HEIGHT="22" WIDTH="14" FIXEDSIZE="true" VALIGN="BOTTOM" BGCOLOR="#00bbbb" TITLE="computation order" HREF="https://graphtik.readthedocs.io/en/latest/arch.html#term-steps" TARGET="_top"><FONT FACE="monospace" COLOR="white"><B>0</B></FONT></TD>
+                    </TR>
+                </TABLE></TD>
+        </TR>
+        <TR>
+            <TD COLSPAN="2" ALIGN="left" TOOLTIP="&quot;a&quot;, operation(lambda a, c: np.array([1.0, 2]), &quot;A&quot;, [&quot;i1&quot;, &quot;i2&quot;], &quot;o&quot;)" TARGET="_top"
+            ><B>FN:</B> ...py.&lt;locals&gt;.&lt;lambda&gt;</TD>
+        </TR>
+    </TABLE>>, shape=plain, tooltip=<A>];
+    <o> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
+                <TR>
+                    <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                        TITLE="shape: (2,), dtype: float64"
+                        TARGET="_top"
+                    ><FONT FACE="monospace" COLOR="#7193ff"><B>#</B></FONT></TD><TD>o</TD>
+                </TR>
+            </TABLE>>, shape=house, style=filled, tooltip="(output)\n(ndarray, shape: (2,), dtype: float64) [1. 2.]"];
+    <i1> -> <A>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <i2> -> <A>  [arrowtail=inv, dir=back, headport=n, tailport=s];
+    <A> -> <o>  [headport=n, tailport=s];
+    legend [URL="https://graphtik.readthedocs.io/en/latest/_images/GraphtikLegend.svg", fillcolor=yellow, shape=component, style=filled, target=_blank];
+    }
+    """
+    assert oneliner(got) == oneliner(exp)

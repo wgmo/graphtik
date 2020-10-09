@@ -337,6 +337,22 @@ def _format_exception(ex):
         return f"{type(ex).__name__}: {ex}"
 
 
+def _vector_info(val):
+    """Printout ``val.info()`` or fallback to ``val.shape``. """
+    buf = io.StringIO()
+    try:
+        val.info(buf=buf)
+        return buf.getvalue()
+    except Exception:
+        try:
+            return f"shape: {val.shape}, dtype: {val.dtype}"
+        except Exception:
+            try:
+                return len(val)
+            except Exception:
+                pass
+
+
 @jinja2.environmentfilter
 def _reversing_truncate(
     env, s, length=255, killwords=False, end="...", leeway=None, reverse=None
@@ -361,6 +377,7 @@ def _make_jinja2_environment() -> jinja2.Environment:
     env.filters["eee"] = jinja2.evalcontextfilter(
         partial(_escape_or_none, escaper=quote_html_tooltips)
     )
+    env.filters["vector_info"] = _vector_info
     env.filters["slug"] = jinja2.evalcontextfilter(
         partial(_escape_or_none, escaper=as_identifier)
     )
@@ -418,7 +435,12 @@ def make_data_value_tooltip(plot_args: PlotArgs):
     if val is None:
         tooltip = "(None)"
     elif hasattr(val, "shape"):
-        tooltip = f"({type(val).__name__}, shape: {val.shape}) {val}"
+        if hasattr(val, "dtype"):
+            tooltip = (
+                f"({type(val).__name__}, shape: {val.shape}, dtype: {val.dtype}) {val}"
+            )
+        else:
+            tooltip = f"({type(val).__name__}, shape: {val.shape}) {val}"
     else:
         tooltip = f"({type(val).__name__}) {val}"
     return quote_html_tooltips(tooltip)
@@ -503,6 +525,7 @@ class Theme:
     broken_color = "Red"
     overwrite_color = "SkyBlue"
     steps_color = "#00bbbb"
+    vector_color = "#7193ff"  # pandas logo
     evicted_color = "#006666"
     #: the url to the architecture section explaining *graphtik* glossary,
     #: linked by legend.
@@ -605,7 +628,43 @@ class Theme:
     data_template = make_template(
         """\
         <<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
-            <TR><TD>
+            <TR>
+                {%- if solution and nx_item in solution and solution[nx_item]|attr('shape') -%}
+                {%- set val = solution[nx_item] %}
+                <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                    TITLE="{{- val | vector_info | eee -}}"
+                    TARGET="_top"
+                ><FONT FACE="monospace" COLOR="{{ vector_color | eee }}"><B>#</B></FONT></TD>
+                {%- endif -%}
+
+                {%- if val is defined and val.index is defined %}
+                <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                    TITLE="{{- val.index | string | eee -}}"
+                    TARGET="_top"
+                ><FONT FACE="monospace" COLOR="{{ vector_color | eee }}"><B>R</B></FONT></TD>
+                {%- endif -%}
+
+                {%- if val is defined and val.columns is defined %}
+                <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
+                    TITLE="{{- val.columns | string | eee -}}"
+                    TARGET="_top"
+                ><FONT FACE="monospace" COLOR="{{ vector_color | eee }}"><B>C</B></FONT></TD>
+                {%- endif -%}
+
+                {%- if steps and nx_item in steps %}
+                <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4"
+                {{- {
+                    'BGCOLOR': step_bgcolor | eee,
+                    'TITLE': step_tooltip | eee,
+                    'HREF': step_url | hrefer | ee,
+                    'TARGET': step_target | eee
+                    } | xmlattr }}
+                ><FONT FACE="monospace" COLOR="{{ step_color | eee }}"><B>
+                        {{- steps.index(nx_item) -}}
+                    </B></FONT></TD>
+                {%- endif -%}
+
+                <TD>
                 {%- if nx_item | jsonp -%}
                     {%- for js_step in nx_item | jsonp -%}
                         {%- if loop.first -%}
@@ -633,18 +692,6 @@ class Theme:
                 {%- endif -%}
 
             </TD>
-            {%- if steps and nx_item in steps %}
-            <TD STYLE="rounded" CELLSPACING="2" CELLPADDING="4"
-            {{- {
-                'BGCOLOR': step_bgcolor | eee,
-                'TITLE': step_tooltip | eee,
-                'HREF': step_url | hrefer | ee,
-                'TARGET': step_target | eee
-                } | xmlattr }}
-            ><FONT FACE="monospace" COLOR="{{ step_color | eee }}"><B>
-                    {{- steps.index(nx_item) -}}
-                </B></FONT></TD>
-            {%- endif -%}
             </TR>
         </TABLE>>
         """
@@ -804,7 +851,7 @@ class Theme:
                 {%- endif -%}
                 </TD>
             </TR>
-            {%- if fn_name -%}
+            {%- if fn_name %}
             <TR>
                 <TD COLSPAN="2" ALIGN="left"
                   {{- {
@@ -903,6 +950,7 @@ class Theme:
         "step_url": "https://graphtik.readthedocs.io/en/latest/arch.html#term-steps",
         "step_target": "_top",
         "step_tooltip": "computation order",
+        "vector_color": Ref("vector_color"),
     }
     #: step edges
     kw_step = {
