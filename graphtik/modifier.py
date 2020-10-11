@@ -339,21 +339,23 @@ def _modifier(
         (prefixed with ``_`` if not already) only if values are not null.
         Here used for :term:`implicit`, and client code may extend its own modifiers.
     """
+    ## Establish JSONP & their accessors
+    #
     if jsonp is not None:
         if isinstance(jsonp, str):
             from .jsonpointer import jsonp_path
 
             jsonp = jsonp_path(jsonp)
-        kw["_jsonp"] = jsonp  # WARN: must be False or a collection for jsonp-accessors!
     # Prevent sfx-jsonp.
     elif "/" in name and jsonp is None and (sideffected is None or sfx_list):
         from .jsonpointer import jsonp_path
 
-        kw["_jsonp"] = jsonp_path(name)
-    # Don't override user's accessor.
-    #
-    if not accessor and kw.get("_jsonp"):
-        accessor = JsonpAcc()
+        jsonp = jsonp_path(name)
+    if jsonp is not None:
+        kw["_jsonp"] = jsonp
+        if not accessor and jsonp:
+            # Honor user's accessor.
+            accessor = JsonpAcc()
 
     args = (name, keyword, optional, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
