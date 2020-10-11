@@ -489,34 +489,37 @@ Architecture
         accessed with a `json pointer path` expression with respect to the `solution`,
         denoted with slashes like: ``root/parent/child/leaf``
 
-        Note that if a nested `output <outputs>` is asked, then all **docs-in-chain**
-        are kept i.e. all *superdocs* till the **root dependency** (the "superdocs") plus
-        all its *subdocs* (the "subdocs");  as depicted below for a hypothetical
-        dependency ``/stats/b/b1``:
+        Whenever a nested dependency is given/asked, then all **docs-in-chain**
+        (depicted below) are *topologically sorted*, before executing any operations
+        working on them.
 
         .. graphviz::
+            :caption:
+                The **docs-in-chain** for a hypothetical dependency ``stats/b/b1``:
+                **superdocs** at the *left*, **subdocs** at the *right* of ``b1``,
+                respectively.
 
             digraph {
                 rankdir=LR;
+                node [color="grey80" fontcolor="grey80" label="..."]
+                edge [color="grey80"]
 
-                stats -> a -> {a1, a2}  [color=grey]
-                stats -> b -> b1 -> {b11, b12, b13}
-                b13 -> b131
-                stats -> c -> {c1, c2}  [color=grey]
-                b1 [fontname=bold penwidth=3]
-                a [color=grey fontcolor=grey]
-                a1 [color=grey fontcolor=grey label="..."]
-                a2 [color=grey fontcolor=grey label="..."]
-                c [color=grey fontcolor=grey]
-                c1 [color=grey fontcolor=grey label="..."]
-                c2 [color=grey fontcolor=grey label="..."]
+                stats -> a -> {a1, a2}
+                stats -> b -> b1 -> {b11, b12, b13}  [color="#8B4513"]
+                b13 -> b131                          [color="#8B4513"]
+                stats -> c -> c1
+
+                stats [label=<stats> color="#8B4513" fontcolor="#8B4513" fillcolor="#E0E0E0" style=filled]
+                b [label=<b> color="#8B4513" fontcolor="#8B4513" fillcolor="#E0E0E0" style=filled]
+                b1 [label=<<B>b1</B>> color="#8B4513" fontcolor="#8B4513" penwidth=3 fillcolor="#E0E0E0" style=filled]
+                b11 [label="b11" color="#8B4513" fontcolor="#8B4513"]
+                b12 [label="b12" color="#8B4513" fontcolor="#8B4513"]
+                b13 [label="b13" color="#8B4513" fontcolor="#8B4513"]
+                b131 [label="b131" color="#8B4513" fontcolor="#8B4513"]
             }
 
-        For instance, if the root has been asked as output, no subdoc can be
-        subsequently `evicted <eviction>`.
-
-        Note that `jsonp` are implicitly created on an operation that has
-        a `current-working-document` defined.
+        Note that if the root has been asked in `outputs`, none of its subdocs
+        will be `evicted <eviction>`.
 
         :seealso: ::ref:`hierarchical-data` (example)
 
@@ -528,6 +531,9 @@ Architecture
 
         In addition to writing values, the :func:`.vcat` or :func:`.hcat` modifiers
         (& respective accessors) support also `pandas concatenation` for `provides`.
+
+        Note that all non-root dependencies are implicitly created as jsonp
+        if the operation has a `current-working-document` defined.
 
     cwd
     current-working-document
