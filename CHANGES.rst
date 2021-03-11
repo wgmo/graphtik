@@ -36,18 +36,23 @@ Graphtik Changelog
   - Compose:
     - [+] feat: add a real ``implicit`` modifier.
     - [?] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
-    - [ ] FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
+    - [?] `cwd()` modifier:
+      Isn't already working with relative jsonps?
+    - [ ] ++FEAT: Teach pipelines how to accept positional arguments with a tuple with their names
+    - [ ] ++FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
+      (need pipeline feat for positional-args, above).
     - [ ] break/enh(modifier): augment modifier table with `implicits` for REPR.
     - [ ] BREAK(modif): "stuffy" names for `is_xxx(modifier)` funcs returning stuff.
-    - [ ] FEAT: Autograph functions by annotating
+    - [ ] +++FEAT: Autograph functions by type-annotations
+      (PY39 :pep:`593` e.g. ``Annotated[int, CWD]``)
 
   - Planning:
     - [ ] FEAT: break cycles with dijkstra; +weights?
-    - [ ] ENH: link graph inputs/outputs to virtual root-nodes, to replace custom visiting algos
+    - [ ] ++ENH: link graph inputs/outputs to virtual root-nodes, to replace custom visiting algos
           (eg unsatisfied-ops, prune-by-outs)
     - [ ] FEAT: per-operation EVICTs
       (+cat: Compose)
-    - [ ] DROP PARALLEL: always produce a list of "parallelizable batches",
+    - [ ] ++DROP PARALLEL: always produce a list of "parallelizable batches",
           to hook with other executors, and keep here just the single-process implementation.
       (+cat: Execution)
 
@@ -56,16 +61,23 @@ Graphtik Changelog
       PARTIAL: moved existing x2 callbacks to be called before marshalling.
     - [?] refact: named_inputs --> sol
     - [ ] ENH/REFACT: use Signature.Param from `inspect` module to match needs & zip provides
-    - [ ] FEAT(fnop): varargs for Outs collect all outs to the very end
+    - [ ] Solution-retriever modifier `opcb()`;
+      WONTFIX: easier and more generic to access solution from Op-context.
+      REINSTATED: bc it's simpler and does not have any threading issues....
+    - [ ] ++FEAT(fnop): vararg(s) for Outs collect all outs to the very end
     - [ ] BREAK/FEAT: allow marking SFX-LIST items:
       1. Implicits (default), to be checked/resolved downstream (see "FEAT: +2 callbacks"), or
       2. Sfx (pure), as they are now).
-    - [] Solution-retriever modifier `opcb()`;
-      WONTFIX: easier and more generic to access solution from Op-context.
-      REINSTATED     - [X] Solution-retriever modifier;
-      WONTFIX: easier and more generic to access solution from Op-context.
-      REINSTATED to support simple conveyor belts from json-pointer paths.
-      bc it's simpler and does not have any threading issues.
+    - [ ] +++BREAK/DROP accessors for `jsonp` (move all functionality in solution)
+      REJECTED already used for hcat()/vcat()
+      REINSTATED as "ACCESSOR per jsonp-PART"! (h/vcat should have been like that)
+      by default applied to the last part (or use ``[acc, ...]`` syntax for specific parts)
+
+      - [ ] RENAME ``Solution -->  DataTree``
+      - [ ] move dep_prefixed() as a top-level `modifier` utility (to prefix also Accessors)
+      - [ ] revive "stable sort paths" branch on solution updates
+      - [ ] hdf/vdf accessor example-utilities for typical level-0 resolving multi-indexed slices.
+      - [ ] Drop int/attribute indexers from resolve-jsonp, accessors-per-part can do that.
 
     - **Solution:**
       - [+] DROP/ENH: Solution updates GivenInputs only, yet still layers jsonp-refer to its values.
@@ -77,10 +89,10 @@ Graphtik Changelog
         - [ ] FEAT: VALIDATE (by user) items on Solution-Insert (with a `post_callback`?):
           - auto-assertions {jsonp--> validators}
           - compare overwrites while recomputing
-          - check implicits exist
+          - check implicits exist (??not done above??)
 
   - plot:
-    - [ ] Badges on Data
+    - [+] Badges on Data
     - [ ] generate legend dynamically
     - [ ] SPHINXEXT: autodoc Pipelines & Ops
     - [ ] sphinxext: extend standard `doctest` module (instead of sphinx-builder)
@@ -88,7 +100,7 @@ Graphtik Changelog
   - Docs:
     - [ ] REFACT: move GitHub organization `pygraphkit --> pygraphtik` (+Travis, +RTD)
     - [ ] Merge tutorial (operations + composition)
-    - [ ] DOC: explain Implicits in tutorial
+    - [ ] +++DOC: explain Implicits in tutorial;  mention ovunque.
       - [ ] TCs: Test DEBUG
 
 
@@ -100,7 +112,7 @@ Graphtik Changelog
     - [X] conditionals
       WONTFIX bc it permits pipelines with too complex execution flow to debug.
     - [X] DROP accessors:
-      REJECTED already used for hcat()/vcat()
+      REJECTED already used for hcat()/vcat() (but to be dropped for jsnop).
 
     - v9.0.0
     - [X] Accept jsonp inputs & outputs,
@@ -127,12 +139,12 @@ Changelog
 v10.4.0 (9 Oct 2020, @ankostis): CWD, callbacks non-marshalled, preserve concat index-names
 -------------------------------------------------------------------------------------------
 + FEAT(compose): a :term:`current-working-document` given when defining operation
-  prefixes all non-root its dependencies as `jsonp` expressions.
+  prefixes its non-root dependencies as `jsonp` expressions.
 + feat(plot): color as "pink" any ``None``\s in the results, to facilitate identification
   of operations returning nothing, by mistake, or non-produced :term:`implicit`\s.
   Include "shape" when printing vectors (np-arrays and data-frames).
 + refact/feat(exe): the argument to :term:`callback`\s now contains the results;
-  replace ``OpCb` class with pre-existing ``_OpTask``  (now publicized).
+  replace ``OpCb`` class with pre-existing ``_OpTask``  (now publicized).
 
   + Calllbacks are now called from solution context, before :term:`marshalling`.
 
@@ -189,7 +201,7 @@ v10.2.1 (18 Sep 2020, @ankostis): plot sol bugfix
 
 v10.2.0 (16 Sep 2020, @ankostis): RECOMPUTE, pre-callback, drop `op_xxx`, ops-eq-op.name, drop NULL_OP
 ------------------------------------------------------------------------------------------------------
-Should have been a "major" release, but x2 breaks are that important.
+Should have been a "major" release due to x2 API-BREAKs not that important.
 
 + FEAT(pipeline+execution): add term ``pre_callback`` to be invoked prior to computing
   each operation (see ``pre_callback`` arg in :meth:`.Pipeline.compute()`).
