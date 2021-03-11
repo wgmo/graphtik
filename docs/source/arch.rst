@@ -415,8 +415,9 @@ Architecture
         See also the elaborate example in :ref:`hierarchical-data` section.
 
     implicit
-        A `modifier` denoting a `dependency` not to be fed into/out of the function,
-        but the *dependency* is still considered while `planning`.
+        A `modifier` denoting a `dependency` not fed into/out of the function,
+        but the *dependency* is still considered while `planning`,
+        expected to exist in the `solution`, downstream.
 
         One use case is for an operation to consume/produce a `subdoc`\(s)
         with its own means (not through `jsonp` `accessor`\s).

@@ -461,7 +461,7 @@ return the special value :data:`graphtik.NO_RESULT`.
 Hierarchical data and further tricks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Working with :term:`hierarchical data` relies upon dependencies expressed as
-:term:`json pointer path`\s against solution data-tree
+:term:`json pointer path`\s against solution data-tree.
 Let's retrofit the "weekly tasks" example from :ref:`operation-nesting` section,
 above.
 

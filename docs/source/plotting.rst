@@ -12,11 +12,11 @@ For :ref:`debugging` it is necessary to visualize the graph-operation (e.g. to s
 You may plot any :term:`plottable` and annotate on top the *execution plan* and
 solution of the last computation, calling methods with arguments like this::
 
-   pipeline.plot(True)                   # open a matplotlib window
-   pipeline.plot("pipeline.svg")            # other supported formats: png, jpg, pdf, ...
-   pipeline.plot()                       # without arguments return a pydot.DOT object
-   pipeline.plot(solution=solution)      # annotate graph with solution values
-   solution.plot()                    # plot solution only
+   pipeline.plot(True)                    # open a matplotlib window
+   pipeline.plot("pipeline.svg")          # other supported formats: png, jpg, pdf, ...
+   pipeline.plot()                        # without arguments return a pydot.DOT object
+   pipeline.plot(solution=solution)       # annotate graph with solution values
+   solution.plot()                        # plot solution only
 
 ... or for the last ...::
 

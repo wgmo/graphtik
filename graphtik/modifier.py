@@ -3,6 +3,38 @@
 """
 :term:`modifier`\\s (print-out with :term:`diacritic`\\s) change :term:`dependency` behavior during :term:`planning` & :term:`execution`.
 
+.. autosummary::
+
+    optional
+    keyword
+    implicit
+    sfx
+    sfxed
+    sfxed_vararg
+    sfxed_varargs
+    vararg
+    varargs
+    hcat
+    vcat
+    modify
+    dependency
+    get_keyword
+    is_optional
+    is_vararg
+    is_varargs
+    is_varargish
+    jsonp_ize
+    get_jsonp
+    is_sfx
+    is_pure_sfx
+    is_sfxed
+    is_implicit
+    get_accessor
+    dep_renamed
+    dep_singularized
+    dep_stripped
+    modifier_withset
+
 The `needs` and `provides` annotated with *modifiers* designate, for instance,
 :term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
 
