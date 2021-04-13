@@ -8,6 +8,7 @@ Graphtik
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
 
+.. default-role:: term
 .. epigraph::
    It's a DAG all the way down!
 
@@ -17,8 +18,8 @@ Computation graphs for Python & Pandas
 --------------------------------------
 
 **Graphtik** is a library to compose, plot & execute *graphs of python functions*
-(a.k.a :term:`pipeline`\s) that consume and populate (possibly :term:`nested
-<hierarchical data>`) named data (a.k.a :term:`dependencies <dependency>`),
+(a.k.a `pipeline`\s) that consume and populate (possibly `nested
+<hierarchical data>`) named data (a.k.a `dependencies <dependency>`),
 based on whether values for those dependencies exist in the inputs
 or have been calculated earlier, with *pandas* in mind.
 
@@ -59,11 +60,9 @@ but has diverged significantly with enhancements ever since.
 
 .. _features:
 
-.. default-role:: term
 .. include:: ../../README.rst
    :start-after:  .. _features:
    :end-before:  Quick start
-.. default-role:: obj
 
 .. _quick-start:
 
@@ -79,8 +78,8 @@ separately with your OS tools)::
    pip install graphtik[plot]
 
 
-Let's build a *graphtik* computation :term:`pipeline` that produces the following
-x3 :term:`outputs` out of x2 :term:`inputs` (`α` and `β`):
+Let's build a *graphtik* computation `pipeline` that produces the following
+x3 `outputs` out of x2 `inputs` (``α`` and ``β``):
 
 .. math::
    :label: sample-formula
@@ -104,10 +103,10 @@ x3 :term:`outputs` out of x2 :term:`inputs` (`α` and `β`):
 
 .. hint::
    Notice that *graphtik* has not problem working in unicode chars
-   for :term:`dependency` names.
+   for `dependency` names.
 
 Compose the ``abspow`` function along with ``mul`` & ``sub``  built-ins
-into a computation :term:`graph`:
+into a computation `graph`:
 
    >>> graphop = compose("graphop",
    ...    operation(mul, needs=["α", "β"], provides=["α×β"]),
@@ -135,7 +134,7 @@ Run the graph-operation and request all of the outputs:
    >>> sol
    {'α': 2, 'β': 5, 'α×β': 10, 'α-α×β': -8, '|α-α×β|³': 512}
 
-:term:`Solutions <solution>` are :term:`plottable` as well:
+`Solutions <solution>` are `plottable` as well:
 
    >>> solution.plot('solution.svg')      # doctest: +SKIP
 
@@ -158,6 +157,7 @@ Run the graph-operation and request a subset of the outputs:
    >>> from graphtik.plot import legend
    >>> l = legend()
 
+.. default-role:: obj
 .. |sample-plot| raw:: html
     :file:  images/sample.svg
 .. include:: ../../README.rst
