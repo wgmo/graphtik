@@ -93,6 +93,20 @@ Anti-features
   because it pertains function-call semantics, calling only once each function
   to process data-items.
 
+Differences with *schedula*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+`schedula <https://schedula.readthedocs.io/>`_ is a library written roughly for the same purpose.
+
+- Results are stored in the same nested-structure used for the inputs - *schedula* stores them
+  inside a graph (mimicking the structure of the functions) - to facilitate debugging and overview.
+- Overwrites - all possible values computed and stored.
+- Computation precedence based on insertion-into-pipeline order while `compositing <composition>`,
+  not lexicographical order of function name.
+- Does not introduce "virtual" start and end data-nodes while solving the dag.
+- No domains (execute-time conditionals deciding whether a function must run).
+- TODO: more differences with *schedula* exist.
+
 Quick start
 -----------
 Here’s how to install:
