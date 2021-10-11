@@ -208,27 +208,43 @@ def clone_graph_with_stripped_sfxed(graph):
     return clone
 
 
-def _topo_sort_nodes(dag) -> iset:
+def _format_cycle(graph):
+    operation_strings = []
+    for second, first in reversed(graph[1:] + [graph[0]]):
+        if isinstance(first, str) and operation_strings:
+            operation_strings[-1] += f' needs "{first}" from {second.name}.'
+        if isinstance(first, Operation):
+            operation_strings.append(first.name)
+    return "\n".join(operation_strings)
+
+
+def _topo_sort_nodes(graph) -> iset:
     """
-    Topo-sort dag by execution order & operation-insertion order to break ties.
+    Topo-sort `graph` by execution order & operation-insertion order to break ties.
 
     This means (probably!?) that the first inserted win the `needs`, but
     the last one win the `provides` (and the final solution).
 
     Inform user in case of cycles.
     """
-    node_keys = dict(zip(dag.nodes, count()))
+    node_keys = dict(zip(graph.nodes, count()))
     try:
-        return iset(nx.lexicographical_topological_sort(dag, key=node_keys.get))
+        return iset(nx.lexicographical_topological_sort(graph, key=node_keys.get))
     except nx.NetworkXUnfeasible as ex:
         import sys
         from textwrap import dedent
+
+        try:
+            cycles_msg = nx.find_cycle(graph)
+        except nx.exception.NetworkXNoCycle:
+            log.warning("Swallowed error while discovering graph-cycles: %s", ex)
+            cycles_msg = ""
 
         tb = sys.exc_info()[2]
         msg = dedent(
             f"""
             {ex}
-
+            {cycles_msg}
             TIP:
                 Launch a post-mortem debugger, move 3 frames UP, and
                 plot the `graphtik.planning.Network' class in `self`

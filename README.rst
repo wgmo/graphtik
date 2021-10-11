@@ -16,16 +16,27 @@ Graphtik
 Computation graphs for Python & Pandas
 --------------------------------------
 
-**Graphtik** is a library to compose, plot & execute *graphs of python functions*
-(a.k.a pipelines) that consume and populate (possibly nested) named data
-(a.k.a dependencies), based on whether values for those dependencies exist in the inputs
-or have been calculated earlier, with *pandas* in mind.
+**Graphtik** is a library to compose, solve, execute & plot *graphs of python functions*
+(a.k.a pipelines) that consume and populate named data
+(a.k.a dependencies), whose names may be nested (such as. *pandas* dataframe columns),
+based on whether values for those dependencies exist in the inputs or
+have been calculated earlier.
+
+In mathematical terms, given:
+
+- a partially populated data-tree, and
+- a set of functions operating on (consuming/producing) branches of the data tree,
+
+*graphtik* collects a subset of functions in a graph that when executed
+consume & produce as many values as possible in the data-tree.
+
+|usage-overview|
 
 - Its primary use case is building flexible algorithms for data science/machine learning projects.
 - It should be extendable to implement the following:
 
   - an `IoC dependency resolver <https://en.wikipedia.org/wiki/Dependency_injection>`_
-    (e.g. Java Spring);
+    (e.g. Java Spring, Google Guice);
   - an executor of interdependent tasks based on files (e.g. GNU Make);
   - a custom ETL engine;
   - a spreadsheet calculation engine.
@@ -40,8 +51,8 @@ but has diverged significantly with enhancements ever since.
 Features
 --------
 
-- Deterministic pre-decided `execution plan` (excepting *partial-outputs* or
-  *endured operations*, see below).
+- Deterministic pre-decided `execution plan` (unless *partial-outputs* or
+  *endured operations* defined, see below).
 - Can assemble existing functions without modifications into `pipeline`\s.
 - `dependency` resolution can bypass calculation cycles based on data given and asked.
 - Support functions with `optional <optionals>` input args and/or `varargs <varargish>`.
@@ -56,14 +67,17 @@ Features
 - `Merge <operation merging>` or `nest <operation nesting>` sub-pipelines.
 - Early `eviction` of intermediate results from `solution`, to optimize memory footprint.
 - Solution tracks all intermediate `overwritten <overwrite>` values for the same dependency.
-- Parallel execution (but underdeveloped).
 - Elaborate `Graphviz`_ plotting with configurable `plot theme`\s.
 - Integration with Sphinx sites with the new :rst:dir:`graphtik` directive.
 - Authored with :ref:`debugging <debugging>` in mind.
-- Parallel execution (but underdeveloped & deprecated).
+- Parallel execution (but underdeveloped & DEPRECATED).
 
 Anti-features
 ^^^^^^^^^^^^^
+
+- It's not meant to follow complex conditional logic based on `dependency` values
+  (though it does support that to `a limited degree <partial outputs>`).
+
 - It's not an orchestrator for long-running tasks, nor a calendar scheduler -
   `Apache Airflow <https://airflow.apache.org/>`_, `Dagster
   <https://github.com/dagster-io/dagster>`_ or `Luigi <https://luigi.readthedocs.io/>`_
@@ -73,8 +87,11 @@ Anti-features
   additionally at `Dask <https://dask.org/>`_, `IpyParallel
   <https://ipyparallel.readthedocs.io/en/latest/>`_, `Celery
   <https://docs.celeryproject.org/en/stable/getting-started/introduction.html>`_,
-  Hive, Pig, Spark, Hadoop, etc.
+  Hive, Pig, Hadoop, etc.
 
+- It's not a stream/batch processor, like Spark, Storm, Fink, Kinesis,
+  because it pertains function-call semantics, calling only once each function
+  to process data-items.
 
 Quick start
 -----------
@@ -160,11 +177,15 @@ Run the graph and request all of the outputs
 
 .. |sample-plot| image:: docs/source/images/sample.svg
     :alt: sample graphtik plot
-    :width: 120px
+    :width: 380px
+    :align: middle
+.. |usage-overview| image:: docs/source/images/GraphkitUsageOverview.svg
+    :alt: Usage overview of graphtik library
+    :width: 640px
     :align: middle
 .. |sample-sol| image:: docs/source/images/executed_3ops.svg
     :alt: sample graphtik plot
-    :width: 120px
+    :width: 380px
     :align: middle
 .. |plot-legend| image:: docs/source/images/GraphtikLegend.svg
     :alt: graphtik legend

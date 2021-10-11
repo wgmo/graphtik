@@ -6,17 +6,24 @@ Architecture
 
 
 .. default-role:: term
+
+.. include:: index.rst
+    :start-after: .. math-overview-start
+    :end-before: .. math-overview-end
+
 .. glossary::
 
     compute
     computation
     phase
-        |v440-flowchart|
-        The definition & execution of networked operation is split in 1+2 phases:
+
+        The definition & execution of `pipeline`\s happens in 3 phases:
 
         - `composition`
         - `planning`
         - `execution`
+
+        |v440-flowchart|
 
         ... it is constrained by these IO data-structures:
 
@@ -484,6 +491,7 @@ Architecture
     subdoc
     superdoc
     doc chain
+    data tree
     hierarchical data
         A **subdoc** is a `dependency` value nested further into another one
         (the **superdoc**),
@@ -742,5 +750,9 @@ Architecture
         See :ref:`jetsam`.
 
 .. default-role:: obj
+.. |usage-overview| image:: images/GraphkitUsageOverview.svg
+    :alt: Usage overview of graphtik library
+    :width: 640px
+    :align: middle
 .. |v440-flowchart| raw:: html
     :file: images/GraphtikFlowchart-v4.4.0.svg

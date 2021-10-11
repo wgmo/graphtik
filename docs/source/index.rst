@@ -16,18 +16,34 @@ Graphtik
 
 Computation graphs for Python & Pandas
 --------------------------------------
+**Graphtik** is a library to compose, solve, execute & plot *graphs of python functions*
+(a.k.a `pipeline`\s) that consume and populate named data
+(a.k.a `dependencies <dependency>`), whose names may be
+`nested <hierarchical data>` (such as, *pandas* dataframe columns),
+based on whether values for those dependencies exist in the inputs or
+have been calculated earlier.
 
-**Graphtik** is a library to compose, plot & execute *graphs of python functions*
-(a.k.a `pipeline`\s) that consume and populate (possibly `nested
-<hierarchical data>`) named data (a.k.a `dependencies <dependency>`),
-based on whether values for those dependencies exist in the inputs
-or have been calculated earlier, with *pandas* in mind.
+.. math-overview-start
+
+In mathematical terms, given:
+
+- a partially populated `data tree`, and
+- `a set <pipeline>` of `functions operating <operation>` (consuming/producing) on
+  `branches <dependency>` of the data tree,
+
+*graphtik* `collects <compile>` a `subset of functions in a graph <plan>`
+that when `executed <execute>` consume & produce as `values as possible in the data-tree
+<solution>`.
+
+|usage-overview|
+
+.. math-overview-end
 
 - Its primary use case is building flexible algorithms for data science/machine learning projects.
 - It should be extendable to implement the following:
 
   - an `IoC dependency resolver <https://en.wikipedia.org/wiki/Dependency_injection>`_
-    (e.g. Java Spring);
+    (e.g. Java Spring, Google Guice);
   - an executor of interdependent tasks based on files (e.g. GNU Make);
   - a custom ETL engine;
   - a spreadsheet calculation engine.
@@ -160,5 +176,10 @@ Run the graph-operation and request a subset of the outputs:
 .. default-role:: obj
 .. |sample-plot| raw:: html
     :file:  images/sample.svg
+.. |usage-overview| image:: images/GraphkitUsageOverview.svg
+    :alt: Usage overview of graphtik library
+    :width: 640px
+    :align: middle
+.. from https://docs.google.com/document/d/1P73jgcAEzR_Vw491DQR0zogdunJOj3qh0h_lvphdaHk
 .. include:: ../../README.rst
     :start-after: _badges_substs:
