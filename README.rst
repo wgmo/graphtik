@@ -156,7 +156,7 @@ out of 2 inputs `α` and `β`:
 ... def abs_qubed(a):
 ...     return abs(a) ** 3
 
-Compose the ``abspow`` function along the ``mul`` & ``sub``  built-ins
+Compose the ``abs_qubed`` function along the ``mul`` & ``sub``  built-ins
 into a computation graph:
 
 >>> graphop = compose("graphop",
