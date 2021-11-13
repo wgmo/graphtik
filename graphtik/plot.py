@@ -1910,13 +1910,13 @@ class Plotter:
             needs [color=invis];
             needs -> provides     [tooltip="Compulsory dependency from src Operation --> dst `provides` data"];
             provides [color=invis];
-            provides -> optional     [style=dashed label="**kw"];
+            provides -> optional     [style=dashed label="**kw" tooltip="A `need` passed in as kw-argument underlying fn."];
             optional    [color=invis label="optional\npartial out"
                         tooltip="Target operation may run without source `need` OR source operation may not `provide` target data."
                         URL="%(arch_url)s#term-needs"];
             optional    -> implicit [dir=both arrowtail=inv arrowhead=obox];
             implicit    [color=invis label="implicit"
-                        tooltip="A `need` passed in as **kw argument underlying fn."
+                        tooltip="A `need` not fed into/out of the function but expected to exist in the `solution`."
                         URL="%(arch_url)s#term-implicit"];
             implicit    -> sideffect    [color=blue];
             sideffect   [color=invis
