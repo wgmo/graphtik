@@ -48,7 +48,7 @@ needs_sphinx = "2.0"
 
 # General information about the project.
 project = "graphtik"
-copyright = "2016, Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess"
+copyright = "2019+: Kostis Anagnostopoulos, 2016+: Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
