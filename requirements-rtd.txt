@@ -2,3 +2,7 @@ boltons
 networkx
 pydot
 sphinx >=2
+# docutils 0.17+ set a line-limit that cannot expand substitutions, eg:
+#   docs/source/index.rst:: WARNING: Substitution definition "sample-plot" exceeds the line-length-limit.
+# see also https://github.com/spatialaudio/nbsphinx/issues/549
+docutils <0.16
