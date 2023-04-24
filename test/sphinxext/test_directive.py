@@ -11,7 +11,6 @@ from graphtik.sphinxext import _image_formats
 
 from ..helpers import attr_check, check_xpath, flat_dict
 
-
 etree_cache: Dict[str, Element] = {}
 
 

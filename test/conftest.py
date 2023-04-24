@@ -7,6 +7,7 @@ from multiprocessing import get_context
 from operator import add
 
 import pytest
+
 from graphtik import compose, operation
 from graphtik.config import debug_enabled, execution_pool_plugged, tasks_marshalled
 
@@ -28,6 +29,7 @@ pytest_plugins = "sphinx.testing.fixtures"
 # TODO: is this needed along with norecursedirs?
 # See https://stackoverflow.com/questions/33508060/create-and-import-helper-functions-in-tests-without-creating-packages-in-test-di
 collect_ignore = ["helpers.py"]
+
 
 ########
 ## From https://stackoverflow.com/a/57002853/548792

@@ -35,7 +35,7 @@ class HistoricDict(OrderedDict):
 
 
 class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
-    """Retrieve a :term:`plottable` from doctests globals and render them. """
+    """Retrieve a :term:`plottable` from doctests globals and render them."""
 
     run_empty_code = True
 
@@ -55,7 +55,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         self.outfile.write(text)
 
     def _globals_updated(self, code: extdoctest.TestCode, globs: dict):
-        """Collect plottable from doctest-runner globals and render graphtik plot. """
+        """Collect plottable from doctest-runner globals and render graphtik plot."""
         node: nodes.Node = code.node.parent
 
         if isinstance(node, graphtik_node):

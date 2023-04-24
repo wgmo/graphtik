@@ -69,7 +69,7 @@ class Token(str):
     def __init__(self, *args):
         import random
 
-        self.hashid = random.randint(-(2 ** 32), 2 ** 32 - 1)
+        self.hashid = random.randint(-(2**32), 2**32 - 1)
 
     def __eq__(self, other):
         return self.hashid == getattr(other, "hashid", None)
@@ -653,8 +653,8 @@ class Plottable(abc.ABC):
 
         plot_args = PlotArgs(**kw)
 
-        from .plot import Plotter, Theme, get_active_plotter
         from .execution import Solution
+        from .plot import Plotter, Theme, get_active_plotter
 
         ## Ensure a valid plotter in the args asap.
         #
@@ -906,7 +906,7 @@ class Operation(Plottable, abc.ABC):
             ]
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
-        """Delegate to a provisional network with a single op . """
+        """Delegate to a provisional network with a single op ."""
         from .pipeline import compose
         from .plot import graphviz_html_string
 

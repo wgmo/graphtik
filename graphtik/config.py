@@ -127,7 +127,7 @@ def abort_run():
 
 
 def reset_abort():
-    """Reset the :term:`abort run` global flag, to permit plan executions to proceed. """
+    """Reset the :term:`abort run` global flag, to permit plan executions to proceed."""
     _abort.get().value = False
 
 

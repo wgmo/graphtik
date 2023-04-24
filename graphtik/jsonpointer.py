@@ -25,8 +25,8 @@ from typing import (
     Iterable,
     List,
     MutableMapping,
-    Optional,
     MutableSequence,
+    Optional,
     Sequence,
     Tuple,
     TypeVar,
@@ -36,7 +36,6 @@ from typing import (
 import numpy as np
 import pandas as pd
 from pandas.core.generic import NDFrame
-
 
 log = logging.getLogger(__name__)
 UNSET = "%%UNSET%%"  # Change this in case of troubles...
@@ -356,7 +355,7 @@ def contains_path(
     root: Doc = UNSET,
     descend_objects=True,
 ) -> bool:
-    """Test if `doc` has a value for json-pointer path by calling :func:`.resolve_path()`. """
+    """Test if `doc` has a value for json-pointer path by calling :func:`.resolve_path()`."""
     try:
         resolve_path(doc, path, root=root, descend_objects=descend_objects)
         return True

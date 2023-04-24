@@ -22,7 +22,7 @@ from graphtik import (
     vararg,
     varargs,
 )
-from graphtik.base import IncompleteExecutionError, UNSET
+from graphtik.base import UNSET, IncompleteExecutionError
 from graphtik.config import debug_enabled, evictions_skipped, operations_endured
 
 from .helpers import addall, exe_params
@@ -53,7 +53,6 @@ def filtdict(d, *keys):
 
 
 def test_smoke_test():
-
     # Sum operation, late-bind compute function
     sum_op1 = operation(name="sum_op1", needs=["a", "b"], provides="sum_ab")(add)
 

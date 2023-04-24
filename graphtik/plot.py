@@ -184,7 +184,7 @@ def _dot2svg(dot):
 
 
 def _monkey_patch_for_jupyter(pydot):
-    """Ensure Dot instance render in Jupyter notebooks. """
+    """Ensure Dot instance render in Jupyter notebooks."""
     if not hasattr(pydot.Dot, "_repr_html_"):
         pydot.Dot._repr_html_ = _dot2svg
 
@@ -207,7 +207,7 @@ _monkey_patch_for_jupyter(pydot)
 
 
 def is_nx_node_dependent(graph, nx_node):
-    """Return true if node's edges are not :term:`subdoc` only. """
+    """Return true if node's edges are not :term:`subdoc` only."""
     return any(
         1
         for _src, _dst, subdoc in chain(
@@ -332,13 +332,13 @@ def _escape_or_none(context: jinja2.environment.EvalContext, x, escaper):
 
 
 def _format_exception(ex):
-    """Printout ``type(msg)``. """
+    """Printout ``type(msg)``."""
     if ex:
         return f"{type(ex).__name__}: {ex}"
 
 
 def _vector_info(val):
-    """Printout ``val.info()`` or fallback to ``val.shape``. """
+    """Printout ``val.info()`` or fallback to ``val.shape``."""
     buf = io.StringIO()
     try:
         val.info(buf=buf)
@@ -423,12 +423,12 @@ def make_template(s):
 
 
 def _render_template(tpl: jinja2.Template, **kw) -> str:
-    """Ignore falsy values, to skip attributes in template all together. """
+    """Ignore falsy values, to skip attributes in template all together."""
     return tpl.render(**{k: v for k, v in kw.items() if v})
 
 
 def make_data_value_tooltip(plot_args: PlotArgs):
-    """Called on datanodes, when solution exists. """
+    """Called on datanodes, when solution exists."""
     node = plot_args.nx_item
     assert node in plot_args.solution
     val = plot_args.solution[node]
@@ -447,7 +447,7 @@ def make_data_value_tooltip(plot_args: PlotArgs):
 
 
 def make_overwrite_tooltip(plot_args: PlotArgs):
-    """Called on datanodes, withmultiple overwrite values. """
+    """Called on datanodes, withmultiple overwrite values."""
     node = plot_args.nx_item
     assert node in plot_args.solution
     val = plot_args.solution.overwrites[node]
@@ -992,7 +992,7 @@ class Theme:
 
     @staticmethod
     def theme_attributes(obj) -> dict:
-        """Extract public data attributes of a :class:`Theme` instance. """
+        """Extract public data attributes of a :class:`Theme` instance."""
         return {
             k: v
             for k, v in vars(obj).items()
@@ -1291,8 +1291,8 @@ class StylesStack(NamedTuple):
             return {}
 
         if (debug is None and is_debug()) or debug:
-            from pprint import pformat
             from itertools import count
+            from pprint import pformat
 
             styles_provenance = {}
             style = remerge(*self.named_styles, source_map=styles_provenance)
@@ -1655,7 +1655,7 @@ class Plotter:
         return root
 
     def _append_or_cluster_node(self, plot_args: PlotArgs) -> None:
-        """Add dot-node in dot now, or "cluster" it, to be added later. """
+        """Add dot-node in dot now, or "cluster" it, to be added later."""
 
         root = plot_args.dot
         clusters = plot_args.clusters
@@ -1682,7 +1682,7 @@ class Plotter:
         root.add_node(plot_args.dot_item)
 
     def _make_edge(self, plot_args: PlotArgs) -> pydot.Edge:
-        """Override it to customize edge appearance. """
+        """Override it to customize edge appearance."""
         graph, solution = plot_args.graph, plot_args.solution
         (src, dst), edge_attrs = plot_args.nx_item, plot_args.nx_attrs
         src_name, dst_name = get_node_name(src), get_node_name(dst)
@@ -1810,8 +1810,8 @@ class Plotter:
         if isinstance(filename, (bool, int)):
             ## Display graph via matplotlib
             #
-            import matplotlib.pyplot as plt
             import matplotlib.image as mpimg
+            import matplotlib.pyplot as plt
 
             png = dot.create_png()
             sio = io.BytesIO(png)

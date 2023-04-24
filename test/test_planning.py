@@ -8,13 +8,13 @@ from networkx.readwrite.edgelist import parse_edgelist
 
 from graphtik import operation
 from graphtik.planning import (
+    Network,
     yield_also_chaindocs,
     yield_also_subdocs,
     yield_also_superdocs,
     yield_chaindocs,
     yield_subdocs,
     yield_superdocs,
-    Network,
 )
 
 

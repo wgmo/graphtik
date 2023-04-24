@@ -179,7 +179,7 @@ yield_chaindocs = partial(_yield_chained_docs, (("out_edges", 1), ("in_edges", 0
 
 
 def clone_graph_with_stripped_sfxed(graph):
-    """Clone `graph` including ALSO stripped :term:`sideffected` deps, with original attrs. """
+    """Clone `graph` including ALSO stripped :term:`sideffected` deps, with original attrs."""
 
     def with_stripped_node(node):
         stripped = dep_stripped(node)

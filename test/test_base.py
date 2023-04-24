@@ -8,6 +8,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
+
 from graphtik import (
     base,
     compose,
@@ -138,7 +139,6 @@ def test_jetsam_nested():
 
     def outer():
         try:
-
             fn = "outer"
             b = 0
             inner()

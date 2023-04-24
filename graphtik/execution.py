@@ -147,7 +147,7 @@ class Solution(ChainMap, Plottable):
         self.canceled = {}
         self.broken = {}
         self.elapsed_ms = {}
-        self.solid = "%X" % random.randint(0, 2 ** 16)
+        self.solid = "%X" % random.randint(0, 2**16)
 
         ## Cache context-var flags.
         #
@@ -161,7 +161,7 @@ class Solution(ChainMap, Plottable):
         # assert next(iter(dag.edges))[0] == next(iter(plan.dag.edges))[0]:
 
     def copy(self):
-        """Deep-copy user's `input_data` and pass the rest into a new Solution. """
+        """Deep-copy user's `input_data` and pass the rest into a new Solution."""
         named_inputs = dict(self.maps[-1])
         clone = type(self)(
             self.plan,
@@ -208,7 +208,7 @@ class Solution(ChainMap, Plottable):
 
     @property
     def layers(self) -> List[OpMap]:
-        """Outputs by operation, in execution order (last, most recently executed). """
+        """Outputs by operation, in execution order (last, most recently executed)."""
         return [v for v in self.executed.values() if not isinstance(v, Exception)]
 
     def _reschedule(self, dag, reason, op):
@@ -432,7 +432,7 @@ class Solution(ChainMap, Plottable):
         }
 
     def check_if_incomplete(self) -> Optional[IncompleteExecutionError]:
-        """Return a :class:`IncompleteExecutionError` if `pipeline` operations failed/canceled. """
+        """Return a :class:`IncompleteExecutionError` if `pipeline` operations failed/canceled."""
         failures = {
             op: ex for op, ex in self.executed.items() if isinstance(ex, Exception)
         }
@@ -454,7 +454,7 @@ class Solution(ChainMap, Plottable):
             return IncompleteExecutionError(msg, self)
 
     def scream_if_incomplete(self):
-        """Raise a :class:`IncompleteExecutionError` if `pipeline` operations failed/canceled. """
+        """Raise a :class:`IncompleteExecutionError` if `pipeline` operations failed/canceled."""
         ex = self.check_if_incomplete()
         if ex:
             raise ex

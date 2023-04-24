@@ -34,11 +34,12 @@ __author__ = "hnguyen, ankostis"  # chronologically ordered
 
 
 from .base import AbortedException, IncompleteExecutionError
+from .fnop import NO_RESULT, NO_RESULT_BUT_SFX, operation
 from .modifier import (
-    modify,
     hcat,
     implicit,
     keyword,
+    modify,
     optional,
     sfx,
     sfxed,
@@ -48,5 +49,4 @@ from .modifier import (
     varargs,
     vcat,
 )
-from .fnop import NO_RESULT, NO_RESULT_BUT_SFX, operation
 from .pipeline import compose

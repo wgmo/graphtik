@@ -41,8 +41,9 @@ class Jetsam(dict):
         """
         from tempfile import gettempdir
         from textwrap import indent
-        from .config import is_debug
+
         from . import __title__
+        from .config import is_debug
         from .plot import save_plot_file_by_sha1
 
         debug = is_debug() if plot is None else plot

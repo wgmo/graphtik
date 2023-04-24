@@ -187,7 +187,7 @@ def test_resolve_path_empty_path():
 
 @pytest.fixture
 def std_doc():
-    """From https://tools.ietf.org/html/rfc6901#section-5 """
+    """From https://tools.ietf.org/html/rfc6901#section-5"""
     return {
         r"foo": ["bar", r"baz"],
         r"": 0,
@@ -220,7 +220,7 @@ def std_doc():
     ]
 )
 def std_case(std_doc, request):
-    """From https://tools.ietf.org/html/rfc6901#section-5 """
+    """From https://tools.ietf.org/html/rfc6901#section-5"""
     path, exp = request.param
     if exp is ...:
         exp = deepcopy(std_doc)

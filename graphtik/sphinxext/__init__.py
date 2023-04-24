@@ -25,8 +25,7 @@ from sphinx.ext import doctest as extdoctest
 from sphinx.ext.autodoc import ModuleDocumenter
 from sphinx.locale import _, __
 from sphinx.roles import XRefRole
-from sphinx.util import inspect
-from sphinx.util import logging
+from sphinx.util import inspect, logging
 from sphinx.util.console import bold  # pylint: disable=no-name-in-module
 from sphinx.writers.html import HTMLTranslator
 from sphinx.writers.latex import LaTeXTranslator
@@ -62,7 +61,7 @@ def _ignore_node_but_process_children(
 
 
 class dynaimage(nodes.General, nodes.Inline, nodes.Element):
-    """Writes a tag in `tag` attr (``<img>`` for PNGs, ``<object>`` for SVGs/PDFs). """
+    """Writes a tag in `tag` attr (``<img>`` for PNGs, ``<object>`` for SVGs/PDFs)."""
 
 
 def _zoomable_activation_js_code(default_zoom_opts: str) -> str:
@@ -380,7 +379,7 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
 
 
 class GraphtikDoctestDirective(_GraphtikTestDirective):
-    """Embeds plots from doctest code (see :rst:dir:`graphtik`). """
+    """Embeds plots from doctest code (see :rst:dir:`graphtik`)."""
 
     option_spec = _option_spec
     _real_name = "graphkit"
@@ -388,7 +387,7 @@ class GraphtikDoctestDirective(_GraphtikTestDirective):
 
 
 class GraphtikTestoutputDirective(_GraphtikTestDirective):
-    """Like :rst:dir:`graphtik` directive, but  emulates doctest :rst:dir:`testoutput` blocks. """
+    """Like :rst:dir:`graphtik` directive, but  emulates doctest :rst:dir:`testoutput` blocks."""
 
     option_spec = _option_spec
     _real_name = "graphtik-output"
@@ -403,7 +402,7 @@ def _should_work(app: Sphinx):
 
 
 def _run_doctests_on_graphtik_document(app: Sphinx, doctree: nodes.Node):
-    """Callback of `doctree-resolved`` event. """
+    """Callback of `doctree-resolved`` event."""
     try:
         docname = app.env.docname
         from ._graphtikbuilder import get_graphtik_builder
@@ -443,7 +442,6 @@ class DocFilesPurgatory:
             ## Delete file when given `docname` is the only document using it.
             #
             if len(docs_involved) == 1:  # equality checked also by assertion
-
                 try:
                     log.debug(
                         "Deleting outdated image '%s' of doc %r...", docname, fpath
@@ -492,7 +490,7 @@ _css_fname = "graphtik.css"
 
 
 def _copy_graphtik_static_assets(app: Sphinx, exc: Exception) -> None:
-    """Callback of `build-finished`` event. """
+    """Callback of `build-finished`` event."""
     if not exc and _should_work(app):
         dst = Path(app.outdir, "_static", _css_fname)
         ## Builder `latex` does not have _static folder.
@@ -502,7 +500,7 @@ def _copy_graphtik_static_assets(app: Sphinx, exc: Exception) -> None:
 
 
 def _validate_and_apply_configs(app: Sphinx, config: Config):
-    """Callback of `config-inited`` event. """
+    """Callback of `config-inited`` event."""
     config.graphtik_default_graph_format is None or _valid_format_option(
         config.graphtik_default_graph_format
     )

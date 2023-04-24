@@ -1,7 +1,7 @@
+from pathlib import Path
 from typing import List
 
 import pytest
-from pathlib import Path
 
 from graphtik.sphinxext import DocFilesPurgatory, _image_formats
 

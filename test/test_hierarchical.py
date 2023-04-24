@@ -14,7 +14,6 @@ from graphtik.config import solution_layered
 from graphtik.execution import task_context
 from graphtik.modifier import dep_renamed, modify
 
-
 pytestmark = pytest.mark.usefixtures("log_levels")
 
 

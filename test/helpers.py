@@ -31,7 +31,7 @@ exe_params = ExeParams()
 
 
 def oneliner(s) -> str:
-    """Collapse any whitespace in stringified `s` into a single space. """
+    """Collapse any whitespace in stringified `s` into a single space."""
     return re.sub(r"[\n ]+", " ", str(s).strip())
 
 

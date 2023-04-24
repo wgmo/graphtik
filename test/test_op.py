@@ -220,7 +220,6 @@ def test_results_sequence_lt_many_provides(result, nfewer, asked_outputs):
     with pytest.raises(
         ValueError, match=f"Got {nfewer} fewer results, while expected x2"
     ):
-
         op.compute({}, outputs=asked_outputs)
 
 

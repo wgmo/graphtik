@@ -11,6 +11,8 @@ import dill
 import networkx as nx
 import pydot
 import pytest
+from jinja2 import Template
+
 from graphtik import base, compose, operation, planning, plot
 from graphtik.fnop import PlotArgs
 from graphtik.modifier import optional
@@ -23,7 +25,6 @@ from graphtik.plot import (
     active_plotter_plugged,
     get_active_plotter,
 )
-from jinja2 import Template
 
 from .helpers import oneliner
 

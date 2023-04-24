@@ -24,7 +24,6 @@ from graphtik import (
 from graphtik.config import get_execution_pool, is_marshal_tasks
 from graphtik.pipeline import Pipeline
 
-
 pytestmark = pytest.mark.usefixtures("log_levels")
 
 
@@ -436,7 +435,7 @@ def sideffected_resched(request, exemethod):
 
 
 def test_sideffected_canceled(sideffected_resched):
-    """Check if a `returns-dict` op can cancel sideffecteds. """
+    """Check if a `returns-dict` op can cancel sideffecteds."""
     sol = sideffected_resched.compute({})
     print(sol)
     assert sol == {"DEP": 1, sfxed("DEP", "no"): False, "yes": "yes!"}

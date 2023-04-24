@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
+import datetime as dt
 import io
 import os
 import re
-import datetime as dt
 import subprocess as sbp
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 def _ask_git_version(default: str) -> str:

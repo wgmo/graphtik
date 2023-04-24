@@ -61,8 +61,8 @@ utilize a combination of these **diacritics**:
 .. diacritics-end
 """
 import enum
-from functools import lru_cache, partial
 import operator
+from functools import lru_cache, partial
 from typing import (
     Any,
     Callable,
@@ -154,7 +154,7 @@ class Accessor(NamedTuple):
     update: Callable[[dict, Collection[Tuple[str, Any]]], None] = None
 
     def validate(self):
-        """Call me early to fail asap (if it must); returns self instance. """
+        """Call me early to fail asap (if it must); returns self instance."""
         oks = [callable(i) for i in self]
         oks[-1] |= self[-1] is None  # `update` can be None
         if not all(oks):
@@ -167,7 +167,7 @@ class Accessor(NamedTuple):
 
 @lru_cache()
 def JsonpAcc():
-    """Read/write `jsonp` paths found on modifier's "extra' attribute `jsonpath` """
+    """Read/write `jsonp` paths found on modifier's "extra' attribute `jsonpath`"""
     from . import jsonpointer as jsp
 
     return Accessor(
@@ -181,7 +181,7 @@ def JsonpAcc():
 
 @lru_cache()
 def VCatAcc():
-    """Read/write `jsonp` and concat columns (axis=1) if both doc & value are Pandas. """
+    """Read/write `jsonp` and concat columns (axis=1) if both doc & value are Pandas."""
     from . import jsonpointer as jsp
 
     return Accessor(
@@ -195,7 +195,7 @@ def VCatAcc():
 
 @lru_cache()
 def HCatAcc():
-    """Read/write `jsonp` and concat columns (axis=1) if both doc & value are Pandas. """
+    """Read/write `jsonp` and concat columns (axis=1) if both doc & value are Pandas."""
     from . import jsonpointer as jsp
 
     return Accessor(
@@ -268,7 +268,7 @@ class _Modifier(str):
         sfx_list,
         **kw,
     ) -> "_Modifier":
-        """Warning, returns None! """
+        """Warning, returns None!"""
         ## sanity checks & preprocessing
         #
         if optional is not None and not isinstance(optional, _Optionals):
@@ -504,7 +504,7 @@ def is_varargish(dep) -> bool:
 
 
 def jsonp_ize(dep):
-    """Parse dep as :term:`jsonp` (unless modified with ``jsnop=False``) or is pure sfx. """
+    """Parse dep as :term:`jsonp` (unless modified with ``jsnop=False``) or is pure sfx."""
     return dep if type(dep) is _Modifier or "/" not in dep else _modifier(dep)
 
 
@@ -539,7 +539,7 @@ def is_sfxed(dep) -> bool:
 
 
 def is_implicit(dep) -> bool:
-    """Return if it is a :term:`implicit` dependency. """
+    """Return if it is a :term:`implicit` dependency."""
     return getattr(dep, "_implicit", None)
 
 
@@ -743,17 +743,17 @@ def modify(
 
 
 def implicit(name, *, jsonp=None) -> _Modifier:
-    """see :term:`implicit` & generic :func:`.modify` modifier. """
+    """see :term:`implicit` & generic :func:`.modify` modifier."""
     return _modifier(name, implicit=True, jsonp=jsonp)
 
 
 def vcat(name, *, keyword: str = None, jsonp=None) -> _Modifier:
-    """Provides-only, see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
+    """Provides-only, see :term:`pandas concatenation` & generic :func:`.modify` modifier."""
     return _modifier(name, accessor=VCatAcc(), keyword=keyword, jsonp=jsonp)
 
 
 def hcat(name, *, keyword: str = None, jsonp=None) -> _Modifier:
-    """Provides-only, see :term:`pandas concatenation` & generic :func:`.modify` modifier. """
+    """Provides-only, see :term:`pandas concatenation` & generic :func:`.modify` modifier."""
     return _modifier(name, accessor=HCatAcc(), keyword=keyword, jsonp=jsonp)
 
 
@@ -1247,7 +1247,7 @@ def sfxed(
 def sfxed_vararg(
     dependency: str, sfx0: str, *sfx_list: str, accessor: Accessor = None, jsonp=None
 ) -> _Modifier:
-    """Like :func:`sideffected` + :func:`vararg`. """
+    """Like :func:`sideffected` + :func:`vararg`."""
     return _modifier(
         dependency,
         optional=_Optionals.vararg,
@@ -1261,7 +1261,7 @@ def sfxed_vararg(
 def sfxed_varargs(
     dependency: str, sfx0: str, *sfx_list: str, accessor: Accessor = None, jsonp=None
 ) -> _Modifier:
-    """Like :func:`sideffected` + :func:`varargs`. """
+    """Like :func:`sideffected` + :func:`varargs`."""
     return _modifier(
         dependency,
         optional=_Optionals.varargs,

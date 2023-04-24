@@ -18,16 +18,7 @@ from typing import Callable, List, Mapping, Union
 
 from boltons.setutils import IndexedSet as iset
 
-from .base import (
-    UNSET,
-    Items,
-    Operation,
-    PlotArgs,
-    Plottable,
-    RenArgs,
-    aslist,
-    asset,
-)
+from .base import UNSET, Items, Operation, PlotArgs, Plottable, RenArgs, aslist, asset
 from .modifier import dep_renamed
 
 log = logging.getLogger(__name__)
@@ -310,7 +301,7 @@ class Pipeline(Operation):
         return self.net.graph
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
-        """Delegate to network. """
+        """Delegate to network."""
         from .plot import graphviz_html_string
 
         plottable = self.net

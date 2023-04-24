@@ -9,8 +9,8 @@ from textwrap import dedent
 import pytest
 
 from graphtik import compose, operation, sfx, sfxed, vararg
-from graphtik.modifier import dep_renamed
 from graphtik.fnop import Operation
+from graphtik.modifier import dep_renamed
 
 from .helpers import abspow, addall
 

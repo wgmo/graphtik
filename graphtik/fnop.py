@@ -134,7 +134,7 @@ def prefixed(dep, cwd):
 
 
 def jsonp_ize_all(deps, cwd: Sequence[str]):
-    """Auto-convert deps with slashes as :term:`jsonp` (unless ``no_jsonp``). """
+    """Auto-convert deps with slashes as :term:`jsonp` (unless ``no_jsonp``)."""
     if deps:
         deps = tuple(prefixed(dep, cwd) for dep in deps)
     return deps
@@ -267,7 +267,7 @@ def _process_dependencies(
     seen_sideffecteds = set()
 
     def as_fn_deps(dep):
-        """Strip and dedupe any sfxed, drop any sfx and implicit. """
+        """Strip and dedupe any sfxed, drop any sfx and implicit."""
         if is_implicit(dep):  # must ignore also `sfxed`s
             pass
         elif is_sfxed(dep):
@@ -631,7 +631,7 @@ class FnOp(Operation):
         return FnOp(**kw)
 
     def validate_fn_name(self):
-        """Call it before enclosing it in a pipeline, or it will fail on compute(). """
+        """Call it before enclosing it in a pipeline, or it will fail on compute()."""
         if self.fn is None or not self.name:
             ## Could not check earlier due to builder pattern.
             raise ValueError(
@@ -773,7 +773,7 @@ class FnOp(Operation):
         return results
 
     def _zip_results_plain(self, results, is_rescheduled) -> dict:
-        """Handle result sequence: no-result, single-item, or many. """
+        """Handle result sequence: no-result, single-item, or many."""
         fn_expected = self._fn_provides
         nexpected = len(fn_expected)
 
@@ -938,7 +938,7 @@ class FnOp(Operation):
         return self.compute(dict(*args, **kwargs))
 
     def prepare_plot_args(self, plot_args: PlotArgs) -> PlotArgs:
-        """Delegate to a provisional network with a single op . """
+        """Delegate to a provisional network with a single op ."""
         from .pipeline import compose
         from .plot import graphviz_html_string
 
