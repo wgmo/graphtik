@@ -38,6 +38,7 @@ from typing import (
 )
 
 import jinja2
+import markupsafe
 import networkx as nx
 import pydot
 from boltons.iterutils import default_enter, default_exit, get_path, remap
@@ -328,7 +329,7 @@ def _drop_gt_lt(x):
 
 def _escape_or_none(context: jinja2.environment.EvalContext, x, escaper):
     """Do not markup Nones/empties, so `xmlattr` filter does not include them."""
-    return x and jinja2.Markup(escaper(str(x)))
+    return x and markupsafe.Markup(escaper(str(x)))
 
 
 def _format_exception(ex):
@@ -353,7 +354,7 @@ def _vector_info(val):
                 pass
 
 
-@jinja2.environmentfilter
+@jinja2.pass_environment
 def _reversing_truncate(
     env, s, length=255, killwords=False, end="...", leeway=None, reverse=None
 ) -> str:
@@ -371,14 +372,14 @@ def _reversing_truncate(
 def _make_jinja2_environment() -> jinja2.Environment:
     env = jinja2.Environment()
 
-    env.filters["ee"] = jinja2.evalcontextfilter(
+    env.filters["ee"] = jinja2.pass_eval_context(
         partial(_escape_or_none, escaper=html.escape)
     )
-    env.filters["eee"] = jinja2.evalcontextfilter(
+    env.filters["eee"] = jinja2.pass_eval_context(
         partial(_escape_or_none, escaper=quote_html_tooltips)
     )
     env.filters["vector_info"] = _vector_info
-    env.filters["slug"] = jinja2.evalcontextfilter(
+    env.filters["slug"] = jinja2.pass_eval_context(
         partial(_escape_or_none, escaper=as_identifier)
     )
     env.filters["hrefer"] = _drop_gt_lt

@@ -37,7 +37,14 @@ with open("README.rst") as f:
 with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
-plot_deps = ["pydot", "jinja2", "importlib_resources; python_version<'3.7'"]
+plot_deps = [
+    "pydot",
+    # filter/context decorators renamed, Markup()/escape() from MarkupSafe.
+    "jinja2>=3",
+    # Direct use now due to jinja2-3+.
+    "MarkupSafe",
+    "importlib_resources; python_version<'3.7'",
+]
 matplot_deps = plot_deps + ["matplotlib"]
 sphinx_deps = plot_deps + [
     "sphinx >=2",
@@ -47,9 +54,9 @@ test_deps = list(
         matplot_deps
         + sphinx_deps
         + [
-            "pytest==5.3.5",  # Pinned due to sugar
+            "pytest",
             "pytest-sugar",
-            "pytest-sphinx==0.2.1",  # Pinned due to API break 0.2.2
+            "pytest-sphinx>=0.2.1",  # internal API changes
             "pytest-cov",
             "dill",
             "sphinxcontrib-spelling",
