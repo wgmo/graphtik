@@ -24,8 +24,8 @@
     :func:`.plot.get_active_plotter()` configs, not imported, unless plot is needed.
 """
 
-__version__ = "10.5.0"
-__release_date__ = "24 Apr 2023, 18:01"
+__version__ = "11.0.0.dev0"
+__release_date__ = "24 Apr 2023, 23:45"
 __title__ = "graphtik"
 __summary__ = __doc__.splitlines()[0]
 __license__ = "Apache-2.0"

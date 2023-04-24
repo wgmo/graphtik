@@ -191,6 +191,12 @@ Changelog
 %%%%%%%%%
 :GitHub Releases: https://github.com/pygraphkit/graphtik/releases
 
+v11.0.0.dev0 (?? Apr 2023, @ankostis): AUTOGRAPHED
+==================================================
+
++ ...
+
+
 v10.5.0 (25 Apr 2023, @ankostis): REVIVE project, Bump DEPS
 ===========================================================
 
