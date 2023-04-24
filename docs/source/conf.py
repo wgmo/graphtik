@@ -26,10 +26,9 @@ import subprocess as sbp
 import sys
 from functools import partial
 
-import packaging.version
 from sphinx.application import Sphinx
 
-from graphtik import plot
+from graphtik import __version__, plot
 from graphtik.base import func_name, func_sourcelines
 
 log = logging.getLogger(__name__)
@@ -54,27 +53,14 @@ copyright = "2019+: Kostis Anagnostopoulos, 2016+: Yahoo Vision and Machine Lear
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-# Parse the Travis tag as a version, if it's available, or else use a default.
-try:
-    with io.open("../../graphtik/__init__.py", "rt", encoding="utf8") as f:
-        version = re.search(r'__version__ *= *"(.*?)"', f.read()).group(1)
-except FileNotFoundError:
-    version = "0.0.0"
-version = f"src: {version}"
-
 try:
     git_ver = sbp.check_output("git describe --always".split(), universal_newlines=True)
-    version = f"{version}, git: {git_ver}"
+    version = f"src: {__version__}, git: {git_ver}"
 except Exception:
-    pass
+    version = __version__
 
-version_str = os.environ.get("TRAVIS_TAG", version)
-version_parse = packaging.version.parse(version_str)
-
-# The short X.Y version.
-version = ".".join(version_parse.public.split(".")[:2])
-# The full version, including alpha/beta/rc tags.
-release = version_parse.public
+# Parse the Travis tag as a version, if it's available, or else use a default.
+release = os.environ.get("TRAVIS_TAG", version)
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
