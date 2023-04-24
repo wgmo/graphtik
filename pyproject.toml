@@ -6,6 +6,7 @@ requires = ["setuptools>=30.3.0", "wheel"]
 exclude = '''
     /(
         \.eggs
+        |.*venv.*
         |\.git
         |\.hg
         |\.mypy_cache
