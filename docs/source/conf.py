@@ -84,8 +84,8 @@ doctest_default_flags = (
 )
 
 extlinks = {
-    "gh": ("https://github.com/yahoo/graphkit/issues/%s", "yahoo#"),
-    "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#"),
+    "gh": ("https://github.com/yahoo/graphkit/issues/%s", "yahoo#%s"),
+    "gg": ("https://github.com/pygraphkit/graphtik/issues/%s", "#%s"),
 }
 
 
