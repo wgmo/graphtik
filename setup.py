@@ -40,7 +40,6 @@ plot_deps = ["pydot", "jinja2", "importlib_resources; python_version<'3.7'"]
 matplot_deps = plot_deps + ["matplotlib"]
 sphinx_deps = plot_deps + [
     "sphinx >=2",
-    "docutils <0.16",  # docutils 0.17+ line-limit prevents subsitutions.
 ]
 test_deps = list(
     set(
