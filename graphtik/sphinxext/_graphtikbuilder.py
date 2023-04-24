@@ -193,7 +193,7 @@ class GraphtikPlotsBuilder(doctestglobs.ExposeGlobalsDocTestBuilder):
         img_format: str = node["img_format"]
         assert img_format, (img_format, node)
 
-        image_node: dynaimage = first(node.traverse(dynaimage))
+        image_node: dynaimage = first(node.findall(dynaimage))
         if img_format == "png":
             image_node.tag = "img"
             image_node["src"] = str(rel_img_path)

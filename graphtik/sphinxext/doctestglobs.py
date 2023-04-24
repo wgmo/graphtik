@@ -77,7 +77,7 @@ class ExposeGlobalsDocTestBuilder(extdoctest.DocTestBuilder):
                     and "testnodetype" in node
                 )
 
-        for node in doctree.traverse(condition):  # type: Element
+        for node in doctree.findall(condition):  # type: Element
             if self.skipped(node):
                 continue
 

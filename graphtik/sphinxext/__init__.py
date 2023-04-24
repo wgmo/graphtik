@@ -407,7 +407,7 @@ def _run_doctests_on_graphtik_document(app: Sphinx, doctree: nodes.Node):
         docname = app.env.docname
         from ._graphtikbuilder import get_graphtik_builder
 
-        if _should_work(app) and any(doctree.traverse(graphtik_node)):
+        if _should_work(app) and any(doctree.findall(graphtik_node)):
             log.info(__("Graphtik-ing document %r..."), docname)
             graphtik_builder = get_graphtik_builder(app)
             graphtik_builder.test_doc(docname, doctree)
