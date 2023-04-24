@@ -96,15 +96,47 @@ Anti-features
 Differences with *schedula*
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-`schedula <https://schedula.readthedocs.io/>`_ is a library written roughly for the same purpose.
+`schedula <https://schedula.readthedocs.io/>`_ is a powerful library written roughly
+for the same purpose, and works differently along these lines
+(ie features below refer to *schedula*):
 
-- Results are stored in the same nested-structure used for the inputs - *schedula* stores them
-  inside a graph (mimicking the structure of the functions) - to facilitate debugging and overview.
-- Overwrites - all possible values computed and stored.
-- Computation precedence based on insertion-into-pipeline order while `compositing <composition>`,
-  not lexicographical order of function name.
-- Does not introduce "virtual" start and end data-nodes while solving the dag.
+- terminology (<graphtik> := <schedula>):
+
+  - pipeline := dispatcher
+  - plan := workflow
+  - solution := solution
+
+- Dijkstra planning runs while calling operations:
+
+  - Powerful & flexible (ie all operations are dynamic, *domains* are possible, etc).
+  - Supports *weights*.
+  - Cannot pre-calculate & cache execution plans (slow).
+
+- Calculated values are stored inside a graph (mimicking the structure of the functions):
+
+  - graph visualizations absolutely needed to inspect & debug its solutions.
+  - graphs imply complex pre/post processing & traversal algos
+      (vs constructing/traversing data-trees).
+
+- Reactive plotted diagrams, web-server runs behind the scenes.
+- Operation graphs are stackable:
+
+  - plotted nested-graphs support drill-down.
+  - *graphtik* emulates that with data/operation names (`operation nesting`),
+    but always a unified graph is solved at once,
+    bc it is impossible to dress *nesting-funcs* as a *python-funcs* and pre-solve plan
+    (*schedula* does not pre-solve plan, Dijkstra runs all the time).
+    See TODO about plotting such nested graphs.
+
+- *Schedula* does not calculate all possible values (ie no `overwrite`\s).
+- *Schedula* computes precedence based on weights and lexicographical order of function name.
+
+  - Re-inserting operation does not overrides its current function - must remove it first.
+  - *graphtik* precedence based insertion order during `composition`.
+
+- Virtual *start* and *end* data-nodes needed for Dijkstra to solve the dag.
 - No domains (execute-time conditionals deciding whether a function must run).
+- Probably :ref:`recompute` is more straightforward in *graphtik*.
 - TODO: more differences with *schedula* exist.
 
 Quick start
