@@ -2,3 +2,5 @@ boltons
 networkx
 pydot
 sphinx >=2
+# Fix dissappearing bulets: https://stackoverflow.com/a/71069918/548792
+sphinx-rtd-theme>=0.5.1
