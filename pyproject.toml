@@ -21,3 +21,6 @@ exclude = '''
     \..*cache.*
     )
 '''
+
+[tool.isort]
+profile = "black"
