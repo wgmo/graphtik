@@ -834,7 +834,7 @@ def test_plot_pandas_numpy():
     <i2> [fillcolor=wheat, fixedsize=shape, label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0">
                 <TR>
                     <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
-                        TITLE="shape: (1,), dtype: int64"
+                        TITLE="&lt;class &#x27;pandas.core.series.Series&#x27;&gt;&#10;MultiIndex: 1 entries, (&#x27;a&#x27;, &#x27;b&#x27;) to (&#x27;a&#x27;, &#x27;b&#x27;)&#10;Series name: None&#10;Non-Null Count  Dtype&#10;--------------  -----&#10;1 non-null      int64&#10;dtypes: int64(1)&#10;memory usage: 344.0+ bytes"
                         TARGET="_top"
                     ><FONT FACE="monospace" COLOR="#7193ff"><B>#</B></FONT></TD>
                     <TD STYLE="rounded" CELLSPACING="0" CELLPADDING="0" WIDTH="8"
