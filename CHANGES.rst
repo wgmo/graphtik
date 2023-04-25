@@ -191,6 +191,34 @@ Changelog
 %%%%%%%%%
 :GitHub Releases: https://github.com/pygraphkit/graphtik/releases
 
+v10.5.0 (25 Apr 2023, @ankostis): REVIVE project, Bump DEPS
+===========================================================
+
+Fix all TCs and warnings for recent dependencies.
+
++ FIX(SITE): bump to latest sphinx:
+
+  + FIX(TCs): bumped *jinja2*, added *MarkupSafe* and unpinned *pytest*
+    so that all TCs run OK again with latest deps.
+  + fix(sphinxext.TC) probably *graphviz* generates slightly different captions in SVGs.
+  + fix: version-parsing in docs/conf.py neglected since v1.0 and
+    manifested now as erroneously parsing pep440-version id - simplified it a lot;
+    stop using forgotten packaging dep.
+  + fix: ``sphinx-extlinks >= 4`` plugin demands ``%s`` also in caption or else
+    pytest-fails, and a warning is issued on site generation.
+  + fix(site) docutils-0.17+ broke long substitutions like ``|version|``;
+    fixed it with a ``docutils.conf`` file (instead of `resorting to pinning
+    <https://sourceforge.net/p/docutils/bugs/416/#4d3b>`_).
++ fix(build): unpin ``black==20.8b1`` since it's been years since ``black`` was released
+  and ``pip install -e[all]`` was failing when trying to build end-of-lifed ``typed-ast``
+  e.g. on Python3.11.
++ style: *black* & *isort* imports all over (with a *black* profile for the latter).
++ DOC: various nitpicks and diagram beauties.
++ DOC: add section about diffs with *schedula* project.
++ plot: various minor improvements.
++ ENH(plot) add RC-Shape badges in data-nodes
++ CHORE: TravisCI site lost :-( moved to **GitHub Actions**.
+
 
 v10.4.0 (9 Oct 2020, @ankostis): CWD, callbacks non-marshalled, preserve concat index-names
 -------------------------------------------------------------------------------------------

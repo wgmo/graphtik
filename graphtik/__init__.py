@@ -1,7 +1,7 @@
 # Copyright 2016, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
 """
-:term:`computation` graphs for Python * Pandas
+:term:`computation` graphs for Python & Pandas
 
 .. import-speeds-start
 .. tip::
@@ -24,8 +24,8 @@
     :func:`.plot.get_active_plotter()` configs, not imported, unless plot is needed.
 """
 
-__version__ = "10.4.0"
-__release_date__ = "9 Oct 2020, 14:20"
+__version__ = "10.5.0"
+__release_date__ = "24 Apr 2023, 18:01"
 __title__ = "graphtik"
 __summary__ = __doc__.splitlines()[0]
 __license__ = "Apache-2.0"
