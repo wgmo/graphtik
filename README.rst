@@ -3,7 +3,7 @@ Graphtik
 
 |pypi-version| |gh-version| (build-version: |release|, build-date: |today|)
 |python-ver| |dev-status|
-|travis-status| |doc-status| |cover-status| |codestyle| |proj-lic|
+|ci-status| |doc-status| |cover-status| |codestyle| |proj-lic|
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
 
@@ -242,9 +242,9 @@ Run the graph and request all of the outputs
 .. _Graphviz: https://graphviz.org
 .. _badges_substs:
 
-.. |travis-status| image:: https://img.shields.io/travis/pygraphkit/graphtik
-    :alt: Travis continuous integration testing ok? (Linux)
-    :target: https://travis-ci.org/pygraphkit/graphtik/builds
+.. |ci-status| image:: https://github.com/pygraphkit/graphtik/actions/workflows/ci.yaml/badge.svg
+    :alt: GitHub Actions CI testing ok? (Linux)
+    :target: https://github.com/pygraphkit/graphtik/actions
 
 .. |doc-status| image:: https://img.shields.io/readthedocs/graphtik?branch=master
     :alt: ReadTheDocs ok?
