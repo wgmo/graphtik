@@ -547,7 +547,7 @@ def dot_str_pipeline():
     )
 
 
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sys.version_info < (3, 7), reason="PY3.6- have different docstrings for builtins."
 )
 def test_node_dot_str0(dot_str_pipeline):
@@ -605,7 +605,7 @@ def test_node_dot_str0(dot_str_pipeline):
     assert _striplines(dot_str) == _striplines(exp)
 
 
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sys.version_info < (3, 7), reason="PY3.6 - has different docstrings for builtins."
 )
 def test_node_dot_str1(dot_str_pipeline, monkeypatch):

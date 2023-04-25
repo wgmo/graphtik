@@ -333,7 +333,7 @@ def calc_prices_pipeline(request, exemethod):
     return compose("process order", *ops, parallel=exemethod)
 
 
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sys.version_info < (3, 7),
     reason="Pickling function typing of return annotations fails.",
 )
@@ -380,7 +380,7 @@ def test_sideffecteds_ok(calc_prices_pipeline):
     assert re.search(r'(?s)>vat owed<.+tooltip=".*\(evicted\)"', dot)
 
 
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sys.version_info < (3, 7),
     reason="Pickling function typing of return annotations fails.",
 )
