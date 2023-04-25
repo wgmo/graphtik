@@ -47,7 +47,7 @@ plot_deps = [
 ]
 matplot_deps = plot_deps + ["matplotlib"]
 sphinx_deps = plot_deps + [
-    "sphinx >=2",
+    "sphinx[setuptools] >=2",
 ]
 test_deps = list(
     set(
