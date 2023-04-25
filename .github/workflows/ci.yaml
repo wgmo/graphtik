@@ -27,6 +27,11 @@ jobs:
           # Undo configs in setup.cfg
           echo -e '[pytest]\nmarkers: slow' > pytest.ini
           pytest --cov=graphtik #--log-level=DEBUG -v
+      - name: Upload@Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
       - name: Site
         run: |
           python setup.py build_sphinx
