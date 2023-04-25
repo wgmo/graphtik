@@ -789,6 +789,10 @@ def test_degenerate_pipeline():
     compose("defs", operation(str, "a")).plot()
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 8),
+    reason="PY3.7 - has different docstrings for multiindex series.",
+)
 def test_plot_pandas_numpy():
     import numpy as np
     import pandas as pd
