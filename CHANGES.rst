@@ -12,123 +12,179 @@ Graphtik Changelog
 
    </details>
 
-..
-  TODOs
-  %%%%%
-  <hidden from RTD docs, as comment>
+TODOs
+%%%%%
 
-  - [+] ENH: planning reports unsatisfied node modus, for plotting
-  - [+] ENH: Plan accepts previous solutions
-    - [+] fix: FnOp.compute() should (or should not?) accept Pipeline.compute() args.
-    - [+] FEAT: ``compute(solution, recompute_from=["input_1"])``
+- [+] ENH: planning reports unsatisfied node modus, for plotting
+- [+] ENH: Plan accepts previous solutions
 
-  - Configs:
-    - [ ] FEAT: drop MANY contextvars with 1 cfg-dict in contextvars?
-    - [ ] FEAT: drop contextvars, use merging-dicts on (cfg, pipe, op) instead?
-      BUT then cannot change configs amidst run, unless next todo ...
-    - [ ] FEAT: configs & op attributes accept 2-tuples: (flag, priority)
-      default priorities: cfg, fnop
-      (+cat: Compose)
-    - [ ] FEAT: Config DEBUG flags:
-      - [ ] skip - evictions(drop config)
-      - [ ] keep SFX in outputs
+  - [+] fix: FnOp.compute() should (or should not?) accept Pipeline.compute() args.
+  - [+] FEAT: ``compute(solution, recompute_from=["input_1"])``
 
-  - Compose:
-    - [+] feat: add a real ``implicit`` modifier.
-    - [?] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
-    - [?] `cwd()` modifier:
-      Isn't already working with relative jsonps?
-    - [ ] ++FEAT: Teach pipelines how to accept positional arguments with a tuple with their names
-    - [ ] ++FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
-      (need pipeline feat for positional-args, above).
-    - [ ] break/enh(modifier): augment modifier table with `implicits` for REPR.
-    - [ ] BREAK(modif): "stuffy" names for `is_xxx(modifier)` funcs returning stuff.
-    - [ ] +++FEAT: Autograph functions by type-annotations
-      (PY39 :pep:`593` e.g. ``Annotated[int, CWD]``)
+Configs
+=======
 
-  - Planning:
-    - [ ] FEAT: break cycles with dijkstra; +weights?
-    - [ ] ++ENH: link graph inputs/outputs to virtual root-nodes, to replace custom visiting algos
-          (eg unsatisfied-ops, prune-by-outs)
-    - [ ] FEAT: per-operation EVICTs
-      (+cat: Compose)
-    - [ ] ++DROP PARALLEL: always produce a list of "parallelizable batches",
-          to hook with other executors, and keep here just the single-process implementation.
-      (+cat: Execution)
+- [ ] FEAT: drop MANY contextvars with 1 cfg-dict in contextvars?
+- [ ] FEAT: drop contextvars, use merging-dicts on (cfg, pipe, op) instead?
+  BUT then cannot change configs amidst run, unless next todo ...
+- [ ] FEAT: configs & op attributes accept 2-tuples: (flag, priority)
+  default priorities: cfg, fnop
+  (+cat: Compose)
+- [ ] FEAT: Config DEBUG flags:
 
-  - Execute:
-    - [+] FEAT: +2 callbacks before marshalling: (pre_batch, post_batch) (olds: pre_op, post_op).
-      PARTIAL: moved existing x2 callbacks to be called before marshalling.
-    - [?] refact: named_inputs --> sol
-    - [ ] ENH/REFACT: use Signature.Param from `inspect` module to match needs & zip provides
-    - [ ] Solution-retriever modifier `opcb()`;
-      WONTFIX: easier and more generic to access solution from Op-context.
-      REINSTATED: bc it's simpler and does not have any threading issues....
-    - [ ] ++FEAT(fnop): vararg(s) for Outs collect all outs to the very end
-    - [ ] BREAK/FEAT: allow marking SFX-LIST items:
-      1. Implicits (default), to be checked/resolved downstream (see "FEAT: +2 callbacks"), or
-      2. Sfx (pure), as they are now).
-    - [ ] +++BREAK/DROP accessors for `jsonp` (move all functionality in solution)
-      REJECTED already used for hcat()/vcat()
-      REINSTATED as "ACCESSOR per jsonp-PART"! (h/vcat should have been like that)
-      by default applied to the last part (or use ``[acc, ...]`` syntax for specific parts)
+  - [ ] skip - evictions(drop config)
+  - [ ] keep SFX in outputs
 
-      - [ ] RENAME ``Solution -->  DataTree``
-      - [ ] move dep_prefixed() as a top-level `modifier` utility (to prefix also Accessors)
-      - [ ] revive "stable sort paths" branch on solution updates
-      - [ ] hdf/vdf accessor example-utilities for typical level-0 resolving multi-indexed slices.
-      - [ ] Drop int/attribute indexers from resolve-jsonp, accessors-per-part can do that.
+Compose
+=======
 
-    - **Solution:**
-      - [+] DROP/ENH: Solution updates GivenInputs only, yet still layers jsonp-refer to its values.
-      - [+] FEAT: ``pd.concat()`` --> modifier+accessor, to avoid sfxed for multi-column updates.
-      - [+] FEAT: + `post_callback` with `pre_callback` --> `callbacks` tuple
-        (+cat: Compose)
-        - [+] ENH(jsonp): mass-concat (not one-by-one).
-        - [+] ENH: validate Implicits indeed added (in `post_op_callback`)?
-        - [ ] FEAT: VALIDATE (by user) items on Solution-Insert (with a `post_callback`?):
-          - auto-assertions {jsonp--> validators}
-          - compare overwrites while recomputing
-          - check implicits exist (??not done above??)
+- [+] feat: add a real ``implicit`` modifier.
+- [?] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
+- [?] `cwd()` modifier:
+  Isn't already working with relative jsonps?
 
-  - plot:
-    - [+] Badges on Data
-    - [ ] generate legend dynamically
-    - [ ] SPHINXEXT: autodoc Pipelines & Ops
-    - [ ] sphinxext: extend standard `doctest` module (instead of sphinx-builder)
+  - `implicit` with only the 2nd arg should work on cwd, no?
 
-  - Docs:
-    - [ ] REFACT: move GitHub organization `pygraphkit --> pygraphtik` (+Travis, +RTD)
-    - [ ] Merge tutorial (operations + composition)
-    - [ ] +++DOC: explain Implicits in tutorial;  mention ovunque.
-      - [ ] TCs: Test DEBUG
+- [ ] ++FEAT: Teach pipelines how to accept positional arguments with a tuple with their names
+- [ ] ++FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
+  (need pipeline feat for positional-args, above).
+- [ ] break/enh(modifier): augment modifier table with ``implicits`` for REPR.
+- [ ] BREAK(modif): "stuffy" names for ``is_xxx(modifier)`` funcs returning stuff.
+- [ ] +++FEAT: Autograph functions by type-annotations
+  (PY39 :pep:`593` e.g. ``Annotated[int, CWD]``)
+- [ ] +++FEAT: Autograph functions by type-annotations
+- [ ] modifier || jsonp --> pandalone.pstep (flexible syntax for a modifier on each step)
+- [ ] Rename modifier sfx --> token
 
 
-  - DROPPED
-    - [X] `solution.executed` pre-populated with all operations
-    - [X] parallel batches restart from last position in steps
-    - [X] covert custom op classes & modifiers directly into mergeable networkx graphs;
-      WONTFIX bc foreign function would not work with merged deps.
-    - [X] conditionals
-      WONTFIX bc it permits pipelines with too complex execution flow to debug.
-    - [X] DROP accessors:
-      REJECTED already used for hcat()/vcat() (but to be dropped for jsnop).
+Planning
+========
 
-    - v9.0.0
-    - [X] Accept jsonp inputs & outputs,
-      WONTFIX user's business to expand into given Inputs, Outputs already working.
-    - [X] REVERT rename subdocs;
-      WONTFIX bc eventually made it work correctly and added TC.
-    - [X] REFACT: separate op-decorator from factory
-      (to facilitate defining conveyor operations):
-      NO, simplify passing fn=None.
-    - [X] Nest-rename subdocs: not by default, possible by renamer/nester.
-    - [X] accessors accept default (not to search x2 contain+get_path)
-      WONTFIX bc not worth it.
-    - [X] Simplify Task-context by injecting it in a parametric argument of `fn`.
-      NO, `opcb` modifier works without `inspect` module.
+- [ ] FEAT: break cycles with dijkstra; +weights?
+- [ ] ++ENH: link graph inputs/outputs to virtual root-nodes, to replace custom visiting algos
+  (eg unsatisfied-ops, prune-by-outs)
+- [ ] FEAT: per-operation EVICTs
+  (+cat: Compose)
+- [ ] ++DROP PARALLEL: always produce a list of "parallelizable batches",
+  to hook with other executors, and keep here just the single-process implementation.
+  (+cat: Execution)
 
-  + See :gg:`1`.
+
+Execute
+=======
+
+- [+] FEAT: +2 callbacks before marshalling: (pre_batch, post_batch) (olds: pre_op, post_op).
+
+  - PARTIAL: moved existing x2 callbacks to be called before marshalling.
+
+- [?] refact: named_inputs --> sol
+- [ ] ENH/REFACT: use Signature.Param from `inspect` module to match needs & zip provides
+- [ ] Solution-retriever modifier `opcb()`;
+
+  - WONTFIX: easier and more generic to access solution from Op-context.
+  - REINSTATED: bc it's simpler and does not have any threading issues....
+
+- [ ] ++FEAT(fnop): vararg(s) for Outs collect all outs to the very end
+- [ ] BREAK/FEAT: allow marking SFX-LIST items:
+
+  1. Implicits (default), to be checked/resolved downstream (see "FEAT: +2 callbacks"), or
+  2. Sfx (pure), as they are now).
+
+- [ ] +++BREAK/DROP accessors for `jsonp` (move all functionality in solution)
+
+  - REJECTED already used for hcat()/vcat()
+  - REINSTATED as "ACCESSOR per jsonp-PART"! (h/vcat should have been like that)
+    by default applied to the last part (or use ``[acc, ...]`` syntax for specific parts)
+
+  - [ ] RENAME ``Solution -->  DataTree``
+  - [ ] move dep_prefixed() as a top-level `modifier` utility (to prefix also Accessors)
+  - [ ] revive "stable sort paths" branch on solution updates
+  - [ ] hdf/vdf accessor example-utilities for typical level-0 resolving multi-indexed slices.
+  - [ ] Drop int/attribute indexers from resolve-jsonp, accessors-per-part can do that.
+  - [ ] Interoperate with *Dask,* *Vaex,* *Modin* etc
+    (see https://12ft.io/proxy?&q=https%3A%2F%2Ftowardsdatascience.com%2F4-libraries-that-can-parallelize-the-existing-pandas-ecosystem-f46e5a257809)
+- [ ] replace in-house `jetsam` with :pep:`678` for exception notes on PY3.11+.
+
+Solution
+--------
+
+- [+] DROP/ENH: Solution updates GivenInputs only, yet still layers jsonp-refer to its values.
+- [+] FEAT: ``pd.concat()`` --> modifier+accessor, to avoid sfxed for multi-column updates.
+- [+] FEAT: + `post_callback` with `pre_callback` --> `callbacks` tuple
+  (+cat: Compose)
+
+  - [+] ENH(jsonp): mass-concat (not one-by-one).
+  - [+] ENH: validate Implicits indeed added (in `post_op_callback`)?
+  - [ ] FEAT: VALIDATE (by user) items on Solution-Insert (with a `post_callback`?):
+    - auto-assertions ``{jsonp--> validators}``
+    - compare overwrites while recomputing
+    - check implicits exist (??not done above??)
+
+Plotting
+========
+
+- [+] Badges on Data
+- [ ] generate legend dynamically
+- [ ] Draw nested graphs as such (hiding internal nodes)
+- [ ] SPHINXEXT: autodoc Pipelines & Ops
+- [ ] sphinxext: extend standard ``doctest`` or *doctest* module (instead of sphinx-builder)
+- [ ] FEAT/REFACT: dogfood when constructing graphviz graphs.
+- [ ] FEAT: add another `dagviz <https://wimyedema.medium.com/drawing-dags-5cadcb452115>`_
+  plot-backend.
+
+Docs
+====
+
+- [ ] REFACT: move GitHub organization `pygraphkit --> pygraphtik` (+Travis, +RTD)
+- [ ] Merge tutorial (operations + composition)
+- [ ] +++DOC: explain Implicits in tutorial;  mention ovunque.
+
+  - [ ] TCs: Test DEBUG
+
+
+DROPPED
+=======
+
+- [X] `solution.executed` pre-populated with all operations
+- [X] parallel batches restart from last position in steps
+- [X] covert custom op classes & modifiers directly into mergeable networkx graphs;
+
+  - WONTFIX bc foreign function would not work with merged deps.
+
+- [X] conditionals
+
+  - WONTFIX bc it permits pipelines with too complex execution flow to debug.
+
+- [X] DROP accessors:
+
+  - REJECTED already used for hcat()/vcat() (but to be dropped for jsnop).
+
+v9.0.0
+------
+
+- [X] Accept jsonp inputs & outputs,
+
+  - WONTFIX user's business to expand into given Inputs, Outputs already working.
+
+- [X] REVERT rename subdocs;
+
+  - WONTFIX bc eventually made it work correctly and added TC.
+
+- [X] REFACT: separate op-decorator from factory
+  (to facilitate defining conveyor operations):
+
+  - NO, simplify passing fn=None.
+
+- [X] Nest-rename subdocs: not by default, possible by renamer/nester.
+- [X] accessors accept default (not to search x2 contain+get_path)
+
+  - WONTFIX bc not worth it.
+
+- [X] Simplify Task-context by injecting it in a parametric argument of `fn`.
+
+  - NO, `opcb` modifier works without `inspect` module.
+
+- See :gg:`1`.
 
 
 Changelog
