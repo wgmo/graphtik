@@ -214,8 +214,7 @@ def get_graphtik_builder(app: Sphinx) -> GraphtikPlotsBuilder:
     """Initialize a singleton patched doctest-builder"""
     builder = getattr(app, "graphtik_builder", None)
     if builder is None:
-        builder = GraphtikPlotsBuilder(app)
-        builder.set_environment(app.env)
+        builder = GraphtikPlotsBuilder(app, app.env)
         builder.imgpath = app.builder.imgpath
         builder.imagedir = app.builder.imagedir
         builder.init()
