@@ -111,7 +111,7 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
             uri_attr,
         ),
     )
-    check_xpath(etree, fname, ".//*[@class='caption']/*", "Solved")
+    check_xpath(etree, fname, ".//*[@class='caption-text']", "Solved ")
 
 
 def _count_nodes(count):
