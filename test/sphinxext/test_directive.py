@@ -1,3 +1,12 @@
+"""
+Pytest-ing sphinx directives is `yet undocumented
+<https://github.com/sphinx-doc/sphinx/issues/7008>`_
+and as explained also in `this sourceforge <>`_ thread,
+you may learn more from the `test-cases in the *sphinx* sources
+<https://github.com/sphinx-doc/sphinx/blob/master/tests/test_ext_doctest.py>`_
+or `similar projects
+<https://github.com/pauleveritt/customizing_sphinx/blob/master/tests/integration/test_directive.py>`_.
+"""
 import os.path as osp
 import re
 import xml.etree

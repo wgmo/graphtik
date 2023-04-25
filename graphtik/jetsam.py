@@ -1,6 +1,8 @@
 # Copyright 2019-2020, Kostis Anagnostopoulos;
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-""":term:`jetsam` utility for annotating exceptions from ``locals()``.
+""":term:`jetsam` utility for annotating exceptions from ``locals()`` like :pep:`678`
+
+PY3.11 exception-notes.
 
 .. doctest::
     :hide:

@@ -1138,7 +1138,7 @@ def sfxed(
         of the function.
     :param sfx0:
         the 1st (arbitrary object) sideffect marked as "acting" on the `dependency`.
-    :param sfx0:
+    :param sfx_list:
         more (arbitrary object) sideffects (like the `sfx0`)
     :param keyword:
         the name for the function argument it corresponds.

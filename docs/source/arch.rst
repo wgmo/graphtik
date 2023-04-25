@@ -72,7 +72,7 @@ Architecture
         There are 2 ways to feed the `solution` back into the same `pipeline`:
 
         * by reusing the pre-compiled `plan` (coarse-grained), or
-        * by using the ``compute(recalculate_from=...)`` argument (fine-grained),
+        * by using the ``compute(recompute_from=...)`` argument (fine-grained),
 
         as described in :ref:`recompute` tutorial section.
 
