@@ -49,18 +49,14 @@ needs_sphinx = "2.0"
 project = "graphtik"
 copyright = "2019+: Kostis Anagnostopoulos, 2016+: Yahoo Vision and Machine Learning Team: Huy Nguyen, Arel Cordero, Pierre Garrigues, Tobi Baumgartner, Rob Hess"
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-
+## NOTE: `|version|` subst is not used anywhere in this project;  only `|release|`.
+#
 try:
     git_ver = sbp.check_output("git describe --always".split(), universal_newlines=True)
     version = f"src: {__version__}, git: {git_ver}"
 except Exception:
     version = __version__
-
-# Parse the Travis tag as a version, if it's available, or else use a default.
-release = os.environ.get("TRAVIS_TAG", version)
+release = version
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

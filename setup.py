@@ -6,36 +6,43 @@ import io
 import os
 import re
 import subprocess as sbp
+from typing import Optional
 
 from setuptools import find_packages, setup
 
 
-def _ask_git_version(default: str) -> str:
+def _version() -> str:
+    """
+    Grab the version from the root package.
+    """
+    with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
+        return re.search(r'__version__ = "(.*?)"', f.read()).group(1).strip()
+
+
+def _ask_git_version() -> Optional[str]:
     try:
         return sbp.check_output(
             "git describe --always".split(), universal_newlines=True
         ).strip()
     except Exception:
-        return default
+        pass
 
 
-git_ver = _ask_git_version("x.x.x")
+version = _version()
+git_ver = _ask_git_version()
+txt_ver = f"src: {version}, git: {git_ver}" if git_ver else version
 
 with open("README.rst") as f:
     long_description = (
         f.read()
-        .replace("|version|", git_ver)
-        .replace("|release|", git_ver)
+        .replace("|version|", txt_ver)
+        .replace("|release|", txt_ver)
         .replace("|today|", dt.datetime.now().isoformat())
     )
     long_description = re.sub(
         r":(?:ref|class|rst:dir):`([^`]+?)(?: <[^>]+>)?`", r"*\1*", long_description
     )
 
-# Grab the version using convention described by flask
-# https://github.com/pallets/flask/blob/master/setup.py#L10
-with io.open("graphtik/__init__.py", "rt", encoding="utf8") as f:
-    version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 plot_deps = [
     "pydot",
