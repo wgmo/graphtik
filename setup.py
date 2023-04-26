@@ -92,7 +92,10 @@ setup(
         "Bug Tracker": "https://github.com/pygraphkit/graphtik/issues",
     },
     packages=find_packages(exclude=["test"]),
-    package_data={"graphtik.sphinxext": ["*.css"]},
+    package_data={
+        "graphtik": ["py.typed"],
+        "graphtik.sphinxext": ["*.css"],
+    },
     python_requires=">=3.6",
     install_requires=[
         "contextvars; python_version < '3.7'",
