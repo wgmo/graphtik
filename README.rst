@@ -246,22 +246,22 @@ Run the graph and request all of the outputs
     :alt: GitHub Actions CI testing ok? (Linux)
     :target: https://github.com/pygraphkit/graphtik/actions
 
-.. |doc-status| image:: https://img.shields.io/readthedocs/graphtik?branch=master
+.. |doc-status| image:: https://img.shields.io/readthedocs/graphtik?branch=master&logo=read-the-docs
     :alt: ReadTheDocs ok?
     :target: https://graphtik.readthedocs.org
 
 .. |cover-status| image:: https://codecov.io/gh/pygraphkit/graphtik/branch/master/graph/badge.svg?token=Qr8LHNkSXK
     :target: https://codecov.io/gh/pygraphkit/graphtik
 
-.. |gh-version| image::  https://img.shields.io/github/v/release/pygraphkit/graphtik?label=GitHub%20release&include_prereleases
+.. |gh-version| image:: https://img.shields.io/github/v/release/pygraphkit/graphtik?label=GitHub%20release&include_prereleases&logo=github
     :target: https://github.com/pygraphkit/graphtik/releases
     :alt: Latest release in GitHub
 
-.. |pypi-version| image::  https://img.shields.io/pypi/v/graphtik?label=PyPi%20release
+.. |pypi-version| image::  https://img.shields.io/pypi/v/graphtik?label=PyPi%20release&logo=pypi
     :target: https://pypi.python.org/pypi/graphtik/
     :alt: Latest version in PyPI
 
-.. |python-ver| image:: https://img.shields.io/pypi/pyversions/graphtik?label=Python
+.. |python-ver| image:: https://img.shields.io/pypi/pyversions/graphtik?label=Python&logo=pypi
     :target: https://pypi.python.org/pypi/graphtik/
     :alt: Supported Python versions of latest release in PyPi
 
