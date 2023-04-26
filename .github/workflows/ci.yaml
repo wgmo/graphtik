@@ -1,11 +1,13 @@
-name: Graphtik
+name: test-n-release
 
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
+  release:
+    types: [published]
 
 jobs:
-  build:
+  build-n-publish:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -13,33 +15,56 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-      - name: Graphviz
+
+      - name: graphviz
         uses: ts-graphviz/setup-graphviz@v1
-      - name: Install
+
+      - name: install
         run: |
           python -m pip install --upgrade pip
           pip install -e .[all]
-      - name: Test
+
+      - name: test
         run: |
           # Undo configs in setup.cfg
           echo -e '[pytest]\nmarkers: slow' > pytest.ini
           pytest --cov=graphtik #--log-level=DEBUG -v
-      - name: Upload@Codecov
+
+      - name: upload@codecov
         uses: codecov/codecov-action@v3
-        with:
-          fail_ci_if_error: true # optional (default = false)
-          verbose: true # optional (default = false)
-      - name: Site
+        # with:
+        #   fail_ci_if_error: true # optional (default = false)
+        #   verbose: true # optional (default = false)
+
+      - name: site
         run: |
           python setup.py build_sphinx
-      - name: Wheel
+
+      - name: build
         run: |
-          python setup.py bdist_wheel
-      - name: Sources
-        run: |
-          python setup.py sdist
+          python -m build
+
+      - name: publish@test-pypi
+        if: >
+          github.event_name == 'release' &&
+          matrix.python-version == '3.11' &&
+          github.repository_owner != 'pygraphkit'
+        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+        with:
+          repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+      - name: publish@pypi
+        if: >
+          github.event_name == 'release' &&
+          matrix.python-version == '3.11' &&
+          github.repository_owner == 'pygraphkit'
+        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
