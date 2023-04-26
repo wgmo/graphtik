@@ -51,11 +51,13 @@ copyright = "2019+: Kostis Anagnostopoulos, 2016+: Yahoo Vision and Machine Lear
 
 ## NOTE: `|version|` subst is not used anywhere in this project;  only `|release|`.
 #
+version = __version__
 try:
     git_ver = sbp.check_output("git describe --always".split(), universal_newlines=True)
-    version = f"src: {__version__}, git: {git_ver}"
+    if git_ver != version:
+        version = f"{version}+{git_ver}"
 except Exception:
-    version = __version__
+    pass
 release = version
 
 # Add any Sphinx extension module names here, as strings. They can be

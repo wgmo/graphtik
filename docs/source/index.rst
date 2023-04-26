@@ -3,8 +3,9 @@
 Graphtik
 ========
 
-|pypi-version| |gh-version| (|release|, |today|) |python-ver| |dev-status|
-|ci-status| |doc-status| |cover-status| |codestyle| |proj-lic|
+|release|, |today| |gh-version| |pypi-version| |python-ver|
+|dev-status| |ci-status| |doc-status| |cover-status|
+|codestyle| |proj-lic|
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
 

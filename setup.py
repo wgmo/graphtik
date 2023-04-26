@@ -30,7 +30,7 @@ def _ask_git_version() -> Optional[str]:
 
 version = _version()
 git_ver = _ask_git_version()
-txt_ver = f"src: {version}, git: {git_ver}" if git_ver else version
+txt_ver = f"{version}+{git_ver}" if git_ver and git_ver != version else version
 
 with open("README.rst") as f:
     long_description = (

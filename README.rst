@@ -1,9 +1,9 @@
 Graphtik
 ========
 
-|pypi-version| |gh-version| (build-version: |release|, build-date: |today|)
-|python-ver| |dev-status|
-|ci-status| |doc-status| |cover-status| |codestyle| |proj-lic|
+|release|, |today| |gh-version| |pypi-version| |python-ver|
+|dev-status| |ci-status| |doc-status| |cover-status|
+|codestyle| |proj-lic|
 
 |gh-watch| |gh-star| |gh-fork| |gh-issues|
 
@@ -250,14 +250,14 @@ Run the graph and request all of the outputs
     :alt: ReadTheDocs ok?
     :target: https://graphtik.readthedocs.org
 
-.. |cover-status| image:: https://img.shields.io/codecov/c/github/pygraphkit/graphtik
+.. |cover-status| image:: https://codecov.io/gh/pygraphkit/graphtik/branch/master/graph/badge.svg?token=Qr8LHNkSXK
     :target: https://codecov.io/gh/pygraphkit/graphtik
 
 .. |gh-version| image::  https://img.shields.io/github/v/release/pygraphkit/graphtik?label=GitHub%20release&include_prereleases
     :target: https://github.com/pygraphkit/graphtik/releases
     :alt: Latest release in GitHub
 
-.. |pypi-version| image::  https://img.shields.io/pypi/v/graphtik?label=PyPi%20version
+.. |pypi-version| image::  https://img.shields.io/pypi/v/graphtik?label=PyPi%20release
     :target: https://pypi.python.org/pypi/graphtik/
     :alt: Latest version in PyPI
 
