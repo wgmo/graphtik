@@ -33,6 +33,7 @@ __uri__ = "https://github.com/pygraphkit/graphtik"
 __author__ = "hnguyen, ankostis"  # chronologically ordered
 
 
+from .autograph import Autograph, FnHarvester, autographed
 from .base import AbortedException, IncompleteExecutionError
 from .fnop import NO_RESULT, NO_RESULT_BUT_SFX, operation
 from .modifier import (

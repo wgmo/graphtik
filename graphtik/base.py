@@ -111,6 +111,17 @@ def first_solid(*tristates, default=None):
 
 
 def aslist(i, argname, allowed_types=list):
+    """
+    Convert iterables (except strings) or wrap a scalar valu into a list.
+
+    :param i:
+        `None` is converted into an empty list;
+        empty `allowed_types` are returned as is.
+    :param argname:
+        If string, it's used in the exception raised when `i` not an iterable.
+        ATTENTION: if `None`, any scalar (non-iterable) `i` is wrapped in a single-item list,
+        and no exception is ever raised.
+    """
     """Utility to accept singular strings as lists, and None --> []."""
     if not i:
         return i if isinstance(i, allowed_types) else []
@@ -121,23 +132,61 @@ def aslist(i, argname, allowed_types=list):
         try:
             i = list(i)
         except Exception as ex:
-            raise ValueError(f"Cannot list-ize {argname}({i!r}) due to: {ex}") from None
+            raise ValueError(
+                f"Cannot list-ize {argname or ''}({i!r}) due to: {ex}"
+            ) from None
 
     return i
 
 
 def astuple(i, argname, allowed_types=tuple):
+    """
+    Convert iterables (except strings) or wrap a scalar value into a tuple.
+
+    :param i:
+        `None` is converted into an empty tuple;
+        empty `allowed_types` are returned as is.
+    :param argname:
+        If string, it's used in the exception raised when `i` not an iterable.
+        ATTENTION: if `None`, any scalar (non-iterable) `i` is wrapped in a single-item tuple,
+        and no exception is ever raised.
+    """
     if not i:
         return i if isinstance(i, allowed_types) else ()
 
     if isinstance(i, str):
         i = (i,)
-    elif not isinstance(i, allowed_types):
+    else:  # if not isinstance(i, allowed_types):
         try:
             i = tuple(i)
         except Exception as ex:
+            if argname is None:
+                return (i,)
             raise ValueError(
-                f"Cannot tuple-ize {argname}({i!r}) due to: {ex}"
+                f"Cannot tuple-ize {argname or ''}({i!r}) due to: {ex}"
+            ) from None
+
+    return i
+
+
+def asdict(i, argname: str):
+    """
+    Converts iterables-of-pairs or just a pair-tuple into a dict.
+
+    :param argname:
+        Used in the exception raised when `i` not an iterable.
+    """
+    if not i:
+        return i if isinstance(i, dict) else {}
+
+    if isinstance(i, tuple) and len(i) == 2:
+        i = dict([i])
+    elif not isinstance(i, Mapping):
+        try:
+            i = dict(i)
+        except Exception as ex:
+            raise ValueError(
+                f"Cannot dict-ize {argname or ''}({i!r}) due to: {ex}"
             ) from None
 
     return i
