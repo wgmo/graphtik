@@ -10,6 +10,7 @@ Harvest :term:`dependencies <dependency>` annotated callables to form :term:`pip
 """
 import functools as fnt
 import inspect
+import itertools as itt
 import logging
 import re
 import sys
@@ -407,10 +408,14 @@ class Autograph(Prefkey):
     >>> def calc_sum_ab(a, b=0):
     ...     return a + b
 
-    >>> aug = Autograph(out_patterns=['calc_', 'upd_'], renames={"a": "A"})
+    >>> aug = Autograph(
+    ...     out_patterns=['calc_', 'upd_'], renames={"a": "A"},
+    ...     overrides={
+    ...         "autographed": {"needs": [keyword("fn", "other_fn"), ...]},
+    ...     })
     >>> aug.wrap_funcs([autographed, get_autograph_decors, is_regular_class])
     [FnOp(name='autographed',
-        needs=['fn'(?),
+        needs=['fn'(>'other_fn'),
             'name'(?),
             'needs'(?),
             'provides'(?),
@@ -429,6 +434,10 @@ class Autograph(Prefkey):
     FnOp(name='is_regular_class',
         needs=['name', 'item'],
         fn='is_regular_class')]
+
+    .. hint::
+       Notice the use of triple-dot(``...``) to indicate that the rest of the
+       *needs* should be parsed from the :term:`operation`'s underlying function.
     """
 
     def __init__(
@@ -624,6 +633,7 @@ class Autograph(Prefkey):
                 continue
             overrides = self._from_overrides(decor_path)
 
+            # TODO: support an extra overrides source, in ``wrap_funcs()``.
             op_data = (
                 ChainMap(overrides, decors)
                 if (overrides and decors)
@@ -639,10 +649,12 @@ class Autograph(Prefkey):
                 op_data.get(a, UNSET) for a in op_props
             )
 
-            sig = None
             if needs is UNSET:
+                needs = [...]
+            needs = aslist(needs, "needs")
+            if ... in needs:
                 sig = inspect.signature(fun)
-                needs = [
+                fun_needs = [
                     param_to_modifier(name, param)
                     for name, param in sig.parameters.items()
                     if name != "self" and param.kind is not Parameter.VAR_KEYWORD
@@ -655,15 +667,11 @@ class Autograph(Prefkey):
                     class_name = name_path[-2] if len(name_path) > 1 else clazz.__name__
                     if is_regular_class(class_name, clazz):
                         log.debug("Object-method %s.%s", class_name, fn_name)
-                        needs.insert(0, camel_2_snake_case(class_name))
+                        fun_needs.insert(0, camel_2_snake_case(class_name))
 
-            needs = aslist(needs, "needs")
-            if ... in needs:
-                if sig is None:
-                    sig = inspect.signature(fun)
                 needs = [
-                    arg_name if n is ... else n
-                    for n, arg_name in zip(needs, sig.parameters)
+                    fneed if n is ... else n
+                    for n, fneed in itt.zip_longest(needs, fun_needs, fillvalue=...)
                 ]
 
             if provides is UNSET:
