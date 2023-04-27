@@ -31,10 +31,16 @@ jobs:
           pip install -e .[all]
 
       - name: test
+        if: matrix.python-version != '3.11'
         run: |
           # Undo configs in setup.cfg
           echo -e '[pytest]\nmarkers: slow' > pytest.ini
           pytest --cov=graphtik #--log-level=DEBUG -v
+
+      - name: test-slow
+        if: matrix.python-version == '3.11'
+        run: |
+          pytest -m 'slow or not slow' --cov=graphtik #--log-level=DEBUG -v
 
       - name: upload@codecov
         uses: codecov/codecov-action@v3
