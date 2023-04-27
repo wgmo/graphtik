@@ -444,27 +444,27 @@ def test_cwd_fnop():
     )
     exp = """
     FnOp(name='str',
-        needs=['root/a'($),
-            'root/a/b'($),
-            '/r/b'($),
-            'root/o'($?'o'),
-            'root/k'($>'k'),
-            'root/i'($),
-            'root/v1'($*),
-            'root/v2'($+),
+        needs=['root/a'(@),
+            'root/a/b'(@),
+            '/r/b'(@),
+            'root/o'(@?'o'),
+            'root/k'(@>'k'),
+            'root/i'(@),
+            'root/v1'(@*),
+            'root/v2'(@+),
             sfx('s1'),
-            sfxed('root/s2'($),
+            sfxed('root/s2'(@),
             's22'),
-            'root/vc'($)],
-        provides=['root/A/B'($),
-            'root/C'($),
-            '/R'($),
-            'root/aa'($),
-            'root/CC'($),
-            'root/RR'($)],
-         aliases=[('root/A/B'($), 'root/aa'($)),
-            ('root/C'($), 'root/CC'($)),
-            ('/R'($), 'root/RR'($))],
+            'root/vc'(@)],
+        provides=['root/A/B'(@),
+            'root/C'(@),
+            '/R'(@),
+            'root/aa'(@),
+            'root/CC'(@),
+            'root/RR'(@)],
+         aliases=[('root/A/B'(@), 'root/aa'(@)),
+            ('root/C'(@), 'root/CC'(@)),
+            ('/R'(@), 'root/RR'(@))],
         fn='str')
     """
     assert oneliner(op) == oneliner(exp)
@@ -488,15 +488,15 @@ def test_cwd_pipeline():
     )
     exp = """
     Pipeline('test_cwd_pipeline',
-        needs=['/root/a'($),
-            '/root/a/b'($),
-            '/r/b'($)],
-        provides=['/root/A/B'($),
-            '/root/C'($),
-            '/R'($),
-            '/root/aa'($),
-            '/root/CC'($),
-            '/root/RR'($)],
+        needs=['/root/a'(@),
+            '/root/a/b'(@),
+            '/r/b'(@)],
+        provides=['/root/A/B'(@),
+            '/root/C'(@),
+            '/R'(@),
+            '/root/aa'(@),
+            '/root/CC'(@),
+            '/root/RR'(@)],
         x1 ops: str)
     """
     assert oneliner(op) == oneliner(exp)
@@ -795,9 +795,9 @@ def test_op_rename_parts():
     assert got == oneliner(
         """
         FnOp(name='op1',
-            needs=[sfx('a/b'), '/PP.a/PP.b'($)],
-            provides=['PP.b/PP.c'($), sfxed('PP.d/PP.e/PP.f'($), 'k/l'), '/PP.b/PP.t'($)],
-            aliases=[('PP.b/PP.c'($), '/PP.b/PP.t'($))], fn='str')
+            needs=[sfx('a/b'), '/PP.a/PP.b'(@)],
+            provides=['PP.b/PP.c'(@), sfxed('PP.d/PP.e/PP.f'(@), 'k/l'), '/PP.b/PP.t'(@)],
+            aliases=[('PP.b/PP.c'(@), '/PP.b/PP.t'(@))], fn='str')
         """,
     )
 

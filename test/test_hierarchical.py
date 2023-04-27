@@ -39,7 +39,7 @@ def test_jsonp_disabled():
         needs=[modify("inputs/a"), modify("inputs/b")],
         provides=["RESULTS/A", modify("RESULTS/BB", jsonp=False)],
     )
-    assert "provides=['RESULTS/A'($), RESULTS/BB" in str(no_jsonp_res)
+    assert "provides=['RESULTS/A'(@), RESULTS/BB" in str(no_jsonp_res)
     res = compose("", no_jsonp_res).compute({"inputs": {"a": 1, "b": 2}})
     assert res == {"inputs": {"a": 1, "b": 2}, "RESULTS": {"A": 1}, "RESULTS/BB": 2}
 
@@ -48,7 +48,7 @@ def test_jsonp_disabled():
         needs=["inputs/a", modify("inputs/b", jsonp=False)],
         provides=["RESULTS/A", "RESULTS/BB"],
     )()
-    assert "needs=['inputs/a'($), inputs/b]" in str(no_jsonp_inp)
+    assert "needs=['inputs/a'(@), inputs/b]" in str(no_jsonp_inp)
     res = compose("", no_jsonp_inp).compute({"inputs": {"a": 1}, "inputs/b": 2})
     assert res == {"inputs": {"a": 1}, "inputs/b": 2, "RESULTS": {"A": 1, "BB": 2}}
 
@@ -66,7 +66,7 @@ def test_jsonp_and_conveyor_fn_simple():
         copy_values.compute({"inputs": {"a": 1, "b": 2}})
     results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
     assert results == {"RESULTS/A": 1, "RESULTS/BB": 2}
-    assert repr(results) == "{'RESULTS/A'($): 1, 'RESULTS/BB'($): 2}"
+    assert repr(results) == "{'RESULTS/A'(@): 1, 'RESULTS/BB'(@): 2}"
 
     pipe = compose("t", copy_values)
     sol = pipe.compute({"inputs": {"a": 1, "b": 2}})
@@ -192,8 +192,8 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
         """
         Pipeline('week', needs=['backlog', 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks'],
         provides=['Monday.tasks', sfxed('backlog', 'todos'),
-                  'daily_tasks/Monday'($), 'Tuesday.tasks', 'daily_tasks/Tuesday'($),
-                  'Wednesday.tasks', 'daily_tasks/Wednesday'($)],
+                  'daily_tasks/Monday'(@), 'Tuesday.tasks', 'daily_tasks/Tuesday'(@),
+                  'Wednesday.tasks', 'daily_tasks/Wednesday'(@)],
         x6 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
         Wednesday.wake up, Wednesday.work!)
         """.strip(),
@@ -218,11 +218,11 @@ def test_network_nest_subdocs_LAYERED(solution_layered_true):
             needs=['backlog',
                 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks',
                 sfxed('backlog', 'todos'),
-                'daily_tasks/Monday'($?), 'daily_tasks/Tuesday'($?), 'daily_tasks/Wednesday'($?)],
+                'daily_tasks/Monday'(@?), 'daily_tasks/Tuesday'(@?), 'daily_tasks/Wednesday'(@?)],
             provides=['Monday.tasks',
-                sfxed('backlog', 'todos'), 'daily_tasks/Monday'($),
-                'Tuesday.tasks', 'daily_tasks/Tuesday'($),
-                'Wednesday.tasks', 'daily_tasks/Wednesday'($),
+                sfxed('backlog', 'todos'), 'daily_tasks/Monday'(@),
+                'Tuesday.tasks', 'daily_tasks/Tuesday'(@),
+                'Wednesday.tasks', 'daily_tasks/Wednesday'(@),
                 'weekly_tasks', 'todos'],
             x7 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
                     Wednesday.wake up, Wednesday.work!, collect tasks)
@@ -355,8 +355,8 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
         """
         Pipeline('week', needs=['backlog', 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks'],
         provides=['Monday.tasks', sfxed('backlog', 'todos'),
-                  'daily_tasks/Monday'($), 'Tuesday.tasks', 'daily_tasks/Tuesday'($),
-                  'Wednesday.tasks', 'daily_tasks/Wednesday'($)],
+                  'daily_tasks/Monday'(@), 'Tuesday.tasks', 'daily_tasks/Tuesday'(@),
+                  'Wednesday.tasks', 'daily_tasks/Wednesday'(@)],
         x6 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
         Wednesday.wake up, Wednesday.work!)
         """.strip(),
@@ -381,11 +381,11 @@ def test_network_nest_subdocs_NOT_LAYERED(solution_layered_false):
             needs=['backlog',
                 'Monday.tasks', 'Tuesday.tasks', 'Wednesday.tasks',
                 sfxed('backlog', 'todos'),
-                'daily_tasks/Monday'($?), 'daily_tasks/Tuesday'($?), 'daily_tasks/Wednesday'($?)],
+                'daily_tasks/Monday'(@?), 'daily_tasks/Tuesday'(@?), 'daily_tasks/Wednesday'(@?)],
             provides=['Monday.tasks',
-                sfxed('backlog', 'todos'), 'daily_tasks/Monday'($),
-                'Tuesday.tasks', 'daily_tasks/Tuesday'($),
-                'Wednesday.tasks', 'daily_tasks/Wednesday'($),
+                sfxed('backlog', 'todos'), 'daily_tasks/Monday'(@),
+                'Tuesday.tasks', 'daily_tasks/Tuesday'(@),
+                'Wednesday.tasks', 'daily_tasks/Wednesday'(@),
                 'weekly_tasks', 'todos'],
             x7 ops: Monday.wake up, Monday.work!, Tuesday.wake up, Tuesday.work!,
                     Wednesday.wake up, Wednesday.work!, collect tasks)

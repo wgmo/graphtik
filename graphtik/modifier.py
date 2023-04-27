@@ -56,7 +56,6 @@ utilize a combination of these **diacritics**:
     ?   : :func:`.optional`
     *   : :func:`.vararg`
     +   : :func:`.varargs`
-    $   : :term:`accessor` (mostly for :term:`jsonp`)
 
 .. diacritics-end
 """
@@ -87,11 +86,11 @@ _modifier_cstor_matrix = {
 702000: (       "%(dep)s",                  "'%(dep)s'(*)",                 "vararg"),
 703000: (       "%(dep)s",                  "'%(dep)s'(+)",                 "varargs"),
 # Accessor
-700100: (       "%(dep)s",                  "'%(dep)s'($)",                 "accessor"),
-710100: (       "%(dep)s",                  "'%(dep)s'($>%(kw)s)",          "keyword"),
-711100: (       "%(dep)s",                  "'%(dep)s'($?%(kw)s)",          "optional"),
-702100: (       "%(dep)s",                  "'%(dep)s'($*)",                "vararg"),
-703100: (       "%(dep)s",                  "'%(dep)s'($+)",                "varargs"),
+700100: (       "%(dep)s",                  "'%(dep)s'(@)",                 "accessor"),
+710100: (       "%(dep)s",                  "'%(dep)s'(@>%(kw)s)",          "keyword"),
+711100: (       "%(dep)s",                  "'%(dep)s'(@?%(kw)s)",          "optional"),
+702100: (       "%(dep)s",                  "'%(dep)s'(@*)",                "vararg"),
+703100: (       "%(dep)s",                  "'%(dep)s'(@+)",                "varargs"),
 
 700010: (  "sfx('%(dep)s')",            "sfx('%(dep)s')",    "sfx"),
 701010: (  "sfx('%(dep)s')",            "sfx('%(dep)s'(?))", "sfx"),
@@ -102,11 +101,11 @@ _modifier_cstor_matrix = {
 702011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(*), %(sfx)s)",        "sfxed_vararg"),
 703011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(+), %(sfx)s)",        "sfxed_varargs"),
 # Accessor
-700111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'($), %(sfx)s)",               "sfxed"),
-710111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'($>%(kw)s), %(sfx)s)",        "sfxed"),
-711111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'($?%(kw)s), %(sfx)s)",        "sfxed"),
-702111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'($*), %(sfx)s)",              "sfxed_vararg"),
-703111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'($+), %(sfx)s)",              "sfxed_varargs"),
+700111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@), %(sfx)s)",               "sfxed"),
+710111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@>%(kw)s), %(sfx)s)",        "sfxed"),
+711111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@?%(kw)s), %(sfx)s)",        "sfxed"),
+702111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@*), %(sfx)s)",              "sfxed_vararg"),
+703111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@+), %(sfx)s)",              "sfxed_varargs"),
 }
 # fmt: on
 
@@ -415,7 +414,7 @@ def _modifier(
         "dep": name,
         "kw": f"'{keyword}'" if keyword != name else "",
         "sfx": ", ".join(f"'{i}'" for i in sfx_list),
-        "acs": "$" if accessor else "",
+        "acs": "@" if accessor else "",
     }
     _repr = repr_fmt % fmt_args
     name = str_fmt % fmt_args
@@ -701,15 +700,15 @@ def modify(
         >>> results = copy_values.compute({"inputs": {"a": 1, "b": 2}})
         Traceback (most recent call last):
         ValueError: Failed matching inputs <=> needs for FnOp(name='copy a+b-->A+BB',
-            needs=['inputs/a'($), 'inputs/b'($)],
-            provides=['RESULTS/A'($), 'RESULTS/BB'($)],
+            needs=['inputs/a'(@), 'inputs/b'(@)],
+            provides=['RESULTS/A'(@), 'RESULTS/BB'(@)],
             fn='identity_fn'):
-            1. Missing compulsory needs['inputs/a'($), 'inputs/b'($)]!
+            1. Missing compulsory needs['inputs/a'(@), 'inputs/b'(@)]!
             +++inputs: ['inputs']
 
         >>> results = copy_values.compute({"inputs/a": 1, "inputs/b": 2})
         >>> results
-        {'RESULTS/A'($): 1, 'RESULTS/BB'($): 2}
+        {'RESULTS/A'(@): 1, 'RESULTS/BB'(@): 2}
 
     Notice that the :term:`hierarchical dependencies <subdoc>` did not yet worked,
     because *jsonp* modifiers work internally with :term:`accessor`\\s, and
@@ -717,7 +716,7 @@ def modify(
     class that supports *accessors**, and this requires the operation to be wrapped
     in a pipeline (see below).
 
-    Note also that it we see the "representation' of the key as ``'RESULTS/A'($)``
+    Note also that it we see the "representation' of the key as ``'RESULTS/A'(@)``
     but the actual string value simpler:
 
         >>> str(next(iter(results)))
