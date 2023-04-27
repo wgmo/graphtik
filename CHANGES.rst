@@ -68,7 +68,7 @@ Planning
 - [ ] ++DROP PARALLEL: always produce a list of "parallelizable batches",
   to hook with other executors, and keep here just the single-process implementation.
   (+cat: Execution)
-
+- [ ] +++FEAT: Identify any jsonp-needs already in the given-inputs as sub-docs.
 
 Execute
 =======

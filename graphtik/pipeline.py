@@ -358,6 +358,7 @@ class Pipeline(Operation):
         if predicate == UNSET:
             predicate = self.predicate
 
+        # TODO: :func:`compile` needs to see the whole sol to decide if sub-doc exist!
         return self.net.compile(inputs, outputs, recompute_from, predicate=predicate)
 
     def compute(
@@ -459,6 +460,7 @@ class Pipeline(Operation):
 
             log.info("=== Compiling pipeline(%s) ...", self.name)
             plan = net.compile(
+                # TODO: :func:`compile` needs to see the whole sol to decide if sub-doc exist!
                 named_inputs.keys(),
                 outputs,
                 recompute_from,
