@@ -76,7 +76,7 @@ try:
     from pandas.core.generic import NDFrame
 
     def is_empty_frame(val):
-        return isinstance(val, NDFrame) and not val.any()
+        return isinstance(val, NDFrame) and val.empty
 
     _null_checks.append(is_empty_frame)
 except ImportError:
