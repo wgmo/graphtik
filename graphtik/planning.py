@@ -887,22 +887,6 @@ class Network(Plottable):
 
         return list(steps)
 
-    def _deps_tuplized(
-        self, deps, arg_name
-    ) -> Tuple[Optional[Tuple[str, ...]], Optional[Tuple[str, ...]]]:
-        """
-        Stabilize None or string/list-of-strings, drop names out of graph.
-
-        :return:
-            a 2-tuple (stable-deps, deps-in-graph) or ``(None, None)``
-        """
-        if deps is None:
-            return None, None
-
-        data_nodes = set(yield_datanodes(self.graph.nodes))
-        deps = tuple(sorted(astuple(deps, arg_name, allowed_types=abc.Collection)))
-        return deps, tuple(d for d in deps if d in data_nodes)
-
     def compile(
         self,
         inputs: Items = None,
@@ -947,14 +931,31 @@ class Network(Plottable):
         """
         from .execution import ExecutionPlan
 
+        def _deps_tuplized(
+            deps, arg_name
+        ) -> Tuple[Optional[Tuple[str, ...]], Optional[Tuple[str, ...]]]:
+            """
+            Stabilize None or string/list-of-strings, drop names out of graph.
+
+            :return:
+                a 2-tuple (stable-deps, deps-in-graph) or ``(None, None)``
+            """
+            if deps is None:
+                return None, None
+
+            deps = tuple(sorted(astuple(deps, arg_name, allowed_types=abc.Collection)))
+            return deps, tuple(d for d in deps if d in data_nodes)
+
         ok = False
         try:
+            data_nodes = set(yield_datanodes(self.graph.nodes))
+
             ## Make a stable cache-key,
             #  ignoring out-of-graph nodes (2nd results).
             #
-            inputs, k1 = self._deps_tuplized(inputs, "inputs")
-            outputs, k2 = self._deps_tuplized(outputs, "outputs")
-            recompute_from, k3 = self._deps_tuplized(recompute_from, "recompute_from")
+            inputs, k1 = _deps_tuplized(inputs, "inputs")
+            outputs, k2 = _deps_tuplized(outputs, "outputs")
+            recompute_from, k3 = _deps_tuplized(recompute_from, "recompute_from")
             if not predicate:
                 predicate = None
             cache_key = (k1, k2, k3, predicate, is_skip_evictions())
