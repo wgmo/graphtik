@@ -70,6 +70,7 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.graphviz",
     "sphinx.ext.intersphinx",
+    "sphinxext.opengraph",
     # "sphinx.ext.doctest",  # doctests maintained by pytest
     "graphtik.sphinxext",
 ]
