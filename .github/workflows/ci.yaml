@@ -38,7 +38,8 @@ jobs:
 
       - name: upload@codecov
         uses: codecov/codecov-action@v3
-        # with:
+        with:
+          env_vars: OS,PYTHON
         #   fail_ci_if_error: true # optional (default = false)
         #   verbose: true # optional (default = false)
 
