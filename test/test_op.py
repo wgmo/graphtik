@@ -449,7 +449,7 @@ def test_cwd_fnop():
             '/r/b'(@),
             'root/o'(@?'o'),
             'root/k'(@>'k'),
-            'root/i'(@),
+            'root/i'(^),
             'root/v1'(@*),
             'root/v2'(@+),
             's1'($),

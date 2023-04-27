@@ -441,10 +441,10 @@ Architecture
         One use case is for an operation to consume/produce a `subdoc`\(s)
         with its own means (not through `jsonp` `accessor`\s).
 
-        Only a :func:`.modify` & :func:`.sfxed` *modifier* functions accept
-        the ``implicit`` param.
+        Constructed with the :func:`.implicit` *modifier* function,
+        they can also be `optionals` and `jsonp` (but without `accessor`\s).
+        If an *implicit* cannot solve your problems, try `sideffected` or `tokens`...
 
-        If an *implicit* cannot solve your problems, try `sideffects` or `tokens`...
 
     tokens
     sideffects
@@ -498,7 +498,7 @@ Architecture
 
     accessor
         Getter/setter functions to extract/populate `solution` values given as a `modifier` parameter
-        (not applicable for pure `tokens`).
+        (not applicable for `tokens` & `implicit`).
 
         See :class:`.Accessor` defining class and the :func:`.modify` concrete factory.
 

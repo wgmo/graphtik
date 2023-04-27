@@ -58,6 +58,7 @@ utilize a combination of these **diacritics**:
     +   : :func:`.varargs`
     @   : :term:`accessor` (mostly for :term:`jsonp`)
     $   : :func:`token`
+    ^   : :func:`implicit`
 
 .. diacritics-end
 """
@@ -80,34 +81,36 @@ from typing import (
 #: Arguments-presence patterns for :class:`_Modifier` constructor.
 #: Combinations missing raise errors.
 _modifier_cstor_matrix = {
-# TODO: Add `implicit` in the table, to augment REPR & forbid implicit sfxed.
-# (7, kw, opt, accessors, token, sfxed): (STR, REPR, FUNC) OR None
-700000: None,
-710000: (       "%(dep)s",                  "'%(dep)s'(%(acs)s>%(kw)s)",    "keyword"),
-711000: (       "%(dep)s",                  "'%(dep)s'(%(acs)s?%(kw)s)",    "optional"),
-702000: (       "%(dep)s",                  "'%(dep)s'(*)",                 "vararg"),
-703000: (       "%(dep)s",                  "'%(dep)s'(+)",                 "varargs"),
+# (7, kw, opt, implicit, accessors, sfxed, token/sfx_list): (STR, REPR, FUNC) OR None
+7000000: None,
+7100000: (       "%(dep)s",                  "'%(dep)s'(%(acs)s>%(kw)s)",    "keyword"),
+7110000: (       "%(dep)s",                  "'%(dep)s'(%(acs)s?%(kw)s)",    "optional"),
+7020000: (       "%(dep)s",                  "'%(dep)s'(*)",                 "vararg"),
+7030000: (       "%(dep)s",                  "'%(dep)s'(+)",                 "varargs"),
 # Accessor
-700100: (       "%(dep)s",                  "'%(dep)s'(@)",                 "accessor"),
-710100: (       "%(dep)s",                  "'%(dep)s'(@>%(kw)s)",          "keyword"),
-711100: (       "%(dep)s",                  "'%(dep)s'(@?%(kw)s)",          "optional"),
-702100: (       "%(dep)s",                  "'%(dep)s'(@*)",                "vararg"),
-703100: (       "%(dep)s",                  "'%(dep)s'(@+)",                "varargs"),
+7000100: (       "%(dep)s",                  "'%(dep)s'(@)",                 "accessor"),
+7100100: (       "%(dep)s",                  "'%(dep)s'(@>%(kw)s)",          "keyword"),
+7110100: (       "%(dep)s",                  "'%(dep)s'(@?%(kw)s)",          "optional"),
+7020100: (       "%(dep)s",                  "'%(dep)s'(@*)",                "vararg"),
+7030100: (       "%(dep)s",                  "'%(dep)s'(@+)",                "varargs"),
+# Implicit
+7001000: (       "%(dep)s",                  "'%(dep)s'(^)",                 "implicit"),
+7011000: (       "%(dep)s",                  "'%(dep)s'(^?)",                "implicit"),
 
-700010: (       "$%(dep)s$",                "'%(dep)s'($)",                 "token"),
-701010: (       "$%(dep)s$",                "'%(dep)s'($?)",                "token"),
+7000010: (       "$%(dep)s$",                "'%(dep)s'($)",                 "token"),
+7010010: (       "$%(dep)s$",                "'%(dep)s'($?)",                "token"),
 #SFXED
-700011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s', %(sfx)s)",           "sfxed"),
-710011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(>%(kw)s), %(sfx)s)",  "sfxed"),
-711011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(?%(kw)s), %(sfx)s)",  "sfxed"),
-702011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(*), %(sfx)s)",        "sfxed_vararg"),
-703011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(+), %(sfx)s)",        "sfxed_varargs"),
+7000011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s', %(sfx)s)",           "sfxed"),
+7100011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(>%(kw)s), %(sfx)s)",  "sfxed"),
+7110011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(?%(kw)s), %(sfx)s)",  "sfxed"),
+7020011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(*), %(sfx)s)",        "sfxed_vararg"),
+7030011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(+), %(sfx)s)",        "sfxed_varargs"),
 # Accessor
-700111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@), %(sfx)s)",               "sfxed"),
-710111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@>%(kw)s), %(sfx)s)",        "sfxed"),
-711111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@?%(kw)s), %(sfx)s)",        "sfxed"),
-702111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@*), %(sfx)s)",              "sfxed_vararg"),
-703111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@+), %(sfx)s)",              "sfxed_varargs"),
+7000111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@), %(sfx)s)",               "sfxed"),
+7100111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@>%(kw)s), %(sfx)s)",        "sfxed"),
+7110111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@?%(kw)s), %(sfx)s)",        "sfxed"),
+7020111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@*), %(sfx)s)",              "sfxed_vararg"),
+7030111: ("sfxed('%(dep)s', %(sfx)s)", "sfxed('%(dep)s'(@+), %(sfx)s)",              "sfxed_varargs"),
 }
 # fmt: on
 
@@ -127,7 +130,7 @@ def _match_modifier_args(name, *args):
 
 
 class _Optionals(enum.Enum):
-    keyword = 1
+    keyword = 1  # or don't bother for tokens & implicits
     vararg = 2
     varargs = 3
 
@@ -242,6 +245,7 @@ class _Modifier(str):
     #: :func:`is_optional()` returns it.
     #: All regulars are `keyword`.
     _optional: _Optionals = None
+    _implicit: bool = None
     #: An :term:`accessor` with getter/setter functions to read/write solution values.
     #: Any sequence of 2-callables will do.
     _accessor: Accessor = None
@@ -262,6 +266,7 @@ class _Modifier(str):
         _func,
         keyword,
         optional: _Optionals,
+        implicit,
         accessor,
         sideffected,
         sfx_list,
@@ -283,13 +288,6 @@ class _Modifier(str):
                 f"`sideffected` cannot be `sfx`, got {sideffected!r}"
                 f"\n  locals={locals()}"
             )
-
-        # TODO: Add `implicit` in the table, to augment REPR & forbid implicit sfxed.
-        if sideffected and kw.get("_implicit"):
-            raise ValueError(
-                f"`sideffected` cannot be `implicit`, got {sideffected!r}"
-                f"\n  locals={locals()}"
-            )
         double_sideffects = [
             f"{type(i).__name__}({i!r})" for i in sfx_list if is_sfx(i)
         ]
@@ -306,6 +304,8 @@ class _Modifier(str):
             obj._keyword = keyword
         if optional:
             obj._optional = optional
+        if implicit:
+            obj._implicit = implicit
         if accessor:
             obj._accessor = accessor
         if sideffected:
@@ -331,6 +331,8 @@ class _Modifier(str):
             items.append(f"keyword={keyword}" if self._sfx_list else keyword)
         if self._optional == _Optionals.keyword and self._func != "optional":
             items.append("optional=1" if self._sfx_list else "1")
+        if self._implicit:
+            items.append("implicit=1")
         if self._accessor:
             items.append(f"accessor={self._accessor!r}")
         return f"{self._func}({', '.join(items)})"
@@ -342,6 +344,7 @@ class _Modifier(str):
             self._func,
             self._keyword,
             self._optional,
+            self._implicit,
             self._accessor,
             self._sideffected,
             self._sfx_list,
@@ -353,6 +356,7 @@ def _modifier(
     *,
     keyword=None,
     optional: _Optionals = None,
+    implicit=None,
     accessor=None,
     sideffected=None,
     sfx_list=(),
@@ -384,11 +388,11 @@ def _modifier(
         jsonp = jsonp_path(name)
     if jsonp is not None:
         kw["_jsonp"] = jsonp
-        if not accessor and jsonp:
+        if not accessor and jsonp and not implicit:
             # Honor user's accessor.
             accessor = JsonpAcc()
 
-    args = (name, keyword, optional, accessor, sideffected, sfx_list)
+    args = (name, keyword, optional, implicit, accessor, sideffected, sfx_list)
     formats = _match_modifier_args(*args)
 
     ## Private-ize all keywords and throw away nulls.
@@ -398,7 +402,14 @@ def _modifier(
     if not formats:
         if kw:
             # Just jsonp given.
-            assert not accessor and (optional, accessor, sideffected, sfx_list) == (
+            assert not accessor and (
+                optional,
+                implicit,
+                accessor,
+                sideffected,
+                sfx_list,
+            ) == (
+                None,
                 None,
                 None,
                 None,
@@ -427,6 +438,7 @@ def modifier_withset(
     name=...,
     keyword=...,
     optional: _Optionals = ...,
+    implicit=...,
     accessor=...,
     sideffected=...,
     sfx_list=...,
@@ -452,7 +464,7 @@ def modifier_withset(
         kw = {
             k: v
             for k, v in kw.items()
-            if k not in set(["dep", "name", "kw", "repr", "func"])
+            if k not in {"dep", "name", "kw", "repr", "func"}
         }
         if name is ...:
             name = dep._sideffected or str(dep)
@@ -741,7 +753,7 @@ def modify(
     )
 
 
-def implicit(name, *, jsonp=None) -> _Modifier:
+def implicit(name, *, optional: bool = None, jsonp=None) -> _Modifier:
     """
     :term:`implicit` dependencies are not fed into/out of the function,
     usually they are accessed as :term:`jsonp` from some other dependency
@@ -752,7 +764,12 @@ def implicit(name, *, jsonp=None) -> _Modifier:
         An *implicit* dependency is expected to always exist in the solution,
         contrary to :func:`token`\\s and the :term:`sfx_list` of :func:`sfxed`\\s.
     """
-    return _modifier(name, implicit=True, jsonp=jsonp)
+    return _modifier(
+        name,
+        implicit=True,
+        optional=_Optionals.keyword if optional else None,
+        jsonp=jsonp,
+    )
 
 
 def vcat(name, *, keyword: str = None, jsonp=None) -> _Modifier:
@@ -857,7 +874,7 @@ def keyword(
 
 
 def optional(
-    name: str, keyword: str = None, accessor: Accessor = None, jsonp=None, implicit=None
+    name: str, keyword: str = None, accessor: Accessor = None, jsonp=None
 ) -> _Modifier:
     """
     Annotate :term:`optionals` `needs` corresponding to *defaulted* op-function arguments, ...
@@ -878,9 +895,6 @@ def optional(
     :param jsonp:
         None (derrived from `name`), ``False``, str, collection of str/callable (last one)
         See generic :func:`.modify` modifier.
-    :param implicit:
-        :term:`implicit` dependencies are not fed into/out of the function.
-        You may use directly :func:`implicit`.
 
     **Example:**
 
@@ -928,7 +942,6 @@ def optional(
         optional=_Optionals.keyword,
         accessor=accessor,
         jsonp=jsonp,
-        implicit=implicit,
     )
 
 

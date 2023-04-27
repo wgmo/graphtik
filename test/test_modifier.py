@@ -11,8 +11,12 @@ from graphtik.modifier import (
     dep_renamed,
     dep_singularized,
     dep_stripped,
+    get_accessor,
+    get_jsonp,
+    get_keyword,
     implicit,
     is_implicit,
+    is_optional,
     keyword,
     modify,
     optional,
@@ -343,8 +347,30 @@ def test_implicit(ser_method):
     assert is_implicit("a") is None
     m = implicit("a")
     assert is_implicit(m) is True
-    m = optional("a", implicit=1)
-    assert is_implicit(m) is 1
+    assert get_keyword(m) is None
+    assert get_keyword(m) is None
+
+    m = implicit("a", optional=3)
+    assert is_implicit(m) is True
+    assert is_optional(m).value == 1
+    assert get_keyword(m) is None
+
+    m = implicit("a/b")
+    assert not is_optional(m)
+    assert get_jsonp(m)
+    assert get_accessor(m) is None
+    m = implicit("a/b", jsonp=0)
+    assert not get_jsonp(m)
+    assert get_accessor(m) is None
+
+    m = implicit("a/b", optional=True)
+    assert is_optional(m).value == 1
+    assert get_jsonp(m)
+    assert get_accessor(m) is None
+    m = implicit("a/b", optional=True, jsonp=0)
+    assert is_optional(m).value == 1
+    assert not get_jsonp(m)
+    assert get_accessor(m) is None
 
     assert dep_renamed(m, "R")._implicit == m._implicit
     assert ser_method(m)._implicit == m._implicit

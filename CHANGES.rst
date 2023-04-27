@@ -41,10 +41,11 @@ Compose
 
 - [+] ++refact: change :term:`accessor` diacritic `` from ``$`` to @``.
 - [+] +++feat: add a real ``implicit`` modifier.
-- [ ] ++feat: ``^`` diacritic for implicits
-- [ ] ++refact: change keyword diacritic to ``**``.
-- [ ] refact: rename modifier sfx --> token
-- [ ] refact: introduce diacritic for sfx ``$`` (vs ``sfx()``).
+- [+] ++feat: ``^`` diacritic for implicits
+- [-] ++refact: change keyword diacritic to ``**``.
+  - NO, ``dep>kword`` is better.
+- [+] refact: rename modifier sfx --> token
+- [+] refact: introduce diacritic for sfx ``$`` (vs ``sfx()``).
 - [ ] refact: change (or separate) jsonp diacritic (from accessor) to ``/`` (``@``)?
 - [?] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
 - [?] `cwd()` modifier:
@@ -52,6 +53,7 @@ Compose
 
   - `implicit` with only the 2nd arg should work on cwd, no?
 
+- [ ] :func:`.get_accessor()` should return a partial on the dependency.
 - [ ] ++FEAT: Teach pipelines how to accept positional arguments with a tuple with their names
 - [ ] ++FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
   (need pipeline feat for positional-args, above).
