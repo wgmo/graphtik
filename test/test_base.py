@@ -17,7 +17,7 @@ from graphtik import (
     operation,
     pipeline,
     planning,
-    sfx,
+    token,
     sfxed,
     vararg,
     varargs,
@@ -280,7 +280,7 @@ def test_jetsam_n_plot_with_DEBUG():
                 sfxed("b", "FOO", keyword="bb"),
                 implicit("C"),
                 sfxed("d", "BAR", optional=True),
-                sfx("FOOBAR"),
+                token("FOOBAR"),
             ],
             aliases={"A": "aaa", "b": "bbb", "d": "ddd"},  # FIXME: "D" is implicit!
         ),

@@ -1887,7 +1887,7 @@ class Plotter:
                 "URL": graphviz_html_string(f"{theme.arch_url}#term-sideffects"),
             },
         )
-        theme_styles["sfx"] = str(pydot.Node(**ss.merge()))
+        theme_styles["token"] = str(pydot.Node(**ss.merge()))
         theme_styles["ver"] = __version__
 
         ## From https://stackoverflow.com/questions/3499056/making-a-legend-key-in-graphviz
@@ -1958,7 +1958,7 @@ class Plotter:
                     tooltip="Data both given and asked."
                     URL="%(arch_url)s#term-dependency"];
             evicted %(evicted)s
-            sfx %(sfx)s
+            token %(token)s
             sol     [shape=rect fixedsize=shape
                     style=filled fillcolor="%(fill_color)s" label="with value"
                     tooltip="Data contained in the solution."

@@ -16,7 +16,7 @@ from graphtik.modifier import (
     keyword,
     modify,
     optional,
-    sfx,
+    token,
     sfxed,
     sfxed_vararg,
     sfxed_varargs,
@@ -60,8 +60,8 @@ def test_serialize_modifier(ser_method):
         (lambda: modify("/d/"), "/d/"),
         (lambda: modify("/d", jsonp=False), "/d"),
         (lambda: modify("/d/", jsonp=False), "/d/"),
-        (lambda: sfx("e"), "sfx('e')"),
-        (lambda: sfx("e", optional=1), "sfx('e')"),
+        (lambda: token("e"), "$e$"),
+        (lambda: token("e", optional=1), "$e$"),
         (lambda: sfxed("f", "a", "b"), "sfxed('f', 'a', 'b')"),
         (lambda: sfxed("f", "ff", keyword="F"), "sfxed('f', 'ff')"),
         (lambda: sfxed("f", "ff", optional=1, keyword="F"), "sfxed('f', 'ff')"),
@@ -89,6 +89,10 @@ def test_modifs_str(mod, exp):
     assert str(got) == exp
 
 
+def test_t():
+    str(token("e"))
+
+
 ## construct in lambdas, not to crash pytest while modifying core _Modifier
 @pytest.mark.parametrize(
     "mod, exp",
@@ -106,8 +110,8 @@ def test_modifs_str(mod, exp):
         (lambda: modify("/d/"), "'/d/'(@)"),
         (lambda: modify("/d", jsonp=False), "/d"),
         (lambda: modify("/d/", jsonp=()), "/d/"),
-        (lambda: sfx("e"), "sfx('e')"),
-        (lambda: sfx("e", optional=1), "sfx('e'(?))"),
+        (lambda: token("e"), "'e'($)"),
+        (lambda: token("e", optional=1), "'e'($?)"),
         (lambda: sfxed("f", "a", "b"), "sfxed('f', 'a', 'b')"),
         (lambda: sfxed("f", "ff", keyword="F"), "sfxed('f'(>'F'), 'ff')"),
         (lambda: sfxed("f", "ff", optional=1, keyword="F"), "sfxed('f'(?'F'), 'ff')"),
@@ -170,8 +174,8 @@ def test_modifs_repr(mod, exp, ser_method):
         (lambda: optional("b", "bb"), "optional('b', 'bb')"),
         (lambda: vararg("c"), "vararg('c')"),
         (lambda: varargs("d"), "varargs('d')"),
-        (lambda: sfx("e"), "sfx('e')"),
-        (lambda: sfx("e", optional=1), "sfx('e', 1)"),
+        (lambda: token("e"), "token('e')"),
+        (lambda: token("e", optional=1), "token('e', 1)"),
         (lambda: sfxed("f", "a", "b"), "sfxed('f', 'a', 'b')"),
         (lambda: sfxed("f", "ff", keyword="F"), "sfxed('f', 'ff', keyword='F')"),
         (
@@ -211,11 +215,11 @@ def test_recreation_repr():
 @pytest.mark.parametrize(
     "call, exp",
     [
-        (lambda: sfx(sfx("a")), "^`sideffected` cannot"),
-        (lambda: sfxed("a", sfx("a")), "^`sfx_list` cannot"),
-        (lambda: sfxed(sfx("a"), "a"), "^`sideffected` cannot"),
-        (lambda: sfxed_vararg(sfx("a"), "a"), "^`sideffected` cannot"),
-        (lambda: sfxed_varargs(sfx("a"), "a"), "^`sideffected` cannot"),
+        (lambda: token(token("a")), "^`sideffected` cannot"),
+        (lambda: sfxed("a", token("a")), "^`sfx_list` cannot"),
+        (lambda: sfxed(token("a"), "a"), "^`sideffected` cannot"),
+        (lambda: sfxed_vararg(token("a"), "a"), "^`sideffected` cannot"),
+        (lambda: sfxed_varargs(token("a"), "a"), "^`sideffected` cannot"),
     ],
 )
 def test_sideffected_bad(call, exp):
@@ -238,8 +242,8 @@ def test_sideffected_bad(call, exp):
         (lambda: vararg("c"), "'p.c'(*)"),
         (lambda: varargs("d"), "'p.d'(+)"),
         (lambda: varargs("/d"), "'p./d'(@+)"),
-        (lambda: sfx("e"), "sfx('p.e')"),
-        (lambda: sfx("e", optional=1), "sfx('p.e'(?))"),
+        (lambda: token("e"), "'p.e'($)"),
+        (lambda: token("e", optional=1), "'p.e'($?)"),
         (lambda: sfxed("f", "a", "b"), "sfxed('p.f', 'a', 'b')"),
         (lambda: sfxed("f", "ff", keyword="F"), "sfxed('p.f'(>'F'), 'ff')"),
         (lambda: sfxed("f", "ff", optional=1, keyword="F"), "sfxed('p.f'(?'F'), 'ff')"),
@@ -280,7 +284,7 @@ def test_modifs_rename_fn(mod, exp, ser_method):
         (lambda: modify("b", accessor=acc), "'D'(@)"),
         (lambda: vararg("c"), "'D'(*)"),
         (lambda: varargs("d"), "'D'(+)"),
-        (lambda: sfx("e"), "sfx('D')"),
+        (lambda: token("e"), "'D'($)"),
         (lambda: sfxed("f", "a", "b", optional=1), "sfxed('D'(?'f'), 'a', 'b')"),
         (
             lambda: sfxed("f", "a", "b", optional=1, keyword="F"),
@@ -299,7 +303,7 @@ def test_modifs_rename_str(mod, exp, ser_method):
     "mod, exp",
     [
         (lambda: varargs("d"), "'d'(+)"),
-        (lambda: sfx("e", optional=1), "sfx('e'(?))"),
+        (lambda: token("e", optional=1), "'e'($?)"),
         (lambda: sfxed("f", "a", "b"), "'f'"),
         (lambda: sfxed("f", "ff", keyword="F"), "'f'(>'F')"),
         (lambda: sfxed("f", "ff", optional=1, keyword="F"), "'f'(?'F')"),
@@ -325,7 +329,7 @@ def test_sideffected_strip(mod, exp):
     "mod, exp",
     [
         ("a", ["a"]),
-        (sfx("a"), [sfx("a")]),
+        (token("a"), [token("a")]),
         (sfxed("a", "b"), [sfxed("a", "b")]),
         (sfxed("a", "b", "c"), [sfxed("a", "b"), sfxed("a", "c")]),
     ],

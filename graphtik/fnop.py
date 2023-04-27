@@ -39,7 +39,7 @@ from .modifier import (
     get_keyword,
     is_implicit,
     is_optional,
-    is_pure_sfx,
+    is_token,
     is_sfx,
     is_sfxed,
     is_vararg,
@@ -52,12 +52,12 @@ from .modifier import (
 log = logging.getLogger(__name__)
 
 #: A special return value for the function of a :term:`reschedule` operation
-#: signifying that it did not produce any result at all (including :term:`sideffects`),
+#: signifying that it did not produce any result at all (including :term:`tokens`),
 #: otherwise, it would have been a single result, ``None``.
 #: Usefull for rescheduled who want to cancel their single result
 #: witout being delcared as :term:`returns dictionary`.
 NO_RESULT = Token("NO_RESULT")
-#: Like :data:`NO_RESULT` but does not cancel any :term;`sideffects`
+#: Like :data:`NO_RESULT` but does not cancel any :term:`tokens`
 #: declared as provides.
 NO_RESULT_BUT_SFX = Token("NO_RESULT_BUT_SFX")
 
@@ -122,7 +122,7 @@ def prefixed(dep, cwd):
     from .jsonpointer import json_pointer, jsonp_path, prepend_parts
     from .modifier import jsonp_ize
 
-    if not dep or is_pure_sfx(dep):
+    if not dep or is_token(dep):
         pass
     elif cwd:
         parts = prepend_parts(cwd, jsonp_path(dep_stripped(dep)))
@@ -208,12 +208,12 @@ def reparse_operation_data(
         sfx_aliases = [
             f"{src!r} -> {dst!r}"
             for src, dst in aliases
-            if is_pure_sfx(src) or is_pure_sfx(dst)
+            if is_token(src) or is_token(dst)
         ]
         if sfx_aliases:
             raise ValueError(
-                f"The `aliases` must not contain `sideffects` {sfx_aliases}"
-                "\n  Simply add any extra `sideffects` in the `provides`."
+                f"The `aliases` must not contain `tokens` {sfx_aliases}"
+                "\n  Simply add any extra `tokens` in the `provides`."
             )
         implicit_aliases = [
             f"{'<implicit>' if bad_src else ''}{src!r} -> "
@@ -238,7 +238,7 @@ def _process_dependencies(
     deps: Collection[str],
 ) -> Tuple[Collection[str], Collection[str]]:
     """
-    Strip or singularize any :term:`implicit`/:term:`sideffects` and apply CWD.
+    Strip or singularize any :term:`implicit`/:term:`tokens` and apply CWD.
 
     :param cwd:
         The :term:`current-working-document`, when given, all non-root `dependencies`
@@ -246,7 +246,7 @@ def _process_dependencies(
 
     :return:
         a x2 tuple ``(op_deps, fn_deps)``, where any instances of
-        :term:`sideffects` in `deps` are processed like this:
+        :term:`tokens` in `deps` are processed like this:
 
         `op_deps`
             - any :func:`.sfxed` is replaced by a sequence of ":func:`singularized
@@ -260,14 +260,14 @@ def _process_dependencies(
               they are first met.  In particular, it replaces any :func:`.sfxed`
               by the :func:`stripped <.dep_stripped>`, unless ...
             - it had been declared as :term:`implicit`, in which case, it is discared;
-            - any :func:`.sfx` are simply dropped.
+            - any :func:`.token` are simply dropped.
     """
 
     #: The dedupe  any `sideffected`.
     seen_sideffecteds = set()
 
     def as_fn_deps(dep):
-        """Strip and dedupe any sfxed, drop any sfx and implicit."""
+        """Strip and dedupe any sfxed, drop any token and implicit."""
         if is_implicit(dep):  # must ignore also `sfxed`s
             pass
         elif is_sfxed(dep):
@@ -304,7 +304,7 @@ class FnOp(Operation):
 
 
     +-----------------------------+-----+-----+-----+--------+
-    |   dependency attribute      |dupes| sfx |alias|  sfxed |
+    |   dependency attribute      |dupes|token|alias|  sfxed |
     +==========+==================+=====+=====+=====+========+
     |          |    **needs**     ||no| ||yes||     |SINGULAR|
     +          +------------------+-----+-----+     +--------+
@@ -323,7 +323,7 @@ class FnOp(Operation):
 
     - "dupes=no" means the collection drops any duplicated dependencies
     - "SINGULAR" means ``sfxed('A', 'a', 'b') ==> sfxed('A', 'b'), sfxed('A', 'b')``
-    - "STRIPPED" means ``sfxed('A', 'a', 'b') ==> sfx('a'), sfxed('b')``
+    - "STRIPPED" means ``sfxed('A', 'a', 'b') ==> token('a'), sfxed('b')``
 
     .. |yes| replace:: :green:`✓`
     .. |no| replace:: :red:`✗`
@@ -569,24 +569,24 @@ class FnOp(Operation):
 
         **Examples**
 
-            >>> from graphtik import operation, sfx
+            >>> from graphtik import operation, token
 
             >>> op = operation(str, "foo", needs="a",
-            ...     provides=["b", sfx("c")],
+            ...     provides=["b", token("c")],
             ...     aliases={"b": "B-aliased"})
             >>> op.withset(renamer={"foo": "BAR",
             ...                     'a': "A",
             ...                     'b': "B",
-            ...                     sfx('c'): "cc",
+            ...                     token('c'): "cc",
             ...                     "B-aliased": "new.B-aliased"})
             FnOp(name='BAR',
                                 needs=['A'],
-                                provides=['B', sfx('cc'), 'new.B-aliased'],
+                                provides=['B', 'cc'($), 'new.B-aliased'],
                                 aliases=[('B', 'new.B-aliased')],
                                 fn='str')
 
-        - Notice that ``'c'`` rename change the "sideffect name, without the destination name
-          being an ``sfx()`` modifier (but source name must match the sfx-specifier).
+        - Notice that ``'c'`` rename change the token name, without the destination name
+          being a ``token()`` modifier (but source name must match the sfx-specifier).
         - Notice that the source of aliases from ``b-->B`` is handled implicitely
           from the respective rename on the `provides`.
 
@@ -600,7 +600,7 @@ class FnOp(Operation):
             ...            False)
             FnOp(name='foo',
                                 needs=['parent.a'],
-                                provides=['parent.b', sfx('parent.c'), 'parent.B-aliased'],
+                                provides=['parent.b', 'parent.c'($), 'parent.B-aliased'],
                                 aliases=[('parent.b', 'parent.B-aliased')],
                                 fn='str')
 
@@ -735,14 +735,14 @@ class FnOp(Operation):
             fn_expected = fn_required = renames = ()
 
         if is_rescheduled:
-            # Canceled sfx(ed) are welcomed.
+            # Canceled sfxes are welcomed.
             fn_expected = iset([*fn_expected, *(i for i in self.provides if is_sfx(i))])
 
         res_names = results.keys()
 
         ## Clip unknown outputs (handy for reuse).
         #
-        unknown = [i for i in (res_names - fn_expected) if not is_pure_sfx(i)]
+        unknown = [i for i in (res_names - fn_expected) if not is_token(i)]
         if unknown:
             unknown = list(unknown)
             log.warning(
@@ -1005,7 +1005,7 @@ def operation(
     :param needs:
         the list of (positionally ordered) names of the data needed by the `operation`
         to receive as :term:`inputs`, roughly corresponding to the arguments of
-        the underlying `fn` (plus any :term:`sideffects`).
+        the underlying `fn` (plus any :term:`tokens`).
 
         It can be a single string, in which case a 1-element iterable is assumed.
 
@@ -1020,7 +1020,7 @@ def operation(
     :param provides:
         the list of (positionally ordered) output data this operation provides,
         which must, roughly, correspond to the returned values of the `fn`
-        (plus any :term:`sideffects` & :term:`alias`\es).
+        (plus any :term:`tokens` & :term:`alias`\es).
 
         It can be a single string, in which case a 1-element iterable is assumed.
 

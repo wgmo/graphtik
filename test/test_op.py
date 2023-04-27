@@ -19,7 +19,7 @@ from graphtik import (
     keyword,
     operation,
     optional,
-    sfx,
+    token,
     sfxed,
     vararg,
     varargs,
@@ -387,12 +387,12 @@ def test_as_renames(inp, exp):
             ),
         ),
         (
-            (sfx("a"), {sfx("a"): "a"}),
-            ValueError("must not contain `sideffects"),
+            (token("a"), {token("a"): "a"}),
+            ValueError("must not contain `tokens`"),
         ),
         (
-            ("a", {"a": sfx("AA")}),
-            ValueError("must not contain `sideffects"),
+            ("a", {"a": token("AA")}),
+            ValueError("must not contain `tokens`"),
         ),
         (
             (["a", "b"], {"a": "b"}),
@@ -434,7 +434,7 @@ def test_cwd_fnop():
             implicit("i"),
             vararg("v1"),
             varargs("v2"),
-            sfx("s1"),
+            token("s1"),
             sfxed("s2", "s22"),
             vcat("vc"),
         ],
@@ -452,7 +452,7 @@ def test_cwd_fnop():
             'root/i'(@),
             'root/v1'(@*),
             'root/v2'(@+),
-            sfx('s1'),
+            's1'($),
             sfxed('root/s2'(@),
             's22'),
             'root/vc'(@)],
@@ -757,8 +757,8 @@ def test_op_rename():
     op = operation(
         str,
         name="op1",
-        needs=sfx("a"),
-        provides=["a", sfx("b")],
+        needs=token("a"),
+        provides=["a", token("b")],
         aliases=[("a", "b")],
     )
 
@@ -771,7 +771,7 @@ def test_op_rename():
     got = str(ren)
     assert got == (
         """
-    FnOp(name='PP.op1', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b'), 'PP.b'], aliases=[('PP.a', 'PP.b')], fn='str')
+    FnOp(name='PP.op1', needs=['PP.a'($)], provides=['PP.a', 'PP.b'($), 'PP.b'], aliases=[('PP.a', 'PP.b')], fn='str')
         """.strip()
     )
 
@@ -780,7 +780,7 @@ def test_op_rename_parts():
     op = operation(
         str,
         name="op1",
-        needs=[sfx("a/b"), "/a/b"],
+        needs=[token("a/b"), "/a/b"],
         provides=["b/c", sfxed("d/e/f", "k/l")],
         aliases=[("b/c", "/b/t")],
     )
@@ -795,7 +795,7 @@ def test_op_rename_parts():
     assert got == oneliner(
         """
         FnOp(name='op1',
-            needs=[sfx('a/b'), '/PP.a/PP.b'(@)],
+            needs=['a/b'($), '/PP.a/PP.b'(@)],
             provides=['PP.b/PP.c'(@), sfxed('PP.d/PP.e/PP.f'(@), 'k/l'), '/PP.b/PP.t'(@)],
             aliases=[('PP.b/PP.c'(@), '/PP.b/PP.t'(@))], fn='str')
         """,
@@ -805,12 +805,12 @@ def test_op_rename_parts():
 def test_pipe_rename():
     pipe = compose(
         "t",
-        operation(str, name="op1", needs=sfx("a")),
+        operation(str, name="op1", needs=token("a")),
         operation(
             str,
             name="op2",
-            needs=sfx("a"),
-            provides=["a", sfx("b")],
+            needs=token("a"),
+            provides=["a", token("b")],
             aliases=[("a", "b")],
         ),
     )
@@ -824,14 +824,14 @@ def test_pipe_rename():
     got = str(ren)
     assert got == (
         """
-    Pipeline('t', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b'), 'PP.b'], x2 ops: PP.op1, PP.op2)
+    Pipeline('t', needs=['PP.a'($)], provides=['PP.a', 'PP.b'($), 'PP.b'], x2 ops: PP.op1, PP.op2)
         """.strip()
     )
     got = str(ren.ops)
     assert got == oneliner(
         """
-        [FnOp(name='PP.op1', needs=[sfx('PP.a')], fn='str'),
-         FnOp(name='PP.op2', needs=[sfx('PP.a')], provides=['PP.a', sfx('PP.b'), 'PP.b'],
+        [FnOp(name='PP.op1', needs=['PP.a'($)], fn='str'),
+         FnOp(name='PP.op2', needs=['PP.a'($)], provides=['PP.a', 'PP.b'($), 'PP.b'],
          aliases=[('PP.a', 'PP.b')], fn='str')]
         """
     )
@@ -849,8 +849,8 @@ def test_pipe_rename():
     got = str(ren.ops)
     assert got == oneliner(
         """
-        [FnOp(name='OP1', needs=[sfx('a')], fn='str'),
-         FnOp(name='op2', needs=[sfx('a')], provides=['a'(?), sfx('b'), 'B'],
+        [FnOp(name='OP1', needs=['a'($)], fn='str'),
+         FnOp(name='op2', needs=['a'($)], provides=['a'(?), 'b'($), 'B'],
          aliases=[('a'(?), 'B')], fn='str')]
         """
     )

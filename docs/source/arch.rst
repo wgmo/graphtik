@@ -177,8 +177,8 @@ Architecture
         When layers are disabled, the `solution` populates the passed-in `inputs`
         and stores in *layers* just the keys of *outputs* produced.
 
-        The layering, by default, is disabled if a `jsonp` `dependency` exists in the `network`,
-        and :func:`.set_layered_solution` `configurations` has not been set,
+        The layering, by default, is disabled if there is no `jsonp` `dependency`
+        in the `network`, and :func:`.set_layered_solution` `configurations` has not been set,
         nor has the respective parameter been given to methods
         :meth:`~.FnOp.compute()`/:meth:`~.ExecutionPlan.execute()`.
 
@@ -344,7 +344,7 @@ Architecture
         You may alter this "zipping" by one of the following methods:
 
         - artificially extended the *provides* with `alias`\ed *fn_provides*,
-        - use `modifier`\s to annotate certain names with :func:`.keyword`, `sideffects`
+        - use `modifier`\s to annotate certain names with :func:`.keyword`, `tokens`
           and/or `implicit`, or
         - mark the *operation* that its function `returns dictionary`, and
           cancel zipping.
@@ -376,15 +376,27 @@ Architecture
         takes place.
 
         Usefull for operations returning `partial outputs` to have full control
-        over which `outputs` were actually produced, or to cancel `sideffects`.
+        over which `outputs` were actually produced, or to cancel `tokens`.
 
     modifier
     diacritic
-        A `modifier` change `dependency` behavior during `planning` or `execution`.
+        `Dependency` annotations modifying their behavior during `planning`, `execution`,
 
-        For instance, a `needs` may be annotated as :func:`.keyword` and/or `optionals`
-        function arguments, `provides` and *needs* can be annotated as "ghost" `sideffects`
-        or assigned an `accessor` to work with `hierarchical data`.
+        and when binding them as the `inputs` & `outputs` of `operation`\s.
+
+
+        The `needs` and `provides` may be annotated as:
+
+        - as :func:`.keyword` and/or `optionals` to modify their binding with
+          the underlying function's arguments
+        - as `tokens` to let `operation`\s form arbitrary chains,
+        - as `sideffected` to operate on the same data more than once
+          (something that a DAG does not allow),
+        - as `implicit` to let functions do the actual read/write in `solution`,
+        - as `accessor` to modularize that access of *solution* data
+          (only `jsonp` implemented so far)
+
+        the last two often working together to manipulate `hierarchical data`.
 
         .. include:: ../../graphtik/modifier.py
             :start-after: .. diacritics-start
@@ -396,7 +408,7 @@ Architecture
         A `needs` only `modifier` for a `inputs` that do not hinder `operation` execution
         (`prune`) if absent from `solution`.
 
-        In the underlying function it corresponds to either:
+        In the underlying function it may correspond to either:
 
         - non-compulsory function arguments (with defaults), annotated with
           :func:`.optional`, or
@@ -432,8 +444,9 @@ Architecture
         Only a :func:`.modify` & :func:`.sfxed` *modifier* functions accept
         the ``implicit`` param.
 
-        If an *implicit* cannot solve your problems, try `sideffects`...
+        If an *implicit* cannot solve your problems, try `sideffects` or `tokens`...
 
+    tokens
     sideffects
         A `modifier` denoting a fictive `dependency` linking `operation`\s into virtual flows,
         without real data exchanges.
@@ -443,8 +456,9 @@ Architecture
 
         There are actually 2 relevant *modifiers*:
 
-        - An *abstract sideffect* modifier (annotated with :func:`.sfx`)
-          describing modifications taking place beyond the scope of the solution.
+        - The with :func:`.token` modifier describing modifications taking place
+          beyond the scope of the solution, and can connect operations arbitrarily,
+          irrespective of data exchanges.
           It may have just the "optional" `diacritic` in printouts.
 
           .. tip::
@@ -462,7 +476,7 @@ Architecture
 
     sideffected
     sfx_list
-        A `modifier` denoting `sideffects`\(*sfx_list*) acting on a `solution` `dependency`,
+        A `modifier` denoting (*sfx_list*) sideffects acting on a `solution` `dependency`.
 
         .. Note::will
             To be precise, the *"sideffected dependency"* is the name held in
@@ -484,7 +498,7 @@ Architecture
 
     accessor
         Getter/setter functions to extract/populate `solution` values given as a `modifier` parameter
-        (not applicable for pure `sideffects`).
+        (not applicable for pure `tokens`).
 
         See :class:`.Accessor` defining class and the :func:`.modify` concrete factory.
 
@@ -619,7 +633,7 @@ Architecture
         Operations and `pipeline` are marked as such on construction, or enabled globally
         from `configurations`.
 
-        Note a `sideffects` are not expected to function with *process pools*,
+        Note a `tokens` are not expected to function with *process pools*,
         certainly not when `marshalling` is enabled.
 
     process pool
@@ -629,7 +643,7 @@ Architecture
         With pickling failures you may try `marshalling` with *dill* library,
         and see if that helps.
 
-        Note that `sideffects` are not expected to function at all.
+        Note that `tokens` are not expected to function at all.
         certainly not when `marshalling` is enabled.
 
     thread pool
@@ -642,7 +656,7 @@ Architecture
         with :func:`.set_marshal_tasks()` or set with a flag on each
         operation / `pipeline`.
 
-        Note that `sideffects` do not work when this is enabled.
+        Note that `tokens` do not work when this is enabled.
 
     plottable
         Objects that can plot their graph network, such as those inheriting :class:`.Plottable`,

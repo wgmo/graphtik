@@ -35,7 +35,6 @@ from .modifier import (
     get_keyword,
     is_implicit,
     is_optional,
-    is_pure_sfx,
     is_sfx,
     modifier_withset,
     modify,

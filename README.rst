@@ -58,8 +58,8 @@ Features
 - Support functions with `optional <optionals>` input args and/or `varargs <varargish>`.
 - Support functions with `partial outputs`; keep working even if certain `endured` operations fail.
 - Facilitate trivial `conveyor operation`\s and `alias` on `provides`.
-- Support cycles, by annotating repeated updates of `dependency` values as `sideffects`,
-  (e.g. to add columns into :class:`pandas.DataFrame`\s).
+- Support cycles, by annotating repeated updates of `dependency` values as `tokens`
+  or `sideffected` (e.g. to add columns into :class:`pandas.DataFrame`\s).
 - `Hierarchical dependencies <subdoc>` may access data values deep in `solution`
   with `json pointer path` expressions.
 - Hierarchical dependencies annotated as `implicit` imply which subdoc dependency

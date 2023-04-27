@@ -340,7 +340,7 @@ Advanced pipelines
 
 Depending on sideffects
 ^^^^^^^^^^^^^^^^^^^^^^^
-.. autofunction:: graphtik.modifier.sfx
+.. autofunction:: graphtik.modifier.token
    :noindex:
 
 Modifying existing values in solutions

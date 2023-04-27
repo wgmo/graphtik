@@ -17,7 +17,7 @@ from graphtik import (
     operation,
     optional,
     planning,
-    sfx,
+    token,
     sfxed,
     vararg,
     varargs,

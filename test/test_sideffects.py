@@ -1,6 +1,6 @@
 # Copyright 2020-2020, Kostis Anagnostopoulos;
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-"""Test :term:`implicit` & :term:`sideffects`."""
+"""Test :term:`implicit` & :term:`tokens`."""
 import re
 import sys
 import types
@@ -18,7 +18,7 @@ from graphtik import (
     implicit,
     modify,
     operation,
-    sfx,
+    token,
     sfxed,
 )
 from graphtik.config import get_execution_pool, is_marshal_tasks
@@ -40,10 +40,10 @@ def _box_increment(box):
 @pytest.fixture(params=[0, 1])
 def pipeline_sideffect1(request, exemethod) -> Pipeline:
     ops = [
-        operation(name="extend", needs=["box", sfx("a")], provides=[sfx("b")])(
+        operation(name="extend", needs=["box", token("a")], provides=[token("b")])(
             _box_extend
         ),
-        operation(name="increment", needs=["box", sfx("b")], provides=sfx("c"))(
+        operation(name="increment", needs=["box", token("b")], provides=token("c"))(
             _box_increment
         ),
     ]
@@ -78,7 +78,7 @@ def test_sideffect_no_real_data(pipeline_sideffect1: Pipeline):
         graph.compute(inp)
 
     with pytest.raises(ValueError, match="Unreachable outputs"):
-        graph.compute(inp, ["box", sfx("b")])
+        graph.compute(inp, ["box", token("b")])
 
     with pytest.raises(ValueError, match="Unsolvable graph"):
         # Cannot run, since no sideffect inputs given.
@@ -89,18 +89,18 @@ def test_sideffect_no_real_data(pipeline_sideffect1: Pipeline):
     ## OK INPUT SIDEFFECTS
     #
     # ok, no asked out
-    sol = graph.compute({"box": [0], sfx("a"): True})
-    assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3], sfx("a"): True}
+    sol = graph.compute({"box": [0], token("a"): True})
+    assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3], token("a"): True}
     #
     # Although no out-sideffect asked (like regular data).
-    assert graph.compute({"box": [0], sfx("a"): True}, "box") == {"box": [0]}
+    assert graph.compute({"box": [0], token("a"): True}, "box") == {"box": [0]}
     #
     # ok, asked the 1st out-sideffect
-    sol = graph.compute({"box": [0], sfx("a"): True}, ["box", sfx("b")])
+    sol = graph.compute({"box": [0], token("a"): True}, ["box", token("b")])
     assert sol == {"box": box_orig if sidefx_fail else [0, 1, 2]}
     #
     # ok, asked the 2nd out-sideffect
-    sol = graph.compute({"box": [0], sfx("a"): True}, ["box", sfx("c")])
+    sol = graph.compute({"box": [0], token("a"): True}, ["box", token("c")])
     assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3]}
 
 
@@ -111,8 +111,10 @@ def test_sideffect_real_input(reverse, exemethod):
     )
 
     ops = [
-        operation(name="extend", needs=["box", "a"], provides=[sfx("b")])(_box_extend),
-        operation(name="increment", needs=["box", sfx("b")], provides="c")(
+        operation(name="extend", needs=["box", "a"], provides=[token("b")])(
+            _box_extend
+        ),
+        operation(name="increment", needs=["box", token("b")], provides="c")(
             _box_increment
         ),
     ]
@@ -140,7 +142,7 @@ def test_sideffect_steps(exemethod, pipeline_sideffect1: Pipeline):
 
     pipeline = pipeline_sideffect1.withset(parallel=exemethod)
     box_orig = [0]
-    sol = pipeline.compute({"box": [0], sfx("a"): True}, ["box", sfx("c")])
+    sol = pipeline.compute({"box": [0], token("a"): True}, ["box", token("c")])
     assert sol == {"box": box_orig if sidefx_fail else [1, 2, 3]}
     assert len(sol.plan.steps) == 4
 
@@ -153,7 +155,7 @@ def test_sideffect_steps(exemethod, pipeline_sideffect1: Pipeline):
 def test_sideffect_NO_RESULT(caplog, exemethod):
     # NO_RESULT does not cancel sideffects unless op-rescheduled
     #
-    an_sfx = sfx("b")
+    an_sfx = token("b")
     op1 = operation(lambda: NO_RESULT, name="do-SFX", provides=an_sfx)
     op2 = operation(lambda: 1, name="ask-SFX", needs=an_sfx, provides="a")
     pipeline = compose("t", op1, op2, parallel=exemethod)
@@ -218,7 +220,7 @@ def test_sideffect_NO_RESULT(caplog, exemethod):
 
 
 def test_sideffect_cancel_sfx_only_operation(exemethod):
-    an_sfx = sfx("b")
+    an_sfx = token("b")
     op1 = operation(
         lambda: {an_sfx: False},
         name="op1",
@@ -235,7 +237,7 @@ def test_sideffect_cancel_sfx_only_operation(exemethod):
 
 
 def test_sideffect_cancel(exemethod):
-    an_sfx = sfx("b")
+    an_sfx = token("b")
     op1 = operation(
         lambda: {"a": 1, an_sfx: False},
         name="op1",
@@ -258,7 +260,7 @@ def test_sideffect_cancel(exemethod):
 def test_sideffect_not_canceled_if_not_resched(exemethod):
     # Check op without any provides
     #
-    an_sfx = sfx("b")
+    an_sfx = token("b")
     op1 = operation(
         lambda: {an_sfx: False}, name="op1", provides=an_sfx, returns_dict=True
     )
@@ -271,7 +273,7 @@ def test_sideffect_not_canceled_if_not_resched(exemethod):
 
     # Check also op with some provides
     #
-    an_sfx = sfx("b")
+    an_sfx = token("b")
     op1 = operation(
         lambda: {"a": 1, an_sfx: False},
         name="op1",

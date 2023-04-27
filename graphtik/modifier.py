@@ -8,7 +8,7 @@
     optional
     keyword
     implicit
-    sfx
+    token
     sfxed
     sfxed_vararg
     sfxed_varargs
@@ -26,7 +26,7 @@
     jsonp_ize
     get_jsonp
     is_sfx
-    is_pure_sfx
+    is_token
     is_sfxed
     is_implicit
     get_accessor
@@ -36,7 +36,7 @@
     modifier_withset
 
 The `needs` and `provides` annotated with *modifiers* designate, for instance,
-:term:`optional <optionals>` function arguments, or "ghost" :term:`sideffects`.
+:term:`optional <optionals>` function arguments, or "ghost" :term:`tokens`.
 
 .. note::
     This module (along with :mod:`.op` & :mod:`.pipeline`) is what client code needs
@@ -56,6 +56,8 @@ utilize a combination of these **diacritics**:
     ?   : :func:`.optional`
     *   : :func:`.vararg`
     +   : :func:`.varargs`
+    @   : :term:`accessor` (mostly for :term:`jsonp`)
+    $   : :func:`token`
 
 .. diacritics-end
 """
@@ -79,7 +81,7 @@ from typing import (
 #: Combinations missing raise errors.
 _modifier_cstor_matrix = {
 # TODO: Add `implicit` in the table, to augment REPR & forbid implicit sfxed.
-# (7, kw, opt, accessors, sfxed, sfx): (STR, REPR, FUNC) OR None
+# (7, kw, opt, accessors, token, sfxed): (STR, REPR, FUNC) OR None
 700000: None,
 710000: (       "%(dep)s",                  "'%(dep)s'(%(acs)s>%(kw)s)",    "keyword"),
 711000: (       "%(dep)s",                  "'%(dep)s'(%(acs)s?%(kw)s)",    "optional"),
@@ -92,8 +94,8 @@ _modifier_cstor_matrix = {
 702100: (       "%(dep)s",                  "'%(dep)s'(@*)",                "vararg"),
 703100: (       "%(dep)s",                  "'%(dep)s'(@+)",                "varargs"),
 
-700010: (  "sfx('%(dep)s')",            "sfx('%(dep)s')",    "sfx"),
-701010: (  "sfx('%(dep)s')",            "sfx('%(dep)s'(?))", "sfx"),
+700010: (       "$%(dep)s$",                "'%(dep)s'($)",                 "token"),
+701010: (       "$%(dep)s$",                "'%(dep)s'($?)",                "token"),
 #SFXED
 700011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s', %(sfx)s)",           "sfxed"),
 710011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(>%(kw)s), %(sfx)s)",  "sfxed"),
@@ -214,7 +216,7 @@ class _Modifier(str):
     or check if a dependency ``isinstance()``, but use these facilities instead:
 
     - the *factory* functions like :func:`.keyword`, :func:`optional` etc,
-    - the *predicates* like :func:`is_optional()`, :func:`is_pure_sfx()` etc,
+    - the *predicates* like :func:`is_optional()`, :func:`is_token()` etc,
     - the *conversion* functions like :func:`dep_renamed()`, :func:`dep_stripped()` etc,
     - and only *rarely* (and with care) call its :meth:`modifier_withset()` method or
       :func:`_modifier()` factor functions.
@@ -246,13 +248,11 @@ class _Modifier(str):
     #: Has value only for sideffects: the pure-sideffect string or
     #: the existing :term:`sideffected` dependency.
     _sideffected: str = None
-    #: At least one name(s) denoting the :term:`sideffects` modification(s) on
+    #: At least one name(s) denoting the :term:`tokens` modification(s) on
     #: the :term:`sideffected`, performed/required by the operation.
     #:
-    #: - If it is an empty tuple`, it is an abstract sideffect,
-    #:    and :func:`is_pure_optional()` returns True.
-    #: - If not empty :func:`is_sfxed()` returns true
-    #:   (the :attr:`._sideffected`).
+    #: - If it is an empty tuple`, it is a token.
+    #: - If not empty :func:`is_sfxed()` returns true (the :attr:`._sideffected`).
     _sfx_list: Tuple[Union[str, None]] = ()
 
     def __new__(
@@ -514,7 +514,7 @@ def get_jsonp(dep) -> Union[List[str], None]:
 
 def is_sfx(dep) -> Optional[str]:
     """
-    Check if a dependency is :term:`sideffects` or :term:`sideffected`.
+    Check if a dependency is :term:`tokens` or :term:`sideffected`.
 
     :return:
         the :attr:`._sideffected`
@@ -522,8 +522,8 @@ def is_sfx(dep) -> Optional[str]:
     return getattr(dep, "_sideffected", None)
 
 
-def is_pure_sfx(dep) -> bool:
-    """Check if it is :term:`sideffects` but not a :term:`sideffected`."""
+def is_token(dep) -> bool:
+    """Check if it is :term:`tokens` but not a :term:`sideffected`."""
     return getattr(dep, "_sideffected", None) and not getattr(dep, "_sfx_list", None)
 
 
@@ -742,7 +742,16 @@ def modify(
 
 
 def implicit(name, *, jsonp=None) -> _Modifier:
-    """see :term:`implicit` & generic :func:`.modify` modifier."""
+    """
+    :term:`implicit` dependencies are not fed into/out of the function,
+    usually they are accessed as :term:`jsonp` from some other dependency
+    or from the :term:`solution` directly
+    (eg through the "unstable" API :func:`.task_context()`).
+
+    .. hint::
+        An *implicit* dependency is expected to always exist in the solution,
+        contrary to :func:`token`\\s and the :term:`sfx_list` of :func:`sfxed`\\s.
+    """
     return _modifier(name, implicit=True, jsonp=jsonp)
 
 
@@ -1043,35 +1052,35 @@ def varargs(name: str, accessor: Accessor = None, jsonp=None) -> _Modifier:
     return _modifier(name, optional=_Optionals.varargs, accessor=accessor, jsonp=jsonp)
 
 
-def sfx(name, optional: bool = None) -> _Modifier:
+def token(name, optional: bool = None) -> _Modifier:
     """
-    :term:`sideffects` denoting modifications beyond the scope of the solution.
+    :term:`tokens` denoting modifications beyond the scope of the solution.
 
-    Both `needs` & `provides` may be designated as *sideffects* using this modifier.
+    Both `needs` & `provides` may be designated as *tokens* using this modifier.
     They work as usual while solving the graph (:term:`planning`) but
     they have a limited interaction with the operation's underlying function;
     specifically:
 
-    - input sideffects must exist in the solution as :term:`inputs` for an operation
+    - input tokens must exist in the solution as :term:`inputs` for an operation
       depending on it to kick-in, when the computation starts - but this is not necessary
-      for intermediate sideffects in the solution during execution;
-    - input sideffects are NOT fed into underlying functions;
-    - output sideffects are not expected from underlying functions, unless
+      for intermediate tokens in the solution during execution;
+    - input tokens are NOT fed into underlying functions;
+    - output tokens are not expected from underlying functions, unless
       a rescheduled operation with :term:`partial outputs` designates a sideffected
       as *canceled* by returning it with a falsy value (operation must `returns dictionary`).
 
-    .. hint::
-        If modifications involve some input/output, prefer the :func:`.sfxed`
-        modifier.
+    .. tip::
+        If modifications involve some input/output, prefer :func:`implicit` or
+        :func:`.sfxed` modifiers.
 
         You may still convey this relationships by including the dependency name
         in the string - in the end, it's just a string - but no enforcement of any kind
         will happen from *graphtik*, like:
 
-        >>> from graphtik import sfx
+        >>> from graphtik import token
 
-        >>> sfx("price[sales_df]")
-        sfx('price[sales_df]')
+        >>> token("price[sales_df]")
+        'price[sales_df]'($)
 
     **Example:**
 
@@ -1079,9 +1088,9 @@ def sfx(name, optional: bool = None) -> _Modifier:
     outside `solution`:
 
 
-        >>> from graphtik import operation, compose, sfx
+        >>> from graphtik import operation, compose, token
 
-        >>> @operation(provides=sfx("lights off"))  # sideffect names can be anything
+        >>> @operation(provides=token("lights off"))  # sideffect names can be anything
         ... def close_the_lights():
         ...    pass
 
@@ -1089,13 +1098,13 @@ def sfx(name, optional: bool = None) -> _Modifier:
         ...     close_the_lights,
         ...     operation(
         ...         name='undress',
-        ...         needs=[sfx("lights off")],
+        ...         needs=[token("lights off")],
         ...         provides="body")(lambda: "TaDa!")
         ... )
         >>> graph
         Pipeline('strip ease',
-                         needs=[sfx('lights off')],
-                         provides=[sfx('lights off'), 'body'],
+                         needs=['lights off'($)],
+                         provides=['lights off'($), 'body'],
                          x2 ops: close_the_lights, undress)
 
         >>> sol = graph()
@@ -1110,7 +1119,7 @@ def sfx(name, optional: bool = None) -> _Modifier:
         this could be another operation, like above, or the user-inputs;
         just specify some truthy value for the sideffect:
 
-            >>> sol = graph.compute({sfx("lights off"): True})
+            >>> sol = graph.compute({token("lights off"): True})
 
         .. graphtik::
 
@@ -1151,7 +1160,7 @@ def sfxed(
         None (derrived from `name`), ``False``, str, collection of str/callable (last one)
         See generic :func:`.modify` modifier.
 
-    Like :func:`.sfx` but annotating a *real* :term:`dependency` in the solution,
+    Like :func:`.token` but annotating a *real* :term:`dependency` in the solution,
     allowing that dependency to be present both in :term:`needs` and :term:`provides`
     of the same function.
 

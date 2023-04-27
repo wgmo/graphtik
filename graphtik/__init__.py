@@ -42,7 +42,7 @@ from .modifier import (
     keyword,
     modify,
     optional,
-    sfx,
+    token,
     sfxed,
     sfxed_vararg,
     sfxed_varargs,

@@ -8,7 +8,7 @@ from textwrap import dedent
 
 import pytest
 
-from graphtik import compose, operation, sfx, sfxed, vararg
+from graphtik import compose, operation, token, sfxed, vararg
 from graphtik.fnop import Operation
 from graphtik.modifier import dep_renamed
 
@@ -23,7 +23,7 @@ def test_compose_rename_dict(caplog):
             str,
             "op2",
             needs="a",
-            provides=["b", sfx("c")],
+            provides=["b", token("c")],
             aliases=[("b", "B"), ("b", "p")],
         ),
         nest={"op1": "OP1", "op2": lambda n: "OP2", "a": "A", "b": "bb"},
@@ -31,7 +31,7 @@ def test_compose_rename_dict(caplog):
     print(str(pip))
     assert str(pip) == (
         "Pipeline('t', needs=['A'], "
-        "provides=['A', 'aa', 'bb', sfx('c'), 'B', 'p'], x2 ops: OP1, OP2)"
+        "provides=['A', 'aa', 'bb', 'c'($), 'B', 'p'], x2 ops: OP1, OP2)"
     )
     print(str(pip.ops))
     assert (
@@ -39,7 +39,7 @@ def test_compose_rename_dict(caplog):
         == dedent(
             """
         [FnOp(name='OP1', provides=['A', 'aa'], fn='str'),
-         FnOp(name='OP2', needs=['A'], provides=['bb', sfx('c'), 'B', 'p'],
+         FnOp(name='OP2', needs=['A'], provides=['bb', 'c'($), 'B', 'p'],
          aliases=[('bb', 'B'), ('bb', 'p')], fn='str')]
     """
         ).replace("\n", "")
@@ -233,7 +233,7 @@ def test_compose_nest_dict(caplog):
             operation(
                 str,
                 name="op1",
-                needs=[sfx("a"), "aa"],
+                needs=[token("a"), "aa"],
                 provides=[sfxed("S1", "g"), sfxed("S2", "h")],
             ),
         ),
@@ -242,8 +242,8 @@ def test_compose_nest_dict(caplog):
             operation(
                 str,
                 name="op2",
-                needs=sfx("a"),
-                provides=["a", sfx("b")],
+                needs=token("a"),
+                provides=["a", token("b")],
                 aliases=[("a", "b")],
             ),
         ),
@@ -251,11 +251,11 @@ def test_compose_nest_dict(caplog):
             "op1": True,
             "op2": lambda n: "p2.op2",
             "aa": False,
-            sfx("a"): True,
+            token("a"): True,
             "b": lambda n: f"PP.{n}",
             sfxed("S1", "g"): True,
             sfxed("S2", "h"): lambda n: dep_renamed(n, "ss2"),
-            sfx("b"): True,
+            token("b"): True,
         },
     )
     got = str(pipe.ops)
@@ -264,10 +264,10 @@ def test_compose_nest_dict(caplog):
         r"[\n ]{2,}",  # collapse all space-chars into a single space
         " ",
         """
-        [FnOp(name='p1.op1', needs=[sfx('p1.a'), 'aa'],
+        [FnOp(name='p1.op1', needs=['p1.a'($), 'aa'],
          provides=[sfxed('p1.S1', 'g'), sfxed('ss2', 'h')], fn='str'),
-        FnOp(name='p2.op2', needs=[sfx('p2.a')],
-         provides=['a', sfx('p2.b'), 'PP.b'], aliases=[('a', 'PP.b')], fn='str')]
+        FnOp(name='p2.op2', needs=['p2.a'($)],
+         provides=['a', 'p2.b'($), 'PP.b'], aliases=[('a', 'PP.b')], fn='str')]
 
         """.strip(),
     )

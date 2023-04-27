@@ -132,7 +132,7 @@ to the :func:`.operation` factory, specifically:
    this argument names the list of (positionally ordered) :term:`inputs` data the `operation`
    requires to receive from *solution*.
    The list corresponds, roughly, to the arguments of the underlying function
-   (plus any :term:`sideffects`).
+   (plus any :term:`tokens`).
 
    It can be a single string, in which case a 1-element iterable is assumed.
 
@@ -143,7 +143,7 @@ to the :func:`.operation` factory, specifically:
    this argument names the list of (positionally ordered) :term:`outputs` data
    the operation provides into the *solution*.
    The list corresponds, roughly, to the returned values of the `fn`
-   (plus any :term:`sideffects` & :term:`alias`\es).
+   (plus any :term:`tokens` & :term:`alias`\es).
 
    It can be a single string, in which case a 1-element iterable is assumed.
 

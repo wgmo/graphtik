@@ -38,7 +38,7 @@ from boltons.setutils import IndexedSet as iset
 # TODO: replace `UNSET` with ...
 from .base import UNSET, Operation, asdict, aslist, astuple, func_name
 from .fnop import FnOp, reparse_operation_data
-from .modifier import is_sfx, keyword, optional, sfx, sfxed
+from .modifier import is_sfx, keyword, optional, token, sfxed
 
 try:
     from re import Pattern as RegexPattern
@@ -690,13 +690,25 @@ class Autograph(Prefkey):
 
             if inp_sideffects is not UNSET:
                 needs.extend(
-                    (i if is_sfx(i) else sfxed(*i) if isinstance(i, tuple) else sfx(i))
+                    (
+                        i
+                        if is_sfx(i)
+                        else sfxed(*i)
+                        if isinstance(i, tuple)
+                        else token(i)
+                    )
                     for i in aslist(inp_sideffects, "inp_sideffects")
                 )
 
             if out_sideffects is not UNSET:
                 provides.extend(
-                    (i if is_sfx(i) else sfxed(*i) if isinstance(i, tuple) else sfx(i))
+                    (
+                        i
+                        if is_sfx(i)
+                        else sfxed(*i)
+                        if isinstance(i, tuple)
+                        else token(i)
+                    )
                     for i in aslist(out_sideffects, "out_sideffects")
                 )
 

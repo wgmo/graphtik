@@ -20,6 +20,7 @@ TODOs
 
   - [+] fix: FnOp.compute() should (or should not?) accept Pipeline.compute() args.
   - [+] FEAT: ``compute(solution, recompute_from=["input_1"])``
+- [ ] **+++REFACT: Merge Config+Operation+Authographed to simplify them**
 
 Configs
 =======
@@ -38,7 +39,13 @@ Configs
 Compose
 =======
 
-- [+] feat: add a real ``implicit`` modifier.
+- [+] ++refact: change :term:`accessor` diacritic `` from ``$`` to @``.
+- [+] +++feat: add a real ``implicit`` modifier.
+- [ ] ++feat: ``^`` diacritic for implicits
+- [ ] ++refact: change keyword diacritic to ``**``.
+- [ ] refact: rename modifier sfx --> token
+- [ ] refact: introduce diacritic for sfx ``$`` (vs ``sfx()``).
+- [ ] refact: change (or separate) jsonp diacritic (from accessor) to ``/`` (``@``)?
 - [?] REFACT: separate op-decorator from factory (to facilitate defining conveyor operations).
 - [?] `cwd()` modifier:
   Isn't already working with relative jsonps?
@@ -48,13 +55,19 @@ Compose
 - [ ] ++FEAT: Teach pipelines how to accept positional arguments with a tuple with their names
 - [ ] ++FEAT: +1 merge method for pipelines: nest=False: treat Pipelines as Operations
   (need pipeline feat for positional-args, above).
+- [ ] enh(modifier): augment :func:`keyword` to hold an "informative" value
+  read from the function-default.
 - [ ] break/enh(modifier): augment modifier table with ``implicits`` for REPR.
 - [ ] BREAK(modif): "stuffy" names for ``is_xxx(modifier)`` funcs returning stuff.
+- [ ] modifier || jsonp --> pandalone.pstep (flexible syntax for a modifier on each step)
+
+Autograph
+---------
+
 - [ ] +++FEAT: Autograph functions by type-annotations
   (PY39 :pep:`593` e.g. ``Annotated[int, CWD]``)
-- [ ] +++FEAT: Autograph functions by type-annotations
-- [ ] modifier || jsonp --> pandalone.pstep (flexible syntax for a modifier on each step)
-- [ ] Rename modifier sfx --> token
+- [ ] ++feat: populate :func:`keyword` "informative" value from inspect-signature.
+  (see also keyword-"informative" value, above)
 
 
 Planning
@@ -78,7 +91,8 @@ Execute
   - PARTIAL: moved existing x2 callbacks to be called before marshalling.
 
 - [?] refact: named_inputs --> sol
-- [ ] ENH/REFACT: use Signature.Param from `inspect` module to match needs & zip provides
+- [ ] ++ENH/REFACT: use Signature.Param from `inspect` module to match needs & zip provides
+  and support already there ``...``.
 - [ ] Solution-retriever modifier `opcb()`;
 
   - WONTFIX: easier and more generic to access solution from Op-context.
@@ -274,7 +288,7 @@ v10.3.0 (21 Sep 2020, @ankostis): CONCAT pandas, Hierarchical overwrites, implic
   to save an explicit conversion (jsonps are invalid as python-identifiers).
 
 + break(modifier+fnop): forbid :term:`implicit` term:`sfxed` -- hard to find a solid use-case,
-  pure `sfx` would be preferable in that case.
+  :term:`tokens` would be preferable in that case.
 
 + fix: forbid :term:`aliasing <alias>` implicits -- they wouldn't work anyway.
 
