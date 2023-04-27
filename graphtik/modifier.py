@@ -378,7 +378,7 @@ def _modifier(
 
             jsonp = jsonp_path(jsonp)
     # Prevent sfx-jsonp.
-    elif "/" in name and jsonp is None and (sideffected is None or sfx_list):
+    elif "/" in name and (sideffected is None or sfx_list):
         from .jsonpointer import jsonp_path
 
         jsonp = jsonp_path(name)
