@@ -97,8 +97,8 @@ _modifier_cstor_matrix = {
 7001000: (       "%(dep)s",                  "'%(dep)s'(^)",                 "implicit"),
 7011000: (       "%(dep)s",                  "'%(dep)s'(^?)",                "implicit"),
 
-7000010: (       "$%(dep)s$",                "'%(dep)s'($)",                 "token"),
-7010010: (       "$%(dep)s$",                "'%(dep)s'($?)",                "token"),
+7000010: (       "$%(dep)s",                "'%(dep)s'($)",                 "token"),
+7010010: (       "$%(dep)s",                "'%(dep)s'($?)",                "token"),
 #SFXED
 7000011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s', %(sfx)s)",           "sfxed"),
 7100011: ("sfxed('%(dep)s', %(sfx)s)", "sfxed(%(acs)s'%(dep)s'(>%(kw)s), %(sfx)s)",  "sfxed"),
