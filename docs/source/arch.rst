@@ -478,7 +478,7 @@ Architecture
     sfx_list
         A `modifier` denoting (*sfx_list*) sideffects acting on a `solution` `dependency`.
 
-        .. Note::will
+        .. Note::
             To be precise, the *"sideffected dependency"* is the name held in
             :attr:`._Modifier._sideffected` attribute of a *modifier* created by
             :func:`.sfxed()` function;  it may have all `diacritic`\s in printouts.
