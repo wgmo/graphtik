@@ -226,7 +226,7 @@ class _Modifier(str):
 
     :param kw:
         any extra attributes not needed by execution machinery
-        such as the ``jsonpath``, which is used only by :term:`accessor`.
+        such as the :term:`jsonp`, which is used only by :term:`accessor`.
 
     .. Note::
         Factory function:func:`_modifier()` may return a plain string, if no other

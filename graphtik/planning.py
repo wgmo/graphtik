@@ -535,10 +535,10 @@ class Network(Plottable):
         needs = []
         needs_edges = []
         for n in operation.needs:
-            json_path = get_jsonp(n)
+            jsonp = get_jsonp(n)
             check_node_collision(n, 0, operation, "needs")
-            if json_path:
-                append_subdoc_chain(json_path)
+            if jsonp:
+                append_subdoc_chain(jsonp)
 
             nkw, ekw = {"typ": 0}, {}  # node, edge props
             if is_optional(n):
@@ -567,10 +567,10 @@ class Network(Plottable):
         ## Provides
         #
         for n in operation.provides:
-            json_path = get_jsonp(n)
+            jsonp = get_jsonp(n)
             check_node_collision(n, 0, operation, "provides")
-            if json_path:
-                append_subdoc_chain(json_path)
+            if jsonp:
+                append_subdoc_chain(jsonp)
 
             nkw, ekw = {"typ": 0}, {}
             if is_sfx(n):
