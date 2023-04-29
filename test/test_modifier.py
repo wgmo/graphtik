@@ -20,10 +20,10 @@ from graphtik.modifier import (
     keyword,
     modify,
     optional,
-    token,
     sfxed,
     sfxed_vararg,
     sfxed_varargs,
+    token,
     vararg,
     varargs,
 )

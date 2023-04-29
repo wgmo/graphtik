@@ -18,8 +18,8 @@ from graphtik import (
     implicit,
     modify,
     operation,
-    token,
     sfxed,
+    token,
 )
 from graphtik.config import get_execution_pool, is_marshal_tasks
 from graphtik.pipeline import Pipeline

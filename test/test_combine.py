@@ -8,7 +8,7 @@ from textwrap import dedent
 
 import pytest
 
-from graphtik import compose, operation, token, sfxed, vararg
+from graphtik import compose, operation, sfxed, token, vararg
 from graphtik.fnop import Operation
 from graphtik.modifier import dep_renamed
 

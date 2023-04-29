@@ -14,7 +14,7 @@ import sys
 import textwrap
 from collections import abc as cabc
 from functools import update_wrapper, wraps
-from typing import Any, Callable, Collection, List, Mapping, Sequence, Tuple
+from typing import Callable, Collection, List, Mapping, Sequence, Tuple
 
 from boltons.setutils import IndexedSet as iset
 
@@ -39,14 +39,11 @@ from .modifier import (
     get_keyword,
     is_implicit,
     is_optional,
-    is_token,
     is_sfx,
     is_sfxed,
+    is_token,
     is_vararg,
     is_varargs,
-    jsonp_ize,
-    modify,
-    optional,
 )
 
 log = logging.getLogger(__name__)

@@ -38,7 +38,7 @@ from boltons.setutils import IndexedSet as iset
 # TODO: replace `UNSET` with ...
 from .base import UNSET, Operation, asdict, aslist, astuple, func_name
 from .fnop import FnOp, reparse_operation_data
-from .modifier import is_sfx, keyword, optional, token, sfxed
+from .modifier import is_sfx, keyword, optional, sfxed, token
 
 try:
     from re import Pattern as RegexPattern

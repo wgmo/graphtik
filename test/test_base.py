@@ -17,8 +17,8 @@ from graphtik import (
     operation,
     pipeline,
     planning,
-    token,
     sfxed,
+    token,
     vararg,
     varargs,
 )
