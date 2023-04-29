@@ -150,33 +150,33 @@ def test_yield_chained_docs_root(g):
     "ops, err",
     [
         (
-            [operation(str, "BOOM", provides="BOOM")],
+            lambda: [operation(str, "BOOM", provides="BOOM")],
             r"Name of provides\('BOOM'\) clashed with a same-named operation",
         ),
         (
-            [operation(str, "BOOM", needs="BOOM")],
+            lambda: [operation(str, "BOOM", needs="BOOM")],
             r"Name of operation\(BOOM\) clashed with a same-named dependency",
         ),
         (
-            [operation(str, "BOOM", provides="a", aliases=("a", "BOOM"))],
+            lambda: [operation(str, "BOOM", provides="a", aliases={"a": "BOOM"})],
             r"Name of provides\('BOOM'\) clashed with a same-named operation",
         ),
         (
-            [operation(str, "op1", provides="BOOM"), operation(str, "BOOM")],
+            lambda: [operation(str, "op1", provides="BOOM"), operation(str, "BOOM")],
             r"Name of operation\(BOOM\) clashed with a same-named dependency",
         ),
         ## x2 ops
         (
-            [operation(str, "BOOM"), operation(str, "op2", "BOOM")],
+            lambda: [operation(str, "BOOM"), operation(str, "op2", "BOOM")],
             r"Name of needs\('BOOM'\) clashed with a same-named operation",
         ),
         (
-            [operation(str, "op1", needs="BOOM"), operation(str, "BOOM")],
+            lambda: [operation(str, "op1", needs="BOOM"), operation(str, "BOOM")],
             r"Name of operation\(BOOM\) clashed with a same-named dependency",
         ),
         (
-            [
-                operation(str, "op1", provides="a", aliases=("a", "BOOM")),
+            lambda: [
+                operation(str, "op1", provides="a", aliases={"a": "BOOM"}),
                 operation(str, "BOOM"),
             ],
             r"Name of operation\(BOOM\) clashed with a same-named dependency",
@@ -185,4 +185,4 @@ def test_yield_chained_docs_root(g):
 )
 def test_node_clashes(ops, err):
     with pytest.raises(ValueError, match=err):
-        Network(*ops)
+        Network(*ops())

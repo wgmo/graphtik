@@ -19,8 +19,8 @@ from graphtik import (
     keyword,
     operation,
     optional,
-    token,
     sfxed,
+    token,
     vararg,
     varargs,
     vcat,
@@ -347,16 +347,32 @@ def test_pipeline_merge_node_props():
 @pytest.mark.parametrize(
     "inp, exp",
     [
-        ({"a": "b"}, {"a": "b"}.items()),
-        ((1, 2), [(1, 2)]),
+        ([("", "")], [("", "")]),
+        ({"": ""}, [("", "")]),
+        ([("a", "b")], [("a", "b")]),
+        ((("a", "b"),), [("a", "b")]),
+        ([("ab", "b")], [("ab", "b")]),
+        ([("abc", "b")], [("abc", "b")]),
+        ({"a": "b"}, [("a", "b")]),
+        ({"ab": "b"}, [("ab", "b")]),
+        ({"abc": "b"}, [("abc", "b")]),
+        ([(token("a"), "b")], [(token("a"), "b")]),
+        ({token("a"): "b"}, [(token("a"), "b")]),
+        ({"abc": "b"}, [("abc", "b")]),
+        ({(1, 2)}, [(1, 2)]),
         ([(1, 2)], [(1, 2)]),
-        ([], []),
-        ((), []),
-        (("ab", "ad"), [("a", "b"), ("a", "d")]),
+        ([], ()),
+        ((), ()),
+        ([("a", "1"), ("a", "2")], [("a", "1"), ("a", "2")]),
+        ([("a", "3"), ("a", "2"), ("a", "1")], [("a", "3"), ("a", "2"), ("a", "1")]),
+        ([("a", "c"), ("e", "g")], [("a", "c"), ("e", "g")]),
+        ({"a": "c", "e": "g"}, [("a", "c"), ("e", "g")]),
+        ([("ab", "cd"), ("ef", "gh")], [("ab", "cd"), ("ef", "gh")]),
+        ({"ab": "cd", "ef": "gh"}, [("ab", "cd"), ("ef", "gh")]),
     ],
 )
 def test_as_renames(inp, exp):
-    as_renames((1, 2), "alias")
+    assert as_renames(inp, "alias") == exp
 
 
 @pytest.mark.parametrize(
@@ -386,14 +402,9 @@ def test_as_renames(inp, exp):
                 r"The `aliases` \['b'-->'B'\] rename non-existent provides in \['a'\]"
             ),
         ),
-        (
-            (token("a"), {token("a"): "a"}),
-            ValueError("must not contain `tokens`"),
-        ),
-        (
-            ("a", {"a": token("AA")}),
-            ValueError("must not contain `tokens`"),
-        ),
+        ((token("a"), {token("a"): "a"}), ValueError("must not contain `tokens`")),
+        (("a", {"a": token("AA")}), ValueError("must not contain `tokens`")),
+        (("a", {token("a"): "b"}), ValueError("rename non-existent provides")),
         (
             (["a", "b"], {"a": "b"}),
             ValueError(r"clash with existing provides in \['a', 'b'\]"),

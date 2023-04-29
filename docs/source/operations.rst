@@ -196,7 +196,7 @@ Sometimes, you need to interface functions & operations where they name a
        >>> op = operation(str,
        ...                name="cloning `provides` with an `alias`",
        ...                provides="real thing",
-       ...                aliases=("real thing", "clone"))
+       ...                aliases={"real thing": "clone"})
 
    .. graphtik::
 

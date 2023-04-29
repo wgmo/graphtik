@@ -78,7 +78,7 @@ def identity_fn(*args, **kwargs):
 
 def as_renames(i, argname):
     """
-    Parses a list of (source-->destination) from dict, list-of-2-items, single 2-tuple.
+    Parses a list of (source-->destination) from dict or  list-of-2-items.
 
     :return:
         a (possibly empty)list-of-pairs
@@ -89,25 +89,15 @@ def as_renames(i, argname):
     if not i:
         return ()
 
-    def is_list_of_2(i):
-        try:
-            return all(len(ii) == 2 for ii in i)
-        except Exception:
-            pass  # Let it be, it may be a dictionary...
+    try:
+        i = i.items()
+    except Exception as ex:
+        if not isinstance(i, cabc.Collection) or not all(len(pair) == 2 for pair in i):
+            raise TypeError(
+                f"Argument {argname} must be a list of 2-element items, was: {i!r}"
+            ) from None
 
-    if isinstance(i, tuple) and len(i) == 2:
-        i = [i]
-    elif not isinstance(i, cabc.Collection):
-        raise TypeError(
-            f"Argument {argname} must be a list of 2-element items, was: {i!r}"
-        ) from None
-    elif not is_list_of_2(i):
-        try:
-            i = list(dict(i).items())
-        except Exception as ex:
-            raise ValueError(f"Cannot dict-ize {argname}({i!r}) due to: {ex}") from None
-
-    return i
+    return list(i)
 
 
 def prefixed(dep, cwd):
@@ -1042,7 +1032,9 @@ def operation(
 
 
     :param aliases:
-        an optional mapping of `provides` to additional ones
+        an optional mapping of `provides` to additional ones;  if you need to map
+        the same *source* provides into multiple *destinations*, use a list of tuples,
+        like: ``aliases=[("a", "A1"), ("a", "A2")]``.
     :param cwd:
         The :term:`current-working-document`, when given, all non-root `dependencies`
         (`needs`, `provides` & `aliases`) become :term:`jsonp`\\s, prefixed with this.
