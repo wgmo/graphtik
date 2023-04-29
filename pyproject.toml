@@ -25,3 +25,5 @@ exclude = '''
 
 [tool.isort]
 profile = "black"
+remove_redundant_aliases = true
+src_paths = ["graphtik", "test", "docs/source"]

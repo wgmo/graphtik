@@ -4,6 +4,9 @@
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
     "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true,
+    },
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
@@ -17,5 +20,6 @@
         "**/.ipynb_checkpoints/": true,
         "**/build/**": true,
         "**/.coverage*": true
-    }
+    },
+    "restructuredtext.confPath": ""
 }
