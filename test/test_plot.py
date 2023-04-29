@@ -547,9 +547,6 @@ def dot_str_pipeline():
     )
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="PY3.6- have different docstrings for builtins."
-)
 def test_node_dot_str0(dot_str_pipeline):
     dot_str = str(dot_str_pipeline.plot())
     print(dot_str)
@@ -605,9 +602,6 @@ def test_node_dot_str0(dot_str_pipeline):
     assert _striplines(dot_str) == _striplines(exp)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="PY3.6 - has different docstrings for builtins."
-)
 def test_node_dot_str1(dot_str_pipeline, monkeypatch):
     ## Test node-hidding & Graph-overlaying.
     #

@@ -4,6 +4,7 @@
 Extends Sphinx with :rst:dir:`graphtik` directive for :term:`plotting <plotter>` from doctest code.
 """
 import collections.abc as cabc
+import importlib.resources as pkg_resources
 import itertools as itt
 import os
 import re
@@ -34,12 +35,6 @@ from graphtik.fnop import FnOp
 from graphtik.plot import default_jupyter_render
 
 from .. import __version__
-
-try:
-    import importlib.resources as pkg_resources
-except ImportError:
-    # Use backported to PY<3.7 `importlib_resources` lib.
-    import importlib_resources as pkg_resources  # noqa
 
 obj_name = "graphtik diagram"
 role_name = "graphtik"

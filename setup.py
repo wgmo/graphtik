@@ -50,7 +50,6 @@ plot_deps = [
     "jinja2>=3",
     # Direct use now due to jinja2-3+.
     "MarkupSafe",
-    "importlib_resources; python_version<'3.7'",
 ]
 matplot_deps = plot_deps + ["matplotlib"]
 sphinx_deps = plot_deps + ["sphinx[setuptools] >=2", "sphinxext-opengraph"]
@@ -94,12 +93,9 @@ setup(
         "graphtik": ["py.typed"],
         "graphtik.sphinxext": ["*.css"],
     },
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=[
-        "contextvars; python_version < '3.7'",
-        "dataclasses; python_version < '3.7'",
-        "networkx; python_version >= '3.5'",
-        "networkx == 2.2; python_version < '3.5'",
+        "networkx",
         "boltons",  # for IndexSet
     ],
     extras_require={
@@ -139,7 +135,6 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: Unix",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

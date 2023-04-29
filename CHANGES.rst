@@ -1160,7 +1160,7 @@ v2.2.0 (20 Nov 2019, @ankostis): enhance OPERATIONS & restruct their modules
 
 v2.1.1 (12 Nov 2019, @ankostis): global configs
 ===============================================
-+ BREAK: drop Python-3.6 compatibility.
++ BREAK: drop Python < 3.6 compatibility.
 + FEAT: Use (possibly multiple) global configurations for all networks,
   stored in a :class:`contextvars.ContextVar`.
 + ENH/BREAK: Use a (possibly) single `execution_pool` in global-configs.

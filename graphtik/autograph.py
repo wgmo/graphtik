@@ -17,6 +17,7 @@ import sys
 from collections import ChainMap
 from inspect import Parameter
 from pathlib import Path
+from re import Pattern as RegexPattern
 from types import ModuleType
 from typing import (
     Any,
@@ -39,13 +40,6 @@ from boltons.setutils import IndexedSet as iset
 from .base import UNSET, Operation, asdict, aslist, astuple, func_name
 from .fnop import FnOp, reparse_operation_data
 from .modifier import is_sfx, keyword, optional, sfxed, token
-
-try:
-    from re import Pattern as RegexPattern
-except ImportError:
-    # PY3.6
-    from typing import Pattern as RegexPattern
-
 
 log = logging.getLogger(__name__)
 
