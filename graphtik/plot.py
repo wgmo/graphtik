@@ -91,7 +91,7 @@ except ImportError:
 #:
 #: :param svg_pan_zoom_json:
 #:     arguments controlling the rendering of a zoomable SVG in
-#:     Jupyter notebooks, as defined in https://github.com/ariutta/svg-pan-zoom#how-to-use
+#:     Jupyter notebooks, as defined in https://github.com/bumbu/svg-pan-zoom#how-to-use
 #:     if `None`, defaults to string (also maps supported)::
 #:
 #:             "{controlIconsEnabled: true, fit: true}"
@@ -159,27 +159,49 @@ def _dot2svg(dot):
         Or with plotly https://plot.ly/~empet/14007.embed
 
     """
+    # Load js-script only once from: https://stackoverflow.com/a/57572107/548792
+
+    import random
+
     pan_zoom_json, element_styles, container_styles = _parse_jupyter_render(dot)
     svg_txt = dot.create_svg().decode()
+    svg_id = f"graphtik-plot-{random.randrange(int(1<<32)):08x}"
     html_txt = f"""
-        <div class="svg_container">
-            <style>
-                .svg_container {{
-                    {container_styles}
-                }}
-                .svg_container SVG {{
-                    {element_styles}
-                }}
-            </style>
-            <script src="https://ariutta.github.io/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
-            <script type="text/javascript">
-                var scriptTag = document.scripts[document.scripts.length - 1];
-                var parentTag = scriptTag.parentNode;
-                var svg_el = parentTag.querySelector(".svg_container svg");
-                svgPanZoom(svg_el, {pan_zoom_json});
-            </script>
-            {svg_txt}
-        </</>
+<div id="{svg_id}" class="svg_container">
+    <style>
+        #{svg_id} {{
+            {container_styles}
+        }}
+        #{svg_id} SVG {{
+            {element_styles}
+        }}
+    </style>
+    <script type="text/javascript">
+    function graphtik_renderPlot() {{
+        var svg_el = document.querySelector("#{svg_id} svg");
+        svgPanZoom(svg_el, {pan_zoom_json});
+    }}
+
+    function graphtik_load_panZoom_script_n_render() {{
+        let id = 'graphtik_panZoomScript'
+        if(document.getElementById(id) === null) {{
+            let script = document.createElement('script')
+            script.setAttribute(
+                'src',
+                'https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.0/dist/svg-pan-zoom.min.js')
+            script.setAttribute('id', id)
+            document.body.appendChild(script)
+
+            script.onload = graphtik_renderPlot
+        }} else {{
+            graphtik_renderPlot()
+        }}
+    }}
+
+    graphtik_load_panZoom_script_n_render()
+    </script>
+    {svg_txt}
+</</>
     """
     return html_txt
 

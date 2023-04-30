@@ -92,14 +92,14 @@ def _enact_zoomable_svg(self: HTMLTranslator, node: dynaimage, tag: str):
     :param node:
         Assign a special *class* for the zoom js-code to select by it.
 
-    NOTE: does not work locally with chrome: ariutta/svg-pan-zoom#326
+    NOTE: does not work locally with chrome: bumbu/svg-pan-zoom#326
     """
     if tag == "object" and "graphtik-zoomable-svg" in node["classes"]:
         ## # Setup pan+zoom JS-code only once.
         #
         if not hasattr(self.builder, "svg_zoomer_doc_scripts"):
             self.builder.add_js_file(
-                "https://ariutta.github.io/svg-pan-zoom/dist/svg-pan-zoom.min.js"
+                "https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.0/dist/svg-pan-zoom.min.js"
             )
             self.builder.add_js_file(
                 None,

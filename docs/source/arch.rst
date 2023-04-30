@@ -670,7 +670,7 @@ Architecture
         the :ref:`plotting` section.
 
         SVGs are in rendered with the `zoom-and-pan javascript library
-        <https://github.com/ariutta/svg-pan-zoom>`_
+        <https://github.com/bumbu/svg-pan-zoom>`_
 
         .. include:: plotting.rst
             :start-after: .. serve-sphinx-warn-start

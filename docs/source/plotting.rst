@@ -286,7 +286,7 @@ Directives
    .. rst:directive:option:: zoomable-opts: <empty>, (true, 1, yes, on) | (false, 0, no, off)
       :type: `str`
 
-      A JS-object with `the options <https://github.com/ariutta/svg-pan-zoom#how-to-use>`_
+      A JS-object with `the options <https://github.com/bumbu/svg-pan-zoom#how-to-use>`_
       for the interactive zoom+pan pf SVGs.
       If missing, :confval:`graphtik_zoomable_options` assumed.
       Specify ``{}`` explicitly to force library's default options.
@@ -362,7 +362,7 @@ Configurations
    - default: ``True``
 
    Whether to render SVGs with the `zoom-and-pan javascript library
-   <https://github.com/ariutta/svg-pan-zoom>`_, unless the ``:zoomable:``
+   <https://github.com/bumbu/svg-pan-zoom>`_, unless the ``:zoomable:``
    directive-option is given (and not empty).
 
    .. serve-sphinx-warn-start
@@ -380,7 +380,7 @@ Configurations
    - type: `str`
    - default: ``{controlIconsEnabled: true, fit: true}``
 
-   A JS-object with `the options <https://github.com/ariutta/svg-pan-zoom#how-to-use>`_
+   A JS-object with `the options <https://github.com/bumbu/svg-pan-zoom#how-to-use>`_
    for the interactive zoom+pan pf SVGs, when the ``:zoomable-opts:`` directive option
    is missing.
    If empty, ``{}`` assumed (library's default options).
