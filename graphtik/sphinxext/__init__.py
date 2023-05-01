@@ -475,9 +475,12 @@ def _purge_old_document_images(app: Sphinx, env: BuildEnvironment, docname: str)
 
 
 def _stage_my_pkg_resource(inp_fname, out_fpath):
-    with pkg_resources.open_binary(__package__, inp_fname) as inp, open(
-        out_fpath, "wb"
-    ) as out:
+    try:
+        inp_file = (pkg_resources.files(__package__) / inp_fname).open("rb")
+    except AttributeError:
+        # Python < PY3.9
+        inp_file = pkg_resources.open_binary(__package__, inp_fname)
+    with inp_file as inp, open(out_fpath, "wb") as out:
         copyfileobj(inp, out)
 
 
