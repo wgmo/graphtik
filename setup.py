@@ -52,7 +52,7 @@ plot_deps = [
     "MarkupSafe",
 ]
 matplot_deps = plot_deps + ["matplotlib"]
-sphinx_deps = plot_deps + ["sphinx[setuptools] >=2", "sphinxext-opengraph"]
+sphinx_deps = plot_deps + ["sphinx >=2", "sphinxext-opengraph"]
 test_deps = list(
     set(
         matplot_deps

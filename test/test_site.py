@@ -70,11 +70,22 @@ def test_README_as_PyPi_landing_page(monkeypatch):
 
 
 def test_sphinx_html(monkeypatch):
+    from sphinx.cmd import build
+
     # Fail on warnings, but don't rebuild all files (no `-a`),
     # rm -r ./build/sphinx/ # to fully test site.
-    site_args = list("setup.py build_sphinx -W".split())
+    build_options = [
+        "-W",
+        # "-E",
+        "-D",
+        "graphtik_warning_is_error=true",
+        "--color",
+        "-j",
+        "auto",
+    ]
     if logging.getLogger(__name__).isEnabledFor(logging.INFO):
-        site_args.append("-v")
-    monkeypatch.setattr(sys, "argv", site_args)
+        build_options.append("-v")
+    site_args = [*build_options, "docs/source/", "docs/build"]
     monkeypatch.chdir(proj_path)
-    importlib.import_module("setup")
+    ret = build.build_main(site_args)
+    assert not ret

@@ -97,6 +97,7 @@ def _make_py_item_url(fn):
             return f"../reference.html#{fn_name}"
 
 
+graphtik_warning_is_error = False
 plotter = plot.get_active_plotter()
 plot.set_active_plotter(
     plotter.with_styles(

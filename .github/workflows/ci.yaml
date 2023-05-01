@@ -49,10 +49,6 @@ jobs:
         #   fail_ci_if_error: true # optional (default = false)
         #   verbose: true # optional (default = false)
 
-      - name: site
-        run: |
-          python setup.py build_sphinx
-
       - name: build
         run: |
           python -m build
