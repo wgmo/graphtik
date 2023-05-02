@@ -201,7 +201,7 @@ def _dot2svg(dot):
     graphtik_load_panZoom_script_n_render()
     </script>
     {svg_txt}
-</</>
+</div>
     """
     return html_txt
 
