@@ -83,18 +83,21 @@ except ImportError:
     pass
 
 #: A nested dictionary controlling the rendering of graph-plots in Jupyter cells,
-#:
-#: as those returned from :meth:`.Plottable.plot()` (currently as SVGs).
+#:#: as those returned from :meth:`.Plottable.plot()` (currently as SVGs).
 #: Either modify it in place, or pass another one in the respective methods.
+#:
+#: Any keys ommitted, are taken from :data:`default_jupyter_render` - pass
+#: an empty dict(``{}``) if that is not desirable
+#: (eg. to revert to panZoom's library's defaults).
 #:
 #: The following keys are supported.
 #:
 #: :param svg_pan_zoom_json:
 #:     arguments controlling the rendering of a zoomable SVG in
 #:     Jupyter notebooks, as defined in https://github.com/bumbu/svg-pan-zoom#how-to-use
-#:     if `None`, defaults to string (also maps supported)::
+#:     if `None`, defaults to this map (json strings also supported)::
 #:
-#:             "{controlIconsEnabled: true, fit: true}"
+#:             {"controlIconsEnabled": True, "fit": True}"
 #:
 #: :param svg_element_styles:
 #:     mostly for sizing the zoomable SVG in Jupyter notebooks.
@@ -107,10 +110,10 @@ except ImportError:
 #:     like `svg_element_styles`, if `None`, defaults to empty string (also maps supported).
 #:
 #: .. note::
-#:      referred also by :rst:dir:`graphtik`'s  :confval:`graphtik_zoomable_options`
+#:      referred also by :rst:dir:`graphtik`'s :confval:`graphtik_zoomable_options`
 #:      default configuration value.
 default_jupyter_render = {
-    "svg_pan_zoom_json": "{controlIconsEnabled: true, fit: true}",
+    "svg_pan_zoom_json": {"controlIconsEnabled": True, "fit": True},
     "svg_element_styles": "width: 100%; height: 300px;",
     "svg_container_styles": "",
 }
@@ -122,10 +125,8 @@ def _parse_jupyter_render(dot) -> Tuple[str, str, str]:
         jupy_cfg = default_jupyter_render
 
     def parse_value(key: str, parser: Callable) -> str:
-        if key not in jupy_cfg:
-            return parser(default_jupyter_render.get(key, ""))
+        val: Union[Mapping, str] = jupy_cfg.get(key, default_jupyter_render.get(key))
 
-        val: Union[Mapping, str] = jupy_cfg.get(key)
         if not val:
             val = ""
         elif not isinstance(val, str):
@@ -133,7 +134,11 @@ def _parse_jupyter_render(dot) -> Tuple[str, str, str]:
         return val
 
     def styles_parser(d: Mapping) -> str:
-        return "".join(f"{key}: {val};\n" for key, val in d)
+        try:
+            return "".join(f"{key}: {val};\n" for key, val in d)
+        except Exception as ex:
+            breakpoint()
+            raise ValueError(f"Failed to parse styles {d!r} due to: {ex}") from ex
 
     svg_container_styles = parse_value("svg_container_styles", styles_parser)
     svg_element_styles = parse_value("svg_element_styles", styles_parser)
@@ -1817,13 +1822,21 @@ class Plotter:
             :seealso: :attr:`.PlotArgs.filename`
         :param jupyter_render:
             a nested dictionary controlling the rendering of graph-plots in Jupyter cells.
-            If `None`, defaults to :data:`default_jupyter_render`;  you may modify those
+            If `None`, defaults to :data:`default_jupyter_render`;  values for
+            ommitted  sub-keys are taken also from the above dict - pass an empty dict(``{}``)
+            if that is not desirable (eg. to revert to panZoom's library's defaults).
+
+            You may modify those
             in place and they will apply for all future calls (see :ref:`jupyter_rendering`).
 
             You may increase the height of the SVG cell output with
             something like this::
 
-                plottable.plot(jupyter_render={"svg_element_styles": "height: 600px; width: 100%"})
+                from graphtik.plot import default_jupyter_render
+                plottable.plot(jupyter_render={
+                    **default_jupyter_render,
+                    "svg_element_styles": "height: 600px; width: 100%"
+                })
         :return:
             the matplotlib image if ``filename=-1``, or the given `dot` annotated with any
             jupyter-rendering configurations given in `jupyter_render` parameter.
