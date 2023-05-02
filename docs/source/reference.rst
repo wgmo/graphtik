@@ -6,6 +6,7 @@ API Reference
 
      graphtik
      graphtik.fnop
+     graphtik.autograph
      graphtik.pipeline
      graphtik.modifier
      graphtik.planning
@@ -32,6 +33,12 @@ Module: `fnop`
 ==============
 
 .. automodule:: graphtik.fnop
+     :members:
+     :undoc-members:
+     :private-members:
+     :special-members:
+
+.. automodule:: graphtik.autograph
      :members:
      :undoc-members:
      :private-members:

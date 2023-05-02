@@ -399,6 +399,8 @@ class Autograph(Prefkey):
 
     **Example:**
 
+    >>> from graphtik.autograph import *
+    >>> from graphtik import keyword
     >>> def calc_sum_ab(a, b=0):
     ...     return a + b
 
@@ -407,7 +409,7 @@ class Autograph(Prefkey):
     ...     overrides={
     ...         "autographed": {"needs": [keyword("fn", "other_fn"), ...]},
     ...     })
-    >>> aug.wrap_funcs([autographed, get_autograph_decors, is_regular_class])
+    >>> aug.wrap_funcs([autographed, get_autograph_decors, is_regular_class, FnHarvester])
     [FnOp(name='autographed',
         needs=['fn'(>'other_fn'),
             'name'(?),
@@ -427,7 +429,15 @@ class Autograph(Prefkey):
         fn='get_autograph_decors'),
     FnOp(name='is_regular_class',
         needs=['name', 'item'],
-        fn='is_regular_class')]
+        fn='is_regular_class'),
+    FnOp(name='FnHarvester',
+        needs=['excludes'(?),
+            'base_modules'(?),
+            'predicate'(?),
+            'include_methods'(?),
+            'sep'(?)],
+        provides=['fn_harvester'],
+        fn='FnHarvester')]
 
     .. hint::
        Notice the use of triple-dot(``...``) to indicate that the rest of the
