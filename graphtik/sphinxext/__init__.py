@@ -4,16 +4,16 @@
 Extends Sphinx with :rst:dir:`graphtik` directive for :term:`plotting <plotter>` from doctest code.
 """
 import collections.abc as cabc
+import functools as fnt
 import importlib.resources as pkg_resources
 import itertools as itt
-import os
+import json
 import re
 from collections import defaultdict
 from pathlib import Path
 from shutil import copyfileobj
 from typing import Dict, List, Set, Union, cast
 
-import sphinx
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst import roles as rst_roles
@@ -59,60 +59,6 @@ class dynaimage(nodes.General, nodes.Inline, nodes.Element):
     """Writes a tag in `tag` attr (``<img>`` for PNGs, ``<object>`` for SVGs/PDFs)."""
 
 
-def _zoomable_activation_js_code(default_zoom_opts: str) -> str:
-    if not default_zoom_opts:
-        default_zoom_opts = "{}"
-
-    return f"""
-    $(function() {{
-        var default_opts = {default_zoom_opts};
-        for (const svg_el of $( ".graphtik-zoomable-svg" )) {{
-            var zoom_opts = ("svgZoomOpts" in svg_el.dataset?
-                                svg_el.dataset.svgZoomOpts:
-                                default_opts);
-            svg_el.addEventListener("load", function() {{
-                // Still fails for Chrome localy :-()
-                var panZoom = svgPanZoom(svg_el, zoom_opts);
-
-                // Container follows window size.
-                $(window).resize(function(){{
-                    panZoom.resize();
-                    panZoom.fit();
-                    panZoom.center();
-                }});
-            }});
-        }};
-    }});
-    """
-
-
-def _enact_zoomable_svg(self: HTMLTranslator, node: dynaimage, tag: str):
-    """Make SVGs zoomable if enabled by option/config.
-
-    :param node:
-        Assign a special *class* for the zoom js-code to select by it.
-
-    NOTE: does not work locally with chrome: bumbu/svg-pan-zoom#326
-    """
-    if tag == "object" and "graphtik-zoomable-svg" in node["classes"]:
-        ## # Setup pan+zoom JS-code only once.
-        #
-        if not hasattr(self.builder, "svg_zoomer_doc_scripts"):
-            self.builder.add_js_file(
-                "https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.0/dist/svg-pan-zoom.min.js"
-            )
-            self.builder.add_js_file(
-                None,
-                type="text/javascript",
-                body=_zoomable_activation_js_code(
-                    self.config.graphtik_zoomable_options
-                ),
-            )
-
-            # Mark actions above as preformed only once.
-            self.builder.svg_zoomer_doc_scripts = True
-
-
 def _html_visit_dynaimage(self: HTMLTranslator, node: dynaimage):
     # See sphinx/writers/html5:visit_image()
     tag = getattr(node, "tag", None)
@@ -120,8 +66,6 @@ def _html_visit_dynaimage(self: HTMLTranslator, node: dynaimage):
         # Probably couldn't find :graphvar: in doctest globals.
         raise nodes.SkipNode
     assert tag in ["img", "object"], (tag, node)
-
-    _enact_zoomable_svg(self, node, tag)
 
     atts = {k: v for k, v in node.attlist() if k not in nodes.Element.known_attributes}
     self.body.extend([self.emptytag(node, tag, "", **atts), f"</{tag}>"])
@@ -171,9 +115,23 @@ _image_formats = ("png", "svg", "svgz", "pdf", None)
 
 def _valid_format_option(argument: str) -> Union[str, None]:
     # None choice ignored, choice() would scream due to upper().
-    if not argument:
-        return None
-    return directives.choice(argument, _image_formats)
+    if argument:
+        return directives.choice(argument, _image_formats)
+
+
+def _valid_json(argument: str, argname: str) -> Union[str, None]:
+    # None choice ignored, choice() would scream due to upper().
+    if argument is not None:
+        try:
+            if isinstance(argument, str):
+                json.loads(argument)  # Just to parse if valid.
+                return argument
+            else:
+                return json.dumps(argument)
+        except json.JSONDecodeError as ex:
+            raise ValueError(
+                f"invalid JSON {argument!r} supplied for {argname!r}: {ex}"
+            ) from ex
 
 
 def _tristate_bool_option(val: str) -> Union[None, bool]:
@@ -198,7 +156,7 @@ _graphtik_options = {
     "graph-format": _valid_format_option,
     "graphvar": directives.unchanged_required,
     "zoomable": _tristate_bool_option,
-    "zoomable-opts": directives.unchanged,
+    "zoomable-opts": fnt.partial(_valid_json, "zoomable-opts"),
 }
 _doctest_options = extdoctest.DoctestDirective.option_spec
 _img_options = {
@@ -270,9 +228,8 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
         name = options.get("name") or ""
         if name:
             name = nodes.fully_normalize_name(name)
-        targetname = (
-            f"graphtik-{self.env.docname}-{name}-{self.env.new_serialno('graphtik')}"
-        )
+        serno = self.env.new_serialno("graphtik")
+        targetname = f"graphtik-{self.env.docname}-{name}-{serno}"
         node["filename"] = targetname
         node += original_nodes
 
@@ -297,12 +254,16 @@ class _GraphtikTestDirective(extdoctest.TestDirective):
                 zoomable = self.config.graphtik_zoomable
                 if zoomable:
                     image["classes"].append("graphtik-zoomable-svg")
-        ## Assign a special *dataset* html-attribute
-        #  with the content of a respective option.
-        #
-        zoomable_options = options.get("zoomable-opts")
-        if zoomable_options:
-            image["data-svg-zoom-opts"] = zoomable_options
+            ## Pass PanZoom options to JS with a *dataset* html-attribute.
+            #
+            zoomable_options = options.get("zoomable-opts")
+            if zoomable_options is None:
+                zoomable_options = self.config.graphtik_zoomable_options
+            # Element-dataset properties are strings.
+            # # FIXME: remove too much sanity checking.
+            # json.loads(zoomable_options)
+            image["data-graphtik-svg-zoom-options"] = zoomable_options
+
         figure += image
 
         # A caption is needed if :name: is given, to create a permalink on it
@@ -501,6 +462,9 @@ def _validate_and_apply_configs(app: Sphinx, config: Config):
     """Callback of `config-inited`` event."""
     config.graphtik_default_graph_format is None or _valid_format_option(
         config.graphtik_default_graph_format
+    )
+    config.graphtik_zoomable_options = _valid_json(
+        config.graphtik_zoomable_options, "graphtik_zoomable_options"
     )
 
 

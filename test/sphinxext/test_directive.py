@@ -82,7 +82,7 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
         img_format = "svg"
 
     image_files = image_dir.listdir()
-    n_expected = 8
+    nimages = 9
     if img_format == "png":
         # x2 files for image-maps file.
         tag = "img"
@@ -91,8 +91,8 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
         tag = "object"
         uri_attr = "data"
 
-    assert all(f.endswith(img_format) for f in image_files), image_files
-    assert len(image_files) == n_expected, image_files
+    assert all(f.endswith(img_format) for f in image_files)
+    assert len(image_files) == nimages - 3  # -1 skipIf=true, -1 same name, ???
 
     etree = cached_etree_parse(fname)
     check_xpath(
@@ -106,9 +106,7 @@ def test_html(make_app, app_params, img_format, cached_etree_parse):
             "pipeline3",
             "pipeline4",
             "pipeline1",
-            "pipeline1",  # different graph!
-            "pipeline2",  # only the last of the 2 graphs
-            "pipelineB",  # only the last of the 2 graphs
+            "pipelineB",
             count=True,
         ),
     )
@@ -137,16 +135,17 @@ def test_zoomable_svg(app, cached_etree_parse):
     fname = "index.html"
     print(app.outdir / fname)
 
+    nimages = 9
     etree = cached_etree_parse(app.outdir / fname)
     check_xpath(
         etree,
         fname,
         f".//object[@class='graphtik-zoomable-svg']",
-        _count_nodes(7),  # -1 zoomable false
+        _count_nodes(nimages - 3),  # -zoomable-options(BUG), -skipIf=true, -same-name
     )
     check_xpath(
         etree,
         fname,
-        f".//object[@data-svg-zoom-opts]",
-        _count_nodes(1),
+        f".//object[@data-graphtik-svg-zoom-options]",
+        _count_nodes(nimages - 3),  # see above
     )

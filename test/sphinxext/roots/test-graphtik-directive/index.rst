@@ -1,4 +1,4 @@
-1. `graphtik` with :graphvar:
+0. `graphtik` with :graphvar:
 =============================
 .. graphtik::
     :graphvar: pipeline1
@@ -11,7 +11,7 @@
     ... )
 
 
-2. Solved `graphtik` WITHOUT :graphvar:
+1. Solved `graphtik` WITHOUT :graphvar:
 =======================================
 .. graphtik::
     :caption: Solved *pipeline2* with ``a=1``, ``b=2``
@@ -23,7 +23,7 @@
     >>> sol = pipeline2(a=1, b=2)
 
 
-3. `graphtik` inherit from literal-block WITHOUT :graphvar:
+2. `graphtik` inherit from literal-block WITHOUT :graphvar:
 ===========================================================
 
 >>> pipeline3 = compose(
@@ -34,7 +34,7 @@
 .. graphtik::
 
 
-4. `graphtik` inherit from doctest-block with :graphvar:
+3. `graphtik` inherit from doctest-block with :graphvar:
 ========================================================
 
 >>> pipeline4 = compose(
@@ -46,15 +46,15 @@
     :graphvar: pipeline4
 
 
-5. Image for :hide:
+4. Image for :hide:
 ===================
 .. graphtik::
     :graphvar: pipeline1
-    :hide:
+    :hide: true
     :zoomable: false
 
 
-6. Nothing for :skipif:
+5. Nothing for :skipif:
 =======================
 .. graphtik::
     :graphvar: pipeline1
@@ -62,7 +62,7 @@
 
 
 
-7. Same name, different graph
+6. Same name, different graph
 =============================
 .. graphtik::
     :zoomable:
@@ -74,7 +74,7 @@
     ... )
 
 
-8. Multiple plottables with prexistent
+7. Multiple plottables with prexistent
 ======================================
 Check order of doctest-globals even if item pre-exists:
 
@@ -92,7 +92,7 @@ Check order of doctest-globals even if item pre-exists:
     ... )
 
 
-9. Multiple plottables ignoring 1st
+8. Multiple plottables ignoring 1st
 ===================================
 .. graphtik::
 
