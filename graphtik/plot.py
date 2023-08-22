@@ -471,7 +471,7 @@ def make_data_value_tooltip(plot_args: PlotArgs):
             tooltip = f"({type(val).__name__}, shape: {val.shape}) {val}"
     else:
         tooltip = f"({type(val).__name__}) {val}"
-    return quote_html_tooltips(tooltip)
+    return quote_html_tooltips(tooltip[:4095])
 
 
 def make_overwrite_tooltip(plot_args: PlotArgs):
