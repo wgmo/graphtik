@@ -481,7 +481,7 @@ def make_overwrite_tooltip(plot_args: PlotArgs):
     val = plot_args.solution.overwrites[node]
     val_str = "\n  ".join(f"{i}. {v}" for i, v in reversed(list(enumerate(val))))
     tooltip = f"(x{len(val)} overwrites) {val_str}"
-    return quote_html_tooltips(tooltip)
+    return quote_html_tooltips(tooltip[:4095])
 
 
 def make_op_prune_comment(plot_args: PlotArgs):
